@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { ClassId, EffectKind } from "@arena/shared";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
@@ -9,22 +10,34 @@ export interface CastFrame {
   progress: number; // entre 0 et 1
 }
 
+export interface EffectFrame {
+  kind: EffectKind;
+  // Secondes restantes arrondies, ou null pour un effet permanent.
+  remaining: number | null;
+}
+
 export interface UnitFrame {
   name: string;
+  className: string;
   hp: number;
   maxHp: number;
   cast: CastFrame | null;
+  effects: EffectFrame[];
 }
 
 export interface SelfFrame extends UnitFrame {
+  classId: ClassId;
   mana: number;
   maxMana: number;
   endurance: number;
   maxEndurance: number;
   attacking: boolean;
+  songActive: boolean;
 }
 
 export interface TargetFrame extends UnitFrame {
+  isSelf: boolean;
+  isAlly: boolean;
   distance: number;
   inMeleeRange: boolean;
   inLineOfSight: boolean;
@@ -38,6 +51,8 @@ const ERROR_DISPLAY_MS = 2000;
 let errorTimeout: ReturnType<typeof setTimeout> | undefined;
 
 interface HudState {
+  // Classe choisie avant de rejoindre l'arène (null : écran de sélection).
+  selectedClass: ClassId | null;
   status: ConnectionStatus;
   error: string | null;
   playerCount: number;
@@ -48,6 +63,7 @@ interface HudState {
   cooldownEnds: Record<string, number>;
   // Message bref affiché au centre de l'écran ("Cible hors de portée"...).
   flashMessage: string | null;
+  selectClass: (classId: ClassId | null) => void;
   setStatus: (status: ConnectionStatus, error?: string) => void;
   setPlayerCount: (count: number) => void;
   setFrames: (self: SelfFrame | null, target: TargetFrame | null) => void;
@@ -57,6 +73,7 @@ interface HudState {
 }
 
 export const useHudStore = create<HudState>((set) => ({
+  selectedClass: null,
   status: "connecting",
   error: null,
   playerCount: 0,
@@ -65,6 +82,9 @@ export const useHudStore = create<HudState>((set) => ({
   combatLog: [],
   cooldownEnds: {},
   flashMessage: null,
+  // Changer de classe repart d'une interface vierge.
+  selectClass: (selectedClass) =>
+    set({ selectedClass, self: null, target: null, combatLog: [], cooldownEnds: {}, flashMessage: null }),
   setStatus: (status, error) => set({ status, error: error ?? null }),
   setPlayerCount: (playerCount) => set({ playerCount }),
   setFrames: (self, target) => set({ self, target }),

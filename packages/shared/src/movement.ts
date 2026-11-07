@@ -35,14 +35,13 @@ export interface Position {
 
 // Avance d'un pas de simulation, contourne les obstacles et reste dans l'arène.
 // Partagé entre serveur et client pour pouvoir prédire le mouvement plus tard.
-export function stepMovement(pos: Position, input: MoveInput, dt: number): Position {
+// speedMultiplier applique les bonus et malus de vitesse (chant du Barde, ralentissement).
+export function stepMovement(pos: Position, input: MoveInput, dt: number, speedMultiplier = 1): Position {
   const dir = inputToDirection(input);
-  if (dir.x === 0 && dir.z === 0) return pos;
+  if ((dir.x === 0 && dir.z === 0) || speedMultiplier <= 0) return pos;
 
-  const moved = resolveObstacleCollisions(
-    { x: pos.x + dir.x * MOVE_SPEED * dt, z: pos.z + dir.z * MOVE_SPEED * dt },
-    PLAYER_RADIUS,
-  );
+  const step = MOVE_SPEED * speedMultiplier * dt;
+  const moved = resolveObstacleCollisions({ x: pos.x + dir.x * step, z: pos.z + dir.z * step }, PLAYER_RADIUS);
   const limit = ARENA_SIZE / 2 - PLAYER_RADIUS;
   return { x: clamp(moved.x, -limit, limit), z: clamp(moved.z, -limit, limit) };
 }

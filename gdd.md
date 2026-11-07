@@ -117,6 +117,19 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Parties qui s'éternisent** : si une équipe se cache ou fuit sans arrêt, la partie peut ne jamais finir. Piste possible : une zone qui rétrécit après quelques minutes, ou une durée maximale.
 - **Taille de l'arène** : à caler en test, assez grande pour que la recherche prenne un peu de temps sans devenir ennuyeuse.
 - **Progression** : hors périmètre du prototype.
-- **Attaque automatique** de mêlée : dégâts et vitesse par classe.
-- **Critiques** : chance et multiplicateur de base.
 - **Valeurs chiffrées** : toutes à valider en prototype.
+- **Contrôles** : le personnage regarde dans la direction où il marche (touche E pour faire face à sa cible). À revoir : garder le regard sur la cible pendant les déplacements ?
+
+## Choix faits pendant le prototype (provisoires, à valider en test)
+
+- **Incantation** : bouger interrompt l'incantation, et on ne peut pas commencer à incanter en bougeant (comme dans DAoC).
+- **Orientation** : pour attaquer ou lancer un sort offensif, la cible doit être dans un cône de 180° devant soi.
+- **Positions** (Lame) : devant = ±60° face à la cible, dans le dos = ±60° derrière, flanc = entre les deux.
+- **Zones d'effet** : Déflagration, Mez de zone et Root de zone sont centrés sur la cible (et non sur un point du sol choisi à la souris).
+- **Attaque automatique** : Gardien 55 dégâts / 2 s, Lame 70 / 2 s, Arcaniste, Prêtre et Barde 30 / 2,5 s.
+- **Critiques** : 10 % de chances en mêlée, dégâts × 1,5 (la Rage rend tous les coups critiques).
+- **Interception** : dure 10 s ou jusqu'au premier coup, le Gardien doit être à 4 m maximum de l'allié.
+- **Garde** : utiliser Garde sur l'allié déjà protégé retire la protection.
+- **Chant de vitesse** : s'active et se désactive avec sa touche.
+- **Soins et buffs** : sans allié ciblé, ils s'appliquent au lanceur.
+- **Équipes provisoires** : attribuées automatiquement à l'arrivée (l'équipe la moins nombreuse), en attendant le matchmaking.

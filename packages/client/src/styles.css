@@ -220,3 +220,133 @@ body,
     bottom: 100px;
   }
 }
+
+/* --- Choix de la classe --- */
+.class-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.class-picker h1 {
+  font-size: 22px;
+  margin: 0 0 20px;
+}
+
+.class-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: 1000px;
+}
+
+.class-card {
+  width: 180px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  background: #1c2128;
+  color: inherit;
+  border: 1px solid #3a4250;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.class-card:hover {
+  border-color: #ffd76a;
+  background: #232a33;
+}
+
+.class-name {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.class-role {
+  color: #ffd76a;
+  font-size: 13px;
+}
+
+.class-stats,
+.class-abilities {
+  color: #aab;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* --- Cadres et effets --- */
+.unit-class {
+  color: #aab;
+  font-weight: 400;
+  font-size: 11px;
+}
+
+.frame-ally {
+  border-left: 3px solid #3f7fd0;
+}
+
+.frame-enemy {
+  border-left: 3px solid #d04a3f;
+}
+
+.effect-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.effect {
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.effect-control {
+  background: #8a2f9a;
+}
+
+.effect-debuff {
+  background: #9a5a2f;
+}
+
+.effect-immunity {
+  background: #555;
+}
+
+.effect-buff {
+  background: #2f7a4a;
+}
+
+.slot-active {
+  border-color: #ffd76a;
+  box-shadow: 0 0 6px #ffd76a;
+}
+
+.change-class {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #e8e8e8;
+  border: 1px solid #555;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.help {
+  top: 52px;
+}

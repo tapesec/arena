@@ -13,7 +13,14 @@ const MOVE_BINDINGS: Record<string, keyof MoveInput> = {
   ArrowRight: "right",
 };
 
-export type KeyAction = "nextTarget" | "clearTarget" | "toggleAttack" | "respawn" | "faceTarget" | "slot1" | "slot2" | "slot3";
+export type KeyAction =
+  | "nextTarget"
+  | "clearTarget"
+  | "targetSelf"
+  | "toggleAttack"
+  | "respawn"
+  | "faceTarget"
+  | `slot${number}`;
 
 const ACTION_BINDINGS: Record<string, KeyAction> = {
   Tab: "nextTarget",
@@ -21,10 +28,9 @@ const ACTION_BINDINGS: Record<string, KeyAction> = {
   KeyF: "toggleAttack",
   KeyR: "respawn",
   KeyE: "faceTarget",
-  // Rangée des chiffres : touches &, é, " sur un clavier AZERTY.
-  Digit1: "slot1",
-  Digit2: "slot2",
-  Digit3: "slot3",
+  F1: "targetSelf",
+  // Rangée des chiffres (touches &, é, "… sur un clavier AZERTY) : barre de compétences.
+  ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`Digit${n}`, `slot${n}` as KeyAction])),
 };
 
 // Suit l'état des touches de déplacement et prévient uniquement quand il change,

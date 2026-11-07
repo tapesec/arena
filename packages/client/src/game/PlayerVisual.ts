@@ -6,10 +6,18 @@ import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
+import type { EffectKind } from "@arena/shared";
+
+export interface EffectView {
+  kind: string;
+  remaining: number;
+}
 
 // Ce que le client lit dans l'état synchronisé par le serveur.
 export interface PlayerView {
   name: string;
+  classId: string;
+  team: number;
   x: number;
   z: number;
   facing: number;
@@ -21,13 +29,25 @@ export interface PlayerView {
   endurance: number;
   maxEndurance: number;
   attacking: boolean;
+  songActive: boolean;
   castAbility: string;
   castElapsed: number;
   castDuration: number;
+  effects: Iterable<EffectView>;
 }
 
 const BODY_HEIGHT = 1.8;
 const DEAD_COLOR = new Color3(0.3, 0.3, 0.3);
+
+// Teinte de base par équipe : bleu ou rouge, légèrement variée d'un joueur à l'autre.
+const TEAM_HUES = [215, 5];
+
+// Lueur appliquée au personnage selon le contrôle subi, du plus au moins grave.
+const CONTROL_GLOW: [EffectKind, Color3][] = [
+  ["stun", new Color3(0.6, 0.55, 0)],
+  ["mez", new Color3(0.45, 0.1, 0.6)],
+  ["root", new Color3(0, 0.35, 0.6)],
+];
 
 // Représentation 3D d'un joueur : une capsule, un "nez" pour l'orientation,
 // et un anneau au sol pour son propre personnage.
@@ -38,6 +58,7 @@ export class PlayerVisual {
   private material: StandardMaterial;
   private aliveColor: Color3;
   private wasAlive = true;
+  private currentGlow: Color3 | null = null;
 
   constructor(
     scene: Scene,
@@ -48,7 +69,8 @@ export class PlayerVisual {
     this.root = new TransformNode(`player-${sessionId}`, scene);
     this.root.position.set(state.x, 0, state.z);
 
-    this.aliveColor = Color3.FromHSV((state.colorIndex * 360) / 16, 0.6, 0.9);
+    const hue = TEAM_HUES[state.team] + ((state.colorIndex % 4) - 1.5) * 8;
+    this.aliveColor = Color3.FromHSV((hue + 360) % 360, 0.65, 0.9);
     this.material = new StandardMaterial("playerMat", scene);
     this.material.diffuseColor = this.aliveColor;
 
@@ -81,6 +103,11 @@ export class PlayerVisual {
     return this.state.hp > 0;
   }
 
+  hasEffect(kind: EffectKind): boolean {
+    for (const effect of this.state.effects) if (effect.kind === kind) return true;
+    return false;
+  }
+
   // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame.
   update(smoothing: number) {
     this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
@@ -90,6 +117,12 @@ export class PlayerVisual {
     if (this.isAlive !== this.wasAlive) {
       this.wasAlive = this.isAlive;
       this.applyLifeState();
+    }
+
+    const glow = CONTROL_GLOW.find(([kind]) => this.hasEffect(kind))?.[1] ?? null;
+    if (glow !== this.currentGlow) {
+      this.currentGlow = glow;
+      this.material.emissiveColor = glow ?? Color3.Black();
     }
   }
 

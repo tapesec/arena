@@ -8,4 +8,5 @@ const server = defineServer({
   },
 });
 
-await listen(server, SERVER_PORT);
+// PORT permet de lancer une autre instance à côté (tests, mise en ligne).
+await listen(server, Number(process.env.PORT ?? SERVER_PORT));

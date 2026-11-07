@@ -18,18 +18,22 @@ import {
   ARENA_SIZE,
   OBSTACLES,
   OBSTACLE_HEIGHT,
+  PERMANENT,
   TAB_TARGET_RANGE,
   distance,
   getAbility,
+  getClass,
   hasLineOfSight,
   isFacing,
   isInMeleeRange,
+  type ClassId,
   type CombatEvent,
   type CooldownEvent,
+  type EffectKind,
   type InterruptEvent,
 } from "@arena/shared";
-import { HOTBAR } from "../hotbar";
-import { useHudStore, type CastFrame, type SelfFrame, type TargetFrame } from "../store";
+import { useHudStore, type CastFrame, type EffectFrame, type SelfFrame, type TargetFrame } from "../store";
+import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
@@ -43,8 +47,6 @@ const SMOOTHING = 15;
 
 // Fréquence de mise à jour de l'interface React (inutile de la recalculer à chaque frame).
 const HUD_REFRESH_MS = 100;
-
-const SLOT_INDEX: Partial<Record<KeyAction, number>> = { slot1: 0, slot2: 1, slot3: 2 };
 
 export class Game {
   private engine: Engine;
@@ -155,16 +157,23 @@ export class Game {
 
   private bindMessages() {
     const hud = useHudStore.getState();
-    this.room.onMessage("combat", (event: CombatEvent) => this.logCombat(event));
-    this.room.onMessage("interrupt", (event: InterruptEvent) => this.logInterrupt(event));
+    const nameOf = (id: string) => this.nameOf(id);
+    this.room.onMessage("combat", (event: CombatEvent) => {
+      for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
+    });
+    this.room.onMessage("interrupt", (event: InterruptEvent) => hud.pushLog(formatInterrupt(event, nameOf)));
     this.room.onMessage("cooldown", (event: CooldownEvent) => hud.startCooldown(event.abilityId, event.duration));
     this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
   }
 
+  private get self(): PlayerVisual | undefined {
+    return this.players.get(this.room.sessionId);
+  }
+
   private handleAction(action: KeyAction) {
-    const slot = SLOT_INDEX[action];
-    if (slot !== undefined) {
-      const abilityId = HOTBAR[slot];
+    if (action.startsWith("slot")) {
+      const slot = Number(action.slice(4)) - 1;
+      const abilityId = this.self && getClass(this.self.state.classId)?.abilities[slot];
       if (abilityId) this.room.send("cast", { abilityId });
       return;
     }
@@ -174,6 +183,9 @@ export class Game {
         break;
       case "clearTarget":
         this.setTarget(null);
+        break;
+      case "targetSelf":
+        this.setTarget(this.room.sessionId);
         break;
       case "toggleAttack":
         this.room.send("toggleAttack");
@@ -187,22 +199,22 @@ export class Game {
     }
   }
 
-  // Clic gauche sur un personnage : il devient la cible.
+  // Clic gauche sur un personnage (allié, ennemi ou mort) : il devient la cible.
   private handlePointer(info: PointerInfo) {
     if (info.type !== PointerEventTypes.POINTERDOWN || info.event.button !== 0) return;
     const sessionId = info.pickInfo?.pickedMesh?.metadata?.sessionId as string | undefined;
-    if (sessionId && sessionId !== this.room.sessionId) this.setTarget(sessionId);
+    if (sessionId) this.setTarget(sessionId);
   }
 
   // Tab : passe à l'ennemi vivant et visible suivant, du plus proche au plus éloigné.
   private cycleTarget() {
-    const self = this.players.get(this.room.sessionId);
+    const self = this.self;
     if (!self) return;
 
     const candidates = [...this.players.values()]
       .filter(
         (p) =>
-          p !== self &&
+          p.state.team !== self.state.team &&
           p.isAlive &&
           distance(self.state, p.state) <= TAB_TARGET_RANGE &&
           hasLineOfSight(self.state, p.state),
@@ -214,34 +226,14 @@ export class Game {
     this.setTarget(candidates[(currentIndex + 1) % candidates.length].sessionId);
   }
 
+  // Le serveur ignore une cible sur soi-même : sans cible, soins et buffs s'appliquent au lanceur.
   private setTarget(targetId: string | null) {
     this.targetId = targetId;
-    this.room.send("target", { targetId });
+    this.room.send("target", { targetId: targetId === this.room.sessionId ? null : targetId });
   }
 
   private nameOf(id: string): string {
     return id === this.room.sessionId ? "Vous" : (this.players.get(id)?.state.name ?? "?");
-  }
-
-  private logCombat(event: CombatEvent) {
-    const { pushLog } = useHudStore.getState();
-    const source = this.nameOf(event.sourceId);
-    const abilityName = event.abilityId === "auto" ? "attaque" : (getAbility(event.abilityId)?.name ?? event.abilityId);
-    if (event.kind === "heal") {
-      const target = event.sourceId === event.targetId ? "" : ` → ${this.nameOf(event.targetId)}`;
-      pushLog(`${source}${target} : ${abilityName} +${event.amount}`);
-      return;
-    }
-    pushLog(`${source} → ${this.nameOf(event.targetId)} : ${abilityName} ${event.amount}`);
-    if (event.killed) {
-      pushLog(event.targetId === this.room.sessionId ? "Vous êtes mort" : `${this.nameOf(event.targetId)} est mort`);
-    }
-  }
-
-  private logInterrupt(event: InterruptEvent) {
-    const abilityName = getAbility(event.abilityId)?.name ?? event.abilityId;
-    const cause = event.reason === "move" ? "mouvement" : "dégâts";
-    useHudStore.getState().pushLog(`${this.nameOf(event.casterId)} : ${abilityName} interrompu (${cause})`);
   }
 
   private renderFrame() {
@@ -251,7 +243,7 @@ export class Game {
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
     for (const player of this.players.values()) player.update(smoothing);
 
-    const self = this.players.get(this.room.sessionId);
+    const self = this.self;
     if (self) this.camera.target.copyFrom(self.root.position);
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
@@ -269,24 +261,22 @@ export class Game {
 
     const selfFrame: SelfFrame | null = self
       ? {
-          name: self.state.name,
-          hp: self.state.hp,
-          maxHp: self.state.maxHp,
+          ...unitFrame(self.state),
+          classId: self.state.classId as ClassId,
           mana: Math.floor(self.state.mana),
           maxMana: self.state.maxMana,
           endurance: Math.floor(self.state.endurance),
           maxEndurance: self.state.maxEndurance,
           attacking: self.state.attacking,
-          cast: castFrame(self.state),
+          songActive: self.state.songActive,
         }
       : null;
     const targetFrame: TargetFrame | null =
       self && target
         ? {
-            name: target.state.name,
-            hp: target.state.hp,
-            maxHp: target.state.maxHp,
-            cast: castFrame(target.state),
+            ...unitFrame(target.state),
+            isSelf: target === self,
+            isAlly: target.state.team === self.state.team,
             distance: Math.round(distance(self.state, target.state)),
             inMeleeRange: isInMeleeRange(self.state, target.state),
             inLineOfSight: hasLineOfSight(self.state, target.state),
@@ -302,10 +292,28 @@ export class Game {
   }
 }
 
+function unitFrame(state: PlayerView) {
+  return {
+    name: state.name,
+    className: getClass(state.classId)?.name ?? "",
+    hp: state.hp,
+    maxHp: state.maxHp,
+    cast: castFrame(state),
+    effects: effectFrames(state),
+  };
+}
+
 function castFrame(state: PlayerView): CastFrame | null {
   if (!state.castAbility || state.castDuration <= 0) return null;
   return {
     abilityName: getAbility(state.castAbility)?.name ?? state.castAbility,
     progress: Math.min(1, state.castElapsed / state.castDuration),
   };
+}
+
+function effectFrames(state: PlayerView): EffectFrame[] {
+  return [...state.effects].map((e) => ({
+    kind: e.kind as EffectKind,
+    remaining: e.remaining === PERMANENT ? null : Math.ceil(e.remaining),
+  }));
 }

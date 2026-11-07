@@ -1,15 +1,38 @@
 import { useEffect, useState } from "react";
-import { getAbility } from "@arena/shared";
+import { CLASS_LIST, EFFECTS, getAbility, getClass } from "@arena/shared";
 import { GameCanvas } from "./GameCanvas";
-import { HOTBAR } from "./hotbar";
-import { useHudStore, type CastFrame } from "./store";
+import { useHudStore, type CastFrame, type EffectFrame } from "./store";
 
 export function App() {
+  const selectedClass = useHudStore((s) => s.selectedClass);
+  if (!selectedClass) return <ClassPicker />;
   return (
     <>
-      <GameCanvas />
+      <GameCanvas classId={selectedClass} />
       <Hud />
     </>
+  );
+}
+
+// Choix provisoire de la classe avant de rejoindre l'arène (la vraie sélection viendra à l'étape 6).
+function ClassPicker() {
+  const selectClass = useHudStore((s) => s.selectClass);
+  return (
+    <div className="class-picker">
+      <h1>Choisissez votre classe</h1>
+      <div className="class-list">
+        {CLASS_LIST.map((c) => (
+          <button key={c.id} className="class-card" onClick={() => selectClass(c.id)}>
+            <span className="class-name">{c.name}</span>
+            <span className="class-role">{c.role}</span>
+            <span className="class-stats">
+              {c.maxHp} PV · {c.resource === "mana" ? "Mana" : "Endurance"}
+            </span>
+            <span className="class-abilities">{c.abilities.map((id) => getAbility(id)?.name).join(" · ")}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -33,6 +56,7 @@ function Hud() {
       </div>
       <CombatLog />
       <HelpPanel />
+      <ChangeClassButton />
     </>
   );
 }
@@ -43,12 +67,15 @@ function SelfPanel() {
   return (
     <div className="hud-panel unit-frame">
       <div className="unit-name">
-        {self.name}
+        <span>
+          {self.name} <span className="unit-class">{self.className}</span>
+        </span>
         {self.attacking && <span className="tag tag-attack">Attaque</span>}
       </div>
       <Bar value={self.hp} max={self.maxHp} kind="hp" deadLabel="Mort" />
-      <Bar value={self.mana} max={self.maxMana} kind="mana" />
-      <Bar value={self.endurance} max={self.maxEndurance} kind="endurance" />
+      {self.maxMana > 0 && <Bar value={self.mana} max={self.maxMana} kind="mana" />}
+      {self.maxEndurance > 0 && <Bar value={self.endurance} max={self.maxEndurance} kind="endurance" />}
+      <EffectList effects={self.effects} />
     </div>
   );
 }
@@ -58,18 +85,36 @@ function TargetPanel() {
   if (!target) return null;
 
   let tag = <span className="tag tag-out-range">{target.distance} m</span>;
-  if (!target.inLineOfSight) tag = <span className="tag tag-blocked">Hors de vue</span>;
-  else if (!target.facing) tag = <span className="tag tag-blocked">Pas en face</span>;
+  if (target.isSelf) tag = <span className="tag tag-out-range">Vous</span>;
+  else if (!target.inLineOfSight) tag = <span className="tag tag-blocked">Hors de vue</span>;
+  else if (!target.isAlly && !target.facing) tag = <span className="tag tag-blocked">Pas en face</span>;
   else if (target.inMeleeRange) tag = <span className="tag tag-in-range">Au contact</span>;
 
   return (
-    <div className="hud-panel unit-frame">
+    <div className={`hud-panel unit-frame ${target.isAlly ? "frame-ally" : "frame-enemy"}`}>
       <div className="unit-name">
-        {target.name}
+        <span>
+          {target.name} <span className="unit-class">{target.className}</span>
+        </span>
         {tag}
       </div>
       <Bar value={target.hp} max={target.maxHp} kind="hp" deadLabel="Mort" />
       {target.cast && <CastBar cast={target.cast} />}
+      <EffectList effects={target.effects} />
+    </div>
+  );
+}
+
+function EffectList({ effects }: { effects: EffectFrame[] }) {
+  if (effects.length === 0) return null;
+  return (
+    <div className="effect-list">
+      {effects.map((effect) => (
+        <span key={effect.kind} className={`effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}>
+          {EFFECTS[effect.kind]?.label ?? effect.kind}
+          {effect.remaining !== null && ` ${effect.remaining}s`}
+        </span>
+      ))}
     </div>
   );
 }
@@ -103,27 +148,39 @@ function Hotbar() {
   const self = useHudStore((s) => s.self);
   const cooldownEnds = useHudStore((s) => s.cooldownEnds);
   const now = useNow(Object.values(cooldownEnds).some((end) => end > performance.now()));
+  const classDef = self ? getClass(self.classId) : undefined;
+  if (!self || !classDef) return null;
 
   return (
     <div className="hotbar">
-      {HOTBAR.map((abilityId, index) => {
+      {classDef.abilities.map((abilityId, index) => {
         const ability = getAbility(abilityId);
         if (!ability) return null;
         const remaining = Math.max(0, ((cooldownEnds[abilityId] ?? 0) - now) / 1000);
-        const affordable = !self || self[ability.resource] >= ability.cost;
+        const affordable = self[ability.resource] >= ability.cost;
+        const active = abilityId === "speedSong" && self.songActive;
         return (
-          <div key={abilityId} className={`slot ${affordable ? "" : "slot-unaffordable"}`}>
+          <div
+            key={abilityId}
+            className={`slot ${affordable ? "" : "slot-unaffordable"} ${active ? "slot-active" : ""}`}
+          >
             <span className="slot-key">{index + 1}</span>
             <span className="slot-name">{ability.name}</span>
             <span className="slot-cost">
-              {ability.cost} {ability.resource === "mana" ? "mana" : "endu"}
+              {ability.cost > 0 ? `${ability.cost} ${ability.resource === "mana" ? "mana" : "endu"}` : ""}
+              {ability.castTime > 0 ? ` · ${ability.castTime}s` : ""}
             </span>
-            {remaining > 0 && <span className="slot-cooldown">{remaining.toFixed(1)}</span>}
+            {remaining > 0 && <span className="slot-cooldown">{formatCooldown(remaining)}</span>}
           </div>
         );
       })}
     </div>
   );
+}
+
+function formatCooldown(seconds: number): string {
+  if (seconds >= 60) return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+  return seconds.toFixed(1);
 }
 
 // Rafraîchit l'heure courante 10 fois par seconde, uniquement quand c'est utile.
@@ -155,16 +212,25 @@ function CombatLog() {
   );
 }
 
+function ChangeClassButton() {
+  const selectClass = useHudStore((s) => s.selectClass);
+  return (
+    <button className="change-class" onClick={() => selectClass(null)}>
+      Changer de classe
+    </button>
+  );
+}
+
 function HelpPanel() {
   const playerCount = useHudStore((s) => s.playerCount);
   return (
     <div className="hud-panel help">
       <div>Joueurs connectés : {playerCount}</div>
       <div>ZQSD : se déplacer</div>
-      <div>Tab ou clic : cibler · Échap : annuler</div>
+      <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même</div>
+      <div>Échap : annuler la cible · E : faire face</div>
       <div>F : activer/couper l'attaque</div>
-      <div>E : faire face à la cible</div>
-      <div>1 2 3 : compétences</div>
+      <div>1 à 7 : compétences</div>
       {import.meta.env.DEV && <div>R : revivre (test)</div>}
     </div>
   );
