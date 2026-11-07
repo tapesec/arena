@@ -15,7 +15,8 @@
     "@colyseus/sdk": "^0.18.9",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "zustand": "^5.1.0"
+    "zustand": "^5.1.0",
+    "zzfx": "^1.4.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
