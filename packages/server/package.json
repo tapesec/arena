@@ -1,0 +1,19 @@
+{
+  "name": "@arena/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@arena/shared": "*",
+    "@colyseus/schema": "^5.0.45",
+    "colyseus": "^0.18.12"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15"
+  }
+}
