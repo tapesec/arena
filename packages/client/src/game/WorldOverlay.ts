@@ -1,13 +1,16 @@
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
+import type { ClassId } from "@arena/shared";
+import { CLASS_BADGES } from "./classBadges";
 
 // Durée de vie d'un texte flottant et distance parcourue vers le haut, en pixels.
 const TEXT_DURATION = 1.2;
 const TEXT_RISE = 45;
 // Hauteur au-dessus des pieds où apparaissent textes et indicateurs.
-const TEXT_HEIGHT = 2.2;
-const INDICATOR_HEIGHT = 2.4;
+const BADGE_HEIGHT = 2.45;
+const INDICATOR_HEIGHT = 2.95;
+const TEXT_HEIGHT = 3.2;
 // Au-delà, les textes les plus anciens disparaissent (évite d'encombrer l'écran en 8v8).
 const MAX_TEXTS = 60;
 
@@ -28,12 +31,20 @@ interface Indicator {
   kind: StatusIndicator;
 }
 
-// Couche HTML posée sur le canvas : textes flottants (dégâts, soins…) et indicateurs de contrôle
-// au-dessus des têtes. Pilotée par la boucle de jeu, pas par React, pour rester légère.
+interface Badge {
+  element: HTMLDivElement;
+  anchor: TransformNode;
+  // Classe, équipe et état (vivant ou non) affichés, pour ne toucher au DOM que s'ils changent.
+  key: string;
+}
+
+// Couche HTML posée sur le canvas : badges de classe, textes flottants (dégâts, soins…)
+// et indicateurs de contrôle au-dessus des têtes. Pilotée par la boucle de jeu, pas par React, pour rester légère.
 export class WorldOverlay {
   private texts: FloatingText[] = [];
   private pool: HTMLDivElement[] = [];
   private indicators = new Map<string, Indicator>();
+  private badges = new Map<string, Badge>();
   private projected = new Vector3();
   private worldPos = new Vector3();
 
@@ -73,10 +84,30 @@ export class WorldOverlay {
     this.indicators.set(playerId, { element, anchor, kind });
   }
 
+  // Badge de classe au-dessus de la tête : pictogramme sur la couleur du rôle, liseré de la couleur de l'équipe.
+  setBadge(playerId: string, anchor: TransformNode, classId: ClassId | "", team: number, alive: boolean) {
+    const key = `${classId}|${team}|${alive}`;
+    const current = this.badges.get(playerId);
+    if (current?.key === key) return;
+    current?.element.remove();
+    this.badges.delete(playerId);
+    const badge = classId ? CLASS_BADGES[classId] : undefined;
+    if (!badge) return;
+
+    const element = document.createElement("div");
+    element.className = `class-badge team-border-${team}${alive ? "" : " class-badge-dead"}`;
+    element.style.background = badge.color;
+    element.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14">${badge.icon}</svg>`;
+    this.container.appendChild(element);
+    this.badges.set(playerId, { element, anchor, key });
+  }
+
   // Les textes rattachés à un joueur disparu sont retirés à la prochaine mise à jour.
   removePlayer(playerId: string) {
     this.indicators.get(playerId)?.element.remove();
     this.indicators.delete(playerId);
+    this.badges.get(playerId)?.element.remove();
+    this.badges.delete(playerId);
   }
 
   update(dt: number) {
@@ -104,13 +135,21 @@ export class WorldOverlay {
       indicator.element.style.opacity = screen ? "1" : "0";
       if (screen) indicator.element.style.transform = `translate(${screen.x}px, ${screen.y}px) translate(-50%, -50%)`;
     }
+
+    for (const badge of this.badges.values()) {
+      const screen = this.toScreen(badge.anchor, BADGE_HEIGHT);
+      badge.element.style.display = screen ? "" : "none";
+      if (screen) badge.element.style.transform = `translate(${screen.x}px, ${screen.y}px) translate(-50%, -50%)`;
+    }
   }
 
   dispose() {
     for (const text of this.texts) text.element.remove();
     for (const indicator of this.indicators.values()) indicator.element.remove();
+    for (const badge of this.badges.values()) badge.element.remove();
     this.texts = [];
     this.indicators.clear();
+    this.badges.clear();
   }
 
   // Position à l'écran (en pixels CSS) d'un point situé à "height" au-dessus de l'ancre, ou null s'il est hors champ.

@@ -370,6 +370,7 @@ export class Game {
       player.update(smoothing);
       const control = !player.isAlive ? null : player.hasEffect("stun") ? "stun" : player.hasEffect("mez") ? "mez" : null;
       this.overlay.setIndicator(player.sessionId, player.root, control);
+      this.overlay.setBadge(player.sessionId, player.root, player.state.classId as ClassId | "", player.state.team, player.isAlive);
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);

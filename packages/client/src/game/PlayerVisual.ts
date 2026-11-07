@@ -133,7 +133,8 @@ export class PlayerVisual {
       const ring = CreateTorus("ring", { diameter: 1.6, thickness: 0.08, tessellation: 48 }, scene);
       ring.position.y = 0.05;
       const ringMat = new StandardMaterial("ringMat", scene);
-      ringMat.emissiveColor = new Color3(1, 0.85, 0.3);
+      // Blanc, pour ne pas se confondre avec la lueur dorée des incantations sacrées.
+      ringMat.emissiveColor = new Color3(0.95, 0.95, 0.95);
       ringMat.disableLighting = true;
       ring.material = ringMat;
       ring.isPickable = false;

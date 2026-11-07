@@ -560,3 +560,33 @@ body,
     rotate: 360deg;
   }
 }
+
+/* Badge de classe au-dessus des têtes : couleur du rôle, liseré de la couleur de l'équipe. */
+.class-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  will-change: transform;
+}
+
+.team-border-0 {
+  border-color: #6fa3ff;
+}
+
+.team-border-1 {
+  border-color: #ff6f6f;
+}
+
+.class-badge-dead {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
