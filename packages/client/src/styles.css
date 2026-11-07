@@ -17,19 +17,97 @@ body,
   outline: none;
 }
 
-/* L'interface est superposée au canvas 3D. */
-.hud {
+/* L'interface est superposée au canvas 3D et laisse passer les clics. */
+.hud-panel {
   position: absolute;
-  top: 12px;
-  left: 12px;
   padding: 8px 12px;
   background: rgba(0, 0, 0, 0.55);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
   pointer-events: none;
 }
 
+.hud-status {
+  top: 12px;
+  left: 12px;
+}
+
 .hud-error {
   color: #ff7a7a;
+}
+
+.hud-frames {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.unit-frame {
+  position: static;
+  width: 220px;
+}
+
+.unit-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.tag {
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tag-attack {
+  background: #b33a3a;
+}
+
+.tag-in-range {
+  background: #3a8a4a;
+}
+
+.tag-out-range {
+  background: #555;
+}
+
+.health-bar {
+  position: relative;
+  height: 16px;
+  background: #3a1d1d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.health-fill {
+  height: 100%;
+  background: #3fae4f;
+  transition: width 0.15s linear;
+}
+
+.health-text {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.combat-log {
+  bottom: 12px;
+  left: 12px;
+  min-width: 260px;
+}
+
+.help {
+  bottom: 12px;
+  right: 12px;
+  color: #b8b8b8;
 }
