@@ -16,6 +16,7 @@ import {
   type MoveInput,
 } from "@arena/shared";
 import { BotBrain } from "./bots/BotBrain";
+import { createBotBrain } from "./bots/classBots";
 import { pickBotClass } from "./bots/composition";
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
@@ -222,7 +223,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
 
       const runtime = new PlayerRuntime(id, player, classDef);
       this.combat.add(runtime);
-      if (player.isBot) this.bots.push(new BotBrain(runtime, this.combat, this.pathfinder));
+      if (player.isBot) this.bots.push(createBotBrain(runtime, this.combat, this.pathfinder));
     });
 
     // Pendant la préparation, chacun reste dans la zone de départ de son équipe.

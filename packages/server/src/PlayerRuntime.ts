@@ -28,6 +28,9 @@ export class PlayerRuntime {
   effects: ActiveEffect[] = [];
   bubbleReadyAt = 0;
   songSuppressedUntil = 0;
+  // Dernier coup de mêlée reçu (temps de la partie) et son auteur : sert aux bots pour fuir ou protéger.
+  lastMeleeHitAt = -Infinity;
+  lastMeleeAttackerId: string | null = null;
 
   constructor(
     readonly id: string,

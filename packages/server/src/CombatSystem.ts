@@ -61,6 +61,10 @@ export class CombatSystem {
   // Temps écoulé depuis le début de la partie, en secondes.
   private time = 0;
 
+  get now(): number {
+    return this.time;
+  }
+
   constructor(
     private out: CombatOutput,
     private random: () => number = Math.random,
@@ -102,6 +106,17 @@ export class CombatSystem {
     if (player?.alive && !player.incapacitated && target) {
       player.state.facing = facingTowards(player.state, target.state);
     }
+  }
+
+  // Vrai si la compétence peut être utilisée maintenant sur la cible actuelle (utilisé par les bots).
+  // ignoreMovement : vérifier comme si le lanceur était immobile (il s'arrêtera juste avant d'incanter).
+  canUse(casterId: string, abilityId: string, ignoreMovement = false): boolean {
+    const caster = this.players.get(casterId);
+    const ability = getAbility(abilityId);
+    if (!caster?.alive || !ability || !caster.classDef.abilities.includes(abilityId)) return false;
+    if (this.checkCanUse(caster, ability, ignoreMovement)) return false;
+    const targetId = this.pickTarget(caster, ability);
+    return !!targetId && !this.validateTarget(caster, ability, targetId);
   }
 
   useAbility(casterId: string, abilityId: string) {
@@ -217,14 +232,14 @@ export class CombatSystem {
 
   // --- Compétences ---
 
-  private checkCanUse(caster: PlayerRuntime, ability: AbilityDef): string | null {
+  private checkCanUse(caster: PlayerRuntime, ability: AbilityDef, ignoreMovement = false): string | null {
     if (caster.incapacitated) return "Vous êtes neutralisé";
     if (caster.state.castAbility) return "Incantation déjà en cours";
     if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "Compétence en recharge";
     if (caster.state[ability.resource] < ability.cost) {
       return ability.resource === "mana" ? "Pas assez de mana" : "Pas assez d'endurance";
     }
-    if (ability.castTime > 0 && caster.isMoving) return "Impossible d'incanter en mouvement";
+    if (ability.castTime > 0 && caster.isMoving && !ignoreMovement) return "Impossible d'incanter en mouvement";
     return null;
   }
 
@@ -385,6 +400,8 @@ export class CombatSystem {
 
     let crit = false;
     if (melee) {
+      target.lastMeleeHitAt = this.time;
+      target.lastMeleeAttackerId = source.id;
       const avoided = this.avoidMelee(source, target, abilityId);
       if (avoided) return;
       if (source.has("buffStrength")) amount *= 1 + STRENGTH_BUFF_BONUS;
