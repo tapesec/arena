@@ -271,9 +271,10 @@ class GardienBot extends BotBrain {
       }
       return this.meleeAttack(threat);
     }
-    // Rien à signaler : rester à côté du protégé (la Garde ne fonctionne qu'à 4 m).
-    if (this.distanceTo(ward) > 3) this.moveTo(ward.state, 2.5);
-    else this.stop();
+    // Rien à signaler : rejoindre le protégé (la Garde ne fonctionne qu'à 4 m),
+    // puis mener le groupe : le protégé suit le Gardien.
+    if (this.distanceTo(ward) > 5) this.moveTo(ward.state, 2.5);
+    else this.advance();
   }
 
   // Le lanceur de sorts allié attaqué le plus récemment, sinon le plus proche.

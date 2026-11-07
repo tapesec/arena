@@ -42,13 +42,15 @@ export class WorldOverlay {
     private scene: Scene,
   ) {}
 
-  addText(anchor: TransformNode, text: string, style: FloatingTextStyle, big = false) {
+  // delay : secondes avant l'apparition (par exemple le temps de vol d'un projectile).
+  addText(anchor: TransformNode, text: string, style: FloatingTextStyle, big = false, delay = 0) {
     if (this.texts.length >= MAX_TEXTS) this.recycle(this.texts.shift()!);
     const element = this.pool.pop() ?? document.createElement("div");
     element.className = `float-text float-${style}${big ? " float-big" : ""}`;
     element.textContent = text;
     this.container.appendChild(element);
-    this.texts.push({ element, anchor, age: 0, offsetX: (Math.random() - 0.5) * 40 });
+    element.style.opacity = "0";
+    this.texts.push({ element, anchor, age: -delay, offsetX: (Math.random() - 0.5) * 40 });
   }
 
   // Affiche (ou retire, avec null) l'indicateur de contrôle d'un joueur.
@@ -84,6 +86,7 @@ export class WorldOverlay {
         this.removeText(text);
         continue;
       }
+      if (text.age < 0) continue;
       const progress = text.age / TEXT_DURATION;
       const screen = this.toScreen(text.anchor, TEXT_HEIGHT);
       if (!screen) {

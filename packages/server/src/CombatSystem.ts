@@ -31,6 +31,7 @@ import {
   stepMovement,
   type AbilityDef,
   type AbilityEffect,
+  type AbilityUsedEvent,
   type CombatEvent,
   type CooldownEvent,
   type CrowdControl,
@@ -286,6 +287,8 @@ export class CombatSystem {
 
   private resolveAbility(caster: PlayerRuntime, ability: AbilityDef, targetId: string) {
     caster.state[ability.resource] -= ability.cost;
+    const used: AbilityUsedEvent = { casterId: caster.id, abilityId: ability.id, targetId };
+    this.out.broadcast("ability", used, [caster.id, targetId]);
     if (ability.cooldown > 0) {
       caster.cooldowns.set(ability.id, this.time + ability.cooldown);
       const event: CooldownEvent = { abilityId: ability.id, duration: ability.cooldown };
@@ -554,11 +557,13 @@ export class CombatSystem {
       existing.sourceId = sourceId;
       existing.value = value;
       existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
+      existing.view.source = sourceId;
       return;
     }
     const view = new EffectState();
     view.kind = kind;
     view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
+    view.source = sourceId;
     player.state.effects.push(view);
     player.effects.push({ kind, remaining: duration, sourceId, value, view });
 

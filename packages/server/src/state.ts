@@ -5,6 +5,8 @@ export const EffectState = schema(
   {
     kind: t.string().default(""),
     remaining: t.float32().default(0),
+    // Joueur à l'origine de l'effet (affichage du lien entre un Gardien et son protégé).
+    source: t.string().default(""),
   },
   "EffectState",
 );

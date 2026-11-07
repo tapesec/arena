@@ -2,15 +2,18 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder";
+import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import type { EffectKind } from "@arena/shared";
+import { ABILITY_FX } from "./spellFx";
 
 export interface EffectView {
   kind: string;
   remaining: number;
+  source: string;
 }
 
 // Ce que le client lit dans l'état synchronisé par le serveur.
@@ -61,6 +64,12 @@ export class PlayerVisual {
   private team: number;
   // Anneau de glace au sol, visible tant que le personnage est root.
   private rootRing: Mesh;
+  // Lueur au sol pendant une incantation, à la couleur du sort.
+  private castRing: Mesh;
+  private castMaterial: StandardMaterial;
+  private castingAbility = "";
+  // Sphère translucide tant que la Bulle de l'Arcaniste est active.
+  private bubble: Mesh;
 
   constructor(
     scene: Scene,
@@ -99,6 +108,26 @@ export class PlayerVisual {
     this.rootRing.isPickable = false;
     this.rootRing.parent = this.root;
     this.rootRing.setEnabled(false);
+
+    this.castRing = CreateTorus("castRing", { diameter: 1.9, thickness: 0.12, tessellation: 48 }, scene);
+    this.castRing.position.y = 0.08;
+    this.castMaterial = new StandardMaterial("castMat", scene);
+    this.castMaterial.disableLighting = true;
+    this.castRing.material = this.castMaterial;
+    this.castRing.isPickable = false;
+    this.castRing.parent = this.root;
+    this.castRing.setEnabled(false);
+
+    this.bubble = CreateSphere("bubble", { diameter: 2.2, segments: 16 }, scene);
+    this.bubble.position.y = BODY_HEIGHT / 2;
+    const bubbleMat = new StandardMaterial("bubbleMat", scene);
+    bubbleMat.emissiveColor = new Color3(0.6, 0.45, 1);
+    bubbleMat.disableLighting = true;
+    bubbleMat.alpha = 0.18;
+    this.bubble.material = bubbleMat;
+    this.bubble.isPickable = false;
+    this.bubble.parent = this.root;
+    this.bubble.setEnabled(false);
 
     if (isLocal) {
       const ring = CreateTorus("ring", { diameter: 1.6, thickness: 0.08, tessellation: 48 }, scene);
@@ -141,6 +170,26 @@ export class PlayerVisual {
 
     const rooted = this.isAlive && this.hasEffect("root");
     if (rooted !== this.rootRing.isEnabled()) this.rootRing.setEnabled(rooted);
+
+    const shielded = this.isAlive && this.hasEffect("bubble");
+    if (shielded !== this.bubble.isEnabled()) this.bubble.setEnabled(shielded);
+
+    this.updateCastRing();
+  }
+
+  // La lueur d'incantation pulse, et prend la couleur du sort en cours.
+  private updateCastRing() {
+    const ability = this.isAlive ? this.state.castAbility : "";
+    if (ability !== this.castingAbility) {
+      this.castingAbility = ability;
+      this.castRing.setEnabled(ability !== "");
+      const color = ABILITY_FX[ability]?.color;
+      if (color) this.castMaterial.emissiveColor = color;
+    }
+    if (ability) {
+      const pulse = 1 + 0.12 * Math.sin(performance.now() / 120);
+      this.castRing.scaling.set(pulse, 1, pulse);
+    }
   }
 
   dispose() {

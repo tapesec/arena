@@ -11,6 +11,7 @@ import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { GridMaterial } from "@babylonjs/materials/grid/gridMaterial";
 import { Callbacks, type Room } from "@colyseus/sdk";
@@ -29,6 +30,7 @@ import {
   isInMeleeRange,
   NO_INPUT,
   type ClassId,
+  type AbilityUsedEvent,
   type CombatEvent,
   type CooldownEvent,
   type EffectKind,
@@ -47,6 +49,8 @@ import {
 } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
+import { SpellEffects } from "./SpellEffects";
+import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
@@ -76,6 +80,7 @@ export class Game {
   private scene: Scene;
   private camera: CameraController;
   private overlay: WorldOverlay;
+  private spellEffects: SpellEffects;
   private keyboard: KeyboardInput;
   // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
   private moveKeys: MoveInput = NO_INPUT;
@@ -98,6 +103,7 @@ export class Game {
 
     this.camera = new CameraController(this.scene, canvas);
     this.overlay = new WorldOverlay(overlayElement, this.scene);
+    this.spellEffects = new SpellEffects(this.scene);
 
     this.createEnvironment();
     this.createTargetMarker();
@@ -133,6 +139,7 @@ export class Game {
     this.keyboard.dispose();
     this.camera.dispose();
     this.overlay.dispose();
+    this.spellEffects.dispose();
     this.room.leave();
     this.engine.dispose();
   }
@@ -235,8 +242,25 @@ export class Game {
       const caster = this.players.get(event.casterId);
       if (caster) this.overlay.addText(caster.root, "Interrompu", "info");
     });
+    this.room.onMessage("ability", (event: AbilityUsedEvent) => {
+      this.spellEffects.play(event.abilityId, this.players.get(event.casterId)?.root, this.players.get(event.targetId)?.root);
+    });
     this.room.onMessage("cooldown", (event: CooldownEvent) => hud.startCooldown(event.abilityId, event.duration));
     this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
+  }
+
+  // Joueurs gardés et leur Gardien, tous deux vivants et visibles : id du protégé → [protégé, Gardien].
+  private guardLinks(): Map<string, [TransformNode, TransformNode]> {
+    const links = new Map<string, [TransformNode, TransformNode]>();
+    for (const player of this.players.values()) {
+      if (!player.isAlive) continue;
+      for (const effect of player.state.effects) {
+        if (effect.kind !== "guarded") continue;
+        const guardian = this.players.get(effect.source);
+        if (guardian?.isAlive) links.set(player.sessionId, [player.root, guardian.root]);
+      }
+    }
+    return links;
   }
 
   // Texte flottant au-dessus de la cible d'un événement de combat.
@@ -244,24 +268,26 @@ export class Game {
     const target = this.players.get(event.targetId);
     if (!target) return;
     const anchor = target.root;
+    // Le texte d'un sort à projectile attend que le projectile arrive.
+    const delay = isProjectile(event.abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
     switch (event.kind) {
       case "damage": {
         // Rouge quand ça touche son équipe, clair quand ça touche l'adversaire.
         const ally = target.state.team === this.self?.state.team;
-        this.overlay.addText(anchor, `-${event.amount}`, ally ? "damageTaken" : "damageDealt", event.crit);
+        this.overlay.addText(anchor, `-${event.amount}`, ally ? "damageTaken" : "damageDealt", event.crit, delay);
         break;
       }
       case "heal":
-        if (event.amount) this.overlay.addText(anchor, `+${event.amount}`, "heal");
+        if (event.amount) this.overlay.addText(anchor, `+${event.amount}`, "heal", false, delay);
         break;
       case "resurrect":
         this.overlay.addText(anchor, "Ressuscité", "heal");
         break;
       case "cc":
-        this.overlay.addText(anchor, CONTROL_LABELS[event.detail ?? ""] ?? "", "control");
+        this.overlay.addText(anchor, CONTROL_LABELS[event.detail ?? ""] ?? "", "control", false, delay);
         break;
       default:
-        if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, INFO_LABELS[event.kind]!, "info");
+        if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, INFO_LABELS[event.kind]!, "info", false, delay);
     }
   }
 
@@ -346,6 +372,8 @@ export class Game {
       this.overlay.setIndicator(player.sessionId, player.root, control);
     }
     this.overlay.update(dt);
+    this.spellEffects.update(dt);
+    this.spellEffects.updateGuardLinks(this.guardLinks());
 
     const self = this.self;
     if (self) this.camera.follow(self.root.position);

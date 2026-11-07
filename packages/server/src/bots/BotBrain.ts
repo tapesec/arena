@@ -40,6 +40,8 @@ const STUCK_TIME = 1;
 const FLEE_DISTANCE = 8;
 // Distance aux bords de l'arène en dessous de laquelle on évite de fuir ou d'explorer.
 const EDGE_MARGIN = 10;
+// Distance à laquelle un lanceur de sorts suit son escorte quand aucun ennemi n'est en vue.
+const ESCORT_DISTANCE = 3;
 // Angles essayés (en degrés) si la direction de fuite idéale est bloquée.
 const FLEE_ANGLES = [0, 30, -30, 60, -60, 90, -90, 120, -120];
 
@@ -213,13 +215,16 @@ export class BotBrain {
     if (!this.player.state.attacking) this.combat.toggleAttack(this.player.id);
   }
 
-  // Sans ennemi en vue : les lanceurs suivent leurs alliés de mêlée ; les autres vont là où un ennemi
-  // a été vu pour la dernière fois, puis vers le camp adverse, puis explorent l'arène.
+  // Sans ennemi en vue : les lanceurs suivent un allié de mêlée (à défaut, un joueur humain de leur équipe) ;
+  // les autres vont là où un ennemi a été vu pour la dernière fois, puis vers le camp adverse, puis explorent.
   protected advance() {
     if (CASTER_CLASSES.includes(this.classId)) {
-      const escort = this.nearest(this.allies().filter((p) => MELEE_CLASSES.includes(p.classDef.id)));
+      const others = this.allies().filter((p) => p !== this.player);
+      const escort =
+        this.nearest(others.filter((p) => MELEE_CLASSES.includes(p.classDef.id))) ??
+        this.nearest(others.filter((p) => !p.state.isBot));
       if (escort) {
-        this.moveTo(escort.state, 6);
+        this.moveTo(escort.state, ESCORT_DISTANCE);
         return;
       }
     }

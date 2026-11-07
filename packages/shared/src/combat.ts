@@ -129,6 +129,14 @@ export interface InterruptEvent {
   reason: InterruptReason;
 }
 
+// Diffusé quand une compétence est utilisée (fin d'incantation ou compétence instantanée),
+// pour que les clients puissent afficher son effet visuel.
+export interface AbilityUsedEvent {
+  casterId: string;
+  abilityId: string;
+  targetId: string;
+}
+
 // Envoyé uniquement au joueur concerné quand une compétence entre en recharge.
 export interface CooldownEvent {
   abilityId: string;
