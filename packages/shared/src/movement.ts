@@ -1,3 +1,4 @@
+import { resolveObstacleCollisions } from "./arena";
 import { ARENA_SIZE, MOVE_SPEED, PLAYER_RADIUS } from "./constants";
 
 // État des touches de déplacement envoyé par le client.
@@ -32,15 +33,18 @@ export interface Position {
   z: number;
 }
 
-// Avance d'un pas de simulation et garde le joueur dans les limites de l'arène.
+// Avance d'un pas de simulation, contourne les obstacles et reste dans l'arène.
 // Partagé entre serveur et client pour pouvoir prédire le mouvement plus tard.
 export function stepMovement(pos: Position, input: MoveInput, dt: number): Position {
   const dir = inputToDirection(input);
+  if (dir.x === 0 && dir.z === 0) return pos;
+
+  const moved = resolveObstacleCollisions(
+    { x: pos.x + dir.x * MOVE_SPEED * dt, z: pos.z + dir.z * MOVE_SPEED * dt },
+    PLAYER_RADIUS,
+  );
   const limit = ARENA_SIZE / 2 - PLAYER_RADIUS;
-  return {
-    x: clamp(pos.x + dir.x * MOVE_SPEED * dt, -limit, limit),
-    z: clamp(pos.z + dir.z * MOVE_SPEED * dt, -limit, limit),
-  };
+  return { x: clamp(moved.x, -limit, limit), z: clamp(moved.z, -limit, limit) };
 }
 
 function clamp(value: number, min: number, max: number): number {

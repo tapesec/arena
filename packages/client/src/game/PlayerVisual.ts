@@ -16,7 +16,14 @@ export interface PlayerView {
   colorIndex: number;
   hp: number;
   maxHp: number;
+  mana: number;
+  maxMana: number;
+  endurance: number;
+  maxEndurance: number;
   attacking: boolean;
+  castAbility: string;
+  castElapsed: number;
+  castDuration: number;
 }
 
 const BODY_HEIGHT = 1.8;

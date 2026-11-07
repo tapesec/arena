@@ -13,13 +13,17 @@ const MOVE_BINDINGS: Record<string, keyof MoveInput> = {
   ArrowRight: "right",
 };
 
-export type KeyAction = "nextTarget" | "clearTarget" | "toggleAttack" | "respawn";
+export type KeyAction = "nextTarget" | "clearTarget" | "toggleAttack" | "respawn" | "slot1" | "slot2" | "slot3";
 
 const ACTION_BINDINGS: Record<string, KeyAction> = {
   Tab: "nextTarget",
   Escape: "clearTarget",
   KeyF: "toggleAttack",
   KeyR: "respawn",
+  // Rangée des chiffres : touches &, é, " sur un clavier AZERTY.
+  Digit1: "slot1",
+  Digit2: "slot2",
+  Digit3: "slot3",
 };
 
 // Suit l'état des touches de déplacement et prévient uniquement quand il change,

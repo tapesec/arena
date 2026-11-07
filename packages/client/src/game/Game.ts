@@ -7,14 +7,28 @@ import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import { GridMaterial } from "@babylonjs/materials/grid/gridMaterial";
 import { Callbacks, type Room } from "@colyseus/sdk";
-import { ARENA_SIZE, TAB_TARGET_RANGE, distance, isInMeleeRange, type CombatEvent } from "@arena/shared";
-import { useHudStore, type SelfFrame, type TargetFrame } from "../store";
+import {
+  ARENA_SIZE,
+  OBSTACLES,
+  OBSTACLE_HEIGHT,
+  TAB_TARGET_RANGE,
+  distance,
+  getAbility,
+  hasLineOfSight,
+  isInMeleeRange,
+  type CombatEvent,
+  type CooldownEvent,
+  type InterruptEvent,
+} from "@arena/shared";
+import { HOTBAR } from "../hotbar";
+import { useHudStore, type CastFrame, type SelfFrame, type TargetFrame } from "../store";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
@@ -28,6 +42,8 @@ const SMOOTHING = 15;
 
 // Fréquence de mise à jour de l'interface React (inutile de la recalculer à chaque frame).
 const HUD_REFRESH_MS = 100;
+
+const SLOT_INDEX: Partial<Record<KeyAction, number>> = { slot1: 0, slot2: 1, slot3: 2 };
 
 export class Game {
   private engine: Engine;
@@ -54,7 +70,7 @@ export class Game {
     this.createEnvironment();
     this.createTargetMarker();
     this.bindState();
-    this.room.onMessage("combat", (event: CombatEvent) => this.logCombat(event));
+    this.bindMessages();
 
     this.keyboard = new KeyboardInput(
       (input) => this.room.send("input", input),
@@ -91,6 +107,20 @@ export class Game {
     grid.gridRatio = 2;
     grid.majorUnitFrequency = 5;
     ground.material = grid;
+
+    // Les obstacles viennent de la même définition que celle utilisée par le serveur.
+    const obstacleMat = new StandardMaterial("obstacleMat", this.scene);
+    obstacleMat.diffuseColor = new Color3(0.45, 0.42, 0.38);
+    for (const o of OBSTACLES) {
+      const box = CreateBox(
+        "obstacle",
+        { width: o.halfWidth * 2, depth: o.halfDepth * 2, height: OBSTACLE_HEIGHT },
+        this.scene,
+      );
+      box.position.set(o.x, OBSTACLE_HEIGHT / 2, o.z);
+      box.material = obstacleMat;
+      box.isPickable = false;
+    }
   }
 
   // Anneau rouge affiché sous la cible actuelle.
@@ -122,7 +152,21 @@ export class Game {
     });
   }
 
+  private bindMessages() {
+    const hud = useHudStore.getState();
+    this.room.onMessage("combat", (event: CombatEvent) => this.logCombat(event));
+    this.room.onMessage("interrupt", (event: InterruptEvent) => this.logInterrupt(event));
+    this.room.onMessage("cooldown", (event: CooldownEvent) => hud.startCooldown(event.abilityId, event.duration));
+    this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
+  }
+
   private handleAction(action: KeyAction) {
+    const slot = SLOT_INDEX[action];
+    if (slot !== undefined) {
+      const abilityId = HOTBAR[slot];
+      if (abilityId) this.room.send("cast", { abilityId });
+      return;
+    }
     switch (action) {
       case "nextTarget":
         this.cycleTarget();
@@ -146,13 +190,19 @@ export class Game {
     if (sessionId && sessionId !== this.room.sessionId) this.setTarget(sessionId);
   }
 
-  // Tab : passe à l'ennemi vivant suivant, du plus proche au plus éloigné.
+  // Tab : passe à l'ennemi vivant et visible suivant, du plus proche au plus éloigné.
   private cycleTarget() {
     const self = this.players.get(this.room.sessionId);
     if (!self) return;
 
     const candidates = [...this.players.values()]
-      .filter((p) => p !== self && p.isAlive && distance(self.state, p.state) <= TAB_TARGET_RANGE)
+      .filter(
+        (p) =>
+          p !== self &&
+          p.isAlive &&
+          distance(self.state, p.state) <= TAB_TARGET_RANGE &&
+          hasLineOfSight(self.state, p.state),
+      )
       .sort((a, b) => distance(self.state, a.state) - distance(self.state, b.state));
     if (candidates.length === 0) return;
 
@@ -165,11 +215,29 @@ export class Game {
     this.room.send("target", { targetId });
   }
 
+  private nameOf(id: string): string {
+    return id === this.room.sessionId ? "Vous" : (this.players.get(id)?.state.name ?? "?");
+  }
+
   private logCombat(event: CombatEvent) {
-    const name = (id: string) => (id === this.room.sessionId ? "Vous" : (this.players.get(id)?.state.name ?? "?"));
     const { pushLog } = useHudStore.getState();
-    pushLog(`${name(event.attackerId)} → ${name(event.targetId)} : ${event.damage} dégâts`);
-    if (event.killed) pushLog(`${name(event.targetId)} ${event.targetId === this.room.sessionId ? "êtes mort" : "est mort"}`);
+    const source = this.nameOf(event.sourceId);
+    const abilityName = event.abilityId === "auto" ? "attaque" : (getAbility(event.abilityId)?.name ?? event.abilityId);
+    if (event.kind === "heal") {
+      const target = event.sourceId === event.targetId ? "" : ` → ${this.nameOf(event.targetId)}`;
+      pushLog(`${source}${target} : ${abilityName} +${event.amount}`);
+      return;
+    }
+    pushLog(`${source} → ${this.nameOf(event.targetId)} : ${abilityName} ${event.amount}`);
+    if (event.killed) {
+      pushLog(event.targetId === this.room.sessionId ? "Vous êtes mort" : `${this.nameOf(event.targetId)} est mort`);
+    }
+  }
+
+  private logInterrupt(event: InterruptEvent) {
+    const abilityName = getAbility(event.abilityId)?.name ?? event.abilityId;
+    const cause = event.reason === "move" ? "mouvement" : "dégâts";
+    useHudStore.getState().pushLog(`${this.nameOf(event.casterId)} : ${abilityName} interrompu (${cause})`);
   }
 
   private renderFrame() {
@@ -196,7 +264,17 @@ export class Game {
     this.lastHudRefresh = now;
 
     const selfFrame: SelfFrame | null = self
-      ? { name: self.state.name, hp: self.state.hp, maxHp: self.state.maxHp, attacking: self.state.attacking }
+      ? {
+          name: self.state.name,
+          hp: self.state.hp,
+          maxHp: self.state.maxHp,
+          mana: Math.floor(self.state.mana),
+          maxMana: self.state.maxMana,
+          endurance: Math.floor(self.state.endurance),
+          maxEndurance: self.state.maxEndurance,
+          attacking: self.state.attacking,
+          cast: castFrame(self.state),
+        }
       : null;
     const targetFrame: TargetFrame | null =
       self && target
@@ -204,8 +282,10 @@ export class Game {
             name: target.state.name,
             hp: target.state.hp,
             maxHp: target.state.maxHp,
+            cast: castFrame(target.state),
             distance: Math.round(distance(self.state, target.state)),
             inMeleeRange: isInMeleeRange(self.state, target.state),
+            inLineOfSight: hasLineOfSight(self.state, target.state),
           }
         : null;
 
@@ -213,8 +293,14 @@ export class Game {
     const snapshot = JSON.stringify([selfFrame, targetFrame]);
     if (snapshot === this.lastHudSnapshot) return;
     this.lastHudSnapshot = snapshot;
-    const { setSelf, setTarget } = useHudStore.getState();
-    setSelf(selfFrame);
-    setTarget(targetFrame);
+    useHudStore.getState().setFrames(selfFrame, targetFrame);
   }
+}
+
+function castFrame(state: PlayerView): CastFrame | null {
+  if (!state.castAbility || state.castDuration <= 0) return null;
+  return {
+    abilityName: getAbility(state.castAbility)?.name ?? state.castAbility,
+    progress: Math.min(1, state.castElapsed / state.castDuration),
+  };
 }

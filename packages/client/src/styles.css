@@ -78,21 +78,37 @@ body,
   background: #555;
 }
 
-.health-bar {
+.bar {
   position: relative;
   height: 16px;
-  background: #3a1d1d;
+  margin-top: 3px;
+  background: #222;
   border-radius: 3px;
   overflow: hidden;
 }
 
-.health-fill {
+.bar-fill {
   height: 100%;
-  background: #3fae4f;
-  transition: width 0.15s linear;
+  transition: width 0.1s linear;
 }
 
-.health-text {
+.bar-hp .bar-fill {
+  background: #3fae4f;
+}
+
+.bar-mana .bar-fill {
+  background: #3f6fd0;
+}
+
+.bar-endurance .bar-fill {
+  background: #c9a227;
+}
+
+.bar-cast .bar-fill {
+  background: #b07ad6;
+}
+
+.bar-text {
   position: absolute;
   inset: 0;
   text-align: center;
@@ -107,7 +123,100 @@ body,
 }
 
 .help {
-  bottom: 12px;
+  top: 12px;
   right: 12px;
   color: #b8b8b8;
+}
+
+.tag-blocked {
+  background: #8a5a1a;
+}
+
+.hud-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.self-cast {
+  width: 260px;
+  height: 20px;
+}
+
+.hotbar {
+  display: flex;
+  gap: 6px;
+}
+
+.slot {
+  position: relative;
+  width: 86px;
+  height: 56px;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid #555;
+  border-radius: 6px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.slot-unaffordable {
+  opacity: 0.45;
+}
+
+.slot-key {
+  font-weight: 700;
+  color: #ffd76a;
+}
+
+.slot-name {
+  font-weight: 600;
+}
+
+.slot-cost {
+  color: #aaa;
+}
+
+.slot-cooldown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.flash-message {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff6b6b;
+  font-size: 18px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+
+/* Fenêtres étroites : on masque l'aide et on remonte le journal au-dessus de la barre de compétences. */
+@media (max-width: 1100px) {
+  .help {
+    display: none;
+  }
+
+  .combat-log {
+    bottom: 100px;
+  }
 }
