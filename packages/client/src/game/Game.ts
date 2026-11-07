@@ -1,4 +1,3 @@
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import "@babylonjs/core/Culling/ray"; // Effet de bord : active scene.pick() pour le ciblage au clic.
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { PointerEventTypes, type PointerInfo } from "@babylonjs/core/Events/pointerEvents";
@@ -28,12 +27,14 @@ import {
   hasLineOfSight,
   isFacing,
   isInMeleeRange,
+  NO_INPUT,
   type ClassId,
   type CombatEvent,
   type CooldownEvent,
   type EffectKind,
   type InterruptEvent,
   type MatchPhase,
+  type MoveInput,
 } from "@arena/shared";
 import {
   useHudStore,
@@ -44,14 +45,10 @@ import {
   type TargetFrame,
   type TeammateFrame,
 } from "../store";
+import { CameraController } from "./CameraController";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
-
-// Vue isométrique : caméra en diagonale, inclinée d'environ 55° par rapport à la verticale.
-const CAMERA_ALPHA = (-3 * Math.PI) / 4;
-const CAMERA_BETA = 0.95;
-const CAMERA_RADIUS = 32;
 
 // Vitesse à laquelle l'affichage rattrape la position serveur (plus haut = plus réactif).
 const SMOOTHING = 15;
@@ -59,11 +56,19 @@ const SMOOTHING = 15;
 // Fréquence de mise à jour de l'interface React (inutile de la recalculer à chaque frame).
 const HUD_REFRESH_MS = 100;
 
+// Quand la caméra tourne pendant un déplacement, on renvoie la direction au plus 20 fois par seconde.
+const YAW_RESEND_MS = 50;
+const YAW_RESEND_THRESHOLD = 0.02;
+
 export class Game {
   private engine: Engine;
   private scene: Scene;
-  private camera: ArcRotateCamera;
+  private camera: CameraController;
   private keyboard: KeyboardInput;
+  // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
+  private moveKeys: MoveInput = NO_INPUT;
+  private sentYaw = 0;
+  private lastMoveSent = 0;
   private players = new Map<string, PlayerVisual>();
   private targetId: string | null = null;
   private targetMarker!: Mesh;
@@ -78,8 +83,7 @@ export class Game {
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.07, 0.08, 0.1, 1);
 
-    this.camera = new ArcRotateCamera("camera", CAMERA_ALPHA, CAMERA_BETA, CAMERA_RADIUS, Vector3.Zero(), this.scene);
-    this.camera.fov = 0.6;
+    this.camera = new CameraController(this.scene, canvas);
 
     this.createEnvironment();
     this.createTargetMarker();
@@ -87,7 +91,10 @@ export class Game {
     this.bindMessages();
 
     this.keyboard = new KeyboardInput(
-      (input) => this.room.send("input", input),
+      (keys) => {
+        this.moveKeys = keys;
+        this.sendMove();
+      },
       (action) => this.handleAction(action),
     );
     this.scene.onPointerObservable.add((info) => this.handlePointer(info));
@@ -110,11 +117,27 @@ export class Game {
     useHudStore.getState().setActions(null);
     window.removeEventListener("resize", this.handleResize);
     this.keyboard.dispose();
+    this.camera.dispose();
     this.room.leave();
     this.engine.dispose();
   }
 
   private handleResize = () => this.engine.resize();
+
+  // Le serveur convertit les touches en direction selon l'orientation de la caméra : on la joint aux touches.
+  private sendMove() {
+    this.sentYaw = this.camera.yaw;
+    this.lastMoveSent = performance.now();
+    this.room.send("input", { ...this.moveKeys, yaw: this.sentYaw });
+  }
+
+  // Si la caméra tourne pendant qu'on se déplace, la direction de marche change : on prévient le serveur.
+  private resendMoveIfCameraTurned() {
+    const k = this.moveKeys;
+    if (!(k.up || k.down || k.left || k.right)) return;
+    const turned = Math.abs(Math.atan2(Math.sin(this.camera.yaw - this.sentYaw), Math.cos(this.camera.yaw - this.sentYaw)));
+    if (turned > YAW_RESEND_THRESHOLD && performance.now() - this.lastMoveSent > YAW_RESEND_MS) this.sendMove();
+  }
 
   private createEnvironment() {
     const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), this.scene);
@@ -222,6 +245,9 @@ export class Game {
       case "faceTarget":
         this.room.send("faceTarget");
         break;
+      case "resetCamera":
+        this.camera.reset();
+        break;
     }
   }
 
@@ -270,7 +296,8 @@ export class Game {
     for (const player of this.players.values()) player.update(smoothing);
 
     const self = this.self;
-    if (self) this.camera.target.copyFrom(self.root.position);
+    if (self) this.camera.follow(self.root.position);
+    this.resendMoveIfCameraTurned();
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
     this.targetMarker.setEnabled(!!target);

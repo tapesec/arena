@@ -19,6 +19,7 @@ export type KeyAction =
   | "targetSelf"
   | "toggleAttack"
   | "faceTarget"
+  | "resetCamera"
   | `slot${number}`;
 
 const ACTION_BINDINGS: Record<string, KeyAction> = {
@@ -26,6 +27,7 @@ const ACTION_BINDINGS: Record<string, KeyAction> = {
   Escape: "clearTarget",
   KeyF: "toggleAttack",
   KeyE: "faceTarget",
+  KeyC: "resetCamera",
   F1: "targetSelf",
   // Rangée des chiffres (touches &, é, "… sur un clavier AZERTY) : barre de compétences.
   ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`Digit${n}`, `slot${n}` as KeyAction])),

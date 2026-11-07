@@ -335,6 +335,7 @@ function HelpPanel() {
       <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même</div>
       <div>Échap : annuler la cible · E : faire face</div>
       <div>F : activer/couper l'attaque</div>
+      <div>Clic droit + souris : tourner la caméra · molette : zoom · C : recentrer</div>
       <div>1 à 7 : compétences</div>
     </div>
   );

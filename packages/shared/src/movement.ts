@@ -7,23 +7,28 @@ export interface MoveInput {
   down: boolean;
   left: boolean;
   right: boolean;
+  // Orientation de la caméra : direction du "haut de l'écran" dans le monde, en radians
+  // (même convention que l'orientation des personnages). Absente : orientation par défaut.
+  yaw?: number;
 }
 
 export const NO_INPUT: MoveInput = { up: false, down: false, left: false, right: false };
 
-// La caméra isométrique regarde l'arène en diagonale : "haut" à l'écran
-// correspond à la direction (+x, +z) du monde, "droite" à (+x, -z).
-const SCREEN_UP = { x: Math.SQRT1_2, z: Math.SQRT1_2 };
-const SCREEN_RIGHT = { x: Math.SQRT1_2, z: -Math.SQRT1_2 };
+// Par défaut, la caméra isométrique regarde l'arène en diagonale :
+// "haut" à l'écran correspond à la direction (+x, +z) du monde, "droite" à (+x, -z).
+export const DEFAULT_CAMERA_YAW = Math.PI / 4;
 
-// Convertit les touches pressées en direction normalisée dans le monde.
+// Convertit les touches pressées en direction normalisée dans le monde, selon l'orientation de la caméra.
 export function inputToDirection(input: MoveInput): { x: number; z: number } {
   const forward = Number(input.up) - Number(input.down);
   const strafe = Number(input.right) - Number(input.left);
   if (forward === 0 && strafe === 0) return { x: 0, z: 0 };
 
-  const x = SCREEN_UP.x * forward + SCREEN_RIGHT.x * strafe;
-  const z = SCREEN_UP.z * forward + SCREEN_RIGHT.z * strafe;
+  const yaw = input.yaw ?? DEFAULT_CAMERA_YAW;
+  const up = { x: Math.sin(yaw), z: Math.cos(yaw) };
+  const right = { x: Math.cos(yaw), z: -Math.sin(yaw) };
+  const x = up.x * forward + right.x * strafe;
+  const z = up.z * forward + right.z * strafe;
   const length = Math.hypot(x, z);
   return { x: x / length, z: z / length };
 }

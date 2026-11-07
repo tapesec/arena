@@ -45,6 +45,14 @@ describe("Conversion direction → touches", () => {
     assert.deepEqual(directionToInput(inputToDirection(input)), input);
   });
 
+  it("tient compte de l'orientation de la caméra", () => {
+    // Caméra tournée (yaw = 0) : "haut" de l'écran = +z, "droite" = +x.
+    const up = inputToDirection({ up: true, down: false, left: false, right: false, yaw: 0 });
+    const right = inputToDirection({ up: false, down: false, left: false, right: true, yaw: 0 });
+    assert.ok(Math.abs(up.x) < 1e-9 && Math.abs(up.z - 1) < 1e-9);
+    assert.ok(Math.abs(right.x - 1) < 1e-9 && Math.abs(right.z) < 1e-9);
+  });
+
   it("choisit la direction la plus proche", () => {
     // Haut à l'écran = (+x, +z) dans le monde : une direction presque égale donne "haut".
     assert.deepEqual(directionToInput({ x: 0.75, z: 0.66 }), { up: true, down: false, left: false, right: false });

@@ -320,5 +320,6 @@ function sanitizeInput(message: unknown): MoveInput {
     down: raw.down === true,
     left: raw.left === true,
     right: raw.right === true,
+    yaw: typeof raw.yaw === "number" && Number.isFinite(raw.yaw) ? raw.yaw : undefined,
   };
 }
