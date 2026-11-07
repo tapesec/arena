@@ -277,22 +277,30 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const self = this.state.players.get(client.sessionId);
       const view = client.view;
       if (!self || !view) continue;
+      const spectator = this.isSpectator(self);
       const seen = this.teamVisibility.get(self.team);
       this.state.players.forEach((p, id) => {
-        const shouldSee = seen?.has(id) ?? false;
+        const shouldSee = spectator || (seen?.has(id) ?? false);
         if (shouldSee && !view.has(p)) view.add(p);
         else if (!shouldSee && view.has(p)) view.remove(p);
       });
     }
   }
 
-  // Un événement de combat n'est envoyé qu'aux équipes qui voient l'un des joueurs concernés.
+  // Un événement de combat n'est envoyé qu'aux équipes qui voient l'un des joueurs concernés
+  // (et à tous les spectateurs).
   private broadcastToWitnesses(type: string, message: unknown, involved: string[]) {
     for (const client of this.clients) {
-      const team = this.state.players.get(client.sessionId)?.team;
-      const seen = team === undefined ? undefined : this.teamVisibility.get(team);
-      if (involved.some((id) => seen?.has(id))) client.send(type, message);
+      const self = this.state.players.get(client.sessionId);
+      if (!self) continue;
+      const seen = this.teamVisibility.get(self.team);
+      if (this.isSpectator(self) || involved.some((id) => seen?.has(id))) client.send(type, message);
     }
+  }
+
+  // Un joueur mort pendant le combat devient spectateur : il voit toute l'arène, sans brouillard de guerre.
+  private isSpectator(player: PlayerState): boolean {
+    return this.phase === "fighting" && player.hp <= 0;
   }
 
   private nextColorIndex(): number {

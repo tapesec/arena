@@ -590,3 +590,9 @@ body,
   opacity: 0.35;
   filter: grayscale(1);
 }
+
+.spectator-banner {
+  top: auto;
+  bottom: 110px;
+  border: 1px solid #8a93a3;
+}

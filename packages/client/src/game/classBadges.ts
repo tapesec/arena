@@ -3,10 +3,12 @@ import type { ClassId } from "@arena/shared";
 // Pictogramme (SVG, dans un carré de 24 × 24) et couleur de rôle de chaque classe,
 // affichés dans un badge au-dessus de la tête des personnages.
 export const CLASS_BADGES: Record<ClassId, { color: string; icon: string }> = {
-  // Bouclier
+  // Écu : contour blanc, moitié droite à la couleur du rôle, comme un blason
   gardien: {
     color: "#7d8a99",
-    icon: '<path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z" fill="#fff"/>',
+    icon:
+      '<path d="M12 1.5l9 3.2v6.6c0 5.6-3.9 9.6-9 11.2-5.1-1.6-9-5.6-9-11.2V4.7z" fill="#fff"/>' +
+      '<path d="M12 4.6l6 2.1v4.9c0 3.9-2.6 6.8-6 8.1z" fill="#7d8a99"/>',
   },
   // Croix
   pretre: {

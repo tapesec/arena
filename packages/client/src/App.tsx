@@ -46,6 +46,7 @@ function Hud() {
         <TargetPanel />
       </div>
       <PhaseBanner />
+      <SpectatorBanner />
       <FlashMessage />
       <div className="hud-bottom">
         <SelfCastBar />
@@ -153,6 +154,18 @@ function PhaseBanner() {
   return (
     <div className="phase-banner">
       Préparation : le combat commence dans <strong>{match.timeLeft} s</strong>
+    </div>
+  );
+}
+
+// Mort pendant le combat : on regarde la suite librement, sans brouillard de guerre.
+function SpectatorBanner() {
+  const phase = useHudStore((s) => s.match?.phase);
+  const dead = useHudStore((s) => (s.self ? s.self.hp <= 0 : false));
+  if (phase !== "fighting" || !dead) return null;
+  return (
+    <div className="phase-banner spectator-banner">
+      Vous êtes mort · <strong>Mode spectateur</strong> : ZQSD déplace la caméra, C revient à votre corps
     </div>
   );
 }

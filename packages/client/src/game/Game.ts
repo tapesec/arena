@@ -27,6 +27,7 @@ import {
   getClass,
   hasLineOfSight,
   isFacing,
+  inputToDirection,
   isInMeleeRange,
   NO_INPUT,
   type ClassId,
@@ -75,6 +76,9 @@ const HUD_REFRESH_MS = 100;
 const YAW_RESEND_MS = 50;
 const YAW_RESEND_THRESHOLD = 0.02;
 
+// Vitesse de la caméra libre en mode spectateur, en mètres par seconde.
+const SPECTATOR_SPEED = 18;
+
 export class Game {
   private engine: Engine;
   private scene: Scene;
@@ -86,6 +90,8 @@ export class Game {
   private moveKeys: MoveInput = NO_INPUT;
   private sentYaw = 0;
   private lastMoveSent = 0;
+  // Point suivi par la caméra en mode spectateur (null quand on suit son personnage).
+  private spectatorFocus: Vector3 | null = null;
   private players = new Map<string, PlayerVisual>();
   private targetId: string | null = null;
   private targetMarker!: Mesh;
@@ -113,7 +119,8 @@ export class Game {
     this.keyboard = new KeyboardInput(
       (keys) => {
         this.moveKeys = keys;
-        this.sendMove();
+        // En mode spectateur, les touches déplacent la caméra, pas le personnage.
+        if (!this.isSpectating) this.sendMove();
       },
       (action) => this.handleAction(action),
     );
@@ -151,6 +158,34 @@ export class Game {
     this.sentYaw = this.camera.yaw;
     this.lastMoveSent = performance.now();
     this.room.send("input", { ...this.moveKeys, yaw: this.sentYaw });
+  }
+
+  // Mort pendant le combat : la caméra devient libre et le brouillard de guerre disparaît (côté serveur).
+  private get isSpectating(): boolean {
+    const self = this.self;
+    return !!self && !self.isAlive && (this.room.state as { phase: MatchPhase }).phase === "fighting";
+  }
+
+  // Suit son personnage, ou en mode spectateur un point que l'on déplace avec ZQSD.
+  private updateCamera(dt: number) {
+    const self = this.self;
+    if (!self) return;
+    if (!this.isSpectating) {
+      // Retour à la vie (Résurrection) : la caméra revient sur le personnage et les touches lui sont rendues.
+      if (this.spectatorFocus) {
+        this.spectatorFocus = null;
+        this.sendMove();
+      }
+      this.camera.follow(self.root.position);
+      this.resendMoveIfCameraTurned();
+      return;
+    }
+    this.spectatorFocus ??= self.root.position.clone();
+    const dir = inputToDirection({ ...this.moveKeys, yaw: this.camera.yaw });
+    const limit = ARENA_SIZE / 2;
+    this.spectatorFocus.x = Math.max(-limit, Math.min(limit, this.spectatorFocus.x + dir.x * SPECTATOR_SPEED * dt));
+    this.spectatorFocus.z = Math.max(-limit, Math.min(limit, this.spectatorFocus.z + dir.z * SPECTATOR_SPEED * dt));
+    this.camera.follow(this.spectatorFocus);
   }
 
   // Si la caméra tourne pendant qu'on se déplace, la direction de marche change : on prévient le serveur.
@@ -320,6 +355,8 @@ export class Game {
         break;
       case "resetCamera":
         this.camera.reset();
+        // En mode spectateur, C ramène aussi la caméra sur son corps.
+        if (this.spectatorFocus && this.self) this.spectatorFocus.copyFrom(this.self.root.position);
         break;
     }
   }
@@ -377,8 +414,7 @@ export class Game {
     this.spellEffects.updateGuardLinks(this.guardLinks());
 
     const self = this.self;
-    if (self) this.camera.follow(self.root.position);
-    this.resendMoveIfCameraTurned();
+    this.updateCamera(dt);
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
     this.targetMarker.setEnabled(!!target);
