@@ -30,6 +30,25 @@ export function isInMeleeRange(a: Position, b: Position): boolean {
   return distance(a, b) <= MELEE_RANGE;
 }
 
+// Demi-angle du cône de vision devant le personnage : 90° donne un cône de 180°.
+export const FACING_HALF_ANGLE = Math.PI / 2;
+
+// Orientation vers une position, dans la même convention que le champ "facing" du serveur.
+export function facingTowards(from: Position, to: Position): number {
+  return Math.atan2(to.x - from.x, to.z - from.z);
+}
+
+// Vrai si la cible se trouve dans le cône de vision de l'observateur.
+export function isFacing(observer: Position & { facing: number }, target: Position): boolean {
+  const dx = target.x - observer.x;
+  const dz = target.z - observer.z;
+  const length = Math.hypot(dx, dz);
+  if (length < 1e-6) return true;
+  // Produit scalaire entre la direction du regard et la direction de la cible.
+  const dot = (Math.sin(observer.facing) * dx + Math.cos(observer.facing) * dz) / length;
+  return dot >= Math.cos(FACING_HALF_ANGLE) - 1e-6;
+}
+
 // Événement diffusé à tous les clients à chaque dégât ou soin.
 // abilityId vaut "auto" pour l'attaque automatique.
 export interface CombatEvent {

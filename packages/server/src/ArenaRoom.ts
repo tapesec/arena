@@ -7,8 +7,10 @@ import {
   NO_INPUT,
   TICK_RATE,
   distance,
+  facingTowards,
   getAbility,
   hasLineOfSight,
+  isFacing,
   isInMeleeRange,
   stepMovement,
   type AbilityDef,
@@ -49,6 +51,14 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const targetId = (message as { targetId?: unknown } | null)?.targetId;
       const valid = typeof targetId === "string" && targetId !== client.sessionId && this.state.players.has(targetId);
       this.targets.set(client.sessionId, valid ? targetId : null);
+    },
+
+    // Tourne le personnage vers sa cible sans le déplacer (équivalent du /face de DAoC).
+    faceTarget: (client: Client) => {
+      const player = this.state.players.get(client.sessionId);
+      const targetId = this.targets.get(client.sessionId);
+      const target = targetId ? this.state.players.get(targetId) : undefined;
+      if (player && isAlive(player) && target) player.facing = facingTowards(player, target);
     },
 
     toggleAttack: (client: Client) => {
@@ -179,6 +189,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     if (!isAlive(target)) return "La cible est morte";
     if (distance(caster, target) > ability.range) return "Cible hors de portée";
     if (!hasLineOfSight(caster, target)) return "Cible hors de vue";
+    if (!isFacing(caster, target)) return "Vous devez faire face à la cible";
     return null;
   }
 
@@ -251,6 +262,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       return;
     }
     if (timer > 0 || !isInMeleeRange(attacker, target) || !hasLineOfSight(attacker, target)) return;
+    if (!isFacing(attacker, target)) return;
 
     this.applyDamage(attackerId, targetId, target, AUTO_ATTACK_DAMAGE, "auto");
     this.swingTimers.set(attackerId, AUTO_ATTACK_INTERVAL);

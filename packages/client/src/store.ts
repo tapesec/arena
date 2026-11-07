@@ -28,6 +28,8 @@ export interface TargetFrame extends UnitFrame {
   distance: number;
   inMeleeRange: boolean;
   inLineOfSight: boolean;
+  // La cible est dans le cône de vision du joueur.
+  facing: boolean;
 }
 
 const MAX_LOG_LINES = 8;

@@ -22,6 +22,7 @@ import {
   distance,
   getAbility,
   hasLineOfSight,
+  isFacing,
   isInMeleeRange,
   type CombatEvent,
   type CooldownEvent,
@@ -177,6 +178,9 @@ export class Game {
       case "toggleAttack":
         this.room.send("toggleAttack");
         break;
+      case "faceTarget":
+        this.room.send("faceTarget");
+        break;
       case "respawn":
         if (import.meta.env.DEV) this.room.send("respawn");
         break;
@@ -286,6 +290,7 @@ export class Game {
             distance: Math.round(distance(self.state, target.state)),
             inMeleeRange: isInMeleeRange(self.state, target.state),
             inLineOfSight: hasLineOfSight(self.state, target.state),
+            facing: isFacing(self.state, target.state),
           }
         : null;
 

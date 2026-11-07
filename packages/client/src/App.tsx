@@ -59,6 +59,7 @@ function TargetPanel() {
 
   let tag = <span className="tag tag-out-range">{target.distance} m</span>;
   if (!target.inLineOfSight) tag = <span className="tag tag-blocked">Hors de vue</span>;
+  else if (!target.facing) tag = <span className="tag tag-blocked">Pas en face</span>;
   else if (target.inMeleeRange) tag = <span className="tag tag-in-range">Au contact</span>;
 
   return (
@@ -162,6 +163,7 @@ function HelpPanel() {
       <div>ZQSD : se déplacer</div>
       <div>Tab ou clic : cibler · Échap : annuler</div>
       <div>F : activer/couper l'attaque</div>
+      <div>E : faire face à la cible</div>
       <div>1 2 3 : compétences</div>
       {import.meta.env.DEV && <div>R : revivre (test)</div>}
     </div>
