@@ -9,11 +9,11 @@ import "./styles.css";
 const CATEGORIES: SoundCategory[] = ["Magie", "Mêlée", "Soutien", "Alertes", "Interface et partie"];
 
 function Soundboard() {
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(audio.settings.volume);
   const [lastPlayed, setLastPlayed] = useState<SoundId | null>(null);
 
   const play = (id: SoundId) => {
-    audio.play(id);
+    audio.play(id, { priority: true });
     setLastPlayed(id);
   };
 

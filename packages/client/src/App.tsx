@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/shared";
+import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { useHudStore, type CastFrame, type EffectFrame } from "./store";
 
@@ -22,7 +23,15 @@ function HomeScreen() {
     <div className="screen">
       <h1>Arena</h1>
       <p className="screen-text">Combat de groupe 8 contre 8</p>
-      <button className="primary-button" onClick={joinGame}>
+      <button
+        className="primary-button"
+        onClick={() => {
+          // Premier clic : le navigateur autorise alors le son.
+          audio.unlock();
+          audio.play("click");
+          joinGame();
+        }}
+      >
         Rejoindre une partie
       </button>
     </div>
@@ -54,6 +63,7 @@ function Hud() {
       </div>
       <CombatLog />
       <HelpPanel />
+      <SoundControl />
       {phase === "ended" && <EndScreen />}
     </>
   );
@@ -120,7 +130,10 @@ function ClassSelectScreen() {
           <button
             key={c.id}
             className={`class-card ${myClass === c.id ? "class-card-selected" : ""}`}
-            onClick={() => actions?.selectClass(c.id)}
+            onClick={() => {
+              audio.play("classSelect");
+              actions?.selectClass(c.id);
+            }}
           >
             <span className="class-name">{c.name}</span>
             <span className="class-role">{c.role}</span>
@@ -180,7 +193,13 @@ function EndScreen() {
     <div className="end-overlay">
       <h1>{title}</h1>
       {match.winner !== -1 && <p className="screen-text">Les {TEAM_NAMES[match.winner]} remportent la partie.</p>}
-      <button className="primary-button" onClick={joinGame}>
+      <button
+        className="primary-button"
+        onClick={() => {
+          audio.play("click");
+          joinGame();
+        }}
+      >
         Nouvelle partie
       </button>
       <button className="link-button" onClick={leaveGame}>
@@ -337,6 +356,38 @@ function CombatLog() {
       {lines.map((line, i) => (
         <div key={i}>{line}</div>
       ))}
+    </div>
+  );
+}
+
+// Volume général et sourdine, mémorisés dans le navigateur.
+function SoundControl() {
+  const [settings, setSettings] = useState(audio.settings);
+  return (
+    <div className="sound-control">
+      <button
+        className="sound-toggle"
+        title={settings.muted ? "Réactiver le son" : "Couper le son"}
+        onClick={() => {
+          audio.setMuted(!settings.muted);
+          setSettings(audio.settings);
+        }}
+      >
+        {settings.muted ? "🔇" : "🔊"}
+      </button>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={settings.volume}
+        disabled={settings.muted}
+        aria-label="Volume"
+        onChange={(e) => {
+          audio.setVolume(Number(e.target.value));
+          setSettings(audio.settings);
+        }}
+      />
     </div>
   );
 }

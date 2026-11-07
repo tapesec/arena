@@ -51,6 +51,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
 import { SpellEffects } from "./SpellEffects";
+import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
@@ -85,6 +86,7 @@ export class Game {
   private camera: CameraController;
   private overlay: WorldOverlay;
   private spellEffects: SpellEffects;
+  private gameAudio: GameAudio;
   private keyboard: KeyboardInput;
   // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
   private moveKeys: MoveInput = NO_INPUT;
@@ -110,6 +112,7 @@ export class Game {
     this.camera = new CameraController(this.scene, canvas);
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.spellEffects = new SpellEffects(this.scene);
+    this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
 
     this.createEnvironment();
     this.createTargetMarker();
@@ -147,6 +150,7 @@ export class Game {
     this.camera.dispose();
     this.overlay.dispose();
     this.spellEffects.dispose();
+    this.gameAudio.dispose();
     this.room.leave();
     this.engine.dispose();
   }
@@ -271,16 +275,22 @@ export class Game {
     this.room.onMessage("combat", (event: CombatEvent) => {
       for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
       this.showCombatText(event);
+      this.gameAudio.onCombat(event, this.players.get(event.targetId));
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       hud.pushLog(formatInterrupt(event, nameOf));
+      this.gameAudio.onInterrupt(event);
       const caster = this.players.get(event.casterId);
       if (caster) this.overlay.addText(caster.root, "Interrompu", "info");
     });
     this.room.onMessage("ability", (event: AbilityUsedEvent) => {
       this.spellEffects.play(event.abilityId, this.players.get(event.casterId)?.root, this.players.get(event.targetId)?.root);
+      this.gameAudio.onAbility(event.abilityId, this.players.get(event.casterId), this.players.get(event.targetId));
     });
-    this.room.onMessage("cooldown", (event: CooldownEvent) => hud.startCooldown(event.abilityId, event.duration));
+    this.room.onMessage("cooldown", (event: CooldownEvent) => {
+      hud.startCooldown(event.abilityId, event.duration);
+      this.gameAudio.onCooldown(event.duration);
+    });
     this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
   }
 
@@ -411,6 +421,8 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
+    const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };
+    this.gameAudio.update(dt, this.players.values(), this.self, match.phase, match.phaseTimeLeft, match.winner);
     this.spellEffects.updateGuardLinks(this.guardLinks());
 
     const self = this.self;
