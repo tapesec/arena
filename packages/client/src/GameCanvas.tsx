@@ -7,6 +7,7 @@ import { useHudStore } from "./store";
 // toute la boucle de rendu vit dans la classe Game.
 export function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -21,7 +22,7 @@ export function GameCanvas() {
           room.leave();
           return;
         }
-        game = new Game(canvasRef.current!, room);
+        game = new Game(canvasRef.current!, overlayRef.current!, room);
         setStatus("connected");
       })
       .catch((error: unknown) => {
@@ -34,5 +35,11 @@ export function GameCanvas() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="game-canvas" />;
+  // La couche "world-overlay" reçoit les textes flottants et indicateurs, gérés par le jeu (pas par React).
+  return (
+    <div className="game-view">
+      <canvas ref={canvasRef} className="game-canvas" />
+      <div ref={overlayRef} className="world-overlay" />
+    </div>
+  );
 }

@@ -448,3 +448,115 @@ body,
   justify-content: center;
   gap: 10px;
 }
+
+/* --- Couche posée sur la scène 3D : textes flottants et indicateurs de contrôle --- */
+.game-view {
+  position: absolute;
+  inset: 0;
+}
+
+.world-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.float-text {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-shadow:
+    0 0 3px #000,
+    0 1px 2px #000;
+  will-change: transform, opacity;
+}
+
+.float-big {
+  font-size: 22px;
+}
+
+.float-damageDealt {
+  color: #fff1b8;
+}
+
+.float-damageTaken {
+  color: #ff5a5a;
+}
+
+.float-heal {
+  color: #5dff7a;
+}
+
+.float-info {
+  color: #d6d6d6;
+  font-size: 13px;
+}
+
+.float-control {
+  color: #d58bff;
+}
+
+.status-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  gap: 2px;
+  font-weight: 800;
+  text-shadow: 0 0 3px #000;
+}
+
+/* Mez : des Z qui montent et s'effacent à tour de rôle. */
+.status-mez span {
+  color: #c9a6ff;
+  animation: zzz 1.5s ease-in-out infinite;
+}
+
+.status-mez span:nth-child(1) {
+  font-size: 18px;
+}
+
+.status-mez span:nth-child(2) {
+  font-size: 14px;
+  animation-delay: 0.25s;
+}
+
+.status-mez span:nth-child(3) {
+  font-size: 11px;
+  animation-delay: 0.5s;
+}
+
+@keyframes zzz {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(4px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* Stun : des étoiles qui tournent. */
+.status-stun {
+  animation: spin 1.2s linear infinite;
+}
+
+.status-stun span {
+  color: #ffe14a;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
+  }
+}

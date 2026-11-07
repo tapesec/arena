@@ -49,13 +49,6 @@ function teamColor(team: number, colorIndex: number): Color3 {
   return Color3.FromHSV((hue + 360) % 360, 0.65, 0.9);
 }
 
-// Lueur appliquée au personnage selon le contrôle subi, du plus au moins grave.
-const CONTROL_GLOW: [EffectKind, Color3][] = [
-  ["stun", new Color3(0.6, 0.55, 0)],
-  ["mez", new Color3(0.45, 0.1, 0.6)],
-  ["root", new Color3(0, 0.35, 0.6)],
-];
-
 // Représentation 3D d'un joueur : une capsule, un "nez" pour l'orientation,
 // et un anneau au sol pour son propre personnage.
 export class PlayerVisual {
@@ -66,7 +59,8 @@ export class PlayerVisual {
   private aliveColor: Color3;
   private wasAlive = true;
   private team: number;
-  private currentGlow: Color3 | null = null;
+  // Anneau de glace au sol, visible tant que le personnage est root.
+  private rootRing: Mesh;
 
   constructor(
     scene: Scene,
@@ -94,6 +88,17 @@ export class PlayerVisual {
     this.nose.material = this.material;
     this.nose.metadata = { sessionId };
     this.nose.parent = this.root;
+
+    this.rootRing = CreateTorus("rootRing", { diameter: 1.4, thickness: 0.25, tessellation: 32 }, scene);
+    this.rootRing.position.y = 0.15;
+    const iceMat = new StandardMaterial("iceMat", scene);
+    iceMat.emissiveColor = new Color3(0.45, 0.8, 1);
+    iceMat.disableLighting = true;
+    iceMat.alpha = 0.75;
+    this.rootRing.material = iceMat;
+    this.rootRing.isPickable = false;
+    this.rootRing.parent = this.root;
+    this.rootRing.setEnabled(false);
 
     if (isLocal) {
       const ring = CreateTorus("ring", { diameter: 1.6, thickness: 0.08, tessellation: 48 }, scene);
@@ -134,11 +139,8 @@ export class PlayerVisual {
       this.applyLifeState();
     }
 
-    const glow = CONTROL_GLOW.find(([kind]) => this.hasEffect(kind))?.[1] ?? null;
-    if (glow !== this.currentGlow) {
-      this.currentGlow = glow;
-      this.material.emissiveColor = glow ?? Color3.Black();
-    }
+    const rooted = this.isAlive && this.hasEffect("root");
+    if (rooted !== this.rootRing.isEnabled()) this.rootRing.setEnabled(rooted);
   }
 
   dispose() {

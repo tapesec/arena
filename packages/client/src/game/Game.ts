@@ -46,9 +46,20 @@ import {
   type TeammateFrame,
 } from "../store";
 import { CameraController } from "./CameraController";
+import { WorldOverlay } from "./WorldOverlay";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
+
+// Textes flottants des événements de combat.
+const CONTROL_LABELS: Record<string, string> = { mez: "Mez", stun: "Stun", root: "Root" };
+const INFO_LABELS: Partial<Record<CombatEvent["kind"], string>> = {
+  blocked: "Bloqué",
+  evaded: "Esquivé",
+  absorbed: "Absorbé",
+  intercepted: "Interception",
+  immune: "Immunisé",
+};
 
 // Vitesse à laquelle l'affichage rattrape la position serveur (plus haut = plus réactif).
 const SMOOTHING = 15;
@@ -64,6 +75,7 @@ export class Game {
   private engine: Engine;
   private scene: Scene;
   private camera: CameraController;
+  private overlay: WorldOverlay;
   private keyboard: KeyboardInput;
   // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
   private moveKeys: MoveInput = NO_INPUT;
@@ -77,6 +89,7 @@ export class Game {
 
   constructor(
     canvas: HTMLCanvasElement,
+    overlayElement: HTMLElement,
     private room: Room,
   ) {
     this.engine = new Engine(canvas, true);
@@ -84,6 +97,7 @@ export class Game {
     this.scene.clearColor = new Color4(0.07, 0.08, 0.1, 1);
 
     this.camera = new CameraController(this.scene, canvas);
+    this.overlay = new WorldOverlay(overlayElement, this.scene);
 
     this.createEnvironment();
     this.createTargetMarker();
@@ -118,6 +132,7 @@ export class Game {
     window.removeEventListener("resize", this.handleResize);
     this.keyboard.dispose();
     this.camera.dispose();
+    this.overlay.dispose();
     this.room.leave();
     this.engine.dispose();
   }
@@ -202,6 +217,7 @@ export class Game {
     callbacks.onRemove("players", (_player, sessionId) => {
       const key = sessionId as string;
       this.players.get(key)?.dispose();
+      this.overlay.removePlayer(key);
       this.players.delete(key);
       if (this.targetId === key) this.setTarget(null);
     });
@@ -212,10 +228,41 @@ export class Game {
     const nameOf = (id: string) => this.nameOf(id);
     this.room.onMessage("combat", (event: CombatEvent) => {
       for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
+      this.showCombatText(event);
     });
-    this.room.onMessage("interrupt", (event: InterruptEvent) => hud.pushLog(formatInterrupt(event, nameOf)));
+    this.room.onMessage("interrupt", (event: InterruptEvent) => {
+      hud.pushLog(formatInterrupt(event, nameOf));
+      const caster = this.players.get(event.casterId);
+      if (caster) this.overlay.addText(caster.root, "Interrompu", "info");
+    });
     this.room.onMessage("cooldown", (event: CooldownEvent) => hud.startCooldown(event.abilityId, event.duration));
     this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
+  }
+
+  // Texte flottant au-dessus de la cible d'un événement de combat.
+  private showCombatText(event: CombatEvent) {
+    const target = this.players.get(event.targetId);
+    if (!target) return;
+    const anchor = target.root;
+    switch (event.kind) {
+      case "damage": {
+        // Rouge quand ça touche son équipe, clair quand ça touche l'adversaire.
+        const ally = target.state.team === this.self?.state.team;
+        this.overlay.addText(anchor, `-${event.amount}`, ally ? "damageTaken" : "damageDealt", event.crit);
+        break;
+      }
+      case "heal":
+        if (event.amount) this.overlay.addText(anchor, `+${event.amount}`, "heal");
+        break;
+      case "resurrect":
+        this.overlay.addText(anchor, "Ressuscité", "heal");
+        break;
+      case "cc":
+        this.overlay.addText(anchor, CONTROL_LABELS[event.detail ?? ""] ?? "", "control");
+        break;
+      default:
+        if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, INFO_LABELS[event.kind]!, "info");
+    }
   }
 
   private get self(): PlayerVisual | undefined {
@@ -293,7 +340,12 @@ export class Game {
     // Lissage exponentiel : on rattrape la position reçue du serveur sans à-coups,
     // le serveur n'envoyant que 20 mises à jour par seconde.
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
-    for (const player of this.players.values()) player.update(smoothing);
+    for (const player of this.players.values()) {
+      player.update(smoothing);
+      const control = !player.isAlive ? null : player.hasEffect("stun") ? "stun" : player.hasEffect("mez") ? "mez" : null;
+      this.overlay.setIndicator(player.sessionId, player.root, control);
+    }
+    this.overlay.update(dt);
 
     const self = this.self;
     if (self) this.camera.follow(self.root.position);
