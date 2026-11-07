@@ -17,6 +17,9 @@ function abilityName(id: string): string {
 export function formatCombatEvent(event: CombatEvent, nameOf: (id: string) => string, selfId: string): string[] {
   const source = nameOf(event.sourceId);
   const target = nameOf(event.targetId);
+  // Le joueur local est appelé "Vous" : il faut alors conjuguer à la deuxième personne.
+  const targetIsSelf = event.targetId === selfId;
+  const sourceIsSelf = event.sourceId === selfId;
   const ability = abilityName(event.abilityId);
 
   switch (event.kind) {
@@ -34,25 +37,25 @@ export function formatCombatEvent(event: CombatEvent, nameOf: (id: string) => st
       return [`${ability} de ${source} bloqué${blocker}`];
     }
     case "evaded":
-      return [`${target} esquive ${ability} de ${source}`];
+      return [`${target} ${targetIsSelf ? "esquivez" : "esquive"} ${ability} de ${source}`];
     case "absorbed":
-      return [`La bulle de ${target} absorbe ${ability} de ${source}`];
+      return [`${targetIsSelf ? "Votre bulle" : `La bulle de ${target}`} absorbe ${ability} de ${source}`];
     case "intercepted":
-      return [`${target} intercepte le coup visant ${nameOf(event.detail ?? "")}`];
+      return [`${target} ${targetIsSelf ? "interceptez" : "intercepte"} le coup visant ${nameOf(event.detail ?? "")}`];
     case "cc":
       return [`${target} : ${CONTROL_NAMES[event.detail ?? ""] ?? event.detail} (${ability})`];
     case "immune":
-      return [`${target} est immunisé (${CONTROL_NAMES[event.detail ?? ""] ?? event.detail})`];
+      return [`${target} ${targetIsSelf ? "êtes immunisé" : "est immunisé"} (${CONTROL_NAMES[event.detail ?? ""] ?? event.detail})`];
     case "cleanse":
-      return [`${source} purifie ${target}`];
+      return [`${source} ${sourceIsSelf ? "purifiez" : "purifie"} ${target}`];
     case "resurrect":
-      return [`${source} ressuscite ${target}`];
+      return [`${source} ${sourceIsSelf ? "ressuscitez" : "ressuscite"} ${target}`];
     case "buff":
       return [`${source} → ${target} : buff de ${BUFF_NAMES[event.detail ?? ""] ?? event.detail}`];
     case "guard":
-      return [`${source} protège ${target}`];
+      return [`${source} ${sourceIsSelf ? "protégez" : "protège"} ${target}`];
     case "unguard":
-      return [`${source} ne protège plus ${target}`];
+      return [`${source} ${sourceIsSelf ? "ne protégez plus" : "ne protège plus"} ${target}`];
   }
 }
 

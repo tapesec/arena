@@ -96,6 +96,7 @@ export class Game {
     useHudStore.getState().setActions({
       selectClass: (classId) => this.room.send("selectClass", { classId }),
       forceStart: () => this.room.send("forceStart"),
+      addBots: () => this.room.send("addBots"),
     });
 
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
@@ -328,7 +329,12 @@ export class Game {
     const teammates: TeammateFrame[] = self
       ? [...this.players.values()]
           .filter((p) => p.state.team === self.state.team)
-          .map((p) => ({ name: p.state.name, classId: p.state.classId as ClassId | "", isSelf: p === self }))
+          .map((p) => ({
+            name: p.state.name,
+            classId: p.state.classId as ClassId | "",
+            isSelf: p === self,
+            isBot: p.state.isBot,
+          }))
       : [];
 
     // On ne prévient React que si quelque chose a réellement changé.

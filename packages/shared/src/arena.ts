@@ -53,16 +53,29 @@ export function resolveObstacleCollisions(pos: Position, radius: number): Positi
 
 // Vrai si aucun obstacle ne coupe le segment entre les deux positions.
 export function hasLineOfSight(a: Position, b: Position): boolean {
-  return OBSTACLES.every((o) => !segmentIntersectsObstacle(a, b, o));
+  return OBSTACLES.every((o) => !segmentIntersectsObstacle(a, b, o, 0));
 }
 
-// Méthode des "slabs" : on intersecte le segment avec chaque paire de bords du rectangle.
-function segmentIntersectsObstacle(a: Position, b: Position, o: Obstacle): boolean {
+// Vrai si un personnage de rayon "margin" peut aller de a à b en ligne droite sans toucher d'obstacle.
+export function hasClearPath(a: Position, b: Position, margin: number): boolean {
+  return OBSTACLES.every((o) => !segmentIntersectsObstacle(a, b, o, margin));
+}
+
+// Vrai si la position est dans un obstacle élargi de "margin".
+export function isInsideObstacle(pos: Position, margin: number): boolean {
+  return OBSTACLES.some(
+    (o) => Math.abs(pos.x - o.x) <= o.halfWidth + margin && Math.abs(pos.z - o.z) <= o.halfDepth + margin,
+  );
+}
+
+// Méthode des "slabs" : on intersecte le segment avec chaque paire de bords du rectangle
+// (élargi de "margin" de chaque côté).
+function segmentIntersectsObstacle(a: Position, b: Position, o: Obstacle, margin: number): boolean {
   let tMin = 0;
   let tMax = 1;
   const axes: [number, number, number, number][] = [
-    [a.x, b.x - a.x, o.x - o.halfWidth, o.x + o.halfWidth],
-    [a.z, b.z - a.z, o.z - o.halfDepth, o.z + o.halfDepth],
+    [a.x, b.x - a.x, o.x - o.halfWidth - margin, o.x + o.halfWidth + margin],
+    [a.z, b.z - a.z, o.z - o.halfDepth - margin, o.z + o.halfDepth + margin],
   ];
   for (const [start, delta, min, max] of axes) {
     if (Math.abs(delta) < 1e-9) {

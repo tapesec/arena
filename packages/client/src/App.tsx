@@ -85,9 +85,14 @@ function WaitingScreen() {
       </p>
       <p className="screen-hint">La partie commence dès qu'elle est complète.</p>
       {import.meta.env.DEV && (
-        <button className="secondary-button" disabled={count < 2} onClick={() => actions?.forceStart()}>
-          Lancer maintenant (test)
-        </button>
+        <div className="button-row">
+          <button className="secondary-button" disabled={count < 2} onClick={() => actions?.forceStart()}>
+            Lancer maintenant (test)
+          </button>
+          <button className="secondary-button" onClick={() => actions?.addBots()}>
+            Compléter avec des bots
+          </button>
+        </div>
       )}
       <button className="link-button" onClick={leaveGame}>
         Quitter la file
@@ -130,7 +135,8 @@ function ClassSelectScreen() {
         {teammates.map((t, i) => (
           <div key={i} className="roster-line">
             {t.name}
-            {t.isSelf && " (vous)"} : <strong>{t.classId ? getClass(t.classId)?.name : "…"}</strong>
+            {t.isSelf && " (vous)"} :{" "}
+            <strong>{t.classId ? getClass(t.classId)?.name : t.isBot ? "choix automatique" : "…"}</strong>
           </div>
         ))}
         <p className="screen-hint">La composition adverse reste cachée jusqu'à la rencontre.</p>

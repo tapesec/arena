@@ -60,12 +60,14 @@ export interface TeammateFrame {
   name: string;
   classId: ClassId | "";
   isSelf: boolean;
+  isBot: boolean;
 }
 
 // Commandes que l'interface peut envoyer au serveur, fournies par le jeu une fois connecté.
 export interface GameActions {
   selectClass: (classId: ClassId) => void;
   forceStart: () => void;
+  addBots: () => void;
 }
 
 const MAX_LOG_LINES = 8;

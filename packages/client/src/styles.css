@@ -441,3 +441,10 @@ body,
   box-shadow: 0 0 6px #ffd76a;
 }
 
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}

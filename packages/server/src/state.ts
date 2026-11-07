@@ -15,6 +15,8 @@ export type EffectState = SchemaType<typeof EffectState>;
 export const PlayerState = schema(
   {
     name: t.string().default(""),
+    // Joueur contrôlé par le serveur.
+    isBot: t.boolean().default(false),
     classId: t.string().default(""),
     team: t.uint8().default(0),
     x: t.float32().default(0),

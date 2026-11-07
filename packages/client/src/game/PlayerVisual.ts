@@ -16,6 +16,7 @@ export interface EffectView {
 // Ce que le client lit dans l'état synchronisé par le serveur.
 export interface PlayerView {
   name: string;
+  isBot: boolean;
   classId: string;
   team: number;
   x: number;

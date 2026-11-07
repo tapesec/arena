@@ -11,9 +11,13 @@ import {
   getClass,
   maxResource,
   spawnPosition,
+  type ClassId,
   type MatchPhase,
   type MoveInput,
 } from "@arena/shared";
+import { BotBrain } from "./bots/BotBrain";
+import { pickBotClass } from "./bots/composition";
+import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime } from "./PlayerRuntime";
 import { ArenaState, PlayerState } from "./state";
@@ -68,9 +72,9 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const player = this.state.players.get(client.sessionId);
       if (this.phase !== "classSelect" || !classDef || !player) return;
       player.classId = classDef.id;
-      // Tout le monde a choisi : inutile d'attendre la fin du chrono.
+      // Tous les joueurs humains ont choisi : inutile d'attendre la fin du chrono.
       let everyoneChose = true;
-      this.state.players.forEach((p) => (everyoneChose &&= p.classId !== ""));
+      this.state.players.forEach((p) => (everyoneChose &&= p.isBot || p.classId !== ""));
       if (everyoneChose) this.startPreparation();
     },
     forceStart: () => {
@@ -78,7 +82,34 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
         this.startClassSelect();
       }
     },
+    // Complète la partie avec des bots et la lance.
+    addBots: () => {
+      if (!IS_DEV || this.phase !== "waiting") return;
+      while (this.state.players.size < MATCH_PLAYERS) this.addBot();
+      this.startClassSelect();
+    },
   };
+
+  // Les bots n'ont pas de connexion : ils n'existent que dans l'état et le système de combat.
+  private pathfinder = new Pathfinder();
+  private bots: BotBrain[] = [];
+  private botCount = 0;
+
+  private addBot() {
+    const player = new PlayerState();
+    player.colorIndex = this.nextColorIndex();
+    player.name = `Bot ${++this.botCount}`;
+    player.isBot = true;
+    this.state.players.set(`bot-${this.botCount}`, player);
+    this.state.playerCount = this.state.players.size;
+  }
+
+  private updateBots(dt: number) {
+    for (const bot of this.bots) {
+      const visible = this.teamVisibility.get(bot.player.state.team) ?? new Set<string>();
+      bot.update(dt, { phase: this.phase, players: this.combat.players, visible });
+    }
+  }
 
   private get phase(): MatchPhase {
     return this.state.phase as MatchPhase;
@@ -120,10 +151,12 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
         if (this.countdown(dt)) this.startPreparation();
         break;
       case "preparation":
+        this.updateBots(dt);
         this.combat.tick(dt);
         if (this.countdown(dt)) this.startFight();
         break;
       case "fighting":
+        this.updateBots(dt);
         this.combat.tick(dt);
         this.checkForWinner();
         break;
@@ -158,11 +191,24 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     const teamSizes = [0, 0];
     this.state.players.forEach((p) => teamSizes[p.team]++);
 
+    // Classe tirée au hasard pour les joueurs qui n'ont pas choisi à temps.
+    this.state.players.forEach((player) => {
+      if (!player.isBot && !getClass(player.classId)) {
+        player.classId = CLASS_LIST[Math.floor(Math.random() * CLASS_LIST.length)].id;
+      }
+    });
+    // Les bots choisissent ensuite, pour compléter la composition de leur équipe.
+    this.state.players.forEach((player) => {
+      if (!player.isBot) return;
+      const teamClasses: ClassId[] = [];
+      this.state.players.forEach((p) => {
+        if (p.team === player.team && p.classId) teamClasses.push(p.classId as ClassId);
+      });
+      player.classId = pickBotClass(teamClasses);
+    });
+
     this.state.players.forEach((player, id) => {
-      // Classe tirée au hasard pour ceux qui n'ont pas choisi à temps.
-      const classDef =
-        getClass(player.classId) ?? CLASS_LIST[Math.floor(Math.random() * CLASS_LIST.length)];
-      player.classId = classDef.id;
+      const classDef = getClass(player.classId)!;
       player.hp = player.maxHp = classDef.maxHp;
       if (classDef.resource === "mana") player.mana = player.maxMana = maxResource("mana");
       else player.endurance = player.maxEndurance = maxResource("endurance");
@@ -174,7 +220,9 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       // Tourné vers le centre de l'arène.
       player.facing = Math.atan2(-zone.x, -zone.z);
 
-      this.combat.add(new PlayerRuntime(id, player, classDef));
+      const runtime = new PlayerRuntime(id, player, classDef);
+      this.combat.add(runtime);
+      if (player.isBot) this.bots.push(new BotBrain(runtime, this.combat, this.pathfinder));
     });
 
     // Pendant la préparation, chacun reste dans la zone de départ de son équipe.

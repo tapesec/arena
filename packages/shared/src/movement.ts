@@ -28,6 +28,35 @@ export function inputToDirection(input: MoveInput): { x: number; z: number } {
   return { x: x / length, z: z / length };
 }
 
+// Les 8 combinaisons de touches qui font bouger le personnage.
+const MOVING_INPUTS: MoveInput[] = [
+  { up: true, down: false, left: false, right: false },
+  { up: true, down: false, left: false, right: true },
+  { up: false, down: false, left: false, right: true },
+  { up: false, down: true, left: false, right: true },
+  { up: false, down: true, left: false, right: false },
+  { up: false, down: true, left: true, right: false },
+  { up: false, down: false, left: true, right: false },
+  { up: true, down: false, left: true, right: false },
+];
+
+// Inverse de inputToDirection : les touches qui rapprochent le plus de la direction voulue.
+// Sert aux bots, qui se déplacent avec les mêmes commandes que les joueurs.
+export function directionToInput(dir: { x: number; z: number }): MoveInput {
+  if (Math.hypot(dir.x, dir.z) < 1e-6) return NO_INPUT;
+  let best = NO_INPUT;
+  let bestDot = -Infinity;
+  for (const input of MOVING_INPUTS) {
+    const d = inputToDirection(input);
+    const dot = d.x * dir.x + d.z * dir.z;
+    if (dot > bestDot) {
+      bestDot = dot;
+      best = input;
+    }
+  }
+  return best;
+}
+
 export interface Position {
   x: number;
   z: number;
