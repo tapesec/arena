@@ -6,6 +6,7 @@ export type EffectKind =
   | "snare"
   | "immuneMez"
   | "immuneStun"
+  | "immuneRoot"
   | "evasion"
   | "rage"
   | "concentration"
@@ -26,6 +27,7 @@ export const EFFECTS: Record<EffectKind, { label: string; category: EffectCatego
   snare: { label: "Ralenti", category: "debuff" },
   immuneMez: { label: "Immunisé mez", category: "immunity" },
   immuneStun: { label: "Immunisé stun", category: "immunity" },
+  immuneRoot: { label: "Immunisé root", category: "immunity" },
   evasion: { label: "Évasion", category: "buff" },
   rage: { label: "Rage", category: "buff" },
   concentration: { label: "Concentration", category: "buff" },

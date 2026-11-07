@@ -104,7 +104,7 @@ class ArcanisteBot extends CasterBot {
   protected think() {
     const contact = this.meleeThreats(MELEE_RANGE + 0.5)[0];
     // Au contact : Concentration puis Gel, impossible à interrompre, pour s'en débarrasser.
-    if (contact && !this.isCasting && !contact.has("root") && this.isReady("concentration")) {
+    if (contact && !this.isCasting && !contact.has("immuneRoot") && this.isReady("concentration")) {
       if (this.tryUse("concentration") && this.tryUse("freeze", contact)) return;
     }
     if (this.evadeMelee()) return;
@@ -112,7 +112,7 @@ class ArcanisteBot extends CasterBot {
 
     // Un ennemi de mêlée qui approche : on l'immobilise avant qu'il arrive.
     const approaching = this.enemies().find(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("root"),
+      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneRoot"),
     );
     if (approaching && this.tryUse("freeze", approaching)) return;
 
@@ -212,12 +212,12 @@ class BardeBot extends CasterBot {
     if (this.evadeMelee()) return;
     if (this.isCasting) return;
 
-    // 1. Mez de zone sur au moins deux ennemis ni mezzés ni immunisés.
-    const mezGroup = this.bestGroup(6, (e) => !e.has("mez") && !e.has("immuneMez"));
+    // 1. Mez de zone sur au moins deux ennemis non immunisés (un ennemi mezzé est aussi immunisé).
+    const mezGroup = this.bestGroup(6, (e) => !e.has("immuneMez"));
     if (mezGroup.size >= 2 && this.tryUse("aoeMez", mezGroup.center)) return;
 
-    // 2. Root de zone sur au moins deux ennemis libres de leurs mouvements.
-    const rootGroup = this.bestGroup(6, (e) => !e.has("root") && !e.has("mez"));
+    // 2. Root de zone sur au moins deux ennemis non mezzés et non immunisés au root.
+    const rootGroup = this.bestGroup(6, (e) => !e.has("immuneRoot") && !e.has("mez"));
     if (rootGroup.size >= 2 && this.tryUse("aoeRoot", rootGroup.center)) return;
 
     // 3. Silence sur un ennemi en train d'incanter.
@@ -226,7 +226,7 @@ class BardeBot extends CasterBot {
 
     // 4. Mez ciblé sur un ennemi de mêlée qui approche.
     const approaching = this.enemies().find(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("mez") && !e.has("immuneMez"),
+      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneMez"),
     );
     if (approaching && this.tryUse("mez", approaching)) return;
 

@@ -38,7 +38,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
   - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts.
   - **Root** : la cible ne peut plus se déplacer mais peut agir. Cassé par les dégâts.
   - **Snare** : ralentissement.
-- **Immunités** : après un mez ou un stun, la cible est immunisée contre ce même type de contrôle pendant 30 s.
+- **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
 
 ## Classes
 

@@ -50,6 +50,9 @@ export interface CombatOutput {
   sendTo(playerId: string, type: string, message: unknown): void;
 }
 
+// Immunité associée à chaque type de contrôle.
+const IMMUNITY_EFFECTS: Record<CrowdControl, EffectKind> = { mez: "immuneMez", stun: "immuneStun", root: "immuneRoot" };
+
 // Effets posés par un joueur sur d'autres, qui disparaissent à sa mort ou à son départ.
 const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "guarded", "intercept"];
 
@@ -139,7 +142,7 @@ export class CombatSystem {
     // Concentration protège la prochaine incantation, puis disparaît.
     const concentration = caster.getEffect("concentration");
     caster.castProtected = !!concentration;
-    if (concentration) this.removeEffect(caster, concentration, false);
+    if (concentration) this.removeEffect(caster, concentration);
 
     caster.state.castAbility = ability.id;
     caster.state.castElapsed = 0;
@@ -337,7 +340,7 @@ export class CombatSystem {
       case "cleanse":
         for (const kind of ["mez", "stun"] as const) {
           const control = target.getEffect(kind);
-          if (control) this.removeEffect(target, control, true);
+          if (control) this.removeEffect(target, control);
         }
         this.emit({ kind: "cleanse", sourceId: caster.id, targetId: target.id, abilityId: ability.id });
         break;
@@ -372,7 +375,7 @@ export class CombatSystem {
       const guard = p.getEffect("guarded");
       if (guard?.sourceId !== guardian.id) continue;
       if (p === target) wasGuardingTarget = true;
-      this.removeEffect(p, guard, false);
+      this.removeEffect(p, guard);
     }
     if (wasGuardingTarget) {
       this.emit({ kind: "unguard", sourceId: guardian.id, targetId: target.id, abilityId });
@@ -393,7 +396,7 @@ export class CombatSystem {
     const intercept = target.getEffect("intercept");
     const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;
     if (intercept && interceptor?.alive && distance(interceptor.state, target.state) <= INTERCEPT_RANGE) {
-      this.removeEffect(target, intercept, false);
+      this.removeEffect(target, intercept);
       this.emit({ kind: "intercepted", sourceId: source.id, targetId: interceptor.id, abilityId, detail: target.id });
       target = interceptor;
     }
@@ -423,7 +426,7 @@ export class CombatSystem {
     if (state.castAbility && !target.castProtected) this.interrupt(target, "damage");
     for (const kind of ["mez", "root"] as const) {
       const control = target.getEffect(kind);
-      if (control) this.removeEffect(target, control, true);
+      if (control) this.removeEffect(target, control);
     }
   }
 
@@ -465,12 +468,15 @@ export class CombatSystem {
 
   private applyControl(source: PlayerRuntime, target: PlayerRuntime, cc: CrowdControl, duration: number, abilityId: string) {
     this.noteHostileAction(target);
-    const immune = (cc === "mez" && target.has("immuneMez")) || (cc === "stun" && target.has("immuneStun"));
-    if (immune) {
+    const immunity = IMMUNITY_EFFECTS[cc];
+    if (target.has(immunity)) {
       this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
       return;
     }
     this.addEffect(target, cc, duration, source.id);
+    // L'immunité démarre dès l'application : impossible de prolonger le contrôle en le relançant.
+    // Elle couvre la durée du contrôle, puis IMMUNITY_DURATION de répit après sa fin normale.
+    this.addEffect(target, immunity, duration + IMMUNITY_DURATION, source.id);
     if (cc !== "root" && target.state.castAbility) this.interrupt(target, "cc");
     this.emit({ kind: "cc", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
   }
@@ -481,7 +487,7 @@ export class CombatSystem {
     state.songActive = false;
     player.input = NO_INPUT;
     this.endCast(player);
-    for (const effect of [...player.effects]) this.removeEffect(player, effect, false);
+    for (const effect of [...player.effects]) this.removeEffect(player, effect);
     this.removeLinkedEffects(player);
   }
 
@@ -489,7 +495,7 @@ export class CombatSystem {
   private removeLinkedEffects(source: PlayerRuntime) {
     for (const p of this.players.values()) {
       for (const effect of [...p.effects]) {
-        if (effect.sourceId === source.id && LINKED_EFFECTS.includes(effect.kind)) this.removeEffect(p, effect, false);
+        if (effect.sourceId === source.id && LINKED_EFFECTS.includes(effect.kind)) this.removeEffect(p, effect);
       }
     }
   }
@@ -505,7 +511,7 @@ export class CombatSystem {
     for (const effect of [...player.effects]) {
       if (!Number.isFinite(effect.remaining)) continue;
       effect.remaining -= dt;
-      if (effect.remaining <= 0) this.removeEffect(player, effect, true);
+      if (effect.remaining <= 0) this.removeEffect(player, effect);
       else effect.view.remaining = effect.remaining;
     }
   }
@@ -537,7 +543,7 @@ export class CombatSystem {
   private setDerivedEffect(player: PlayerRuntime, kind: EffectKind, active: boolean) {
     const effect = player.getEffect(kind);
     if (active && !effect) this.addEffect(player, kind, Infinity, player.id);
-    if (!active && effect) this.removeEffect(player, effect, false);
+    if (!active && effect) this.removeEffect(player, effect);
   }
 
   // Un effet déjà présent est rafraîchi plutôt que cumulé.
@@ -562,8 +568,7 @@ export class CombatSystem {
     }
   }
 
-  // grantImmunity : la fin d'un mez ou d'un stun rend immunisé contre ce même contrôle.
-  private removeEffect(player: PlayerRuntime, effect: ActiveEffect, grantImmunity: boolean) {
+  private removeEffect(player: PlayerRuntime, effect: ActiveEffect) {
     player.effects = player.effects.filter((e) => e !== effect);
     const index = player.state.effects.indexOf(effect.view);
     if (index >= 0) player.state.effects.splice(index, 1);
@@ -572,8 +577,6 @@ export class CombatSystem {
       player.state.maxHp -= HP_BUFF_AMOUNT;
       player.state.hp = Math.min(player.state.hp, player.state.maxHp);
     }
-    if (grantImmunity && effect.kind === "mez") this.addEffect(player, "immuneMez", IMMUNITY_DURATION, player.id);
-    if (grantImmunity && effect.kind === "stun") this.addEffect(player, "immuneStun", IMMUNITY_DURATION, player.id);
   }
 
   // --- Utilitaires ---

@@ -273,6 +273,34 @@ describe("Lame", () => {
   });
 });
 
+describe("Immunités aux contrôles", () => {
+  it("relancer un mez sur une cible déjà mezzée échoue : on ne peut pas prolonger le contrôle", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 15, Math.PI);
+    world.cast(barde, "mez", enemy);
+    world.run(2.1);
+    assert.ok(enemy.has("mez") && enemy.has("immuneMez"));
+    world.cast(barde, "mez", enemy);
+    world.run(2.1);
+    assert.equal(world.eventsOf("immune").length, 1);
+    // Appliqué à t = 2 s, le mez se termine à t = 22 s, sans avoir été rafraîchi par le second.
+    world.run(18);
+    assert.ok(!enemy.has("mez"));
+  });
+
+  it("le root rend immunisé au root pendant sa durée plus 30 s", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 15, Math.PI);
+    world.cast(arcaniste, "freeze", enemy);
+    world.run(1.6);
+    assert.ok(enemy.has("root") && enemy.has("immuneRoot"));
+    world.run(10 + 25);
+    assert.ok(!enemy.has("root") && enemy.has("immuneRoot"));
+    world.run(6);
+    assert.ok(!enemy.has("immuneRoot"));
+  });
+});
+
 describe("Règles communes", () => {
   it("le root empêche de bouger mais pas d'incanter, et casse aux dégâts", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);

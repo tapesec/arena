@@ -20,7 +20,8 @@ export const TAB_TARGET_RANGE = 40;
 
 // --- Règles de combat (valeurs du GDD, provisoires) ---
 
-// Immunité contre un même type de contrôle après la fin d'un mez ou d'un stun.
+// Répit après la fin normale d'un contrôle (mez, stun, root) : l'immunité démarre dès l'application
+// et dure le temps du contrôle plus cette valeur.
 export const IMMUNITY_DURATION = 30;
 
 // Gardien
