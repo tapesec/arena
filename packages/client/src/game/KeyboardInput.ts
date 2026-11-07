@@ -18,7 +18,6 @@ export type KeyAction =
   | "clearTarget"
   | "targetSelf"
   | "toggleAttack"
-  | "respawn"
   | "faceTarget"
   | `slot${number}`;
 
@@ -26,7 +25,6 @@ const ACTION_BINDINGS: Record<string, KeyAction> = {
   Tab: "nextTarget",
   Escape: "clearTarget",
   KeyF: "toggleAttack",
-  KeyR: "respawn",
   KeyE: "faceTarget",
   F1: "targetSelf",
   // Rangée des chiffres (touches &, é, "… sur un clavier AZERTY) : barre de compétences.

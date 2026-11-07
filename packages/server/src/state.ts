@@ -46,7 +46,16 @@ export type PlayerState = SchemaType<typeof PlayerState>;
 
 export const ArenaState = schema(
   {
-    players: t.map(PlayerState),
+    // Phase de la partie (voir MatchPhase) et secondes restantes avant la suivante.
+    phase: t.string().default("waiting"),
+    phaseTimeLeft: t.float32().default(0),
+    // Équipe gagnante une fois la partie terminée (-1 tant qu'il n'y en a pas).
+    winner: t.int8().default(-1),
+    // Nombre de joueurs dans la partie et nombre attendu pour la lancer.
+    playerCount: t.uint8().default(0),
+    matchSize: t.uint8().default(0),
+    // Filtrée par client (StateView) : chacun ne reçoit que les joueurs que son équipe voit.
+    players: t.map(PlayerState).view(),
   },
   "ArenaState",
 );

@@ -38,13 +38,15 @@ import {
   type InterruptEvent,
   type InterruptReason,
   type MoveInput,
+  type Position,
 } from "@arena/shared";
 import type { ActiveEffect, PlayerRuntime } from "./PlayerRuntime";
 import { EffectState } from "./state";
 
 // Ce dont le système de combat a besoin pour communiquer avec les clients.
 export interface CombatOutput {
-  broadcast(type: string, message: unknown): void;
+  // involved : joueurs concernés, pour ne prévenir que ceux qui peuvent voir l'événement.
+  broadcast(type: string, message: unknown, involved: string[]): void;
   sendTo(playerId: string, type: string, message: unknown): void;
 }
 
@@ -54,6 +56,8 @@ const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "guarded", "inte
 // Toutes les règles de combat. La salle Colyseus ne fait que lui transmettre les commandes.
 export class CombatSystem {
   readonly players = new Map<string, PlayerRuntime>();
+  // Limite de déplacement optionnelle (zone de départ pendant la préparation).
+  confine: ((player: PlayerRuntime, pos: Position) => Position) | null = null;
   // Temps écoulé depuis le début de la partie, en secondes.
   private time = 0;
 
@@ -98,15 +102,6 @@ export class CombatSystem {
     if (player?.alive && !player.incapacitated && target) {
       player.state.facing = facingTowards(player.state, target.state);
     }
-  }
-
-  // Outil de test : revenir à la vie avec toutes ses ressources.
-  respawn(id: string) {
-    const player = this.players.get(id);
-    if (!player || player.alive) return;
-    player.state.hp = player.state.maxHp;
-    player.state.mana = player.state.maxMana;
-    player.state.endurance = player.state.maxEndurance;
   }
 
   useAbility(casterId: string, abilityId: string) {
@@ -161,7 +156,8 @@ export class CombatSystem {
     const snare = player.getEffect("snare");
     const speed = (player.has("speed") ? SONG_SPEED_MULTIPLIER : 1) * (snare ? 1 - snare.value : 1);
     const state = player.state;
-    const next = stepMovement(state, player.input, dt, speed);
+    let next = stepMovement(state, player.input, dt, speed);
+    if (this.confine) next = this.confine(player, next);
     if (next.x === state.x && next.z === state.z) return;
 
     state.facing = Math.atan2(next.x - state.x, next.z - state.z);
@@ -568,7 +564,7 @@ export class CombatSystem {
   private interrupt(caster: PlayerRuntime, reason: InterruptReason) {
     const event: InterruptEvent = { casterId: caster.id, abilityId: caster.state.castAbility, reason };
     this.endCast(caster);
-    this.out.broadcast("interrupt", event);
+    this.out.broadcast("interrupt", event, [caster.id]);
   }
 
   private endCast(caster: PlayerRuntime) {
@@ -584,7 +580,7 @@ export class CombatSystem {
   }
 
   private emit(event: CombatEvent) {
-    this.out.broadcast("combat", event);
+    this.out.broadcast("combat", event, [event.sourceId, event.targetId]);
   }
 
   private sendError(player: PlayerRuntime, message: string) {

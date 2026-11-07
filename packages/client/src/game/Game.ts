@@ -8,6 +8,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
+import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -19,6 +20,7 @@ import {
   OBSTACLES,
   OBSTACLE_HEIGHT,
   PERMANENT,
+  START_ZONES,
   TAB_TARGET_RANGE,
   distance,
   getAbility,
@@ -31,8 +33,17 @@ import {
   type CooldownEvent,
   type EffectKind,
   type InterruptEvent,
+  type MatchPhase,
 } from "@arena/shared";
-import { useHudStore, type CastFrame, type EffectFrame, type SelfFrame, type TargetFrame } from "../store";
+import {
+  useHudStore,
+  type CastFrame,
+  type EffectFrame,
+  type MatchFrame,
+  type SelfFrame,
+  type TargetFrame,
+  type TeammateFrame,
+} from "../store";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
@@ -81,6 +92,12 @@ export class Game {
     );
     this.scene.onPointerObservable.add((info) => this.handlePointer(info));
 
+    // Commandes accessibles depuis l'interface React (choix de classe, lancement anticipé).
+    useHudStore.getState().setActions({
+      selectClass: (classId) => this.room.send("selectClass", { classId }),
+      forceStart: () => this.room.send("forceStart"),
+    });
+
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
     if (import.meta.env.DEV) (window as unknown as { scene: Scene }).scene = this.scene;
 
@@ -89,6 +106,7 @@ export class Game {
   }
 
   dispose() {
+    useHudStore.getState().setActions(null);
     window.removeEventListener("resize", this.handleResize);
     this.keyboard.dispose();
     this.room.leave();
@@ -124,6 +142,18 @@ export class Game {
       box.material = obstacleMat;
       box.isPickable = false;
     }
+
+    // Zones de départ, à la couleur de chaque équipe.
+    START_ZONES.forEach((zone, team) => {
+      const disc = CreateDisc(`startZone${team}`, { radius: zone.radius, tessellation: 64 }, this.scene);
+      disc.rotation.x = Math.PI / 2;
+      disc.position.set(zone.x, 0.02, zone.z);
+      const material = new StandardMaterial(`startZoneMat${team}`, this.scene);
+      material.diffuseColor = team === 0 ? new Color3(0.2, 0.35, 0.7) : new Color3(0.7, 0.2, 0.2);
+      material.alpha = 0.35;
+      disc.material = material;
+      disc.isPickable = false;
+    });
   }
 
   // Anneau rouge affiché sous la cible actuelle.
@@ -143,7 +173,6 @@ export class Game {
     callbacks.onAdd("players", (player, sessionId) => {
       const key = sessionId as string;
       this.players.set(key, new PlayerVisual(this.scene, player as PlayerView, key, key === this.room.sessionId));
-      useHudStore.getState().setPlayerCount(this.players.size);
     });
 
     callbacks.onRemove("players", (_player, sessionId) => {
@@ -151,7 +180,6 @@ export class Game {
       this.players.get(key)?.dispose();
       this.players.delete(key);
       if (this.targetId === key) this.setTarget(null);
-      useHudStore.getState().setPlayerCount(this.players.size);
     });
   }
 
@@ -192,9 +220,6 @@ export class Game {
         break;
       case "faceTarget":
         this.room.send("faceTarget");
-        break;
-      case "respawn":
-        if (import.meta.env.DEV) this.room.send("respawn");
         break;
     }
   }
@@ -284,11 +309,35 @@ export class Game {
           }
         : null;
 
+    const state = this.room.state as {
+      phase: MatchPhase;
+      phaseTimeLeft: number;
+      playerCount: number;
+      matchSize: number;
+      winner: number;
+    };
+    const matchFrame: MatchFrame = {
+      phase: state.phase,
+      timeLeft: Math.ceil(state.phaseTimeLeft),
+      playerCount: state.playerCount,
+      matchSize: state.matchSize,
+      team: self?.state.team ?? 0,
+      winner: state.winner,
+    };
+    // Le serveur ne nous envoie que nos coéquipiers pendant le choix des classes.
+    const teammates: TeammateFrame[] = self
+      ? [...this.players.values()]
+          .filter((p) => p.state.team === self.state.team)
+          .map((p) => ({ name: p.state.name, classId: p.state.classId as ClassId | "", isSelf: p === self }))
+      : [];
+
     // On ne prévient React que si quelque chose a réellement changé.
-    const snapshot = JSON.stringify([selfFrame, targetFrame]);
+    const snapshot = JSON.stringify([selfFrame, targetFrame, matchFrame, teammates]);
     if (snapshot === this.lastHudSnapshot) return;
     this.lastHudSnapshot = snapshot;
-    useHudStore.getState().setFrames(selfFrame, targetFrame);
+    const hud = useHudStore.getState();
+    hud.setFrames(selfFrame, targetFrame);
+    hud.setMatch(matchFrame, teammates);
   }
 }
 

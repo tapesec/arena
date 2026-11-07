@@ -4,4 +4,5 @@ export * from "./classes";
 export * from "./combat";
 export * from "./constants";
 export * from "./effects";
+export * from "./match";
 export * from "./movement";

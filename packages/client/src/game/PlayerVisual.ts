@@ -42,6 +42,12 @@ const DEAD_COLOR = new Color3(0.3, 0.3, 0.3);
 // Teinte de base par équipe : bleu ou rouge, légèrement variée d'un joueur à l'autre.
 const TEAM_HUES = [215, 5];
 
+// Couleur d'un joueur : celle de son équipe, légèrement variée d'un joueur à l'autre.
+function teamColor(team: number, colorIndex: number): Color3 {
+  const hue = TEAM_HUES[team] + ((colorIndex % 4) - 1.5) * 8;
+  return Color3.FromHSV((hue + 360) % 360, 0.65, 0.9);
+}
+
 // Lueur appliquée au personnage selon le contrôle subi, du plus au moins grave.
 const CONTROL_GLOW: [EffectKind, Color3][] = [
   ["stun", new Color3(0.6, 0.55, 0)],
@@ -58,6 +64,7 @@ export class PlayerVisual {
   private material: StandardMaterial;
   private aliveColor: Color3;
   private wasAlive = true;
+  private team: number;
   private currentGlow: Color3 | null = null;
 
   constructor(
@@ -69,8 +76,8 @@ export class PlayerVisual {
     this.root = new TransformNode(`player-${sessionId}`, scene);
     this.root.position.set(state.x, 0, state.z);
 
-    const hue = TEAM_HUES[state.team] + ((state.colorIndex % 4) - 1.5) * 8;
-    this.aliveColor = Color3.FromHSV((hue + 360) % 360, 0.65, 0.9);
+    this.team = state.team;
+    this.aliveColor = teamColor(state.team, state.colorIndex);
     this.material = new StandardMaterial("playerMat", scene);
     this.material.diffuseColor = this.aliveColor;
 
@@ -113,6 +120,13 @@ export class PlayerVisual {
     this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
     this.root.position.z += (this.state.z - this.root.position.z) * smoothing;
     this.root.rotation.y = this.state.facing;
+
+    // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur.
+    if (this.state.team !== this.team) {
+      this.team = this.state.team;
+      this.aliveColor = teamColor(this.team, this.state.colorIndex);
+      if (this.isAlive) this.material.diffuseColor = this.aliveColor;
+    }
 
     if (this.isAlive !== this.wasAlive) {
       this.wasAlive = this.isAlive;

@@ -1,28 +1,121 @@
 import { useEffect, useState } from "react";
-import { CLASS_LIST, EFFECTS, getAbility, getClass } from "@arena/shared";
+import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/shared";
 import { GameCanvas } from "./GameCanvas";
 import { useHudStore, type CastFrame, type EffectFrame } from "./store";
 
 export function App() {
-  const selectedClass = useHudStore((s) => s.selectedClass);
-  if (!selectedClass) return <ClassPicker />;
+  const inGame = useHudStore((s) => s.inGame);
+  const gameKey = useHudStore((s) => s.gameKey);
+  if (!inGame) return <HomeScreen />;
   return (
     <>
-      <GameCanvas classId={selectedClass} />
+      {/* La clé change à chaque nouvelle partie : le canvas est recréé et le jeu se reconnecte. */}
+      <GameCanvas key={gameKey} />
       <Hud />
     </>
   );
 }
 
-// Choix provisoire de la classe avant de rejoindre l'arène (la vraie sélection viendra à l'étape 6).
-function ClassPicker() {
-  const selectClass = useHudStore((s) => s.selectClass);
+function HomeScreen() {
+  const joinGame = useHudStore((s) => s.joinGame);
   return (
-    <div className="class-picker">
+    <div className="screen">
+      <h1>Arena</h1>
+      <p className="screen-text">Combat de groupe 8 contre 8</p>
+      <button className="primary-button" onClick={joinGame}>
+        Rejoindre une partie
+      </button>
+    </div>
+  );
+}
+
+function Hud() {
+  const status = useHudStore((s) => s.status);
+  const error = useHudStore((s) => s.error);
+  const phase = useHudStore((s) => s.match?.phase);
+
+  if (status === "connecting") return <div className="screen">Connexion au serveur…</div>;
+  if (status === "error") return <ErrorScreen message={error} />;
+  if (!phase || phase === "waiting") return <WaitingScreen />;
+  if (phase === "classSelect") return <ClassSelectScreen />;
+
+  return (
+    <>
+      <div className="hud-frames">
+        <SelfPanel />
+        <TargetPanel />
+      </div>
+      <PhaseBanner />
+      <FlashMessage />
+      <div className="hud-bottom">
+        <SelfCastBar />
+        <Hotbar />
+      </div>
+      <CombatLog />
+      <HelpPanel />
+      {phase === "ended" && <EndScreen />}
+    </>
+  );
+}
+
+function ErrorScreen({ message }: { message: string | null }) {
+  const leaveGame = useHudStore((s) => s.leaveGame);
+  return (
+    <div className="screen">
+      <p className="hud-error">Connexion impossible : {message}</p>
+      <button className="primary-button" onClick={leaveGame}>
+        Retour
+      </button>
+    </div>
+  );
+}
+
+// --- Avant le combat ---
+
+function WaitingScreen() {
+  const match = useHudStore((s) => s.match);
+  const actions = useHudStore((s) => s.actions);
+  const leaveGame = useHudStore((s) => s.leaveGame);
+  const count = match?.playerCount ?? 0;
+  return (
+    <div className="screen">
+      <h1>En attente de joueurs</h1>
+      <p className="screen-text">
+        {count} / {match?.matchSize ?? "?"} joueurs
+      </p>
+      <p className="screen-hint">La partie commence dès qu'elle est complète.</p>
+      {import.meta.env.DEV && (
+        <button className="secondary-button" disabled={count < 2} onClick={() => actions?.forceStart()}>
+          Lancer maintenant (test)
+        </button>
+      )}
+      <button className="link-button" onClick={leaveGame}>
+        Quitter la file
+      </button>
+    </div>
+  );
+}
+
+function ClassSelectScreen() {
+  const match = useHudStore((s) => s.match);
+  const teammates = useHudStore((s) => s.teammates);
+  const actions = useHudStore((s) => s.actions);
+  const myClass = teammates.find((t) => t.isSelf)?.classId ?? "";
+  const team = match?.team ?? 0;
+
+  return (
+    <div className="screen">
       <h1>Choisissez votre classe</h1>
+      <p className="screen-text">
+        Équipe <span className={`team-name team-${team}`}>{TEAM_NAMES[team]}</span> · {match?.timeLeft ?? 0} s
+      </p>
       <div className="class-list">
         {CLASS_LIST.map((c) => (
-          <button key={c.id} className="class-card" onClick={() => selectClass(c.id)}>
+          <button
+            key={c.id}
+            className={`class-card ${myClass === c.id ? "class-card-selected" : ""}`}
+            onClick={() => actions?.selectClass(c.id)}
+          >
             <span className="class-name">{c.name}</span>
             <span className="class-role">{c.role}</span>
             <span className="class-stats">
@@ -32,32 +125,49 @@ function ClassPicker() {
           </button>
         ))}
       </div>
+      <div className="roster">
+        <h2>Votre équipe</h2>
+        {teammates.map((t, i) => (
+          <div key={i} className="roster-line">
+            {t.name}
+            {t.isSelf && " (vous)"} : <strong>{t.classId ? getClass(t.classId)?.name : "…"}</strong>
+          </div>
+        ))}
+        <p className="screen-hint">La composition adverse reste cachée jusqu'à la rencontre.</p>
+      </div>
     </div>
   );
 }
 
-function Hud() {
-  const status = useHudStore((s) => s.status);
-  const error = useHudStore((s) => s.error);
+// --- Pendant le combat ---
 
-  if (status === "connecting") return <div className="hud-panel hud-status">Connexion au serveur…</div>;
-  if (status === "error") return <div className="hud-panel hud-status hud-error">Connexion impossible : {error}</div>;
-
+function PhaseBanner() {
+  const match = useHudStore((s) => s.match);
+  if (match?.phase !== "preparation") return null;
   return (
-    <>
-      <div className="hud-frames">
-        <SelfPanel />
-        <TargetPanel />
-      </div>
-      <FlashMessage />
-      <div className="hud-bottom">
-        <SelfCastBar />
-        <Hotbar />
-      </div>
-      <CombatLog />
-      <HelpPanel />
-      <ChangeClassButton />
-    </>
+    <div className="phase-banner">
+      Préparation : le combat commence dans <strong>{match.timeLeft} s</strong>
+    </div>
+  );
+}
+
+function EndScreen() {
+  const match = useHudStore((s) => s.match);
+  const joinGame = useHudStore((s) => s.joinGame);
+  const leaveGame = useHudStore((s) => s.leaveGame);
+  if (!match) return null;
+  const title = match.winner === -1 ? "Égalité" : match.winner === match.team ? "Victoire !" : "Défaite";
+  return (
+    <div className="end-overlay">
+      <h1>{title}</h1>
+      {match.winner !== -1 && <p className="screen-text">Les {TEAM_NAMES[match.winner]} remportent la partie.</p>}
+      <button className="primary-button" onClick={joinGame}>
+        Nouvelle partie
+      </button>
+      <button className="link-button" onClick={leaveGame}>
+        Retour à l'accueil
+      </button>
+    </div>
   );
 }
 
@@ -212,26 +322,14 @@ function CombatLog() {
   );
 }
 
-function ChangeClassButton() {
-  const selectClass = useHudStore((s) => s.selectClass);
-  return (
-    <button className="change-class" onClick={() => selectClass(null)}>
-      Changer de classe
-    </button>
-  );
-}
-
 function HelpPanel() {
-  const playerCount = useHudStore((s) => s.playerCount);
   return (
     <div className="hud-panel help">
-      <div>Joueurs connectés : {playerCount}</div>
       <div>ZQSD : se déplacer</div>
       <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même</div>
       <div>Échap : annuler la cible · E : faire face</div>
       <div>F : activer/couper l'attaque</div>
       <div>1 à 7 : compétences</div>
-      {import.meta.env.DEV && <div>R : revivre (test)</div>}
     </div>
   );
 }
