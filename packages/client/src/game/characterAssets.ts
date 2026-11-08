@@ -10,6 +10,9 @@ import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLo
 // Modèles 3D produits par scripts/build-assets.mjs, servis depuis public/models/.
 const MODELS_URL = "/models/";
 
+// Agrandissement des personnages (le modèle d'origine mesure 1,84 m).
+const CHARACTER_SCALE = 1.2;
+
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
 
@@ -118,6 +121,8 @@ export class CharacterAssets {
     const entries = character.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
     const root = entries.rootNodes[0] as TransformNode;
     root.parent = parent;
+    // Agrandi pour la lisibilité vue de haut ; purement visuel, les portées et collisions ne changent pas.
+    root.scaling.scaleInPlace(CHARACTER_SCALE);
 
     const bones = new Map<string, TransformNode>();
     for (const node of root.getDescendants(false)) if (node instanceof TransformNode) bones.set(node.name, node);

@@ -8,9 +8,10 @@ import { CLASS_BADGES } from "./classBadges";
 const TEXT_DURATION = 1.2;
 const TEXT_RISE = 45;
 // Hauteur au-dessus des pieds où apparaissent textes et indicateurs.
-const BADGE_HEIGHT = 2.45;
-const INDICATOR_HEIGHT = 2.95;
-const TEXT_HEIGHT = 3.2;
+// Au-dessus de la tête des personnages agrandis (2,2 m).
+const BADGE_HEIGHT = 2.6;
+const INDICATOR_HEIGHT = 3.1;
+const TEXT_HEIGHT = 3.35;
 // Au-delà, les textes les plus anciens disparaissent (évite d'encombrer l'écran en 8v8).
 const MAX_TEXTS = 60;
 

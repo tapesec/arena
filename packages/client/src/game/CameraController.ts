@@ -8,8 +8,9 @@ const BETA = 0.95;
 // Inclinaison réglable à la souris : de presque à la verticale à presque rasante.
 const MIN_BETA = 0.3;
 const MAX_BETA = 1.35;
-const DEFAULT_RADIUS = 32;
-const MIN_RADIUS = 16;
+// Distance de la caméra : assez près pour voir les personnages, la molette permet de reculer ou d'approcher.
+const DEFAULT_RADIUS = 26;
+const MIN_RADIUS = 10;
 const MAX_RADIUS = 55;
 
 // Radians de rotation par pixel de déplacement de la souris.
