@@ -12,6 +12,7 @@ import { getAbility } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
+import { StatusFx } from "./statusFx";
 
 // Effets à particules par compétence : pendant le vol d'un projectile (trail), à son arrivée ou sur la cible
 // (impact, à hauteur du corps ; ground, aux pieds), et sur la zone d'effet (area, avec son rayon).
@@ -62,10 +63,13 @@ export class SpellEffects {
   private effects: TransientEffect[] = [];
   private guardLinks = new Map<string, LinesMesh>();
   private particles: ParticleFactory;
+  // États qui durent (mez, stun, root, bulle), mis à jour à chaque image par le jeu.
+  readonly statuses: StatusFx;
 
   constructor(private scene: Scene) {
     this.particles = new ParticleFactory(scene);
     this.particles.prewarm(P.RECIPES);
+    this.statuses = new StatusFx(scene, this.particles);
   }
 
   // caster et target : les ancres des personnages (absentes si hors de vue).
@@ -149,6 +153,7 @@ export class SpellEffects {
   dispose() {
     for (const effect of this.effects) effect.mesh.dispose(false, true);
     for (const line of this.guardLinks.values()) line.dispose();
+    this.statuses.dispose();
     this.particles.dispose();
     this.effects = [];
     this.guardLinks.clear();

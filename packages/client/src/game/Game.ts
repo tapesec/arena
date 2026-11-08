@@ -447,7 +447,8 @@ export class Game {
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
     for (const player of this.players.values()) {
       player.update(smoothing);
-      const control = !player.isAlive ? null : player.hasEffect("stun") ? "stun" : player.hasEffect("mez") ? "mez" : null;
+      // Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez garde ses « Zzz ».
+      const control = player.isAlive && player.hasEffect("mez") ? "mez" : null;
       this.overlay.setIndicator(player.sessionId, player.root, control);
       const classId = player.state.classId as ClassId | "";
       const enemy = !!this.self && player.state.team !== this.self.state.team;
@@ -459,6 +460,7 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
+    this.spellEffects.statuses.update(dt, this.players.values());
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
     const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };

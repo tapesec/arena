@@ -455,7 +455,51 @@ export const healFlash: Recipe = (fx, at) => {
   return s;
 };
 
+// ——— États qui durent ———
+
+// Mez : volutes violettes qui flottent autour de la tête.
+export const mezHalo: Recipe = (fx, at) => {
+  const s = fx.create("mezHalo", 80, at, "glow");
+  if (!s) return null;
+  sphereBurst(s, 0.45);
+  s.emitRate = 45;
+  s.minLifeTime = 0.8;
+  s.maxLifeTime = 1.3;
+  s.minSize = 0.15;
+  s.maxSize = 0.35;
+  s.minEmitPower = 0.05;
+  s.maxEmitPower = 0.25;
+  s.gravity = new Vector3(0, 0.4, 0);
+  gradient(s, [0, rgba("#c080ff", 0)], [0.3, rgba("#a050ff", 0.5)], [1, rgba("#4010a0", 0)]);
+  s.start();
+  return s;
+};
+
+// Root : brume froide au ras du sol, autour des pieds.
+export const frostMist: Recipe = (fx, at) => {
+  const s = fx.create("frostMist", 60, at, "glow", true);
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 0.3 + Math.random() * 0.5;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, 0.1, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, 1, 0);
+  s.emitRate = 22;
+  s.minLifeTime = 0.8;
+  s.maxLifeTime = 1.4;
+  s.minSize = 0.3;
+  s.maxSize = 0.6;
+  s.minEmitPower = 0.1;
+  s.maxEmitPower = 0.3;
+  gradient(s, [0, rgba("#a0d8ff", 0)], [0.3, rgba("#80c0ff", 0.25)], [1, rgba("#4080d0", 0)]);
+  s.start();
+  return s;
+};
+
 export const RECIPES: Recipe[] = [
+  mezHalo,
+  frostMist,
   fireTrail,
   smokeTrail,
   fireBurst,
