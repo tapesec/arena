@@ -145,3 +145,14 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes cherchent le mez de zone, puis le root de zone, puis le silence. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
 - **Erreur humaine** : un ennemi qui apparaît n'est remarqué qu'après 0,3 à 0,8 s. Une décision sur sept environ est sautée (hésitation), ce qui retarde aussi soins, fuites et interruptions. En changeant de cible, un bot prend parfois (15 %) un ennemi au hasard.
 - Pas de niveau de difficulté pour le moment.
+
+## Assets
+- **Source** : packs Quaternius, licence CC0 (libre, même commercialement). Tous partagent le même squelette humanoïde (65 os), donc toutes les animations vont sur tous les personnages.
+  - Modular Character Outfits – Fantasy (version Source) : 5 styles de tenue (chevalier, noble, mage, rôdeur, paysan), homme et femme, 3 variantes de couleur.
+  - Universal Base Characters (gratuit) : têtes, corps, coiffures.
+  - Universal Animation Library 1 (gratuite) et 2 (Source).
+  - Armes : packs gratuits (épée, bouclier, dagues, luth ; bâtons en FBX, à convertir).
+- **Chaîne de production** : `scripts/import-assets.sh` extrait des archives téléchargées les fichiers utiles vers `assets-source/` (non versionné, ~730 Mo). `node scripts/build-assets.mjs` produit les modèles du jeu dans `packages/client/public/models/` : textures ramenées à 1024 px en WebP, animations triées et sans maillage (~4 Mo au total).
+- **Tenues par classe** (proposition) : Gardien en chevalier, Lame en rôdeur, Arcaniste en mage, Prêtre en noble, Barde en paysan ou chevalier en tissu.
+- **Animations** : au repos, course avant (vitesse de lecture calée sur la vitesse réelle), recul (course jouée à l'envers), pas de côté (marche latérale accélérée, les pieds glissent un peu), coups d'auto-attaque à tour de rôle, compétences, incantation, mort. Les packs n'ont pas de course latérale ni arrière ; la bibliothèque 1 en version Source en a.
+- Fait : le Gardien. Les autres classes restent en capsule pour l'instant.

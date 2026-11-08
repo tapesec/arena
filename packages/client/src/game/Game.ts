@@ -61,6 +61,7 @@ import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
+import { CharacterAssets } from "./characterAssets";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
 // Textes flottants des événements de combat.
@@ -86,6 +87,9 @@ const YAW_RESEND_THRESHOLD = 0.02;
 // Vitesse de la caméra libre en mode spectateur, en mètres par seconde.
 const SPECTATOR_SPEED = 18;
 
+// Issues possibles d'un coup d'auto-attaque (le coup est porté, qu'il touche ou non).
+const SWING_EVENTS = new Set<CombatEvent["kind"]>(["damage", "blocked", "evaded", "absorbed", "intercepted"]);
+
 export class Game {
   private engine: Engine;
   private scene: Scene;
@@ -102,6 +106,7 @@ export class Game {
   // Point suivi par la caméra en mode spectateur (null quand on suit son personnage).
   private spectatorFocus: Vector3 | null = null;
   private players = new Map<string, PlayerVisual>();
+  private characterAssets: CharacterAssets;
   private targetId: string | null = null;
   private targetMarker!: Mesh;
   private lastHudRefresh = 0;
@@ -121,6 +126,8 @@ export class Game {
     });
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.spellEffects = new SpellEffects(this.scene);
+    this.characterAssets = new CharacterAssets(this.scene);
+    this.characterAssets.preload();
     this.fog = new FogOfWar(this.scene);
     this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
 
@@ -281,7 +288,10 @@ export class Game {
 
     callbacks.onAdd("players", (player, sessionId) => {
       const key = sessionId as string;
-      this.players.set(key, new PlayerVisual(this.scene, player as PlayerView, key, key === this.room.sessionId));
+      this.players.set(
+        key,
+        new PlayerVisual(this.scene, player as PlayerView, key, key === this.room.sessionId, this.characterAssets),
+      );
     });
 
     callbacks.onRemove("players", (_player, sessionId) => {
@@ -300,6 +310,10 @@ export class Game {
       for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
       this.showCombatText(event);
       this.gameAudio.onCombat(event, this.players.get(event.targetId));
+      // Auto-attaque (sans compétence) : le personnage qui frappe joue un coup.
+      if (!event.abilityId && SWING_EVENTS.has(event.kind)) {
+        this.players.get(event.sourceId)?.playAttack();
+      }
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       hud.pushLog(formatInterrupt(event, nameOf));
@@ -308,6 +322,7 @@ export class Game {
       if (caster) this.overlay.addText(caster.root, "Interrompu", "info");
     });
     this.room.onMessage("ability", (event: AbilityUsedEvent) => {
+      this.players.get(event.casterId)?.playAbility(event.abilityId);
       this.spellEffects.play(event.abilityId, this.players.get(event.casterId)?.root, this.players.get(event.targetId)?.root);
       this.gameAudio.onAbility(event.abilityId, this.players.get(event.casterId), this.players.get(event.targetId));
     });

@@ -12,6 +12,10 @@
     "dev:server:duo": "MATCH_SIZE=2 npm run dev -w @arena/server"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "sharp": "^0.35.5",
     "typescript": "^5.9.3"
   }
 }
