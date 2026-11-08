@@ -74,7 +74,7 @@ Gros dégâts à distance, à condition d'être protégé.
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
 | Trait de feu | 250 dégâts sur une cible. | 2,5 s | 80 mana | — |
-| Déflagration | 150 dégâts dans une zone de 5 m de rayon. | 3,5 s | 150 mana | — |
+| Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 5 m (pas les alliés), 350 dégâts au centre, décroissant jusqu'à 100 au bord. | 2,5 s | 150 mana | — |
 | Gel | Root de 10 s. | 1,5 s | 60 mana | — |
 | Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 3 min |
 | Bulle | Bloque un coup de mêlée. Se reforme 10 s après avoir été consommée. | Passif | — | 10 s |
@@ -131,7 +131,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Incantation** : bouger interrompt l'incantation, et on ne peut pas commencer à incanter en bougeant (comme dans DAoC).
 - **Orientation** : pour attaquer ou lancer un sort offensif, la cible doit être dans un cône de 180° devant soi.
 - **Positions** (Lame) : devant = ±60° face à la cible, dans le dos = ±60° derrière, flanc = entre les deux.
-- **Zones d'effet** : Déflagration, Mez de zone et Root de zone sont centrés sur la cible (et non sur un point du sol choisi à la souris).
+- **Zones d'effet** : Mez de zone et Root de zone sont centrés sur la cible (et non sur un point du sol choisi à la souris) ; Déflagration est centrée sur le lanceur.
 - **Attaque automatique** : Gardien 55 dégâts / 2 s, Lame 70 / 2 s, Arcaniste, Prêtre et Barde 30 / 2,5 s.
 - **Critiques** : 10 % de chances en mêlée, dégâts × 1,5 (la Rage rend tous les coups critiques).
 - **Interception** : dure 10 s ou jusqu'au premier coup, le Gardien doit être à 4 m maximum de l'allié.

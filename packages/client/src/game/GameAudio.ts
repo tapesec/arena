@@ -9,7 +9,7 @@ import { PROJECTILE_TRAVEL_TIME } from "./spellFx";
 // Sons d'une compétence : au lancement (sur le lanceur) et à l'arrivée (sur la cible).
 const ABILITY_SOUNDS: Record<string, { cast?: SoundId; impact?: SoundId }> = {
   firebolt: { cast: "fireLaunch", impact: "fireImpact" },
-  blast: { cast: "fireLaunch", impact: "fireImpact" },
+  blast: { cast: "fireImpact" },
   freeze: { impact: "frost" },
   aoeRoot: { impact: "frost" },
   mez: { impact: "arcane" },

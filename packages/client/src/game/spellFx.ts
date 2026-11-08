@@ -29,7 +29,7 @@ export const ABILITY_FX: Record<string, AbilityFx> = {
   shieldBash: { color: HOLY, shape: "melee" },
   // Arcaniste
   firebolt: { color: FIRE, shape: "projectile" },
-  blast: { color: FIRE, shape: "projectile", area: true },
+  blast: { color: FIRE, shape: "pulse", area: true },
   freeze: { color: FROST, shape: "projectile" },
   concentration: { color: ARCANE, shape: "pulse" },
   // Prêtre

@@ -99,9 +99,19 @@ abstract class CasterBot extends BotBrain {
   }
 }
 
-// Arcaniste : gros dégâts à distance ; Gel sur les ennemis de mêlée qui approchent.
+// Distance en deçà de laquelle un ennemi prend assez de dégâts de Déflagration pour qu'elle vaille le coup.
+const BLAST_REACH = 4;
+
+// Arcaniste : gros dégâts à distance ; Gel sur les ennemis de mêlée qui approchent ;
+// Déflagration quand plusieurs ennemis sont collés à lui.
 class ArcanisteBot extends CasterBot {
   protected think() {
+    // Plusieurs ennemis tout près : Déflagration, protégée par Concentration si elle est prête.
+    const close = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH).length;
+    if (close >= 2 && !this.isCasting) {
+      if (this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
+      if (this.tryUse("blast")) return;
+    }
     const contact = this.meleeThreats(MELEE_RANGE + 0.5)[0];
     // Au contact : Concentration puis Gel, impossible à interrompre, pour s'en débarrasser.
     if (contact && !this.isCasting && !contact.has("immuneRoot") && this.isReady("concentration")) {
@@ -120,8 +130,6 @@ class ArcanisteBot extends CasterBot {
     if (!target) return this.advance();
     if (!this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
 
-    const grouped = this.enemies().filter((e) => distance(e.state, target.state) <= 5).length >= 2;
-    if (grouped && this.tryUse("blast", target)) return;
     this.tryUse("firebolt", target);
   }
 }

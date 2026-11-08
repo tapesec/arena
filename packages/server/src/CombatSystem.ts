@@ -306,7 +306,7 @@ export class CombatSystem {
 
   // Détermine la cible de la compétence selon son type.
   private pickTarget(caster: PlayerRuntime, ability: AbilityDef): string | null {
-    if (ability.target === "self") return caster.id;
+    if (ability.target === "self" || ability.target === "enemiesAround") return caster.id;
     const current = caster.targetId ? this.players.get(caster.targetId) : undefined;
     if (ability.target === "ally") {
       // Sans allié vivant ciblé, un soin ou un buff s'applique au lanceur.
@@ -319,7 +319,7 @@ export class CombatSystem {
   private validateTarget(caster: PlayerRuntime, ability: AbilityDef, targetId: string): string | null {
     const target = this.players.get(targetId);
     if (!target) return "Cible introuvable";
-    if (ability.target === "self") return null;
+    if (ability.target === "self" || ability.target === "enemiesAround") return null;
 
     const enemy = this.areEnemies(caster, target);
     if (ability.target === "enemy" && !enemy) return "Cible non hostile";
@@ -353,13 +353,19 @@ export class CombatSystem {
     }
     if (isOffensive(ability)) this.noteHostileAction(caster);
 
+    const center = this.areaCenter(caster, ability, targetId);
     for (const target of this.affectedBy(caster, ability, targetId)) {
       for (const effect of ability.effects) {
         // Les effets suivants ne s'appliquent pas à une cible tuée par le premier.
         if (!target.alive && effect.type !== "resurrect") break;
-        this.applyEffect(caster, ability, target, effect);
+        this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target));
       }
     }
+  }
+
+  // Centre d'une zone d'effet : la cible pour une compétence visant un ennemi, le lanceur sinon.
+  private areaCenter(caster: PlayerRuntime, ability: AbilityDef, targetId: string): PlayerRuntime {
+    return ability.target === "enemy" ? (this.players.get(targetId) ?? caster) : caster;
   }
 
   // Cible unique, ou tous les personnages concernés dans la zone d'effet.
@@ -369,13 +375,15 @@ export class CombatSystem {
     if (!ability.radius) return [target];
 
     const offensive = isOffensive(ability);
-    const center = offensive ? target : caster;
+    const center = this.areaCenter(caster, ability, targetId);
+    // Une déflagration autour du lanceur touche tout ce qui est dans le rayon, obstacles compris.
+    const needsSight = ability.target !== "enemiesAround";
     return [...this.players.values()].filter(
       (p) =>
         p.alive &&
         this.areEnemies(caster, p) === offensive &&
         distance(center.state, p.state) <= ability.radius! &&
-        hasLineOfSight(center.state, p.state),
+        (!needsSight || hasLineOfSight(center.state, p.state)),
     );
   }
 
@@ -669,4 +677,11 @@ export class CombatSystem {
   private sendError(player: PlayerRuntime, message: string) {
     this.out.sendTo(player.id, "error", { message });
   }
+}
+
+// Dégâts décroissants du centre vers le bord d'une zone d'effet (edgeAmount au bord du rayon).
+function withFalloff(effect: AbilityEffect, ability: AbilityDef, center: PlayerRuntime, target: PlayerRuntime): AbilityEffect {
+  if (effect.type !== "damage" || effect.edgeAmount === undefined || !ability.radius) return effect;
+  const ratio = Math.min(1, distance(center.state, target.state) / ability.radius);
+  return { ...effect, amount: Math.round(effect.amount + (effect.edgeAmount - effect.amount) * ratio) };
 }

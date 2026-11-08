@@ -6,12 +6,14 @@ import { MELEE_RANGE, SPELL_RANGE, type ResourceType } from "./combat";
 // - otherAlly : la cible actuelle, qui doit être un autre allié vivant
 // - deadAlly : la cible actuelle, qui doit être un allié mort
 // - self : le lanceur
-export type AbilityTarget = "enemy" | "ally" | "otherAlly" | "deadAlly" | "self";
+// - enemiesAround : les ennemis autour du lanceur, sans cible ni ligne de vue (zone d'effet centrée sur soi)
+export type AbilityTarget = "enemy" | "ally" | "otherAlly" | "deadAlly" | "self" | "enemiesAround";
 
 export type CrowdControl = "mez" | "stun" | "root";
 
 export type AbilityEffect =
-  | { type: "damage"; amount: number }
+  // edgeAmount : dégâts en bordure d'une zone d'effet, qui décroissent depuis amount au centre.
+  | { type: "damage"; amount: number; edgeAmount?: number }
   | { type: "heal"; amount: number }
   | { type: "cc"; cc: CrowdControl; duration: number }
   | { type: "snare"; slow: number; duration: number }
@@ -39,7 +41,7 @@ export interface AbilityDef {
   melee?: boolean;
   // Position exigée par rapport à la cible.
   position?: "back" | "side";
-  // Zone d'effet : autour de la cible pour une compétence offensive, autour du lanceur sinon.
+  // Zone d'effet : autour de la cible pour une compétence visant un ennemi, autour du lanceur sinon.
   radius?: number;
   effects: AbilityEffect[];
 }
@@ -97,14 +99,14 @@ const list: AbilityDef[] = [
   {
     id: "blast",
     name: "Déflagration",
-    castTime: 3.5,
+    castTime: 2.5,
     resource: "mana",
     cost: 150,
-    range: SPELL_RANGE,
+    range: 0,
     cooldown: 0,
-    target: "enemy",
+    target: "enemiesAround",
     radius: 5,
-    effects: [{ type: "damage", amount: 150 }],
+    effects: [{ type: "damage", amount: 350, edgeAmount: 100 }],
   },
   {
     id: "freeze",
@@ -327,5 +329,5 @@ export function getAbility(id: string): AbilityDef | undefined {
 
 // Compétence dirigée contre un ennemi : soumise au cône de vision, interrompt le chant du Barde.
 export function isOffensive(ability: AbilityDef): boolean {
-  return ability.target === "enemy";
+  return ability.target === "enemy" || ability.target === "enemiesAround";
 }

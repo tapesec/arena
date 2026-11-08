@@ -121,6 +121,21 @@ describe("Gardien", () => {
 });
 
 describe("Arcaniste", () => {
+  it("Déflagration frappe les ennemis autour du lanceur, sans cible, plus fort au centre", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const close = world.spawn("c", "lame", 1, 0, 0.5);
+    const edge = world.spawn("e", "lame", 1, 0, -4.5);
+    const far = world.spawn("f", "lame", 1, 6, 0);
+    const ally = world.spawn("x", "pretre", 0, 1, 0);
+    world.cast(arcaniste, "blast");
+    world.run(2.6);
+    const lost = (p: typeof close) => p.state.maxHp - p.state.hp;
+    assert.equal(lost(close), 325);
+    assert.equal(lost(edge), 125);
+    assert.equal(lost(far), 0);
+    assert.equal(lost(ally), 0);
+  });
+
   it("la Bulle absorbe un coup de mêlée puis se reforme après 10 s", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const lame = world.spawn("l", "lame", 1, 0, -2, 0);
