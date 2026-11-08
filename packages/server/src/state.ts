@@ -38,6 +38,8 @@ export const PlayerState = schema(
     maxEndurance: t.uint16().default(0),
     // Mode attaque activé : le personnage frappe sa cible dès qu'elle est à portée.
     attacking: t.boolean().default(false),
+    // Technique de mêlée en attente du prochain coup d'arme ("" si aucune).
+    queuedAbility: t.string().default(""),
     // Chant de vitesse du Barde activé.
     songActive: t.boolean().default(false),
     // Incantation en cours ("" si aucune), visible de tous pour pouvoir l'interrompre.

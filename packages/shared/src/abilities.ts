@@ -37,7 +37,8 @@ export interface AbilityDef {
   // Temps de recharge en secondes ; 0 = aucun.
   cooldown: number;
   target: AbilityTarget;
-  // Attaque de mêlée : peut être esquivée, bloquée, et profite du buff de force et des critiques.
+  // Technique de mêlée (comme les styles de DAoC) : elle part au prochain coup d'arme, à la place du coup normal
+  // (aussitôt si l'arme est prête). Peut être esquivée, bloquée, et profite du buff de force et des critiques.
   melee?: boolean;
   // Position exigée par rapport à la cible.
   position?: "back" | "side";
@@ -292,7 +293,7 @@ const list: AbilityDef[] = [
     target: "enemy",
     melee: true,
     position: "back",
-    effects: [{ type: "damage", amount: 200 }],
+    effects: [{ type: "damage", amount: 270 }],
   },
   {
     id: "flankStrike",
@@ -306,7 +307,7 @@ const list: AbilityDef[] = [
     melee: true,
     position: "side",
     effects: [
-      { type: "damage", amount: 120 },
+      { type: "damage", amount: 190 },
       { type: "snare", slow: 0.4, duration: 8 },
     ],
   },

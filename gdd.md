@@ -43,6 +43,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
   - **Mez** : la cible ne peut plus rien faire. Cassé par le moindre dégât.
   - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts, ni retiré par la Purification.
   - Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas au bouclier ; la bulle et la Garde d'un autre Gardien le protègent toujours.
+  - **Techniques de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc), comme les styles de DAoC : la technique part au prochain coup d'arme, à la place du coup normal (aussitôt si l'arme est prête). Elle est mise en attente et s'allume sur la barre ; une autre technique la remplace ; couper l'attaque l'annule ; la lancer active l'attaque. Ses conditions (portée, position, face à la cible, endurance) sont vérifiées au moment du coup : si elles manquent, le coup reste normal et un message l'indique. Une technique au plus par coup d'arme (toutes les 2 s pour la Lame et le Gardien).
   - **Attaques spéciales de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
   - **Snare** : ralentissement.
@@ -66,7 +67,7 @@ Protège les alliés vulnérables et tient la ligne de front.
 |---|---|---|---|---|
 | Garde | 50 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m maximum). | Instantané | — | — |
 | Interception | Encaisse à la place d'un allié le prochain coup qui le vise. | Instantané | 15 endurance | 20 s |
-| Coup de bouclier | Stun de 4 s au contact. | Instantané | 40 endurance | — |
+| Coup de bouclier | Stun de 4 s au contact. Technique de mêlée. | Prochain coup | 40 endurance | — |
 | Passif | 30 % de chances de bloquer avec le bouclier. | — | — | — |
 
 ### 2. Arcaniste — mage dégâts
@@ -114,8 +115,8 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
-| Attaque dans le dos | 200 dégâts. Uniquement de dos. | Instantané | 25 endurance | — |
-| Attaque de flanc | 120 dégâts et snare de 40 % pendant 8 s. Uniquement de côté. | Instantané | 20 endurance | — |
+| Attaque dans le dos | 270 dégâts, à la place du coup normal. Uniquement de dos. Technique de mêlée. | Prochain coup | 25 endurance | — |
+| Attaque de flanc | 190 dégâts, à la place du coup normal, et snare de 40 % pendant 8 s. Uniquement de côté. Technique de mêlée. | Prochain coup | 20 endurance | — |
 | Évasion | 75 % d'esquive contre la mêlée pendant 8 s. | Instantané | 20 endurance | 1 min |
 | Rage | Tous les coups sont critiques pendant 10 s. | Instantané | — | 3 min |
 | *(option future)* Furtivité | Devenir invisible, pour un rôle d'assassin. | — | — | — |

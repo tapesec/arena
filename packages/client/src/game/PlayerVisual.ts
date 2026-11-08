@@ -36,6 +36,7 @@ export interface PlayerView {
   attacking: boolean;
   lock: string;
   songActive: boolean;
+  queuedAbility: string;
   castAbility: string;
   castElapsed: number;
   castDuration: number;

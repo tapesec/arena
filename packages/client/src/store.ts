@@ -35,6 +35,8 @@ export interface SelfFrame extends UnitFrame {
   // Verrou sur la cible : "face" (F), "stick" (C) ou "".
   lock: string;
   songActive: boolean;
+  // Technique de mêlée en attente du prochain coup d'arme ("" si aucune).
+  queuedAbility: string;
 }
 
 export interface TargetFrame extends UnitFrame {

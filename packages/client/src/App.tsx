@@ -443,10 +443,12 @@ function Hotbar() {
         const remaining = Math.max(0, ((cooldownEnds[abilityId] ?? 0) - now) / 1000);
         const affordable = self[ability.resource] >= ability.cost;
         const active = abilityId === "speedSong" && self.songActive;
+        // Technique de mêlée en attente du prochain coup d'arme.
+        const queued = abilityId === self.queuedAbility;
         return (
           <div
             key={abilityId}
-            className={`slot ${affordable ? "" : "slot-unaffordable"} ${active ? "slot-active" : ""}`}
+            className={`slot ${affordable ? "" : "slot-unaffordable"} ${active ? "slot-active" : ""} ${queued ? "slot-queued" : ""}`}
           >
             <span className="slot-key">{index + 1}</span>
             <span className="slot-name">{ability.name}</span>

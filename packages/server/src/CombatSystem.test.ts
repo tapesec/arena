@@ -91,7 +91,9 @@ describe("Gardien", () => {
     world.run(4.1);
     assert.ok(!enemy.has("stun"));
     assert.ok(enemy.has("immuneStun"));
+    // Le Coup de bouclier part au prochain coup d'arme.
     world.cast(gardien, "shieldBash", enemy);
+    world.run(2);
     assert.equal(world.eventsOf("immune").length, 1);
   });
 
@@ -237,6 +239,8 @@ describe("Arcaniste", () => {
     world.cast(arcaniste, "firebolt", enemy);
     world.run(0.5);
     world.cast(lame, "backstab", arcaniste);
+    // La technique a activé l'attaque de la Lame : on la coupe, ses coups suivants interrompraient le sort.
+    world.combat.toggleAttack(lame.id);
     assert.equal(world.eventsOf("absorbed").length, 1);
     assert.equal(arcaniste.state.castAbility, "firebolt");
     assert.equal(world.interrupts.length, 0);
@@ -412,8 +416,43 @@ describe("Lame", () => {
     const lame = world.spawn("l", "lame", 0, 2, 0, -Math.PI / 2); // à droite de la cible, tournée vers elle
     const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
     world.cast(lame, "flankStrike", enemy);
-    assert.equal(enemy.state.hp, enemy.state.maxHp - 120);
+    assert.equal(enemy.state.hp, enemy.state.maxHp - 190);
     assert.ok(enemy.has("snare"));
+  });
+
+  it("une technique part aussitôt si l'arme est prête, à la place du coup normal", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "backstab", enemy);
+    assert.equal(enemy.state.hp, enemy.state.maxHp - 270);
+    assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "auto").length, 0);
+    assert.ok(lame.state.attacking, "la technique active l'attaque");
+  });
+
+  it("deux techniques ne s'enchaînent pas : la seconde attend le prochain coup d'arme", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "backstab", enemy);
+    world.cast(lame, "backstab", enemy);
+    assert.equal(world.eventsOf("damage").length, 1);
+    assert.equal(lame.state.queuedAbility, "backstab");
+    world.run(1.9);
+    assert.equal(world.eventsOf("damage").length, 1);
+    world.run(0.2);
+    assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "backstab").length, 2);
+    assert.equal(lame.state.queuedAbility, "");
+  });
+
+  it("une technique dont les conditions manquent au moment du coup laisse partir un coup normal", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "backstab", enemy);
+    // La cible se retourne : la Lame n'est plus dans son dos au coup suivant.
+    world.cast(lame, "backstab", enemy);
+    enemy.state.facing = Math.PI;
+    world.run(2.1);
+    assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "auto").length, 1);
+    assert.ok(world.errors.some((e) => e.id === "l" && e.message.includes("dos")));
   });
 
   it("la Rage rend tous les coups critiques", () => {
@@ -421,7 +460,7 @@ describe("Lame", () => {
     const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
     world.cast(lame, "rage");
     world.cast(lame, "backstab", enemy);
-    assert.equal(enemy.state.hp, enemy.state.maxHp - 300);
+    assert.equal(enemy.state.hp, enemy.state.maxHp - 405);
     assert.equal(world.eventsOf("damage")[0]?.crit, true);
   });
 

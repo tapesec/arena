@@ -123,7 +123,10 @@ export class CombatSystem {
 
   toggleAttack(id: string) {
     const player = this.players.get(id);
-    if (player?.alive) player.state.attacking = !player.state.attacking;
+    if (!player?.alive) return;
+    player.state.attacking = !player.state.attacking;
+    // Couper l'attaque annule la technique en attente.
+    if (!player.state.attacking) player.state.queuedAbility = "";
   }
 
   // Tourne le personnage vers sa cible sans le déplacer (équivalent du /face de DAoC).
@@ -156,6 +159,19 @@ export class CombatSystem {
 
     const targetId = this.pickTarget(caster, ability);
     if (!targetId) return this.sendError(caster, "Aucune cible");
+
+    // Technique de mêlée : mise en attente du prochain coup d'arme, qui part aussitôt si l'arme est prête.
+    // Ses conditions (portée, position, endurance) sont vérifiées au moment du coup.
+    if (ability.melee) {
+      const target = this.players.get(targetId);
+      if (!target?.alive) return this.sendError(caster, "La cible est morte");
+      if (!this.areEnemies(caster, target)) return this.sendError(caster, "Cible non hostile");
+      caster.state.queuedAbility = ability.id;
+      caster.state.attacking = true;
+      this.updateAutoAttack(caster, 0);
+      return;
+    }
+
     const targetError = this.validateTarget(caster, ability, targetId);
     if (targetError) return this.sendError(caster, targetError);
 
@@ -295,8 +311,16 @@ export class CombatSystem {
     if (!isFacing(attacker.state, target.state)) return;
 
     const auto = attacker.classDef.autoAttack;
-    this.dealDamage(attacker, target, auto.damage, "auto", true);
     attacker.swingTimer = auto.interval;
+    // Une technique en attente remplace le coup normal ; si ses conditions ne sont pas remplies, le coup reste normal.
+    const queued = attacker.state.queuedAbility ? getAbility(attacker.state.queuedAbility) : undefined;
+    attacker.state.queuedAbility = "";
+    if (queued) {
+      const error = this.checkCanUse(attacker, queued, true) ?? this.validateTarget(attacker, queued, target.id);
+      if (!error) return this.resolveAbility(attacker, queued, target.id);
+      this.sendError(attacker, error);
+    }
+    this.dealDamage(attacker, target, auto.damage, "auto", true);
   }
 
   // --- Compétences ---
@@ -599,6 +623,7 @@ export class CombatSystem {
     state.songActive = false;
     state.lock = "";
     player.input = NO_INPUT;
+    state.queuedAbility = "";
     this.endCast(player);
     for (const effect of [...player.effects]) this.removeEffect(player, effect);
     this.removeLinkedEffects(player);

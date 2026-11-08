@@ -528,6 +528,7 @@ export class Game {
           attacking: self.state.attacking,
           lock: self.state.lock,
           songActive: self.state.songActive,
+          queuedAbility: self.state.queuedAbility,
         }
       : null;
     const targetFrame: TargetFrame | null =

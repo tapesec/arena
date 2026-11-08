@@ -446,6 +446,22 @@ body,
   box-shadow: 0 0 6px #ffd76a;
 }
 
+/* Technique de mêlée en attente du prochain coup d'arme : elle pulse jusqu'à ce qu'elle parte. */
+.slot-queued {
+  border-color: #ff9a3c;
+  box-shadow: 0 0 8px #ff9a3c;
+  animation: slot-queued-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes slot-queued-pulse {
+  from {
+    box-shadow: 0 0 3px #ff9a3c;
+  }
+  to {
+    box-shadow: 0 0 12px #ff9a3c;
+  }
+}
+
 
 .button-row {
   display: flex;
