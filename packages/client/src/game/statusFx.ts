@@ -133,16 +133,19 @@ export class StatusFx {
         star.billboardMode = Mesh.BILLBOARDMODE_ALL;
         star.isPickable = false;
         star.parent = status.stars;
-        const angle = (i / STARS) * Math.PI * 2;
-        star.position.set(Math.cos(angle) * STAR_ORBIT, 0, Math.sin(angle) * STAR_ORBIT);
       }
     }
     if (!active && status.stars) {
       status.stars.dispose();
       status.stars = null;
     }
-    // La ronde tourne indépendamment de l'orientation du personnage.
-    if (status.stars) status.stars.rotation.y = this.time * STAR_SPEED - player.root.rotation.y;
+    // Une étoile tournée vers la caméra ignore la rotation de son parent : on place chacune sur son cercle.
+    if (status.stars) {
+      status.stars.getChildMeshes().forEach((star, i) => {
+        const angle = this.time * STAR_SPEED + (i / STARS) * Math.PI * 2;
+        star.position.set(Math.cos(angle) * STAR_ORBIT, Math.sin(angle * 2) * 0.05, Math.sin(angle) * STAR_ORBIT);
+      });
+    }
   }
 
   // Couronne de cristaux de glace aux pieds, qui rapetissent à mesure que la vitesse revient.

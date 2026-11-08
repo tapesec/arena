@@ -95,6 +95,17 @@ describe("Gardien", () => {
     assert.equal(world.eventsOf("immune").length, 1);
   });
 
+  it("le stun n'est pas cassé par les dégâts", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 0, 3, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 2, Math.PI);
+    world.cast(gardien, "shieldBash", enemy);
+    world.cast(arcaniste, "firebolt", enemy);
+    world.run(2.7);
+    assert.ok(world.eventsOf("damage").some((e) => e.targetId === "e" && e.abilityId === "firebolt"));
+    assert.ok(enemy.has("stun"));
+  });
+
   it("la Garde bloque un coup de mêlée visant l'allié protégé", () => {
     const gardien = world.spawn("g", "gardien", 0, 1, 0);
     const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
