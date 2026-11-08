@@ -64,7 +64,11 @@ function HomeScreen() {
         Rejoindre une partie
       </button>
       <p className="credits">
-        Musiques : « Woodland Fantasy » et « The Last Encounter », Eric Matyas,{" "}
+        Musiques : « Woodland Fantasy », Matthew Pablo,{" "}
+        <a href="https://www.matthewpablo.com" target="_blank" rel="noreferrer">
+          matthewpablo.com
+        </a>{" "}
+        · « The Last Encounter », Eric Matyas,{" "}
         <a href="https://soundimage.org" target="_blank" rel="noreferrer">
           soundimage.org
         </a>
