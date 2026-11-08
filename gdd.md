@@ -9,7 +9,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Plateforme** : navigateur d'abord, puis client lourd (Electron/Tauri) pour Steam.
 - **Vue** : 3D isométrique.
 - **Combat** : tab-target (ciblage par Tab ou clic, pas de visée manuelle).
-- **Déplacement** (contrôles à la DAoC) : Z/S avancent et reculent dans la direction du personnage, Q/D le font pivoter. Clic droit maintenu : la souris oriente le personnage et la caméra, Q/D deviennent des pas de côté. La caméra se place dans le dos du personnage ; V la recentre.
+- **Déplacement** (contrôles à la DAoC) : Z/S avancent et reculent dans la direction du personnage, Q/D le font pivoter. Clic droit maintenu : la souris oriente le personnage et la caméra (haut/bas règle l'inclinaison de la caméra), Q/D deviennent des pas de côté. La caméra se place dans le dos du personnage ; V la recentre.
 - **Verrous sur la cible** : F fait face à la cible en permanence, C la suit (stick) en lui faisant face. Rappuyer ne les annule pas : avancer, reculer ou pivoter les lâche, de même que la mort, un mez ou un stun (et un root pour le stick), ou la perte de la cible. Le pas de côté les conserve (tourner autour de sa cible pendant un stick).
 - **Pivoter** n'interrompt pas une incantation ; avancer, reculer ou faire un pas de côté, si.
 - **Attaque automatique** : R.

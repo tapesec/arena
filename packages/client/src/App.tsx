@@ -398,7 +398,7 @@ function HelpPanel() {
   return (
     <div className="hud-panel help">
       <div>Z/S : avancer/reculer · Q/D : pivoter</div>
-      <div>Clic droit maintenu : la souris oriente · Q/D : pas de côté</div>
+      <div>Clic droit maintenu : la souris oriente (haut/bas : inclinaison) · Q/D : pas de côté</div>
       <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même · Échap : annuler</div>
       <div>F : faire face à la cible · C : la suivre (stick)</div>
       <div>R : activer/couper l'attaque · molette : zoom · V : recentrer</div>

@@ -5,6 +5,9 @@ import type { Scene } from "@babylonjs/core/scene";
 // Vue isométrique : caméra en diagonale, inclinée d'environ 55° par rapport à la verticale.
 const DEFAULT_ALPHA = (-3 * Math.PI) / 4;
 const BETA = 0.95;
+// Inclinaison réglable à la souris : de presque à la verticale à presque rasante.
+const MIN_BETA = 0.3;
+const MAX_BETA = 1.35;
 const DEFAULT_RADIUS = 32;
 const MIN_RADIUS = 16;
 const MAX_RADIUS = 55;
@@ -18,11 +21,12 @@ const ZOOM_SPEED = 0.001;
 const FOLLOW_RATE = 10;
 
 // Caméra qui suit le joueur, placée dans son dos. Clic droit maintenu : la souris tourne la caméra
-// (et le personnage avec elle, voir Game). Molette pour zoomer.
+// (et le personnage avec elle, voir Game) ; haut/bas règle l'inclinaison. Molette pour zoomer.
 export class CameraController {
   readonly camera: ArcRotateCamera;
   private dragging = false;
   private lastX = 0;
+  private lastY = 0;
 
   constructor(
     scene: Scene,
@@ -74,6 +78,7 @@ export class CameraController {
   // Zoom par défaut ; l'orientation est remise par défaut seulement si on ne suit pas de personnage.
   reset(facing?: number) {
     this.camera.alpha = facing === undefined ? DEFAULT_ALPHA : Math.atan2(-Math.cos(facing), -Math.sin(facing));
+    this.camera.beta = BETA;
     this.camera.radius = DEFAULT_RADIUS;
   }
 
@@ -81,6 +86,7 @@ export class CameraController {
     if (event.button !== 2) return;
     this.dragging = true;
     this.lastX = event.clientX;
+    this.lastY = event.clientY;
     this.canvas.setPointerCapture(event.pointerId);
     this.onSteerChange(true);
   };
@@ -88,7 +94,11 @@ export class CameraController {
   private handlePointerMove = (event: PointerEvent) => {
     if (!this.dragging) return;
     this.camera.alpha -= (event.clientX - this.lastX) * ROTATION_SPEED;
+    // Souris vers le haut : la caméra s'abaisse vers l'horizon ; vers le bas : elle plonge.
+    const beta = this.camera.beta - (event.clientY - this.lastY) * ROTATION_SPEED;
+    this.camera.beta = Math.min(MAX_BETA, Math.max(MIN_BETA, beta));
     this.lastX = event.clientX;
+    this.lastY = event.clientY;
   };
 
   private handlePointerUp = (event: PointerEvent) => {
