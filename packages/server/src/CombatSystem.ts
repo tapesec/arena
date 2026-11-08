@@ -360,12 +360,31 @@ export class CombatSystem {
 
     const center = this.areaCenter(caster, ability, targetId);
     for (const target of this.affectedBy(caster, ability, targetId)) {
+      // La bulle arrête une attaque de mêlée en entier : dégâts, stun, ralentissement.
+      if (ability.melee && this.absorbedByBubble(caster, target, ability.id)) continue;
       for (const effect of ability.effects) {
         // Les effets suivants ne s'appliquent pas à une cible tuée par le premier.
         if (!target.alive && effect.type !== "resurrect") break;
         this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target));
       }
     }
+  }
+
+  // Une attaque spéciale de mêlée qui frappe une bulle : la bulle casse et rien d'autre ne s'applique.
+  // Si un Gardien intercepte le coup, c'est lui qui le prend (voir dealDamage) : la bulle n'est pas touchée.
+  private absorbedByBubble(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
+    const bubble = target.getEffect("bubble");
+    if (!bubble) return false;
+    const intercept = target.getEffect("intercept");
+    const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;
+    if (intercept && interceptor?.alive && distance(interceptor.state, target.state) <= INTERCEPT_RANGE) return false;
+    this.noteHostileAction(source);
+    this.noteHostileAction(target);
+    target.lastMeleeHitAt = this.time;
+    target.lastMeleeAttackerId = source.id;
+    this.removeEffect(target, bubble);
+    this.emit({ kind: "absorbed", sourceId: source.id, targetId: target.id, abilityId });
+    return true;
   }
 
   // Centre d'une zone d'effet : la cible pour une compétence visant un ennemi, le lanceur sinon.

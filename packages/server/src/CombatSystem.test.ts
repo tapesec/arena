@@ -203,6 +203,29 @@ describe("Arcaniste", () => {
     assert.ok(world.eventsOf("damage").some((e) => e.targetId === "e" && e.abilityId === "firebolt"));
   });
 
+  it("la Bulle arrête le Coup de bouclier : pas de stun, la bulle casse", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const gardien = world.spawn("g", "gardien", 1, 0, 2, Math.PI);
+    world.cast(arcaniste, "bubble");
+    world.run(2.1);
+    world.cast(gardien, "shieldBash", arcaniste);
+    assert.equal(world.eventsOf("absorbed").length, 1);
+    assert.ok(!arcaniste.has("stun"));
+    assert.ok(!arcaniste.has("bubble"));
+  });
+
+  it("la Bulle arrête l'attaque de flanc en entier : ni dégâts ni ralentissement", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    // Sur le côté de l'Arcaniste, tournée vers elle.
+    const lame = world.spawn("l", "lame", 1, 1.5, 0, -Math.PI / 2);
+    world.cast(arcaniste, "bubble");
+    world.run(2.1);
+    world.cast(lame, "flankStrike", arcaniste);
+    assert.equal(world.eventsOf("absorbed").length, 1);
+    assert.equal(arcaniste.state.hp, arcaniste.state.maxHp);
+    assert.ok(!arcaniste.has("snare"));
+  });
+
   it("la Bulle ne se lance que sur l'Arcaniste", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const ally = world.spawn("x", "pretre", 0, 3, 0);
