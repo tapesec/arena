@@ -279,6 +279,11 @@ export class Game {
         this.players.get(event.sourceId)?.playAttack();
       }
       this.playReaction(event);
+      // La bulle de l'Arcaniste absorbe un coup : elle éclate.
+      if (event.kind === "absorbed") {
+        const target = this.players.get(event.targetId);
+        if (target) this.spellEffects.bubblePop(target.root);
+      }
       if (event.kind === "damage") {
         const target = this.players.get(event.targetId);
         // Coup critique : gerbe d'étincelles dorées ; sort de feu : la cible brûle un instant.

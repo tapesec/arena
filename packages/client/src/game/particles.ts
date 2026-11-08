@@ -513,6 +513,27 @@ export const frostMist: Recipe = (fx, at) => {
   return s;
 };
 
+// Bulle qui éclate en absorbant un coup : éclats irisés dans toutes les directions.
+export const bubbleShards: Recipe = (fx, at) => {
+  const s = fx.create("bubbleShards", 80, at, "spark");
+  if (!s) return null;
+  sphereBurst(s, 1.1);
+  s.manualEmitCount = 60;
+  s.minLifeTime = 0.3;
+  s.maxLifeTime = 0.6;
+  s.minSize = 0.15;
+  s.maxSize = 0.35;
+  s.minEmitPower = 2.5;
+  s.maxEmitPower = 5;
+  s.minAngularSpeed = -6;
+  s.maxAngularSpeed = 6;
+  s.gravity = new Vector3(0, -4, 0);
+  gradient(s, [0, rgba("#e8e0ff", 0.9)], [0.3, rgba("#a8a0ff", 0.7)], [0.6, rgba("#f0a0e0", 0.5)], [1, rgba("#6040c0", 0)]);
+  s.start();
+  s.targetStopDuration = 0.05;
+  return s;
+};
+
 // ——— Dégâts magiques subis ———
 
 // Brûlure : flammes qui montent de tout le corps (le point d'attache suit le personnage, à ses pieds).
@@ -706,6 +727,7 @@ export const rageFlames: Recipe = (fx, at) => {
 };
 
 export const RECIPES: Recipe[] = [
+  bubbleShards,
   burning,
   burningSmoke,
   critSparks,

@@ -5,6 +5,7 @@ import { Constants } from "@babylonjs/core/Engines/constants";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { CreateRibbon } from "@babylonjs/core/Meshes/Builders/ribbonBuilder";
+import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { CreateLines } from "@babylonjs/core/Meshes/Builders/linesBuilder";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
@@ -60,6 +61,7 @@ const AFFLICTIONS: Record<School, { recipes: Recipe[]; duration: number }> = {
 };
 
 const SLASH_DURATION = 0.25;
+const BUBBLE_POP_DURATION = 0.3;
 const BEAM_DURATION = 1.4;
 const BEAM_HEIGHT = 9;
 // Le disque qui montre la portée exacte d'une zone reste, plus discret quand des particules l'accompagnent.
@@ -139,6 +141,30 @@ export class SpellEffects {
     };
     if (ABILITY_FX[abilityId]?.shape === "projectile") setTimeout(start, PROJECTILE_TRAVEL_TIME * 1000);
     else start();
+  }
+
+  // La bulle absorbe un coup et éclate : un anneau lumineux qui s'élargit, et des éclats irisés.
+  bubblePop(anchor: TransformNode) {
+    const center = anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
+    P.bubbleShards(this.particles, center.clone());
+    const ring = CreateTorus("bubblePop", { diameter: 2.4, thickness: 0.1, tessellation: 48 }, this.scene);
+    ring.rotation.x = Math.PI / 2;
+    ring.bakeCurrentTransformIntoVertices();
+    ring.billboardMode = Mesh.BILLBOARDMODE_ALL;
+    const material = this.glowMaterial(new Color3(0.75, 0.65, 1), 1);
+    material.alphaMode = Constants.ALPHA_ADD;
+    ring.material = material;
+    ring.isPickable = false;
+    ring.position.copyFrom(center);
+    this.effects.push({
+      mesh: ring,
+      age: 0,
+      duration: BUBBLE_POP_DURATION,
+      animate: (progress) => {
+        ring.scaling.setAll(1 + progress * 0.8);
+        material.alpha = 1 - progress;
+      },
+    });
   }
 
   // Coup critique : gerbe d'étincelles dorées sur la cible.
