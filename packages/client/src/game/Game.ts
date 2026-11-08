@@ -50,6 +50,7 @@ import {
 } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
+import { FogOfWar } from "./FogOfWar";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
@@ -86,6 +87,7 @@ export class Game {
   private camera: CameraController;
   private overlay: WorldOverlay;
   private spellEffects: SpellEffects;
+  private fog: FogOfWar;
   private gameAudio: GameAudio;
   private keyboard: KeyboardInput;
   // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
@@ -114,6 +116,7 @@ export class Game {
     });
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.spellEffects = new SpellEffects(this.scene);
+    this.fog = new FogOfWar(this.scene);
     this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
 
     this.createEnvironment();
@@ -152,6 +155,7 @@ export class Game {
     this.camera.dispose();
     this.overlay.dispose();
     this.spellEffects.dispose();
+    this.fog.dispose();
     this.gameAudio.dispose();
     this.room.leave();
     this.engine.dispose();
@@ -432,6 +436,7 @@ export class Game {
 
     const self = this.self;
     this.updateCamera(dt);
+    this.updateFog(dt, self, match.phase);
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
     this.targetMarker.setEnabled(!!target);
@@ -439,6 +444,18 @@ export class Game {
 
     this.refreshHud(self, target);
     this.scene.render();
+  }
+
+  // Le brouillard s'affiche quand le serveur l'applique : en préparation et en combat, sauf en spectateur.
+  private updateFog(dt: number, self: PlayerVisual | undefined, phase: MatchPhase) {
+    const active = !!self && (phase === "preparation" || phase === "fighting") && !this.isSpectating;
+    this.fog.setEnabled(active);
+    if (!active) return;
+    const watchers = [];
+    for (const player of this.players.values()) {
+      if (player.isAlive && player.state.team === self.state.team) watchers.push({ x: player.state.x, z: player.state.z });
+    }
+    this.fog.update(dt, watchers);
   }
 
   private refreshHud(self: PlayerVisual | undefined, target: PlayerVisual | undefined) {

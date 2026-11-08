@@ -21,7 +21,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Choix des classes** : une fois les équipes formées, chaque joueur choisit sa classe en même temps que les autres. Il voit les choix de ses coéquipiers, mais **pas ceux de l'équipe adverse**, qui ne découvre la composition d'en face qu'en la croisant dans l'arène. 30 s pour choisir, classe aléatoire si le temps est écoulé.
 - **Composition** : doublons autorisés sans limite.
 - **Pas de score** pour le prototype : une partie se gagne ou se perd, c'est tout.
-- **L'arène** : une grande carte simple (sol plat, obstacles basiques pour la ligne de vue, pas d'investissement dans les décors pour le moment), couverte d'un **brouillard de guerre**. Chaque équipe ne voit que ce que ses membres voient : il faut se déplacer et explorer pour trouver l'équipe adverse.
+- **L'arène** : une grande carte simple (sol plat, obstacles basiques pour la ligne de vue, pas d'investissement dans les décors pour le moment), couverte d'un **brouillard de guerre**. Chaque équipe ne voit que ce que ses membres voient : il faut se déplacer et explorer pour trouver l'équipe adverse. À l'écran, le sol est assombri hors de la vue de son équipe (35 m autour de chaque allié vivant, masqué derrière les obstacles).
 - **Les zones de départ** : chaque équipe commence dans sa propre zone, aux deux extrémités de l'arène.
 - **La phase de préparation** : 10 s dans la zone de départ avant l'ouverture, pour former le plan et poser les buffs du Prêtre.
 - **La mort** : un joueur mort reste au sol jusqu'à la fin de la partie, sauf s'il est ressuscité. Aucune réapparition.
