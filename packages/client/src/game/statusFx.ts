@@ -28,6 +28,9 @@ const BUBBLE_DIAMETER = 2.4;
 
 // Affichage d'un personnage contrôlé ou protégé ; chaque élément n'est créé qu'au premier besoin.
 interface PlayerStatus {
+  // Point d'attache qui suit le personnage (position et orientation). Les effets n'ont pas le personnage pour
+  // parent : à sa disparition, il détruit ses descendants avec leurs matériaux, or ceux-ci sont partagés.
+  anchor: TransformNode;
   head: Vector3;
   feet: Vector3;
   mez: ParticleSystem | null;
@@ -94,6 +97,8 @@ export class StatusFx {
       const speed = Math.hypot(player.root.position.x - status.lastX, player.root.position.z - status.lastZ) / Math.max(dt, 1e-3);
       status.lastX = player.root.position.x;
       status.lastZ = player.root.position.z;
+      status.anchor.position.copyFrom(player.root.position);
+      status.anchor.rotation.y = player.root.rotation.y;
       status.feet.copyFrom(player.root.position);
       status.head.copyFrom(player.root.position).y += HEAD;
       status.body.copyFrom(player.root.position).y += BODY;
@@ -109,24 +114,22 @@ export class StatusFx {
       this.updateMez(status, false);
       this.updateAuras(status, false, player, 0);
       status.mist?.stop();
-      status.stars?.dispose();
-      status.crystals?.dispose();
-      status.bubble?.dispose();
+      // Détruit les effets du joueur, sans leurs matériaux partagés.
+      status.anchor.dispose(false, false);
       this.statuses.delete(player);
     }
   }
 
   dispose() {
-    for (const status of this.statuses.values()) {
-      status.stars?.dispose();
-      status.crystals?.dispose();
-      status.bubble?.dispose();
-    }
+    for (const status of this.statuses.values()) status.anchor.dispose(false, false);
     this.statuses.clear();
   }
 
   private track(player: PlayerVisual): PlayerStatus {
+    const anchor = new TransformNode("statusAnchor", this.scene);
+    anchor.position.copyFrom(player.root.position);
     const status: PlayerStatus = {
+      anchor,
       head: new Vector3(),
       feet: new Vector3(),
       mez: null,
@@ -174,7 +177,7 @@ export class StatusFx {
   private updateStars(status: PlayerStatus, active: boolean, player: PlayerVisual) {
     if (active && !status.stars) {
       status.stars = new TransformNode("stunStars", this.scene);
-      status.stars.parent = player.root;
+      status.stars.parent = status.anchor;
       status.stars.position.y = HEAD + 0.1;
       for (let i = 0; i < STARS; i++) {
         const star = CreatePlane("stunStar", { size: 0.32 }, this.scene);
@@ -201,7 +204,7 @@ export class StatusFx {
   private updateRoot(status: PlayerStatus, left: number, player: PlayerVisual) {
     if (left > 0 && !status.crystals) {
       status.crystals = crystalCrown(this.scene, this.iceMaterial);
-      status.crystals.parent = player.root;
+      status.crystals.parent = status.anchor;
       status.mist = frostMist(this.particles, status.feet);
       status.rootDuration = left;
     }
@@ -230,7 +233,7 @@ export class StatusFx {
       status.bubble = CreateSphere("bubble", { diameter: BUBBLE_DIAMETER, segments: 24 }, this.scene);
       status.bubble.material = this.bubbleMaterial;
       status.bubble.isPickable = false;
-      status.bubble.parent = player.root;
+      status.bubble.parent = status.anchor;
       status.bubble.position.y = BODY;
       const rim = CreateTorus("bubbleRim", { diameter: BUBBLE_DIAMETER - 0.05, thickness: 0.07, tessellation: 64 }, this.scene);
       rim.material = this.rimMaterial;
