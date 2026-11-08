@@ -37,19 +37,28 @@ describe("Relief", () => {
   });
 
   it("le relief est symétrique, comme la carte", () => {
-    for (const p of [{ x: 34, z: -30 }, { x: 16, z: 28 }, { x: 12.5, z: -40.5 }]) {
+    for (const p of [{ x: 38, z: -34 }, { x: 3, z: -40 }, { x: -20, z: -18.5 }, { x: 30, z: -25 }]) {
       assert.ok(Math.abs(terrainHeight(p.x, p.z) - terrainHeight(-p.x, -p.z)) < 1e-6);
     }
   });
 
-  it("une grande butte cache un ennemi placé derrière", () => {
-    assert.ok(terrainHeight(34, -30) > 3, "la butte est trop basse");
-    const seen = computeTeamVisibility([unit("a", 0, 34, -42), unit("e", 1, 34, -18)]);
-    assert.ok(!seen.get(0)!.has("e"));
+  it("un plateau a un large dessus plat", () => {
+    for (const p of [{ x: 38, z: -34 }, { x: 33, z: -28 }, { x: 43, z: -40 }]) {
+      assert.ok(Math.abs(terrainHeight(p.x, p.z) - 3) < 0.05, `pas sur le dessus en (${p.x}, ${p.z})`);
+    }
   });
 
-  it("depuis le sommet de la butte, on voit par-dessus", () => {
-    const seen = computeTeamVisibility([unit("a", 0, 34, -30), unit("e", 1, 34, -18)]);
+  it("un plateau cache un ennemi placé derrière", () => {
+    const seen = computeTeamVisibility([unit("a", 0, 18, -36), unit("e", 1, 32, -34)]);
+    assert.ok(terrainHeight(18, -36) < 0.5 && terrainHeight(32, -34) > 2.5);
+    // Ennemi au pied du plateau, de l'autre côté : caché par le plateau.
+    const hidden = computeTeamVisibility([unit("a", 0, 38, -12), unit("e", 1, 38, -46)]);
+    assert.ok(seen.get(0)!.has("e"), "un ennemi au bord du plateau se voit depuis la plaine");
+    assert.ok(!hidden.get(0)!.has("e"));
+  });
+
+  it("depuis le plateau, on voit par-dessus la crête", () => {
+    const seen = computeTeamVisibility([unit("a", 0, 38, -34), unit("e", 1, 12, -48)]);
     assert.ok(seen.get(0)!.has("e"));
   });
 });

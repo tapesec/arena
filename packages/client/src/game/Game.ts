@@ -54,7 +54,7 @@ import {
 } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
-import { FogOfWar } from "./FogOfWar";
+import { FogOfWar, type FogWatcher } from "./FogOfWar";
 import { createTerrainMesh } from "./terrainMesh";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
@@ -481,9 +481,11 @@ export class Game {
     const active = !!self && (phase === "preparation" || phase === "fighting") && !this.isSpectating;
     this.fog.setEnabled(active);
     if (!active) return;
-    const watchers = [];
+    const watchers: FogWatcher[] = [];
     for (const player of this.players.values()) {
-      if (player.isAlive && player.state.team === self.state.team) watchers.push({ x: player.state.x, z: player.state.z });
+      if (player.isAlive && player.state.team === self.state.team) {
+        watchers.push({ id: player.sessionId, x: player.state.x, z: player.state.z });
+      }
     }
     this.fog.update(dt, watchers);
   }

@@ -66,8 +66,9 @@ export function resolveObstacleCollisions(pos: Position, radius: number): Positi
 
 // Vrai si aucun obstacle ne coupe le segment entre les deux positions.
 // Ligne de vue : ni obstacle (plus hauts que les yeux) ni relief entre les deux.
-export function hasLineOfSight(a: Position, b: Position): boolean {
-  return OBSTACLES.every((o) => !segmentIntersectsObstacle(a, b, o, 0)) && !terrainBlocksSight(a, b);
+// obstacles : liste à vérifier, réductible à ceux du voisinage pour les calculs en masse (brouillard).
+export function hasLineOfSight(a: Position, b: Position, obstacles: Obstacle[] = OBSTACLES): boolean {
+  return obstacles.every((o) => !segmentIntersectsObstacle(a, b, o, 0)) && !terrainBlocksSight(a, b);
 }
 
 // Vrai si un personnage de rayon "margin" peut aller de a à b en ligne droite sans toucher d'obstacle.

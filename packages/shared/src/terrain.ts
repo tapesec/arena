@@ -3,31 +3,43 @@ import { ARENA_SIZE } from "./constants";
 import { START_ZONES } from "./match";
 import type { Position } from "./movement";
 
-// Relief de l'arène : des collines en forme de cloche, posées sur un sol plat.
+// Relief de l'arène : de larges plateaux aux pentes douces et des bosses très étalées, sur un sol plat.
 // Partagé entre le serveur (ligne de vue) et le client (affichage). Les pentes ne ralentissent pas :
 // le relief ne compte que pour la vue.
 
-interface Hill {
+// Plateau : un dessus plat (rectangle aux coins arrondis), bordé d'une rampe en pente douce.
+interface Plateau {
   x: number;
   z: number;
-  // Hauteur au sommet, en mètres.
+  // Demi-dimensions du dessus plat.
+  halfWidth: number;
+  halfDepth: number;
   height: number;
-  // Rayon approximatif de la base.
+  // Largeur de la rampe qui descend jusqu'au sol.
+  ramp: number;
+}
+
+// Bosse en cloche, très étalée : un léger vallonnement.
+interface Rise {
+  x: number;
+  z: number;
+  height: number;
   radius: number;
 }
 
 // Comme les obstacles, le relief est symétrique par rotation de 180° autour du centre.
-const mirrored = (h: Hill): Hill[] => [h, { ...h, x: -h.x, z: -h.z }];
+const mirrored = <T extends { x: number; z: number }>(shape: T): T[] => [shape, { ...shape, x: -shape.x, z: -shape.z }];
 
-const HILLS: Hill[] = [
-  // Grandes buttes sur les flancs : assez hautes pour cacher un groupe qui contourne.
-  ...mirrored({ x: 34, z: -30, height: 4, radius: 8 }),
-  // Ondulations douces, qui ne cachent pas un personnage.
-  ...mirrored({ x: 16, z: 28, height: 1.4, radius: 6 }),
-  ...mirrored({ x: 4, z: 24, height: 1.2, radius: 5 }),
-  ...mirrored({ x: 12, z: -42, height: 1.5, radius: 6 }),
-  ...mirrored({ x: -21, z: -21, height: 1.3, radius: 6 }),
-  ...mirrored({ x: -40, z: 32, height: 1.5, radius: 6 }),
+const PLATEAUS: Plateau[] = [
+  // Grands plateaux sur les flancs : 3 m, de quoi cacher un groupe en contrebas et dominer depuis le dessus.
+  ...mirrored({ x: 38, z: -34, halfWidth: 7, halfDepth: 8, height: 3, ramp: 7 }),
+  // Longue crête basse entre une zone de départ et un flanc : 2 m, juste assez pour masquer un personnage.
+  ...mirrored({ x: 0, z: -42, halfWidth: 11, halfDepth: 3, height: 2, ramp: 6 }),
+];
+
+const RISES: Rise[] = [
+  // Vallonnement large sur les approches du centre : ne cache personne.
+  ...mirrored({ x: -22, z: -20, height: 1.5, radius: 16 }),
 ];
 
 // Zones gardées plates : le centre, les zones de départ, les zones ouvertes et les abords des obstacles.
@@ -96,13 +108,24 @@ function buildGrid(): Float32Array {
 
 function rawHeight(x: number, z: number): number {
   let height = 0;
-  for (const hill of HILLS) {
+  for (const p of PLATEAUS) {
+    // Distance au dessus plat (0 dessus), puis rampe adoucie aux deux bouts.
+    const dx = Math.max(Math.abs(x - p.x) - p.halfWidth, 0);
+    const dz = Math.max(Math.abs(z - p.z) - p.halfDepth, 0);
+    const t = 1 - Math.min(1, Math.hypot(dx, dz) / p.ramp);
+    height = Math.max(height, p.height * smoothstep(t));
+  }
+  for (const r of RISES) {
     // Cloche (gaussienne) : environ 14 % de la hauteur au bord du rayon.
-    const sigma = hill.radius / 2;
-    const d2 = (x - hill.x) ** 2 + (z - hill.z) ** 2;
-    height += hill.height * Math.exp(-d2 / (2 * sigma * sigma));
+    const sigma = r.radius / 2;
+    const d2 = (x - r.x) ** 2 + (z - r.z) ** 2;
+    height += r.height * Math.exp(-d2 / (2 * sigma * sigma));
   }
   return height * flatness(x, z);
+}
+
+function smoothstep(t: number): number {
+  return t * t * (3 - 2 * t);
 }
 
 // 0 dans une zone gardée plate, 1 loin de toutes ; transition douce entre les deux.
@@ -117,8 +140,7 @@ function flatness(x: number, z: number): number {
     distance = Math.min(distance, Math.hypot(dx, dz));
   }
   for (const o of OBSTACLES) distance = Math.min(distance, distanceToObstacle(x, z, o) - OBSTACLE_FLAT_MARGIN);
-  const t = Math.min(1, Math.max(0, distance / FLAT_FALLOFF));
-  return t * t * (3 - 2 * t);
+  return smoothstep(Math.min(1, Math.max(0, distance / FLAT_FALLOFF)));
 }
 
 function distanceToObstacle(x: number, z: number, o: Obstacle): number {
