@@ -4,7 +4,6 @@ import { PointerEventTypes, type PointerInfo } from "@babylonjs/core/Events/poin
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -15,7 +14,6 @@ import {
   EFFECTS,
   PERMANENT,
   SPELL_RANGE,
-  START_ZONES,
   TAB_TARGET_RANGE,
   terrainHeight,
   distance,
@@ -233,17 +231,6 @@ export class Game {
     // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
     void this.village.load();
 
-    // Zones de départ, à la couleur de chaque équipe.
-    START_ZONES.forEach((zone, team) => {
-      const disc = CreateDisc(`startZone${team}`, { radius: zone.radius, tessellation: 64 }, this.scene);
-      disc.rotation.x = Math.PI / 2;
-      disc.position.set(zone.x, 0.02, zone.z);
-      const material = new StandardMaterial(`startZoneMat${team}`, this.scene);
-      material.diffuseColor = team === 0 ? new Color3(0.2, 0.35, 0.7) : new Color3(0.7, 0.2, 0.2);
-      material.alpha = 0.35;
-      disc.material = material;
-      disc.isPickable = false;
-    });
   }
 
   // Anneau rouge affiché sous la cible actuelle.
@@ -469,6 +456,7 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
+    if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
     const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };
     this.gameAudio.update(dt, this.players.values(), this.self, match.phase, match.phaseTimeLeft, match.winner);

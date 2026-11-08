@@ -7,11 +7,13 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 import { OBSTACLES, PLAZA, terrainHeight, type Obstacle } from "@arena/shared";
+import { Camps } from "./camps";
 
 const VILLAGE_URL = "/models/village/village.glb";
 
@@ -81,8 +83,12 @@ export class Village {
   private root: TransformNode | null = null;
   private ray = new Ray(Vector3.Zero(), Vector3.Up());
   private interiorMaterial: StandardMaterial | null = null;
+  // Campements des zones de départ, posés avec les mêmes pièces.
+  readonly camps: Camps;
 
-  constructor(private scene: Scene) {}
+  constructor(private scene: Scene) {
+    this.camps = new Camps(scene);
+  }
 
   async load() {
     const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
@@ -99,6 +105,7 @@ export class Village {
       if (pbr.transparencyMode === PBRMaterial.PBRMATERIAL_OPAQUE) pbr.transparencyMode = null;
     }
     for (const obstacle of OBSTACLES) this.build(obstacle);
+    this.camps.build((piece, x, y, z, rotation) => this.placePiece(piece, x, y, z, rotation));
   }
 
   // Estompe les maisons qui cachent le joueur à la caméra.
@@ -166,26 +173,40 @@ export class Village {
     return box;
   }
 
+  // Pièce isolée, non fusionnée (pour pouvoir changer ses matériaux) : ses maillages.
+  placePiece(piece: string, x: number, y: number, z: number, rotation: number): AbstractMesh[] {
+    const holder = new TransformNode(piece, this.scene);
+    this.instantiate({ piece, x, y, z, rotation }, holder);
+    const meshes = holder.getChildMeshes(false);
+    for (const mesh of meshes) {
+      mesh.setEnabled(true);
+      mesh.isPickable = false;
+    }
+    return meshes;
+  }
+
+  // Copie une pièce à sa place sous "parent", avec la conversion de repère du chargeur glTF.
+  private instantiate(p: Placement, parent: TransformNode) {
+    const template = this.templates.get(p.piece);
+    if (!template) return;
+    const anchor = new TransformNode(p.piece, this.scene);
+    anchor.parent = parent;
+    const shift = p.shift ?? 0;
+    anchor.position.set(p.x + Math.cos(p.rotation) * shift, p.y, p.z - Math.sin(p.rotation) * shift);
+    anchor.rotation.y = p.rotation;
+    if (p.scale) anchor.scaling.setAll(p.scale);
+    const frame = new TransformNode("frame", this.scene);
+    frame.parent = anchor;
+    frame.rotationQuaternion = this.root!.rotationQuaternion!.clone();
+    frame.scaling.copyFrom(this.root!.scaling);
+    template.instantiateHierarchy(frame, { doNotInstantiate: true });
+  }
+
   // Copie les pièces à leur place, puis les fusionne : peu de maillages, donc peu d'appels de dessin.
   private assemble(name: string, placements: Placement[], position: Vector3): Mesh[] {
     const holder = new TransformNode(name, this.scene);
     holder.position.copyFrom(position);
-    for (const p of placements) {
-      const template = this.templates.get(p.piece);
-      if (!template) continue;
-      const anchor = new TransformNode(p.piece, this.scene);
-      anchor.parent = holder;
-      const shift = p.shift ?? 0;
-      anchor.position.set(p.x + Math.cos(p.rotation) * shift, p.y, p.z - Math.sin(p.rotation) * shift);
-      anchor.rotation.y = p.rotation;
-      if (p.scale) anchor.scaling.setAll(p.scale);
-      // Même conversion de repère que le nœud racine du chargeur.
-      const frame = new TransformNode("frame", this.scene);
-      frame.parent = anchor;
-      frame.rotationQuaternion = this.root!.rotationQuaternion!.clone();
-      frame.scaling.copyFrom(this.root!.scaling);
-      template.instantiateHierarchy(frame, { doNotInstantiate: true });
-    }
+    for (const p of placements) this.instantiate(p, holder);
     const meshes = holder.getChildMeshes(false).filter((m): m is Mesh => m instanceof Mesh && m.getTotalVertices() > 0);
     // Seuls des maillages aux mêmes données par sommet (normales, couleurs, UV…) peuvent être fusionnés.
     const groups = new Map<string, Mesh[]>();
