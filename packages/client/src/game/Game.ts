@@ -47,6 +47,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
+import { Nature } from "./nature";
 import { Village } from "./village";
 import { FogOfWar, type FogWatcher } from "./FogOfWar";
 import { SpellEffects } from "./SpellEffects";
@@ -230,6 +231,7 @@ export class Game {
 
     // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
     void this.village.load();
+    void new Nature(this.scene).load();
 
   }
 

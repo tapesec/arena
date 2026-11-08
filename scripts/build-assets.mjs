@@ -315,9 +315,43 @@ const VILLAGE_PIECES = {
   ],
 };
 
-async function buildVillage() {
+// Nature autour de l'arène : arbres de la forêt des bords, buissons, rochers, herbes, fleurs et cailloux.
+const NATURE_PIECES = {
+  nature: [
+    "CommonTree_1",
+    "CommonTree_2",
+    "CommonTree_3",
+    "CommonTree_4",
+    "CommonTree_5",
+    "Pine_1",
+    "Pine_2",
+    "Pine_3",
+    "Pine_4",
+    "Pine_5",
+    "TwistedTree_1",
+    "TwistedTree_3",
+    "Bush_Common",
+    "Bush_Common_Flowers",
+    "Rock_Medium_1",
+    "Rock_Medium_2",
+    "Rock_Medium_3",
+    "Grass_Common_Short",
+    "Grass_Common_Tall",
+    "Grass_Wispy_Short",
+    "Flower_3_Group",
+    "Flower_4_Group",
+    "Pebble_Round_1",
+    "Pebble_Round_2",
+    "Pebble_Square_1",
+    "Plant_1",
+    "Mushroom_Common",
+  ],
+};
+
+// Bibliothèque de pièces : chacune regroupée sous un nœud à son nom, dans un seul fichier.
+async function buildPieceLibrary(target, groups) {
   let doc = null;
-  for (const [folder, pieces] of Object.entries(VILLAGE_PIECES)) {
+  for (const [folder, pieces] of Object.entries(groups)) {
     for (const piece of pieces) {
       const part = await io.read(path.join(SOURCE, folder, `${piece}.gltf`));
       if (!doc) {
@@ -335,7 +369,6 @@ async function buildVillage() {
     }
   }
   await optimize(doc);
-  const target = "village/village.glb";
   await io.write(path.join(OUT, target), doc);
   report(target);
 }
@@ -420,7 +453,8 @@ await mkdir(path.join(OUT, "weapons"), { recursive: true });
 await mkdir(path.join(OUT, "ground"), { recursive: true });
 await buildGround();
 await mkdir(path.join(OUT, "village"), { recursive: true });
-await buildVillage();
+await buildPieceLibrary("village/village.glb", VILLAGE_PIECES);
+await buildPieceLibrary("village/nature.glb", NATURE_PIECES);
 for (const [file, keep] of Object.entries(ANIMATIONS)) await buildAnimations(file, keep);
 for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
 for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);

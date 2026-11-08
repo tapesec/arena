@@ -66,6 +66,9 @@ extract "$ALL" "$OUT/ground" "$VILLAGE/Textures/T_Noise_Terrain.png" "$VILLAGE/T
 extract "$ALL" "$OUT/village" "$VILLAGE/glTF/*"
 extract "$ALL" "$OUT/props" "$PROPS/*.gltf" "$PROPS/*.bin" "$PROPS/T_Trim_*"
 
+# Nature autour de l'arène : arbres, buissons, rochers, herbes et fleurs.
+extract "$ALL" "$OUT/nature" 'Nature/Stylized Nature MegaKit - July 2024/glTF/*'
+
 # Armes en FBX (bâtons, boucliers, dagues…) : à convertir en glTF plus tard si besoin.
 extract "$ALL" "$OUT/weapons-fbx/ultimate-rpg-items" 'Medieval/Ultimate RPG Items Pack - Aug 2019/FBX/*'
 extract "$ALL" "$OUT/weapons-fbx/medieval-weapons" 'Medieval/Medieval Weapons Pack - Sept 2018/FBX/*'

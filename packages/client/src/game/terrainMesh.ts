@@ -9,7 +9,7 @@ import { ARENA_SIZE, terrainHeight } from "@arena/shared";
 const OUTSIDE_FADE = 20;
 
 // Hauteur du sol, prolongée hors de l'arène : la hauteur du bord le plus proche, qui décroît en s'éloignant.
-function extendedHeight(x: number, z: number): number {
+export function extendedHeight(x: number, z: number): number {
   const half = ARENA_SIZE / 2;
   const cx = Math.max(-half, Math.min(half, x));
   const cz = Math.max(-half, Math.min(half, z));

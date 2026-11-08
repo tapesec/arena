@@ -13,7 +13,7 @@ import { createTerrainMesh } from "./terrainMesh";
 
 const GROUND_URL = "/models/ground/";
 // Le sol déborde largement de l'arène (100 m) : la forêt des bords y sera posée.
-const GROUND_SIZE = 200;
+export const GROUND_SIZE = 200;
 // Taille, en mètres, d'une répétition des textures de sol.
 const GRASS_TILE = 8;
 const PAVING_TILE = 4;
@@ -39,6 +39,29 @@ const PATHS: [number, number][][] = [
   ],
 ];
 const PATH_WIDTH = 3;
+
+// Vrai si le sol est de l'herbe en (x, z) : ni chemin, ni place, ni zone de départ (marge comprise).
+export function isGrass(x: number, z: number, margin = 0.5): boolean {
+  if (Math.hypot(x - PLAZA.x, z - PLAZA.z) < PLAZA.radius + margin) return false;
+  if (START_ZONES.some((zone) => Math.hypot(x - zone.x, z - zone.z) < zone.radius + margin)) return false;
+  for (const path of PATHS) {
+    for (const sign of [1, -1]) {
+      for (let i = 1; i < path.length; i++) {
+        const [ax, az] = path[i - 1];
+        const [bx, bz] = path[i];
+        if (distanceToSegment(x, z, sign * ax, sign * az, sign * bx, sign * bz) < PATH_WIDTH / 2 + margin) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function distanceToSegment(x: number, z: number, ax: number, az: number, bx: number, bz: number): number {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+  return Math.hypot(x - ax - t * dx, z - az - t * dz);
+}
 
 // Direction de la lumière du soleil (vers le bas) ; le soleil du ciel est placé à l'opposé.
 const SUN_DIRECTION = new Vector3(-0.5, -1, 0.3).normalize();
