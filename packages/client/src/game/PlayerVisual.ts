@@ -68,6 +68,7 @@ export class PlayerVisual {
   private aliveColor: Color3;
   private wasAlive = true;
   private team: number;
+  private outfitColor = 0;
   // Anneau de glace au sol, visible tant que le personnage est root.
   private rootRing: Mesh;
   // Lueur au sol pendant une incantation, à la couleur du sort.
@@ -187,7 +188,6 @@ export class PlayerVisual {
       this.team = this.state.team;
       this.aliveColor = teamColor(this.team, this.state.colorIndex);
       if (this.isAlive) this.material.diffuseColor = this.aliveColor;
-      this.model?.setTeam(this.team);
     }
 
     if (this.isAlive !== this.wasAlive) {
@@ -204,6 +204,13 @@ export class PlayerVisual {
     this.updateCastRing();
     if (this.state.classId !== this.modelClass) this.loadModel();
     this.updateAnimation();
+  }
+
+  // Couleur de tenue vue par le joueur local : 0 (bleu) pour ses alliés, 1 (rouge) pour ses ennemis.
+  setOutfitColor(color: number) {
+    if (color === this.outfitColor) return;
+    this.outfitColor = color;
+    this.model?.setTeam(color);
   }
 
   // Coup d'auto-attaque porté par ce joueur.
@@ -233,7 +240,7 @@ export class PlayerVisual {
         return;
       }
       this.model = model;
-      model.setTeam(this.team);
+      model.setTeam(this.outfitColor);
       // Cliquer sur le personnage le cible, comme la capsule.
       for (const mesh of model.meshes) {
         mesh.metadata = { sessionId: this.sessionId };

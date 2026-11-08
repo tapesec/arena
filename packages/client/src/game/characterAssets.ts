@@ -170,7 +170,7 @@ export interface CharacterInstance {
   animations: Map<string, AnimationGroup>;
   // Points d'attache des armes, exposés pour les régler en développement.
   weapons: TransformNode[];
-  // Habille le personnage aux couleurs de son équipe.
+  // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
   setTeam(team: number): void;
   dispose(): void;
 }
