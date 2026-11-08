@@ -87,6 +87,8 @@ const YAW_RESEND_THRESHOLD = 0.02;
 // Vitesse de la caméra libre en mode spectateur, en mètres par seconde.
 const SPECTATOR_SPEED = 18;
 
+// Identifiant donné par le serveur aux coups d'auto-attaque dans les événements de combat.
+const AUTO_ATTACK_ID = "auto";
 // Issues possibles d'un coup d'auto-attaque (le coup est porté, qu'il touche ou non).
 const SWING_EVENTS = new Set<CombatEvent["kind"]>(["damage", "blocked", "evaded", "absorbed", "intercepted"]);
 
@@ -313,8 +315,8 @@ export class Game {
       for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
       this.showCombatText(event);
       this.gameAudio.onCombat(event, this.players.get(event.targetId));
-      // Auto-attaque (sans compétence) : le personnage qui frappe joue un coup.
-      if (!event.abilityId && SWING_EVENTS.has(event.kind)) {
+      // Auto-attaque : le personnage qui frappe joue son coup.
+      if (event.abilityId === AUTO_ATTACK_ID && SWING_EVENTS.has(event.kind)) {
         this.players.get(event.sourceId)?.playAttack();
       }
     });
