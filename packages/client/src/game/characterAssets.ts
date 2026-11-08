@@ -100,7 +100,13 @@ const CHARACTERS: Record<string, CharacterDef> = {
     animations: {
       idle: "Sword_Idle",
       attacks: ["Sword_Regular_B"],
-      abilities: { backstab: "Sword_Regular_C", flankStrike: "Sword_Regular_B", evasion: "Roll", default: "Yes" },
+      abilities: {
+        backstab: "Sword_Regular_C",
+        flankStrike: "Sword_Regular_B",
+        evasion: "Roll",
+        rage: "MonsterTransformation",
+        default: "Yes",
+      },
     },
   },
   arcaniste: {

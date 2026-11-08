@@ -57,6 +57,8 @@ const ANIMATIONS = {
     "Idle_No_Loop",
     "Zombie_Idle_Loop",
     "Zombie_Walk_Fwd_Loop",
+    // Rage de la Lame.
+    "MonsterTransformation",
   ],
 };
 

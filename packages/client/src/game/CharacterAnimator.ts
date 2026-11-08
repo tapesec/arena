@@ -59,8 +59,9 @@ export class CharacterAnimator {
   private current: AnimationGroup | null = null;
   private currentKey = "";
   private action: AnimationGroup | null = null;
-  // Une réaction (coup reçu) cède la place aux actions du personnage, l'inverse non.
-  private actionIsReaction = false;
+  // Nature de l'action en cours : une réaction (coup reçu) cède la place aux actions du personnage ;
+  // une auto-attaque ne coupe pas une compétence (la transformation de la Rage dure plus de 2 s).
+  private actionKind: "attack" | "ability" | "reaction" = "attack";
   private lastReaction = -Infinity;
   // Étape du stun en cours : rien, « non » de la tête joué, ou titubation.
   private stunStage: "none" | "getup" | "dazed" = "none";
@@ -80,13 +81,14 @@ export class CharacterAnimator {
   // Coup d'auto-attaque : les animations du set défilent à tour de rôle.
   attack() {
     if (this.set.attacks.length === 0) return;
+    if (this.action?.isPlaying && this.actionKind === "ability") return;
     const name = this.set.attacks[this.attackIndex % this.set.attacks.length];
     this.attackIndex++;
-    this.playAction(name);
+    this.playAction(name, "attack");
   }
 
   ability(abilityId: string) {
-    this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default);
+    this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability");
   }
 
   // Coup reçu. Le stun passe toujours ; les autres réactions n'interrompent pas un coup ou une compétence
@@ -96,13 +98,13 @@ export class CharacterAnimator {
     // Un personnage stun encaisse (il recule) mais ne pare pas.
     if (reaction === "block" && this.stunned) return;
     if (reaction !== "stun") {
-      if (this.action?.isPlaying && !this.actionIsReaction) return;
+      if (this.action?.isPlaying && this.actionKind !== "reaction") return;
       if (now - this.lastReaction < REACTION_INTERVAL) return;
     }
     this.lastReaction = now;
     // Le « non » de la tête suit la projection, quel que soit l'ordre d'arrivée du stun et de son coup.
     if (reaction === "stun") this.stunStage = "none";
-    this.playAction(REACTIONS[reaction], true);
+    this.playAction(REACTIONS[reaction], "reaction");
   }
 
   update(input: AnimationInput) {
@@ -121,7 +123,7 @@ export class CharacterAnimator {
     if (this.stunned) {
       if (this.stunStage === "none") {
         this.stunStage = "getup";
-        this.playAction(STUN_GETUP, true);
+        this.playAction(STUN_GETUP, "reaction");
       } else {
         this.stunStage = "dazed";
         this.play(STUN_LOOP, true, 1);
@@ -154,12 +156,12 @@ export class CharacterAnimator {
 
   dispose() {}
 
-  private playAction(name: string | undefined, reaction = false) {
+  private playAction(name: string | undefined, kind: "attack" | "ability" | "reaction") {
     const group = name ? this.animations.get(name) : undefined;
     if (!group) return;
     this.switchTo(group, `action:${name}`, false, 1);
     this.action = group;
-    this.actionIsReaction = reaction;
+    this.actionKind = kind;
   }
 
   // key distingue deux usages d'une même animation (course avant et course à l'envers).
