@@ -250,6 +250,8 @@ export class PlayerVisual {
     this.animator?.update({
       alive: this.isAlive,
       casting: this.state.castAbility !== "",
+      stunned: this.hasEffect("stun"),
+      rooted: this.hasEffect("root"),
       forward: this.forwardSpeed,
       right: this.rightSpeed,
     });

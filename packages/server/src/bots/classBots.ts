@@ -154,8 +154,8 @@ class PretreBot extends CasterBot {
     const critical = byHealth.find((a) => this.hpRatio(a) < 0.35);
     if (critical && this.tryUse("instantHeal", critical)) return;
 
-    // 2. Libérer un allié neutralisé.
-    const controlled = allies.find((a) => a !== self && (a.has("mez") || a.has("stun")));
+    // 2. Libérer un allié mezzé (la Purification ne retire pas le stun).
+    const controlled = allies.find((a) => a !== self && a.has("mez"));
     if (controlled && this.tryUse("purify", controlled)) return;
 
     // 3. Plusieurs blessés autour : soin de groupe.

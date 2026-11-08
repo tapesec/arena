@@ -41,7 +41,8 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Portées** : mêlée 3 m, sorts 30 m.
 - **Contrôle de foule** :
   - **Mez** : la cible ne peut plus rien faire. Cassé par le moindre dégât.
-  - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts.
+  - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts, ni retiré par la Purification.
+  - Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas au bouclier ; la bulle et la Garde d'un autre Gardien le protègent toujours.
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
   - **Snare** : ralentissement.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
@@ -88,7 +89,7 @@ Garde le groupe en vie, le libère des contrôles et le renforce.
 | Soin | Rend 300 points de vie à un allié. | 2 s | 80 mana | — |
 | Soin de groupe | Rend 200 points de vie aux membres du groupe à 20 m. | 3 s | 200 mana | — |
 | Soin instantané | Rend 200 points de vie à un allié. | Instantané | 60 mana | 3 min |
-| Purification | Retire le mez ou le stun d'un allié. | Instantané | 30 mana | 5 s |
+| Purification | Retire le mez d'un allié (pas le stun). | Instantané | 30 mana | 5 s |
 | Buff de vie | +200 points de vie maximum. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 100 mana | — |
 | Buff de force | +15 % de dégâts de mêlée. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 100 mana | — |
 | Aura de régénération | Les alliés à 30 m régénèrent +5 mana/s et +2 endurance/s. | Permanent | — | — |
@@ -164,7 +165,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Couleurs d'équipe** : chaque joueur voit ses alliés en tenue bleue et ses ennemis en tenue rouge, quelle que soit son équipe (pas d'anneau de couleur aux pieds). Prêtre et Arcaniste utilisent les variantes du pack ; pour le Gardien (même armure argent dans les deux camps), la Lame et le Barde, le tissu est recoloré à la préparation des assets. Le Gardien, presque tout en armure, porte en plus un bouclier peint à la couleur de son équipe.
 - **Au-dessus des têtes** : le pictogramme de la classe, suivi du pseudo en bleu pour un allié, ou du nom de la classe en rouge pour un ennemi.
 - **Animations** : au repos, course avant (vitesse de lecture calée sur la vitesse réelle), recul (course jouée à l'envers), marche sous 2,5 m/s (reprise après un root, par exemple), pas de côté (marche latérale accélérée, les pieds glissent un peu), un coup d'auto-attaque par classe (prioritaire, joué sur tout le corps même en courant), compétences, incantation, mort. Les packs n'ont pas de course latérale ni arrière ; la bibliothèque 1 en version Source en a.
-- **Réactions aux coups** : léger recul sur un dégât, coup marqué sur un critique ou au-delà de 200 dégâts, projection quand on est stun, parade quand un Gardien bloque. Une réaction au plus toutes les 0,5 s, jamais par-dessus un coup ou une compétence du personnage (sauf le stun) ; elles se jouent aussi en courant. Rien de particulier pour le mez (on le confondrait avec la mort), l'esquive, la bulle et l'interception.
+- **Réactions aux coups** : léger recul sur un dégât, coup marqué sur un critique ou au-delà de 200 dégâts, projection quand on est stun, parade quand un Gardien bloque (jamais quand il est stun). Stun : après la projection, un « non » de la tête (Idle_No), puis il titube (Zombie_Idle) jusqu'à la fin ; il recule toujours sous les coups. Root : marche entravée (Zombie_Walk_Fwd) tant qu'il avance lentement. Une réaction au plus toutes les 0,5 s, jamais par-dessus un coup ou une compétence du personnage (sauf le stun) ; elles se jouent aussi en courant. Rien de particulier pour le mez (on le confondrait avec la mort), l'esquive, la bulle et l'interception.
 - **Décor** : un hameau autour d'une grande place pavée au centre, de la nature autour (Medieval Village MegaKit, Stylized Nature MegaKit, Fantasy Props MegaKit). Règle : ce qui a l'air de bloquer la vue la bloque vraiment ; dans la zone jouable, le décor qui n'est pas un obstacle reste sous le genou, les arbres restent hors de l'arène.
   - Fait : sol (herbe, chemins de terre des départs vers la place, pavés de la place), ciel avec soleil, brume au loin, lumière chaude. Le sol déborde de 50 m autour de l'arène pour accueillir la forêt.
   - Fait : hameau. Les maisons sont assemblées en jeu à partir des pièces du village (murs de 2 m, pierre en bas et colombages à l'étage pour les grandes, porte face à la place, fenêtres à volets, toit de tuiles, intérieur sombre derrière les ouvertures). Une maison entre la caméra et son personnage devient transparente. Murets et palissades : deux rangées de murs dos à dos (0,8 m d'épaisseur).

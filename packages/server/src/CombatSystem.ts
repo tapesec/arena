@@ -411,13 +411,13 @@ export class CombatSystem {
         this.noteHostileAction(target);
         if (target.state.castAbility && !target.castProtected) this.interrupt(target, "silence");
         break;
-      case "cleanse":
-        for (const kind of ["mez", "stun"] as const) {
-          const control = target.getEffect(kind);
-          if (control) this.removeEffect(target, control);
-        }
+      case "cleanse": {
+        // La Purification retire le mez, pas le stun.
+        const control = target.getEffect("mez");
+        if (control) this.removeEffect(target, control);
         this.emit({ kind: "cleanse", sourceId: caster.id, targetId: target.id, abilityId: ability.id });
         break;
+      }
       case "resurrect":
         if (target.alive) break;
         target.state.hp = Math.round(target.state.maxHp * effect.hpRatio);
@@ -505,9 +505,12 @@ export class CombatSystem {
   }
 
   // Esquive, bulle, bouclier puis garde. Retourne vrai si le coup est évité.
+  // Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas ; la bulle et la Garde d'un autre
+  // Gardien le protègent toujours.
   private avoidMelee(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
     const base = { sourceId: source.id, targetId: target.id, abilityId };
-    if (target.has("evasion") && this.random() < EVASION_CHANCE) {
+    const free = !target.incapacitated;
+    if (free && target.has("evasion") && this.random() < EVASION_CHANCE) {
       this.emit({ kind: "evaded", ...base });
       return true;
     }
@@ -516,7 +519,7 @@ export class CombatSystem {
       this.emit({ kind: "absorbed", ...base });
       return true;
     }
-    if (target.classDef.passives.includes("shieldBlock") && this.random() < SHIELD_BLOCK_CHANCE) {
+    if (free && target.classDef.passives.includes("shieldBlock") && this.random() < SHIELD_BLOCK_CHANCE) {
       this.emit({ kind: "blocked", ...base, detail: target.id });
       return true;
     }

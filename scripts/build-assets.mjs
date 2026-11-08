@@ -53,6 +53,10 @@ const ANIMATIONS = {
     "Shield_OneShot",
     "Hit_Knockback",
     "Yes",
+    // Stun : « non » de la tête une fois relevé, puis titubation ; root : marche entravée.
+    "Idle_No_Loop",
+    "Zombie_Idle_Loop",
+    "Zombie_Walk_Fwd_Loop",
   ],
 };
 

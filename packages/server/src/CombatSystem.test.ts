@@ -95,6 +95,20 @@ describe("Gardien", () => {
     assert.equal(world.eventsOf("immune").length, 1);
   });
 
+  it("un Gardien stun ne bloque plus au bouclier", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "gardien", 1, 0, 2, Math.PI);
+    // Sur le côté du Gardien, tournée vers lui.
+    const lame = world.spawn("l", "lame", 1, 1.5, 0, -Math.PI / 2);
+    world.cast(enemy, "shieldBash", gardien);
+    assert.ok(gardien.has("stun"));
+    // Tirages à 0 : un Gardien libre bloquerait ce coup à coup sûr.
+    world.rolls = [0, 0, 0, 0];
+    world.cast(lame, "flankStrike", gardien);
+    assert.equal(world.eventsOf("blocked").length, 0);
+    assert.ok(world.eventsOf("damage").some((e) => e.targetId === "g"));
+  });
+
   it("le stun n'est pas cassé par les dégâts", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
     const arcaniste = world.spawn("a", "arcaniste", 0, 3, 0, 0);
@@ -226,6 +240,16 @@ describe("Prêtre", () => {
     world.cast(pretre, "purify", ally);
     assert.ok(!ally.has("mez"));
     assert.ok(ally.has("immuneMez"));
+  });
+
+  it("la Purification ne retire pas le stun", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    const ally = world.spawn("x", "lame", 0, 3, 0);
+    const gardien = world.spawn("g", "gardien", 1, 3, 2, Math.PI);
+    world.cast(gardien, "shieldBash", ally);
+    assert.ok(ally.has("stun"));
+    world.cast(pretre, "purify", ally);
+    assert.ok(ally.has("stun"));
   });
 
   it("le Soin sans allié ciblé soigne le Prêtre lui-même", () => {
