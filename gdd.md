@@ -43,7 +43,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
   - **Mez** : la cible ne peut plus rien faire. Cassé par le moindre dégât.
   - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts, ni retiré par la Purification.
   - Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas au bouclier ; la bulle et la Garde d'un autre Gardien le protègent toujours.
-  - **Attaques spéciales de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc) : bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement) ; esquivées, seuls leurs dégâts sont évités.
+  - **Attaques spéciales de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
   - **Snare** : ralentissement.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.

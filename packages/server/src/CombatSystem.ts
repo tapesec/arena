@@ -363,15 +363,13 @@ export class CombatSystem {
 
     const center = this.areaCenter(caster, ability, targetId);
     for (const target of this.affectedBy(caster, ability, targetId)) {
-      // Attaque spéciale de mêlée : l'évitement est tranché une fois, avant ses effets. Bloquée au bouclier ou
-      // absorbée par une bulle, elle s'arrête en entier (dégâts, stun, ralentissement) ; esquivée, seuls ses
-      // dégâts sont évités.
+      // Attaque spéciale de mêlée : l'évitement est tranché une fois, avant ses effets. Esquivée, bloquée au
+      // bouclier ou absorbée par une bulle, elle s'arrête en entier (dégâts, stun, ralentissement).
       const avoidance = ability.melee ? this.meleeAvoidance(caster, target, ability.id) : null;
-      if (avoidance === "blocked" || avoidance === "absorbed") continue;
+      if (avoidance) continue;
       for (const effect of ability.effects) {
         // Les effets suivants ne s'appliquent pas à une cible tuée par le premier.
         if (!target.alive && effect.type !== "resurrect") break;
-        if (effect.type === "damage" && avoidance === "evaded") continue;
         const avoidanceDone = !!ability.melee && avoidance !== undefined;
         this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target), avoidanceDone);
       }

@@ -125,7 +125,7 @@ describe("Gardien", () => {
     assert.ok(!pretre.has("stun"));
   });
 
-  it("une attaque esquivée n'évite que ses dégâts : le ralentissement passe", () => {
+  it("une attaque esquivée est évitée en entier : ni dégâts ni ralentissement", () => {
     const lameA = world.spawn("a", "lame", 0, 0, 0, 0);
     const lameB = world.spawn("b", "lame", 1, 1.5, 0, -Math.PI / 2);
     world.cast(lameA, "evasion");
@@ -133,7 +133,7 @@ describe("Gardien", () => {
     world.cast(lameB, "flankStrike", lameA);
     assert.equal(world.eventsOf("evaded").length, 1);
     assert.equal(lameA.state.hp, lameA.state.maxHp);
-    assert.ok(lameA.has("snare"));
+    assert.ok(!lameA.has("snare"));
   });
 
   it("un Gardien stun ne bloque plus au bouclier", () => {
