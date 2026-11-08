@@ -39,6 +39,7 @@ body,
 
 .hud-frames {
   position: absolute;
+  align-items: flex-start;
   top: 12px;
   left: 12px;
   display: flex;
@@ -694,4 +695,124 @@ body,
   .sound-control input {
     display: none;
   }
+}
+
+/* Fenêtre de groupe : sous les panneaux du joueur et de sa cible, cliquable. */
+.hud-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.group-panel {
+  position: static;
+  width: 215px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: auto;
+}
+
+.group-member {
+  padding: 2px 4px 3px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.group-member:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.group-member-target {
+  border-color: #ffd76a;
+  background: rgba(255, 215, 106, 0.1);
+}
+
+.group-member-far {
+  opacity: 0.5;
+}
+
+.group-member-dead {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.group-member-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.group-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.group-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-casting {
+  color: #ffd76a;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.group-effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.group-effect {
+  padding: 0 2px;
+  border-radius: 2px;
+  font-size: 8px;
+  line-height: 11px;
+}
+
+.group-hotkey {
+  margin-left: auto;
+  color: #888;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.mini-bar {
+  position: relative;
+  height: 4px;
+  margin-top: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mini-bar.bar-hp {
+  height: 11px;
+}
+
+.mini-bar-text {
+  position: absolute;
+  inset: 0;
+  font-size: 9px;
+  line-height: 11px;
+  text-align: center;
+  text-shadow: 0 0 2px #000;
 }

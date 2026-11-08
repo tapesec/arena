@@ -17,9 +17,11 @@ import { GridMaterial } from "@babylonjs/materials/grid/gridMaterial";
 import { Callbacks, type Room } from "@colyseus/sdk";
 import {
   ARENA_SIZE,
+  EFFECTS,
   OBSTACLES,
   OBSTACLE_HEIGHT,
   PERMANENT,
+  SPELL_RANGE,
   START_ZONES,
   TAB_TARGET_RANGE,
   distance,
@@ -34,6 +36,7 @@ import {
   type AbilityUsedEvent,
   type CombatEvent,
   type CooldownEvent,
+  type EffectCategory,
   type EffectKind,
   type InterruptEvent,
   type MatchPhase,
@@ -43,6 +46,7 @@ import {
   useHudStore,
   type CastFrame,
   type EffectFrame,
+  type GroupMemberFrame,
   type MatchFrame,
   type SelfFrame,
   type TargetFrame,
@@ -139,6 +143,7 @@ export class Game {
       selectClass: (classId) => this.room.send("selectClass", { classId }),
       forceStart: () => this.room.send("forceStart"),
       addBots: () => this.room.send("addBots"),
+      selectTarget: (playerId) => this.setTarget(playerId),
     });
 
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
@@ -347,6 +352,11 @@ export class Game {
   }
 
   private handleAction(action: KeyAction) {
+    if (action.startsWith("group")) {
+      const member = this.groupMembers()[Number(action.slice(5)) - 1];
+      if (member) this.setTarget(member.sessionId);
+      return;
+    }
     if (action.startsWith("slot")) {
       const slot = Number(action.slice(4)) - 1;
       const abilityId = this.self && getClass(this.self.state.classId)?.abilities[slot];
@@ -411,6 +421,13 @@ export class Game {
   private setTarget(targetId: string | null) {
     this.targetId = targetId;
     this.room.send("target", { targetId: targetId === this.room.sessionId ? null : targetId });
+  }
+
+  // Coéquipiers hors soi-même, dans un ordre stable (celui d'arrivée dans la partie).
+  private groupMembers(): PlayerVisual[] {
+    const self = this.self;
+    if (!self) return [];
+    return [...this.players.values()].filter((p) => p !== self && p.state.team === self.state.team);
   }
 
   private nameOf(id: string): string {
@@ -489,6 +506,24 @@ export class Game {
           }
         : null;
 
+    const group: GroupMemberFrame[] = self
+      ? this.groupMembers().map((p) => ({
+          id: p.sessionId,
+          name: p.state.name,
+          classId: p.state.classId as ClassId | "",
+          hp: p.state.hp,
+          maxHp: p.state.maxHp,
+          mana: Math.floor(p.state.mana),
+          maxMana: p.state.maxMana,
+          endurance: Math.floor(p.state.endurance),
+          maxEndurance: p.state.maxEndurance,
+          casting: castFrame(p.state)?.abilityName ?? null,
+          effects: sortAfflictionsFirst(effectFrames(p.state)),
+          inRange: distance(self.state, p.state) <= SPELL_RANGE && hasLineOfSight(self.state, p.state),
+          isTarget: p === target,
+        }))
+      : [];
+
     const state = this.room.state as {
       phase: MatchPhase;
       phaseTimeLeft: number;
@@ -517,11 +552,11 @@ export class Game {
       : [];
 
     // On ne prévient React que si quelque chose a réellement changé.
-    const snapshot = JSON.stringify([selfFrame, targetFrame, matchFrame, teammates]);
+    const snapshot = JSON.stringify([selfFrame, targetFrame, group, matchFrame, teammates]);
     if (snapshot === this.lastHudSnapshot) return;
     this.lastHudSnapshot = snapshot;
     const hud = useHudStore.getState();
-    hud.setFrames(selfFrame, targetFrame);
+    hud.setFrames(selfFrame, targetFrame, group);
     hud.setMatch(matchFrame, teammates);
   }
 }
@@ -535,6 +570,13 @@ function unitFrame(state: PlayerView) {
     cast: castFrame(state),
     effects: effectFrames(state),
   };
+}
+
+// Les afflictions d'abord (ce qu'il faut purifier), puis les buffs, puis les immunités.
+const CATEGORY_ORDER: Record<EffectCategory, number> = { control: 0, debuff: 1, buff: 2, immunity: 3 };
+
+function sortAfflictionsFirst(effects: EffectFrame[]): EffectFrame[] {
+  return effects.sort((a, b) => CATEGORY_ORDER[EFFECTS[a.kind].category] - CATEGORY_ORDER[EFFECTS[b.kind].category]);
 }
 
 function castFrame(state: PlayerView): CastFrame | null {

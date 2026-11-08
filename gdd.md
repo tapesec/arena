@@ -13,6 +13,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Verrous sur la cible** : F fait face à la cible en permanence, C la suit (stick) en lui faisant face. Rappuyer ne les annule pas : avancer, reculer ou pivoter les lâche, de même que la mort, un mez ou un stun (et un root pour le stick), ou la perte de la cible. Le pas de côté les conserve (tourner autour de sa cible pendant un stick).
 - **Pivoter** n'interrompt pas une incantation ; avancer, reculer ou faire un pas de côté, si.
 - **Attaque automatique** : R.
+- **Fenêtre de groupe** : à gauche, sous son panneau, une ligne par coéquipier (classe, vie, mana ou endurance, sort en cours, afflictions puis buffs puis immunités). Clic ou F2 à F8 pour le cibler ; un coéquipier mort est grisé, un coéquipier hors de portée de sort ou hors de vue est atténué.
 - **Stack** : TypeScript partout, Babylon.js côté client, serveur autoritaire en Node/Bun, logique de combat partagée.
 
 ## Format de jeu : arène 8v8 avec roaming

@@ -22,6 +22,7 @@ export type KeyAction =
   | "faceLock"
   | "stick"
   | "resetCamera"
+  | `group${number}`
   | `slot${number}`;
 
 const ACTION_BINDINGS: Record<string, KeyAction> = {
@@ -32,6 +33,8 @@ const ACTION_BINDINGS: Record<string, KeyAction> = {
   KeyC: "stick",
   KeyV: "resetCamera",
   F1: "targetSelf",
+  // F2 à F8 : membres du groupe, dans l'ordre de la fenêtre de groupe.
+  ...Object.fromEntries([2, 3, 4, 5, 6, 7, 8].map((n) => [`F${n}`, `group${n - 1}` as KeyAction])),
   // Rangée des chiffres (touches &, é, "… sur un clavier AZERTY) : barre de compétences.
   ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`Digit${n}`, `slot${n}` as KeyAction])),
 };

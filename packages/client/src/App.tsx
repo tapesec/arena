@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
-import { useHudStore, type CastFrame, type EffectFrame } from "./store";
+import { CLASS_BADGES } from "./game/classBadges";
+import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
 export function App() {
   const inGame = useHudStore((s) => s.inGame);
@@ -51,7 +52,11 @@ function Hud() {
   return (
     <>
       <div className="hud-frames">
-        <SelfPanel />
+        {/* La fenêtre de groupe suit le panneau du joueur, quelle que soit sa hauteur. */}
+        <div className="hud-column">
+          <SelfPanel />
+          <GroupPanel />
+        </div>
         <TargetPanel />
       </div>
       <PhaseBanner />
@@ -178,7 +183,7 @@ function SpectatorBanner() {
   if (phase !== "fighting" || !dead) return null;
   return (
     <div className="phase-banner spectator-banner">
-      Vous êtes mort · <strong>Mode spectateur</strong> : ZQSD déplace la caméra, C revient à votre corps
+      Vous êtes mort · <strong>Mode spectateur</strong> : ZQSD déplace la caméra, V revient à votre corps
     </div>
   );
 }
@@ -251,6 +256,97 @@ function TargetPanel() {
       <Bar value={target.hp} max={target.maxHp} kind="hp" deadLabel="Mort" />
       {target.cast && <CastBar cast={target.cast} />}
       <EffectList effects={target.effects} />
+    </div>
+  );
+}
+
+// Libellés courts des effets, pour la fenêtre de groupe (le libellé complet est en infobulle).
+const SHORT_EFFECT_LABELS: Record<string, string> = {
+  mez: "Mez",
+  stun: "Stun",
+  root: "Root",
+  snare: "Ral",
+  immuneMez: "iMez",
+  immuneStun: "iStun",
+  immuneRoot: "iRoot",
+  evasion: "Év",
+  rage: "Rage",
+  concentration: "Conc",
+  guarded: "Gard",
+  intercept: "Int",
+  buffHp: "PV",
+  buffStrength: "For",
+  speed: "Vit",
+  regenAura: "Aura",
+  bubble: "Bul",
+};
+
+// Fenêtre de groupe : ses coéquipiers, cliquables pour les cibler (F2 à F8 au clavier).
+function GroupPanel() {
+  const group = useHudStore((s) => s.group);
+  const actions = useHudStore((s) => s.actions);
+  if (group.length === 0) return null;
+  return (
+    <div className="hud-panel group-panel">
+      {group.map((member, index) => (
+        <GroupMember
+          key={member.id}
+          member={member}
+          hotkey={`F${index + 2}`}
+          onSelect={() => actions?.selectTarget(member.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; hotkey: string; onSelect: () => void }) {
+  const badge = member.classId ? CLASS_BADGES[member.classId] : undefined;
+  const dead = member.hp <= 0;
+  const classes = [
+    "group-member",
+    member.isTarget && "group-member-target",
+    dead && "group-member-dead",
+    !dead && !member.inRange && "group-member-far",
+  ];
+  return (
+    <div className={classes.filter(Boolean).join(" ")} onClick={onSelect} title={`${member.name} (${hotkey})`}>
+      <div className="group-member-header">
+        {badge && (
+          <span className="group-badge" style={{ background: badge.color }}>
+            <svg viewBox="0 0 24 24" width="11" height="11" dangerouslySetInnerHTML={{ __html: badge.icon }} />
+          </span>
+        )}
+        <span className="group-name">{member.name}</span>
+        {member.casting && <span className="group-casting">{member.casting}</span>}
+        <span className="group-hotkey">{hotkey}</span>
+      </div>
+      <MiniBar value={member.hp} max={member.maxHp} kind="hp" label={dead ? "Mort" : String(member.hp)} />
+      {member.maxMana > 0 && <MiniBar value={member.mana} max={member.maxMana} kind="mana" />}
+      {member.maxEndurance > 0 && <MiniBar value={member.endurance} max={member.maxEndurance} kind="endurance" />}
+      {!dead && member.effects.length > 0 && (
+        <div className="group-effects">
+          {member.effects.map((effect) => (
+            <span
+              key={effect.kind}
+              className={`group-effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}
+              title={`${EFFECTS[effect.kind]?.label ?? effect.kind}${effect.remaining !== null ? ` (${effect.remaining}s)` : ""}`}
+            >
+              {SHORT_EFFECT_LABELS[effect.kind] ?? effect.kind}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiniBar({ value, max, kind, label }: { value: number; max: number; kind: string; label?: string }) {
+  const ratio = max > 0 ? Math.max(0, value / max) : 0;
+  return (
+    <div className={`mini-bar bar-${kind}`}>
+      <div className="bar-fill" style={{ width: `${ratio * 100}%` }} />
+      {label && <span className="mini-bar-text">{label}</span>}
     </div>
   );
 }

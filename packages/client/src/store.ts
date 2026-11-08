@@ -57,6 +57,25 @@ export interface MatchFrame {
   winner: number;
 }
 
+// Coéquipier affiché dans la fenêtre de groupe.
+export interface GroupMemberFrame {
+  id: string;
+  name: string;
+  classId: ClassId | "";
+  hp: number;
+  maxHp: number;
+  mana: number;
+  maxMana: number;
+  endurance: number;
+  maxEndurance: number;
+  // Nom du sort en cours d'incantation, ou null.
+  casting: string | null;
+  effects: EffectFrame[];
+  // À portée de sort et en vue : utile pour savoir qui l'on peut soigner.
+  inRange: boolean;
+  isTarget: boolean;
+}
+
 // Membre de son équipe, affiché pendant le choix des classes.
 export interface TeammateFrame {
   name: string;
@@ -70,6 +89,8 @@ export interface GameActions {
   selectClass: (classId: ClassId) => void;
   forceStart: () => void;
   addBots: () => void;
+  // Cibler un joueur (clic dans la fenêtre de groupe).
+  selectTarget: (playerId: string) => void;
 }
 
 const MAX_LOG_LINES = 8;
@@ -88,6 +109,7 @@ interface HudState {
   teammates: TeammateFrame[];
   self: SelfFrame | null;
   target: TargetFrame | null;
+  group: GroupMemberFrame[];
   combatLog: string[];
   // Instant (performance.now()) de fin de recharge, par compétence.
   cooldownEnds: Record<string, number>;
@@ -98,7 +120,7 @@ interface HudState {
   leaveGame: () => void;
   setStatus: (status: ConnectionStatus, error?: string) => void;
   setMatch: (match: MatchFrame, teammates: TeammateFrame[]) => void;
-  setFrames: (self: SelfFrame | null, target: TargetFrame | null) => void;
+  setFrames: (self: SelfFrame | null, target: TargetFrame | null, group: GroupMemberFrame[]) => void;
   setActions: (actions: GameActions | null) => void;
   pushLog: (line: string) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
@@ -113,6 +135,7 @@ const freshGame = {
   teammates: [],
   self: null,
   target: null,
+  group: [],
   combatLog: [],
   cooldownEnds: {},
   flashMessage: null,
@@ -127,7 +150,7 @@ export const useHudStore = create<HudState>((set) => ({
   leaveGame: () => set({ ...freshGame, inGame: false }),
   setStatus: (status, error) => set({ status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
-  setFrames: (self, target) => set({ self, target }),
+  setFrames: (self, target, group) => set({ self, target, group }),
   setActions: (actions) => set({ actions }),
   pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),
   startCooldown: (abilityId, durationSeconds) =>
