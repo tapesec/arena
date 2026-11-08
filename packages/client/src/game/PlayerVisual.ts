@@ -82,8 +82,6 @@ export class PlayerVisual {
   private modelClass = "";
   private loadToken = 0;
   private disposed = false;
-  // Anneau à la couleur de l'équipe sous les personnages animés.
-  private teamRing: Mesh;
   // Vitesse mesurée à l'écran, dans le repère du personnage.
   private lastX: number;
   private lastZ: number;
@@ -151,13 +149,6 @@ export class PlayerVisual {
     this.bubble.isPickable = false;
     this.bubble.parent = this.root;
     this.bubble.setEnabled(false);
-
-    this.teamRing = CreateTorus("teamRing", { diameter: 1.2, thickness: 0.06, tessellation: 40 }, scene);
-    this.teamRing.position.y = 0.04;
-    this.teamRing.material = this.material;
-    this.teamRing.isPickable = false;
-    this.teamRing.parent = this.root;
-    this.teamRing.setEnabled(false);
 
     if (isLocal) {
       const ring = CreateTorus("ring", { diameter: 1.6, thickness: 0.08, tessellation: 48 }, scene);
@@ -257,7 +248,6 @@ export class PlayerVisual {
   private showCapsule(visible: boolean) {
     this.body.visibility = visible ? 1 : 0;
     this.nose.setEnabled(visible && this.isAlive);
-    this.teamRing.setEnabled(!visible);
     this.applyLifeState();
   }
 

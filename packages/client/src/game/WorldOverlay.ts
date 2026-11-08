@@ -35,9 +35,12 @@ interface Indicator {
 interface Badge {
   element: HTMLDivElement;
   anchor: TransformNode;
-  // Classe, équipe et état (vivant ou non) affichés, pour ne toucher au DOM que s'ils changent.
+  // Contenu affiché (classe, texte, camp, état), pour ne toucher au DOM que s'il change.
   key: string;
 }
+
+// Camp d'un joueur vu par le joueur local : son texte au-dessus de la tête est bleu ou rouge.
+export type Side = "ally" | "enemy";
 
 // Couche HTML posée sur le canvas : badges de classe, textes flottants (dégâts, soins…)
 // et indicateurs de contrôle au-dessus des têtes. Pilotée par la boucle de jeu, pas par React, pour rester légère.
@@ -85,9 +88,10 @@ export class WorldOverlay {
     this.indicators.set(playerId, { element, anchor, kind });
   }
 
-  // Badge de classe au-dessus de la tête : pictogramme sur la couleur du rôle, liseré de la couleur de l'équipe.
-  setBadge(playerId: string, anchor: TransformNode, classId: ClassId | "", team: number, alive: boolean) {
-    const key = `${classId}|${team}|${alive}`;
+  // Au-dessus de la tête : pictogramme de la classe (sur la couleur du rôle), suivi d'un texte coloré selon le camp
+  // (le pseudo d'un allié, la classe d'un ennemi).
+  setBadge(playerId: string, anchor: TransformNode, classId: ClassId | "", label: string, side: Side, alive: boolean) {
+    const key = `${classId}|${label}|${side}|${alive}`;
     const current = this.badges.get(playerId);
     if (current?.key === key) return;
     current?.element.remove();
@@ -96,9 +100,15 @@ export class WorldOverlay {
     if (!badge) return;
 
     const element = document.createElement("div");
-    element.className = `class-badge team-border-${team}${alive ? "" : " class-badge-dead"}`;
-    element.style.background = badge.color;
-    element.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14">${badge.icon}</svg>`;
+    element.className = `nameplate nameplate-${side}${alive ? "" : " nameplate-dead"}`;
+    const icon = document.createElement("span");
+    icon.className = "class-badge";
+    icon.style.background = badge.color;
+    icon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14">${badge.icon}</svg>`;
+    const text = document.createElement("span");
+    text.className = "nameplate-label";
+    text.textContent = label;
+    element.append(icon, text);
     this.container.appendChild(element);
     this.badges.set(playerId, { element, anchor, key });
   }

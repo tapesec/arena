@@ -566,32 +566,47 @@ body,
   }
 }
 
-/* Badge de classe au-dessus des têtes : couleur du rôle, liseré de la couleur de l'équipe. */
-.class-badge {
+/* Au-dessus des têtes : pictogramme de la classe (couleur du rôle), puis pseudo d'un allié ou classe d'un ennemi. */
+.nameplate {
   position: absolute;
   left: 0;
   top: 0;
-  width: 22px;
-  height: 22px;
-  box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border: 2px solid;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  gap: 4px;
+  white-space: nowrap;
+  pointer-events: none;
   will-change: transform;
 }
 
-.team-border-0 {
-  border-color: #6fa3ff;
+.class-badge {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-.team-border-1 {
-  border-color: #ff6f6f;
+.nameplate-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow:
+    0 0 3px #000,
+    0 1px 2px #000;
 }
 
-.class-badge-dead {
+.nameplate-ally .nameplate-label {
+  color: #9cc8ff;
+}
+
+.nameplate-enemy .nameplate-label {
+  color: #ff5a52;
+}
+
+.nameplate-dead {
   opacity: 0.35;
   filter: grayscale(1);
 }

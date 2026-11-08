@@ -476,7 +476,11 @@ export class Game {
       player.update(smoothing);
       const control = !player.isAlive ? null : player.hasEffect("stun") ? "stun" : player.hasEffect("mez") ? "mez" : null;
       this.overlay.setIndicator(player.sessionId, player.root, control);
-      this.overlay.setBadge(player.sessionId, player.root, player.state.classId as ClassId | "", player.state.team, player.isAlive);
+      const classId = player.state.classId as ClassId | "";
+      const enemy = !!this.self && player.state.team !== this.self.state.team;
+      // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
+      const label = enemy ? (getClass(classId)?.name ?? "") : player.state.name;
+      this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
