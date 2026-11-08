@@ -1,12 +1,12 @@
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
-import { FresnelParameters } from "@babylonjs/core/Materials/fresnelParameters";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import { CreatePlane } from "@babylonjs/core/Meshes/Builders/planeBuilder";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
+import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
@@ -24,6 +24,7 @@ const STAR_SPEED = 4;
 // Cristaux du root : nombre, et taille restante quand le root est sur le point de finir.
 const CRYSTALS = 7;
 const MELTED = 0.25;
+const BUBBLE_DIAMETER = 2.4;
 
 // Affichage d'un personnage contrôlé ou protégé ; chaque élément n'est créé qu'au premier besoin.
 interface PlayerStatus {
@@ -63,6 +64,7 @@ export class StatusFx {
   private starMaterial: StandardMaterial;
   private iceMaterial: StandardMaterial;
   private bubbleMaterial: StandardMaterial;
+  private rimMaterial: StandardMaterial;
   private time = 0;
 
   constructor(
@@ -72,6 +74,7 @@ export class StatusFx {
     this.starMaterial = starMaterial(scene);
     this.iceMaterial = iceMaterial(scene);
     this.bubbleMaterial = bubbleMaterial(scene);
+    this.rimMaterial = rimMaterial(scene);
   }
 
   update(dt: number, players: Iterable<PlayerVisual>) {
@@ -220,14 +223,23 @@ export class StatusFx {
     status.crystals.scaling.set(1, MELTED + (1 - MELTED) * solid, 1).scaleInPlace(0.6 + 0.4 * solid);
   }
 
-  // Bulle irisée : ses reflets changent doucement de couleur, elle respire légèrement.
+  // Bulle irisée : un volume à peine teinté et un anneau lumineux sur son contour, toujours tourné vers la caméra.
+  // Ses reflets changent doucement de couleur, elle respire légèrement.
   private updateBubble(status: PlayerStatus, active: boolean, player: PlayerVisual) {
     if (active && !status.bubble) {
-      status.bubble = CreateSphere("bubble", { diameter: 2.4, segments: 24 }, this.scene);
+      status.bubble = CreateSphere("bubble", { diameter: BUBBLE_DIAMETER, segments: 24 }, this.scene);
       status.bubble.material = this.bubbleMaterial;
       status.bubble.isPickable = false;
       status.bubble.parent = player.root;
       status.bubble.position.y = BODY;
+      const rim = CreateTorus("bubbleRim", { diameter: BUBBLE_DIAMETER - 0.05, thickness: 0.07, tessellation: 64 }, this.scene);
+      rim.material = this.rimMaterial;
+      rim.isPickable = false;
+      // L'anneau est couché dans le plan de l'écran : tourné vers la caméra, il dessine le contour de la sphère.
+      rim.rotation.x = Math.PI / 2;
+      rim.bakeCurrentTransformIntoVertices();
+      rim.billboardMode = Mesh.BILLBOARDMODE_ALL;
+      rim.parent = status.bubble;
     }
     if (!active && status.bubble) {
       status.bubble.dispose();
@@ -235,9 +247,10 @@ export class StatusFx {
     }
     if (!status.bubble) return;
     status.bubble.scaling.setAll(1 + Math.sin(this.time * 3) * 0.025);
-    // Teinte qui tourne lentement entre le bleu, le violet et le rose (matériau partagé : toutes les bulles ensemble).
+    // Teinte qui tourne lentement entre le bleu, le violet et le rose (matériaux partagés : toutes les bulles ensemble).
     const hue = 265 + Math.sin(this.time * 0.8) * 45;
-    Color3.HSVtoRGBToRef(hue, 0.6, 1, this.bubbleMaterial.emissiveFresnelParameters!.rightColor);
+    Color3.HSVtoRGBToRef(hue, 0.55, 1, this.rimMaterial.emissiveColor);
+    Color3.HSVtoRGBToRef(hue, 0.5, 0.8, this.bubbleMaterial.emissiveColor);
   }
 }
 
@@ -304,27 +317,25 @@ function starMaterial(scene: Scene): StandardMaterial {
   return material;
 }
 
-// Bulle : presque invisible au centre, brillante sur les bords (effet de Fresnel), en mode additif.
-// Dans Babylon, la couleur "left" d'un Fresnel s'applique face à la caméra, "right" sur les bords ;
-// la couleur Fresnel émise multiplie emissiveColor (laissée blanche).
+// Volume de la bulle : à peine teinté, très transparent, sans éclairage (ses reflets sont ceux de rimMaterial).
 function bubbleMaterial(scene: Scene): StandardMaterial {
   const material = new StandardMaterial("bubble", scene);
   material.diffuseColor = Color3.Black();
-  material.specularColor = new Color3(0.8, 0.8, 0.8);
-  material.specularPower = 48;
-  material.emissiveColor = Color3.White();
+  material.specularColor = Color3.Black();
+  material.emissiveColor = new Color3(0.5, 0.4, 0.8);
+  material.disableLighting = true;
+  material.alpha = 0.12;
+  return material;
+}
+
+// Contour lumineux de la bulle, en mode additif.
+function rimMaterial(scene: Scene): StandardMaterial {
+  const material = new StandardMaterial("bubbleRim", scene);
+  material.diffuseColor = Color3.Black();
+  material.specularColor = Color3.Black();
+  material.emissiveColor = new Color3(0.6, 0.5, 1);
+  material.disableLighting = true;
   material.alphaMode = Constants.ALPHA_ADD;
-  material.emissiveFresnelParameters = new FresnelParameters({
-    leftColor: new Color3(0.01, 0.01, 0.02),
-    rightColor: new Color3(0.6, 0.5, 1),
-    bias: 0.02,
-    power: 3,
-  });
-  material.opacityFresnelParameters = new FresnelParameters({
-    leftColor: new Color3(0.04, 0.04, 0.04),
-    rightColor: Color3.White(),
-    bias: 0.02,
-    power: 2.5,
-  });
+  material.alpha = 0.8;
   return material;
 }
