@@ -513,6 +513,51 @@ export const frostMist: Recipe = (fx, at) => {
   return s;
 };
 
+// ——— Dégâts magiques subis ———
+
+// Brûlure : flammes qui montent de tout le corps (le point d'attache suit le personnage, à ses pieds).
+export const burning: Recipe = (fx, at) => {
+  const s = fx.create("burning", 200, at, "glow");
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 0.35;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, 0.2 + Math.random() * 1.7, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set((Math.random() - 0.5) * 0.3, 1, (Math.random() - 0.5) * 0.3);
+  s.emitRate = 150;
+  s.minLifeTime = 0.25;
+  s.maxLifeTime = 0.5;
+  s.minSize = 0.2;
+  s.maxSize = 0.45;
+  s.minEmitPower = 1;
+  s.maxEmitPower = 2.2;
+  gradient(s, [0, rgba("#ffd070", 0.6)], [0.35, rgba("#ff7020", 0.55)], [0.8, rgba("#b02000", 0.3)], [1, rgba("#300000", 0)]);
+  s.start();
+  return s;
+};
+
+// Fumée de la brûlure.
+export const burningSmoke: Recipe = (fx, at) => {
+  const s = fx.create("burningSmoke", 60, at, "glow", true);
+  if (!s) return null;
+  s.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    Vector3.TransformCoordinatesFromFloatsToRef((Math.random() - 0.5) * 0.5, 1 + Math.random() * 1, (Math.random() - 0.5) * 0.5, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, 1, 0);
+  s.emitRate = 25;
+  s.minLifeTime = 0.6;
+  s.maxLifeTime = 1;
+  s.minSize = 0.35;
+  s.maxSize = 0.7;
+  s.minEmitPower = 0.6;
+  s.maxEmitPower = 1.2;
+  gradient(s, [0, rgba("#706050", 0.25)], [1, rgba("#404040", 0)]);
+  s.start();
+  return s;
+};
+
 // ——— Finition ———
 
 // Gerbe d'étincelles dorées d'un coup critique (ou d'une estafilade).
@@ -661,6 +706,8 @@ export const rageFlames: Recipe = (fx, at) => {
 };
 
 export const RECIPES: Recipe[] = [
+  burning,
+  burningSmoke,
   critSparks,
   buffSpiral,
   resurrectRain,

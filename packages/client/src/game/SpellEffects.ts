@@ -16,6 +16,7 @@ import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
 import { StatusFx } from "./statusFx";
+import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 
 // Effets à particules par compétence : pendant le vol d'un projectile (trail), à son arrivée ou sur la cible
 // (impact, à hauteur du corps ; ground, aux pieds), et sur la zone d'effet (area, avec son rayon).
@@ -50,6 +51,14 @@ const VISUALS: Record<string, Visual> = {
   resurrect: { ground: [P.resurrectRain], beam: true },
   speedSong: { impact: [P.noteBurst] },
 };
+// Type de dégâts magiques de chaque sort, et effet sur la cible touchée : elle brûle, gèle… un instant.
+// Aujourd'hui, seuls des sorts de feu infligent des dégâts magiques.
+type School = "fire";
+const DAMAGE_SCHOOLS: Record<string, School> = { firebolt: "fire", blast: "fire" };
+const AFFLICTIONS: Record<School, { recipes: Recipe[]; duration: number }> = {
+  fire: { recipes: [P.burning, P.burningSmoke], duration: 1.2 },
+};
+
 const SLASH_DURATION = 0.25;
 const BEAM_DURATION = 1.4;
 const BEAM_HEIGHT = 9;
@@ -79,6 +88,8 @@ export class SpellEffects {
   private effects: TransientEffect[] = [];
   private guardLinks = new Map<string, LinesMesh>();
   private particles: ParticleFactory;
+  // Effets qui suivent un personnage un moment (brûlure…) : leur point d'attache est recopié à chaque image.
+  private attached: { system: ParticleSystem; at: Vector3; anchor: TransformNode; left: number }[] = [];
   // États qui durent (mez, stun, root, bulle), mis à jour à chaque image par le jeu.
   readonly statuses: StatusFx;
 
@@ -110,6 +121,24 @@ export class SpellEffects {
     if (visual) this.burst(visual, anchor);
     else if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
     else this.spawnPulse(fx.color, anchor, 1);
+  }
+
+  // Dégâts magiques subis : la cible brûle (ou gèle…) un instant, selon le type du sort.
+  // Un projectile n'a d'effet qu'à son arrivée.
+  magicHit(abilityId: string, target: TransformNode) {
+    const school = DAMAGE_SCHOOLS[abilityId];
+    if (!school) return;
+    const affliction = AFFLICTIONS[school];
+    const start = () => {
+      if (target.isDisposed()) return;
+      for (const recipe of affliction.recipes) {
+        const at = target.getAbsolutePosition().clone();
+        const system = recipe(this.particles, at);
+        if (system) this.attached.push({ system, at, anchor: target, left: affliction.duration });
+      }
+    };
+    if (ABILITY_FX[abilityId]?.shape === "projectile") setTimeout(start, PROJECTILE_TRAVEL_TIME * 1000);
+    else start();
   }
 
   // Coup critique : gerbe d'étincelles dorées sur la cible.
@@ -219,6 +248,14 @@ export class SpellEffects {
 
   update(dt: number) {
     this.particles.update();
+    for (const item of [...this.attached]) {
+      item.left -= dt;
+      if (!item.anchor.isDisposed()) item.at.copyFrom(item.anchor.getAbsolutePosition());
+      if (item.left > 0) continue;
+      this.attached = this.attached.filter((a) => a !== item);
+      item.system.emitter = item.at.clone();
+      item.system.stop();
+    }
     for (const effect of [...this.effects]) {
       effect.age += dt;
       if (effect.age >= effect.duration) {
