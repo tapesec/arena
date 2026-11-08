@@ -63,6 +63,9 @@ const IMMUNITY_EFFECTS: Record<CrowdControl, EffectKind> = { mez: "immuneMez", s
 const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "guarded", "intercept"];
 
 // Toutes les règles de combat. La salle Colyseus ne fait que lui transmettre les commandes.
+// Comment une attaque de mêlée a été évitée (null : elle porte).
+type Avoidance = "evaded" | "absorbed" | "blocked" | null;
+
 export class CombatSystem {
   readonly players = new Map<string, PlayerRuntime>();
   // Limite de déplacement optionnelle (zone de départ pendant la préparation).
@@ -360,31 +363,32 @@ export class CombatSystem {
 
     const center = this.areaCenter(caster, ability, targetId);
     for (const target of this.affectedBy(caster, ability, targetId)) {
-      // La bulle arrête une attaque de mêlée en entier : dégâts, stun, ralentissement.
-      if (ability.melee && this.absorbedByBubble(caster, target, ability.id)) continue;
+      // Attaque spéciale de mêlée : l'évitement est tranché une fois, avant ses effets. Bloquée au bouclier ou
+      // absorbée par une bulle, elle s'arrête en entier (dégâts, stun, ralentissement) ; esquivée, seuls ses
+      // dégâts sont évités.
+      const avoidance = ability.melee ? this.meleeAvoidance(caster, target, ability.id) : null;
+      if (avoidance === "blocked" || avoidance === "absorbed") continue;
       for (const effect of ability.effects) {
         // Les effets suivants ne s'appliquent pas à une cible tuée par le premier.
         if (!target.alive && effect.type !== "resurrect") break;
-        this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target));
+        if (effect.type === "damage" && avoidance === "evaded") continue;
+        const avoidanceDone = !!ability.melee && avoidance !== undefined;
+        this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target), avoidanceDone);
       }
     }
   }
 
-  // Une attaque spéciale de mêlée qui frappe une bulle : la bulle casse et rien d'autre ne s'applique.
-  // Si un Gardien intercepte le coup, c'est lui qui le prend (voir dealDamage) : la bulle n'est pas touchée.
-  private absorbedByBubble(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
-    const bubble = target.getEffect("bubble");
-    if (!bubble) return false;
+  // Évitement d'une attaque spéciale de mêlée, avant ses effets. undefined : pas tranché ici, parce qu'un Gardien
+  // intercepte le coup (il le prend à la place de la cible, voir dealDamage).
+  private meleeAvoidance(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): Avoidance | undefined {
     const intercept = target.getEffect("intercept");
     const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;
-    if (intercept && interceptor?.alive && distance(interceptor.state, target.state) <= INTERCEPT_RANGE) return false;
+    if (intercept && interceptor?.alive && distance(interceptor.state, target.state) <= INTERCEPT_RANGE) return undefined;
     this.noteHostileAction(source);
     this.noteHostileAction(target);
     target.lastMeleeHitAt = this.time;
     target.lastMeleeAttackerId = source.id;
-    this.removeEffect(target, bubble);
-    this.emit({ kind: "absorbed", sourceId: source.id, targetId: target.id, abilityId });
-    return true;
+    return this.avoidMelee(source, target, abilityId);
   }
 
   // Centre d'une zone d'effet : la cible pour une compétence visant un ennemi, le lanceur sinon.
@@ -411,10 +415,16 @@ export class CombatSystem {
     );
   }
 
-  private applyEffect(caster: PlayerRuntime, ability: AbilityDef, target: PlayerRuntime, effect: AbilityEffect) {
+  private applyEffect(
+    caster: PlayerRuntime,
+    ability: AbilityDef,
+    target: PlayerRuntime,
+    effect: AbilityEffect,
+    avoidanceDone = false,
+  ) {
     switch (effect.type) {
       case "damage":
-        this.dealDamage(caster, target, effect.amount, ability.id, !!ability.melee);
+        this.dealDamage(caster, target, effect.amount, ability.id, !!ability.melee, avoidanceDone);
         break;
       case "heal":
         this.heal(caster, target, effect.amount, ability.id);
@@ -479,7 +489,15 @@ export class CombatSystem {
 
   // --- Dégâts, soins, contrôles ---
 
-  private dealDamage(source: PlayerRuntime, target: PlayerRuntime, amount: number, abilityId: string, melee: boolean) {
+  // avoidanceDone : pour une attaque spéciale de mêlée, l'évitement a déjà été tranché avant ses effets.
+  private dealDamage(
+    source: PlayerRuntime,
+    target: PlayerRuntime,
+    amount: number,
+    abilityId: string,
+    melee: boolean,
+    avoidanceDone = false,
+  ) {
     if (!target.alive) return;
     this.noteHostileAction(source);
     this.noteHostileAction(target);
@@ -497,8 +515,7 @@ export class CombatSystem {
     if (melee) {
       target.lastMeleeHitAt = this.time;
       target.lastMeleeAttackerId = source.id;
-      const avoided = this.avoidMelee(source, target, abilityId);
-      if (avoided) return;
+      if (!avoidanceDone && this.avoidMelee(source, target, abilityId)) return;
       if (source.has("buffStrength")) amount *= 1 + STRENGTH_BUFF_BONUS;
       crit = source.has("rage") || this.random() < CRIT_CHANCE;
       if (crit) amount *= CRIT_MULTIPLIER;
@@ -525,23 +542,23 @@ export class CombatSystem {
   // Esquive, bulle, bouclier puis garde. Retourne vrai si le coup est évité.
   // Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas ; la bulle et la Garde d'un autre
   // Gardien le protègent toujours.
-  private avoidMelee(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
+  private avoidMelee(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): Avoidance {
     const base = { sourceId: source.id, targetId: target.id, abilityId };
     const free = !target.incapacitated;
     if (free && target.has("evasion") && this.random() < EVASION_CHANCE) {
       this.emit({ kind: "evaded", ...base });
-      return true;
+      return "evaded";
     }
     // Bulle de l'Arcaniste : elle absorbe le coup et disparaît.
     const bubble = target.getEffect("bubble");
     if (bubble) {
       this.removeEffect(target, bubble);
       this.emit({ kind: "absorbed", ...base });
-      return true;
+      return "absorbed";
     }
     if (free && target.classDef.passives.includes("shieldBlock") && this.random() < SHIELD_BLOCK_CHANCE) {
       this.emit({ kind: "blocked", ...base, detail: target.id });
-      return true;
+      return "blocked";
     }
     const guard = target.getEffect("guarded");
     const guardian = guard ? this.players.get(guard.sourceId) : undefined;
@@ -552,9 +569,9 @@ export class CombatSystem {
       this.random() < GUARD_BLOCK_CHANCE
     ) {
       this.emit({ kind: "blocked", ...base, detail: guardian.id });
-      return true;
+      return "blocked";
     }
-    return false;
+    return null;
   }
 
   private heal(source: PlayerRuntime, target: PlayerRuntime, amount: number, abilityId: string) {

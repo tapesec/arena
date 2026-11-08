@@ -95,6 +95,47 @@ describe("Gardien", () => {
     assert.equal(world.eventsOf("immune").length, 1);
   });
 
+  it("un blocage au bouclier arrête l'attaque entière : le Coup de bouclier ne stun pas", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "gardien", 1, 0, 2, Math.PI);
+    world.rolls = [0];
+    world.cast(enemy, "shieldBash", gardien);
+    assert.equal(world.eventsOf("blocked").length, 1);
+    assert.ok(!gardien.has("stun"));
+  });
+
+  it("un blocage au bouclier arrête l'attaque de flanc en entier : ni dégâts ni ralentissement", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 1, 1.5, 0, -Math.PI / 2);
+    world.rolls = [0];
+    world.cast(lame, "flankStrike", gardien);
+    assert.equal(world.eventsOf("blocked").length, 1);
+    assert.equal(gardien.state.hp, gardien.state.maxHp);
+    assert.ok(!gardien.has("snare"));
+  });
+
+  it("un blocage par la Garde arrête aussi l'attaque entière", () => {
+    const gardien = world.spawn("g", "gardien", 0, 1, 0);
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "gardien", 1, 0, 2, Math.PI);
+    world.cast(gardien, "guard", pretre);
+    world.rolls = [0];
+    world.cast(enemy, "shieldBash", pretre);
+    assert.equal(world.eventsOf("blocked").length, 1);
+    assert.ok(!pretre.has("stun"));
+  });
+
+  it("une attaque esquivée n'évite que ses dégâts : le ralentissement passe", () => {
+    const lameA = world.spawn("a", "lame", 0, 0, 0, 0);
+    const lameB = world.spawn("b", "lame", 1, 1.5, 0, -Math.PI / 2);
+    world.cast(lameA, "evasion");
+    world.rolls = [0];
+    world.cast(lameB, "flankStrike", lameA);
+    assert.equal(world.eventsOf("evaded").length, 1);
+    assert.equal(lameA.state.hp, lameA.state.maxHp);
+    assert.ok(lameA.has("snare"));
+  });
+
   it("un Gardien stun ne bloque plus au bouclier", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
     const enemy = world.spawn("e", "gardien", 1, 0, 2, Math.PI);
