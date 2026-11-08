@@ -5,8 +5,9 @@ importées par `scripts/import-assets.sh`.
 
 ## Crédit obligatoire
 
-- **Musique « The Last Encounter »** (version originale, boucle longue) — Eric Matyas, [soundimage.org](https://soundimage.org).
-  Gratuite à condition de créditer l'auteur : crédit affiché sur l'écran d'accueil du jeu.
+- **Musiques « Woodland Fantasy »** (menus) **et « The Last Encounter »** (version originale, boucle longue ; préparation
+  et combat) — Eric Matyas, [soundimage.org](https://soundimage.org). Gratuites à condition de créditer l'auteur :
+  crédit affiché sur l'écran d'accueil du jeu.
 
 ## Sans obligation de crédit
 

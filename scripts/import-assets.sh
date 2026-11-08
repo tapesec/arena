@@ -85,6 +85,7 @@ MUSIC="$SRC/The Last Encounter Collection"
 [[ -d "$MUSIC" ]] || { echo "Dossier introuvable : $MUSIC" >&2; exit 1; }
 mkdir -p "$OUT/music"
 rsync -a --exclude .DS_Store "$MUSIC/" "$OUT/music/"
+cp "$SRC/Woodland Fantasy.mp3" "$OUT/music/"
 
 echo "Assets extraits dans $OUT :"
 du -sh "$OUT"/*

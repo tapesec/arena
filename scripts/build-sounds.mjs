@@ -19,11 +19,15 @@ const PEAK = 0.9;
 const MAX_GAIN = 20;
 const BITRATE = 96000;
 
-// Musiques : boucles faites pour s'enchaîner sans coupure, gardées en stéréo et mieux encodées.
-// Le jeu boucle sur la durée d'origine (public/music/index.json), à l'échantillon près.
+// Musiques, gardées en stéréo et mieux encodées. Le jeu boucle sur la durée indiquée dans public/music/index.json :
+// la durée d'origine pour une boucle faite pour s'enchaîner, ou la fin du son pour un morceau complet
+// (trim : le silence final est coupé, le morceau reprend aussitôt).
 const MUSIC = {
-  lastEncounter: "music/The Last Encounter Long Loop.wav",
+  lastEncounter: { source: "music/The Last Encounter Long Loop.wav" },
+  woodlandFantasy: { source: "music/Woodland Fantasy.mp3", trim: true },
 };
+// Seuil sous lequel la fin d'un morceau est considérée comme du silence.
+const SILENCE = 0.002;
 const MUSIC_OUT = path.join(ROOT, "packages/client/public/music");
 const MUSIC_BITRATE = 160000;
 
@@ -59,16 +63,29 @@ console.log(`${count} fichiers, ${(total / 1024 / 1024).toFixed(2)} Mo`);
 rmSync(MUSIC_OUT, { recursive: true, force: true });
 mkdirSync(MUSIC_OUT, { recursive: true });
 const musicIndex = {};
-for (const [id, source] of Object.entries(MUSIC)) {
+for (const [id, { source, trim }] of Object.entries(MUSIC)) {
   const input = path.join(ROOT, "assets-source", source);
   const info = execFileSync("afinfo", [input]).toString();
-  const duration = Number(/estimated duration: ([\d.]+)/.exec(info)[1]);
+  const duration = trim ? soundEnd(input) : Number(/estimated duration: ([\d.]+)/.exec(info)[1]);
   const target = path.join(MUSIC_OUT, `${id}.m4a`);
   execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", String(MUSIC_BITRATE), input, target]);
   musicIndex[id] = { duration };
   console.log(`musique ${id} : ${duration.toFixed(2)} s, ${(statSync(target).size / 1024 / 1024).toFixed(2)} Mo`);
 }
 writeFileSync(path.join(MUSIC_OUT, "index.json"), JSON.stringify(musicIndex, null, 2) + "\n");
+
+// Instant où le son se termine vraiment, avant le silence final (en secondes).
+function soundEnd(input) {
+  const work = mkdtempSync(path.join(tmpdir(), "arena-music-"));
+  const wav = path.join(work, "music.wav");
+  execFileSync("afconvert", ["-f", "WAVE", "-d", `LEI16@${SAMPLE_RATE}`, "-c", "1", input, wav]);
+  const buffer = readFileSync(wav);
+  const { offset, length } = dataChunk(buffer);
+  let last = offset;
+  for (let i = offset; i < offset + length; i += 2) if (Math.abs(buffer.readInt16LE(i)) > SILENCE * 32768) last = i;
+  rmSync(work, { recursive: true, force: true });
+  return (last - offset) / 2 / SAMPLE_RATE + 0.05;
+}
 
 // Motif "dossier/nom*.ext" : les fichiers du dossier qui correspondent, triés.
 function expand(pattern) {

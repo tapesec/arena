@@ -8,6 +8,8 @@ import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } 
 export function App() {
   const inGame = useHudStore((s) => s.inGame);
   const gameKey = useHudStore((s) => s.gameKey);
+  const phase = useHudStore((s) => s.match?.phase);
+  useMusic(inGame ? phase : undefined);
   if (!inGame) return <HomeScreen />;
   return (
     <>
@@ -16,6 +18,32 @@ export function App() {
       <Hud />
     </>
   );
+}
+
+// Musique selon le moment : Woodland Fantasy dans les menus (accueil, file d'attente, choix de classe),
+// The Last Encounter à partir de la préparation, doucement, puis à volume normal en combat.
+// Le navigateur interdit le son avant la première interaction : la musique attend le premier clic ou la première touche.
+function useMusic(phase: string | undefined) {
+  const [unlocked, setUnlocked] = useState(false);
+  useEffect(() => {
+    if (unlocked) return;
+    const unlock = () => {
+      audio.unlock();
+      setUnlocked(true);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, [unlocked]);
+  useEffect(() => {
+    if (!unlocked) return;
+    if (phase === "preparation" || phase === "ended") void audio.playMusic("lastEncounter", "soft");
+    else if (phase === "fighting") void audio.playMusic("lastEncounter", "normal");
+    else void audio.playMusic("woodlandFantasy", "normal");
+  }, [phase, unlocked]);
 }
 
 function HomeScreen() {
@@ -30,15 +58,13 @@ function HomeScreen() {
           // Premier clic : le navigateur autorise alors le son.
           audio.unlock();
           audio.play("click");
-          // La musique démarre doucement pendant l'attente (voir Hud).
-          void audio.playMusic("lastEncounter", "soft");
           joinGame();
         }}
       >
         Rejoindre une partie
       </button>
       <p className="credits">
-        Musique : « The Last Encounter », Eric Matyas,{" "}
+        Musiques : « Woodland Fantasy » et « The Last Encounter », Eric Matyas,{" "}
         <a href="https://soundimage.org" target="_blank" rel="noreferrer">
           soundimage.org
         </a>
@@ -51,11 +77,6 @@ function Hud() {
   const status = useHudStore((s) => s.status);
   const error = useHudStore((s) => s.error);
   const phase = useHudStore((s) => s.match?.phase);
-
-  // Musique douce pendant l'attente (file, choix de classe, préparation), normale en combat.
-  useEffect(() => {
-    audio.setMusicLevel(phase === "fighting" ? "normal" : "soft");
-  }, [phase]);
 
   if (status === "connecting") return <div className="screen">Connexion au serveur…</div>;
   if (status === "error") return <ErrorScreen message={error} />;
