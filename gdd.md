@@ -78,7 +78,7 @@ Gros dégâts à distance, à condition d'être protégé.
 | Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 5 m (pas les alliés), 350 dégâts au centre, décroissant jusqu'à 100 au bord. | 2,5 s | 150 mana | — |
 | Gel | Root de 10 s. | 1,5 s | 60 mana | — |
 | Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 3 min |
-| Bulle | Sur l'Arcaniste seulement (comme le bladeturn de DAoC) : absorbe entièrement le prochain coup de mêlée, puis disparaît. À relancer. | 2 s | 80 mana | 10 s |
+| Bulle | Sur l'Arcaniste seulement (comme le bladeturn de DAoC) : absorbe entièrement le prochain coup de mêlée, puis disparaît. Seul un coup au corps à corps la casse : elle ne protège pas des sorts. Cassée, elle n'interrompt pas l'incantation en cours. À relancer. | 2 s | 80 mana | 10 s |
 
 ### 3. Prêtre — healer
 

@@ -176,6 +176,33 @@ describe("Arcaniste", () => {
     assert.ok(!arcaniste.has("bubble"), "pas de reformation automatique");
   });
 
+  it("la Bulle ne protège pas des sorts et n'est pas consommée par eux", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "arcaniste", 1, 0, 15, Math.PI);
+    world.cast(arcaniste, "bubble");
+    world.run(2.1);
+    world.cast(enemy, "firebolt", arcaniste);
+    world.run(2.6);
+    assert.ok(arcaniste.state.hp < arcaniste.state.maxHp, "le Trait de feu touche");
+    assert.ok(arcaniste.has("bubble"), "la bulle reste");
+  });
+
+  it("une bulle cassée au corps à corps n'interrompt pas l'incantation", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 1, 0, -2, 0);
+    const enemy = world.spawn("e", "pretre", 1, 0, 15, Math.PI);
+    world.cast(arcaniste, "bubble");
+    world.run(2.1);
+    world.cast(arcaniste, "firebolt", enemy);
+    world.run(0.5);
+    world.cast(lame, "backstab", arcaniste);
+    assert.equal(world.eventsOf("absorbed").length, 1);
+    assert.equal(arcaniste.state.castAbility, "firebolt");
+    assert.equal(world.interrupts.length, 0);
+    world.run(2.1);
+    assert.ok(world.eventsOf("damage").some((e) => e.targetId === "e" && e.abilityId === "firebolt"));
+  });
+
   it("la Bulle ne se lance que sur l'Arcaniste", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const ally = world.spawn("x", "pretre", 0, 3, 0);
