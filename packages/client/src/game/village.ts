@@ -14,6 +14,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 import { OBSTACLES, PLAZA, terrainHeight, type Obstacle } from "@arena/shared";
 import { Camps } from "./camps";
+import type { Shadows } from "./shadows";
 
 const VILLAGE_URL = "/models/village/village.glb";
 
@@ -86,6 +87,9 @@ export class Village {
   // Campements des zones de départ, posés avec les mêmes pièces.
   readonly camps: Camps;
 
+  // Ombres portées : le décor bâti les projette et les reçoit (à fixer avant load).
+  shadows: Shadows | null = null;
+
   constructor(private scene: Scene) {
     this.camps = new Camps(scene);
   }
@@ -155,6 +159,8 @@ export class Village {
     }
     const position = new Vector3(obstacle.x, terrainHeight(obstacle.x, obstacle.z), obstacle.z);
     const meshes = this.assemble(`decor-${obstacle.kind}`, placements, position);
+    this.shadows?.cast(meshes);
+    this.shadows?.receive(meshes);
     // Intérieur sombre : sans lui, on verrait l'herbe à travers les fenêtres et les portes.
     const interior = obstacle.kind === "house" || obstacle.kind === "shed" ? this.interior(obstacle, position) : null;
     this.objects.push({ meshes, interior, fades, opacity: 1 });
@@ -182,6 +188,7 @@ export class Village {
       mesh.setEnabled(true);
       mesh.isPickable = false;
     }
+    this.shadows?.cast(meshes);
     return meshes;
   }
 

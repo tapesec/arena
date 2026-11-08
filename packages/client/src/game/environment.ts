@@ -5,6 +5,7 @@ import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
+import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import { SkyMaterial } from "@babylonjs/materials/sky/skyMaterial";
 import { TerrainMaterial } from "@babylonjs/materials/terrain/terrainMaterial";
@@ -68,7 +69,7 @@ const SUN_DIRECTION = new Vector3(-0.5, -1, 0.3).normalize();
 // Couleur de l'horizon : fond du ciel et brume au loin.
 const HORIZON = new Color3(0.72, 0.82, 0.9);
 
-export function createLights(scene: Scene) {
+export function createLights(scene: Scene): DirectionalLight {
   const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
   hemi.intensity = 0.55;
   // Ciel bleuté au-dessus, reflet vert de l'herbe en dessous.
@@ -78,6 +79,7 @@ export function createLights(scene: Scene) {
   // Lumière chaude de fin d'après-midi.
   sun.diffuse = new Color3(1, 0.93, 0.8);
   sun.intensity = 0.95;
+  return sun;
 }
 
 // Ciel dégradé avec le soleil, et brume légère qui fond l'horizon.
@@ -103,7 +105,7 @@ export function createSky(scene: Scene) {
 }
 
 // Sol texturé : herbe partout, terre sur les chemins et les zones de départ, pavés sur la place.
-export function createGround(scene: Scene) {
+export function createGround(scene: Scene): Mesh {
   const ground = createTerrainMesh("ground", scene, 0, GROUND_SIZE);
   ground.isPickable = false;
 
@@ -114,6 +116,7 @@ export function createGround(scene: Scene) {
   material.diffuseTexture3 = tiled(scene, "paving.webp", PAVING_TILE);
   material.specularColor = Color3.Black();
   ground.material = material;
+  return ground;
 }
 
 function tiled(scene: Scene, file: string, tile: number): Texture {

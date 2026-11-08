@@ -10,6 +10,7 @@ import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
+import type { Shadows } from "./shadows";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 
 // Modèles 3D produits par scripts/build-assets.mjs, servis depuis public/models/.
@@ -184,6 +185,8 @@ export interface CharacterInstance {
 // Charge une seule fois chaque fichier, puis crée autant d'instances que de joueurs.
 export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
+  // Ombres portées : chaque personnage créé (et ses armes) projette son ombre.
+  shadows: Shadows | null = null;
   // Matériaux de tenue par classe et par équipe, partagés par tous les personnages concernés.
   private outfits = new Map<string, PBRMaterial>();
   // Matériaux d'arme peints, par matériau d'origine et par équipe.
@@ -287,6 +290,7 @@ export class CharacterAssets {
     const outfitMeshes = meshes.filter((mesh) => mesh.material?.name === def.outfit);
     const baseOutfit = outfitMeshes[0]?.material as PBRMaterial | undefined;
     for (const attach of weapons) meshes.push(...attach.getChildMeshes(false));
+    this.shadows?.cast(meshes);
 
     return {
       root,

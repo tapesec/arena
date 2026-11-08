@@ -49,6 +49,7 @@ import { WorldOverlay } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
 import { audio } from "../audio/AudioManager";
 import { Nature } from "./nature";
+import { Shadows } from "./shadows";
 import { Village } from "./village";
 import { FogOfWar, type FogWatcher } from "./FogOfWar";
 import { SpellEffects } from "./SpellEffects";
@@ -98,6 +99,7 @@ export class Game {
   private overlay: WorldOverlay;
   private spellEffects: SpellEffects;
   private village: Village;
+  private shadows: Shadows | null = null;
   private fog: FogOfWar;
   private gameAudio: GameAudio;
   private keyboard: KeyboardInput;
@@ -174,6 +176,7 @@ export class Game {
     this.overlay.dispose();
     this.spellEffects.dispose();
     this.fog.dispose();
+    this.shadows?.dispose();
     this.gameAudio.dispose();
     this.room.leave();
     this.engine.dispose();
@@ -226,9 +229,11 @@ export class Game {
   }
 
   private createEnvironment() {
-    createLights(this.scene);
+    this.shadows = new Shadows(createLights(this.scene));
+    this.characterAssets.shadows = this.shadows;
+    this.village.shadows = this.shadows;
     createSky(this.scene);
-    createGround(this.scene);
+    this.shadows.receive([createGround(this.scene)]);
 
     // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
     void this.village.load();
@@ -475,6 +480,7 @@ export class Game {
     this.spellEffects.update(dt);
     this.spellEffects.statuses.update(dt, this.players.values());
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
+    this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
     const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };
     this.gameAudio.update(dt, this.players.values(), this.self, match.phase, match.phaseTimeLeft, match.winner);
