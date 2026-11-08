@@ -21,10 +21,10 @@ describe("Recherche de chemin", () => {
     assert.deepEqual(path, [{ x: 38, z: -5 }]);
   });
 
-  it("contourne un pilier", () => {
-    // Pilier au centre des ruines, en (0, 0) : le trajet direct le traverse.
-    const from = { x: -5, z: 0 };
-    const to = { x: 5, z: 0 };
+  it("contourne une maison", () => {
+    // Grande maison du hameau, en (14, 14) sur 8 × 8 m : le trajet direct la traverse.
+    const from = { x: 8, z: 14 };
+    const to = { x: 20, z: 14 };
     const path = pathfinder.findPath(from, to)!;
     assert.ok(path.length >= 2);
     assertWalkable(from, path);

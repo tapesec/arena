@@ -17,9 +17,9 @@ describe("Brouillard de guerre", () => {
     assert.ok(!seen.get(0)!.has("far"));
   });
 
-  it("un pilier entre les deux bloque la vue", () => {
-    // Pilier au centre des ruines, en (0, 0).
-    const seen = computeTeamVisibility([unit("a", 0, -5, 0), unit("e", 1, 5, 0)]);
+  it("une maison entre les deux bloque la vue", () => {
+    // Grande maison du hameau, en (14, 14) sur 8 × 8 m.
+    const seen = computeTeamVisibility([unit("a", 0, 8, 14), unit("e", 1, 20, 14)]);
     assert.ok(!seen.get(0)!.has("e"));
   });
 

@@ -8,7 +8,7 @@ import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { Scene } from "@babylonjs/core/scene";
 import { SkyMaterial } from "@babylonjs/materials/sky/skyMaterial";
 import { TerrainMaterial } from "@babylonjs/materials/terrain/terrainMaterial";
-import { START_ZONES } from "@arena/shared";
+import { PLAZA, START_ZONES } from "@arena/shared";
 import { createTerrainMesh } from "./terrainMesh";
 
 const GROUND_URL = "/models/ground/";
@@ -20,9 +20,6 @@ const PAVING_TILE = 4;
 // Résolution de la carte qui dit où mettre l'herbe, la terre et les pavés (environ 20 cm par pixel).
 const MIX_RESOLUTION = 1024;
 
-// Sol de l'arène, en attendant que le hameau soit décrit dans les règles partagées (étape suivante).
-// Place pavée au centre.
-const PLAZA = { x: 0, z: 0, radius: 14 };
 // Chemins de terre des zones de départ vers les entrées de la place, définis pour les Bleus
 // et reproduits par symétrie (rotation de 180° autour du centre) pour les Rouges.
 const PATHS: [number, number][][] = [

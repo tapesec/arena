@@ -61,6 +61,11 @@ extract "$ALL" "$OUT/weapons" "$PROPS/Sword_Bronze.*" "$PROPS/Shield_Wooden.*" "
 VILLAGE='Medieval/Medieval Village MegaKit\[Standard\] - Jan 2025'
 extract "$ALL" "$OUT/ground" "$VILLAGE/Textures/T_Noise_Terrain.png" "$VILLAGE/Textures/T_UnevenBrick_BaseColor.png"
 
+# Hameau : pièces modulaires du village (murs, toits, portes, fenêtres…) avec leurs textures,
+# et accessoires du Fantasy Props (étals, caisses, tonneaux, bannières).
+extract "$ALL" "$OUT/village" "$VILLAGE/glTF/*"
+extract "$ALL" "$OUT/props" "$PROPS/*.gltf" "$PROPS/*.bin" "$PROPS/T_Trim_*"
+
 # Armes en FBX (bâtons, boucliers, dagues…) : à convertir en glTF plus tard si besoin.
 extract "$ALL" "$OUT/weapons-fbx/ultimate-rpg-items" 'Medieval/Ultimate RPG Items Pack - Aug 2019/FBX/*'
 extract "$ALL" "$OUT/weapons-fbx/medieval-weapons" 'Medieval/Medieval Weapons Pack - Sept 2018/FBX/*'

@@ -4,7 +4,6 @@ import { PointerEventTypes, type PointerInfo } from "@babylonjs/core/Events/poin
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -14,8 +13,6 @@ import { Callbacks, type Room } from "@colyseus/sdk";
 import {
   ARENA_SIZE,
   EFFECTS,
-  OBSTACLES,
-  OBSTACLE_HEIGHT,
   PERMANENT,
   SPELL_RANGE,
   START_ZONES,
@@ -52,6 +49,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
+import { Village } from "./village";
 import { FogOfWar, type FogWatcher } from "./FogOfWar";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
@@ -88,6 +86,8 @@ const SPECTATOR_SPEED = 18;
 const AUTO_ATTACK_ID = "auto";
 // Issues possibles d'un coup d'auto-attaque (le coup est porté, qu'il touche ou non).
 const SWING_EVENTS = new Set<CombatEvent["kind"]>(["damage", "blocked", "evaded", "absorbed", "intercepted"]);
+// Point visé pour savoir si une maison cache le joueur : le milieu de son corps.
+const VILLAGE_FOCUS_HEIGHT = new Vector3(0, 1.2, 0);
 // Au-delà de ces dégâts (ou sur un critique), la réaction est plus marquée.
 const HEAVY_HIT = 200;
 
@@ -97,6 +97,7 @@ export class Game {
   private camera: CameraController;
   private overlay: WorldOverlay;
   private spellEffects: SpellEffects;
+  private village: Village;
   private fog: FogOfWar;
   private gameAudio: GameAudio;
   private keyboard: KeyboardInput;
@@ -126,6 +127,7 @@ export class Game {
     });
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.spellEffects = new SpellEffects(this.scene);
+    this.village = new Village(this.scene);
     this.characterAssets = new CharacterAssets(this.scene);
     this.characterAssets.preload();
     this.fog = new FogOfWar(this.scene);
@@ -157,7 +159,7 @@ export class Game {
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
     // En développement : scène et joueurs accessibles depuis la console du navigateur.
     if (import.meta.env.DEV) {
-      Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets });
+      Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village });
     }
 
     this.engine.runRenderLoop(() => this.renderFrame());
@@ -228,19 +230,8 @@ export class Game {
     createSky(this.scene);
     createGround(this.scene);
 
-    // Les obstacles viennent de la même définition que celle utilisée par le serveur.
-    const obstacleMat = new StandardMaterial("obstacleMat", this.scene);
-    obstacleMat.diffuseColor = new Color3(0.45, 0.42, 0.38);
-    for (const o of OBSTACLES) {
-      const box = CreateBox(
-        "obstacle",
-        { width: o.halfWidth * 2, depth: o.halfDepth * 2, height: OBSTACLE_HEIGHT },
-        this.scene,
-      );
-      box.position.set(o.x, terrainHeight(o.x, o.z) + OBSTACLE_HEIGHT / 2, o.z);
-      box.material = obstacleMat;
-      box.isPickable = false;
-    }
+    // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
+    void this.village.load();
 
     // Zones de départ, à la couleur de chaque équipe.
     START_ZONES.forEach((zone, team) => {
@@ -478,6 +469,7 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
+    this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
     const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };
     this.gameAudio.update(dt, this.players.values(), this.self, match.phase, match.phaseTimeLeft, match.winner);
     this.spellEffects.updateGuardLinks(this.guardLinks());

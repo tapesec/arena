@@ -261,6 +261,95 @@ function recolorTexture(data, { from, width, to, minSaturation, boost = 1, light
   }
 }
 
+// Pièces du hameau, réunies dans un seul fichier (elles partagent leurs textures) : le jeu assemble
+// les maisons à partir des pièces du village et pose les accessoires.
+const VILLAGE_PIECES = {
+  village: [
+    "Wall_UnevenBrick_Straight",
+    "Wall_UnevenBrick_Window_Wide_Round",
+    "Wall_UnevenBrick_Window_Thin_Round",
+    "Wall_UnevenBrick_Door_Round",
+    "Wall_Plaster_Straight",
+    "Wall_Plaster_Window_Wide_Flat",
+    "Wall_Plaster_Window_Thin_Round",
+    "Wall_Plaster_WoodGrid",
+    "Wall_Plaster_Door_Flat",
+    "Corner_Exterior_Brick",
+    "Corner_Exterior_Wood",
+    "Wall_BottomCover",
+    "Floor_WoodDark",
+    "Roof_RoundTiles_6x6",
+    "Roof_RoundTiles_6x8",
+    "Roof_RoundTiles_8x8",
+    "Roof_RoundTiles_8x10",
+    "Roof_Front_Brick6",
+    "Roof_Front_Brick8",
+    "Door_1_Round",
+    "Door_1_Flat",
+    "Window_Wide_Round1",
+    "Window_Wide_Flat1",
+    "Window_Thin_Round1",
+    "WindowShutters_Wide_Round_Open",
+    "WindowShutters_Wide_Flat_Open",
+    "WindowShutters_Thin_Round_Closed",
+    "Prop_Vine1",
+    "Prop_Vine2",
+    "Prop_Vine4",
+    "Prop_Chimney",
+    "Prop_Wagon",
+    "Prop_Crate",
+    "Prop_WoodenFence_Single",
+    "Prop_WoodenFence_Extension1",
+  ],
+  props: [
+    "Stall_Empty",
+    "Stall_Cart_Empty",
+    "Crate_Wooden",
+    "Barrel",
+    "Barrel_Apples",
+    "FarmCrate_Apple",
+    "Banner_1",
+    "Banner_1_Cloth",
+    "Torch_Metal",
+    "Bench",
+  ],
+};
+
+async function buildVillage() {
+  let doc = null;
+  for (const [folder, pieces] of Object.entries(VILLAGE_PIECES)) {
+    for (const piece of pieces) {
+      const part = await io.read(path.join(SOURCE, folder, `${piece}.gltf`));
+      if (!doc) {
+        doc = part;
+        wrapScene(doc, doc.getRoot().listScenes()[0], piece);
+        continue;
+      }
+      const scene = doc.getRoot().listScenes()[0];
+      const partScene = part.getRoot().listScenes()[0];
+      const map = mergeDocuments(doc, part);
+      const merged = map.get(partScene);
+      wrapScene(doc, merged, piece);
+      for (const child of merged.listChildren()) scene.addChild(child);
+      merged.dispose();
+    }
+  }
+  await optimize(doc);
+  const target = "village/village.glb";
+  await io.write(path.join(OUT, target), doc);
+  report(target);
+}
+
+// Regroupe le contenu d'une scène sous un nœud portant le nom de la pièce : le jeu la retrouve par ce nom.
+function wrapScene(doc, scene, name) {
+  const node = doc.createNode(name);
+  for (const child of scene.listChildren()) {
+    scene.removeChild(child);
+    node.addChild(child);
+  }
+  scene.addChild(node);
+}
+
 // Textures du sol, répétées sur le terrain : herbe et terre teintées à partir d'un bruit, pavés de la place.
 const GROUND_TINTS = {
   grass: ["#41702a", "#7aa646"],
@@ -330,6 +419,8 @@ await mkdir(path.join(OUT, "animations"), { recursive: true });
 await mkdir(path.join(OUT, "weapons"), { recursive: true });
 await mkdir(path.join(OUT, "ground"), { recursive: true });
 await buildGround();
+await mkdir(path.join(OUT, "village"), { recursive: true });
+await buildVillage();
 for (const [file, keep] of Object.entries(ANIMATIONS)) await buildAnimations(file, keep);
 for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
 for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);

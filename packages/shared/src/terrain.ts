@@ -1,4 +1,4 @@
-import { OBSTACLES, type Obstacle } from "./arena";
+import { OBSTACLES, PLAZA, type Obstacle } from "./arena";
 import { ARENA_SIZE } from "./constants";
 import { START_ZONES } from "./match";
 import type { Position } from "./movement";
@@ -42,8 +42,9 @@ const RISES: Rise[] = [
   ...mirrored({ x: -22, z: -20, height: 1.5, radius: 16 }),
 ];
 
-// Zones gardées plates : le centre, les zones de départ, les zones ouvertes et les abords des obstacles.
-const CENTER_FLAT_RADIUS = 13;
+// Zones gardées plates : la place du centre (et ses abords), les zones de départ, les zones ouvertes et les abords des obstacles.
+// Abords de la place gardés plats (PLAZA, lue au calcul : arena.ts et terrain.ts s'importent mutuellement).
+const PLAZA_FLAT_MARGIN = 2;
 const START_FLAT_MARGIN = 2;
 const OBSTACLE_FLAT_MARGIN = 1.5;
 // Distance sur laquelle le sol remonte doucement au sortir d'une zone plate.
@@ -130,7 +131,7 @@ function smoothstep(t: number): number {
 
 // 0 dans une zone gardée plate, 1 loin de toutes ; transition douce entre les deux.
 function flatness(x: number, z: number): number {
-  let distance = Math.hypot(x, z) - CENTER_FLAT_RADIUS;
+  let distance = Math.hypot(x - PLAZA.x, z - PLAZA.z) - PLAZA.radius - PLAZA_FLAT_MARGIN;
   for (const zone of START_ZONES) {
     distance = Math.min(distance, Math.hypot(x - zone.x, z - zone.z) - zone.radius - START_FLAT_MARGIN);
   }
