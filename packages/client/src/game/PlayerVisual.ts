@@ -8,7 +8,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { terrainHeight, type EffectKind } from "@arena/shared";
-import { CharacterAnimator } from "./CharacterAnimator";
+import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
 import { ABILITY_FX } from "./spellFx";
 
@@ -220,6 +220,10 @@ export class PlayerVisual {
 
   playAbility(abilityId: string) {
     this.animator?.ability(abilityId);
+  }
+
+  playReaction(reaction: Reaction) {
+    if (this.isAlive) this.animator?.react(reaction);
   }
 
   // Charge le personnage animé de la classe (la classe est choisie après l'arrivée du joueur).

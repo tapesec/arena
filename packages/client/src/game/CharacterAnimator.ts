@@ -23,6 +23,17 @@ const LOCOMOTION = {
 const CAST_LOOP = "Spell_Simple_Idle_Loop";
 const DEATH = "Death01";
 
+// Réactions aux coups reçus.
+export type Reaction = "light" | "heavy" | "stun" | "block";
+const REACTIONS: Record<Reaction, string> = {
+  light: "Hit_Chest",
+  heavy: "Hit_Head",
+  stun: "Hit_Knockback",
+  block: "Sword_Block",
+};
+// Écart minimal entre deux réactions, pour qu'un personnage pris sous plusieurs coups ne tressaute pas sans arrêt.
+const REACTION_INTERVAL = 0.5;
+
 export interface AnimationInput {
   alive: boolean;
   casting: boolean;
@@ -37,6 +48,9 @@ export class CharacterAnimator {
   private current: AnimationGroup | null = null;
   private currentKey = "";
   private action: AnimationGroup | null = null;
+  // Une réaction (coup reçu) cède la place aux actions du personnage, l'inverse non.
+  private actionIsReaction = false;
+  private lastReaction = -Infinity;
   private attackIndex = 0;
 
   constructor(
@@ -59,6 +73,18 @@ export class CharacterAnimator {
 
   ability(abilityId: string) {
     this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default);
+  }
+
+  // Coup reçu. Le stun passe toujours ; les autres réactions n'interrompent pas un coup ou une compétence
+  // du personnage, et sont espacées d'au moins REACTION_INTERVAL.
+  react(reaction: Reaction) {
+    const now = performance.now() / 1000;
+    if (reaction !== "stun") {
+      if (this.action?.isPlaying && !this.actionIsReaction) return;
+      if (now - this.lastReaction < REACTION_INTERVAL) return;
+    }
+    this.lastReaction = now;
+    this.playAction(REACTIONS[reaction], true);
   }
 
   update(input: AnimationInput) {
@@ -89,11 +115,12 @@ export class CharacterAnimator {
 
   dispose() {}
 
-  private playAction(name: string | undefined) {
+  private playAction(name: string | undefined, reaction = false) {
     const group = name ? this.animations.get(name) : undefined;
     if (!group) return;
     this.switchTo(group, `action:${name}`, false, 1);
     this.action = group;
+    this.actionIsReaction = reaction;
   }
 
   // key distingue deux usages d'une même animation (course avant et course à l'envers).

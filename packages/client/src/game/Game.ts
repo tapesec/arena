@@ -91,6 +91,8 @@ const SPECTATOR_SPEED = 18;
 const AUTO_ATTACK_ID = "auto";
 // Issues possibles d'un coup d'auto-attaque (le coup est porté, qu'il touche ou non).
 const SWING_EVENTS = new Set<CombatEvent["kind"]>(["damage", "blocked", "evaded", "absorbed", "intercepted"]);
+// Au-delà de ces dégâts (ou sur un critique), la réaction est plus marquée.
+const HEAVY_HIT = 200;
 
 export class Game {
   private engine: Engine;
@@ -319,6 +321,7 @@ export class Game {
       if (event.abilityId === AUTO_ATTACK_ID && SWING_EVENTS.has(event.kind)) {
         this.players.get(event.sourceId)?.playAttack();
       }
+      this.playReaction(event);
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       hud.pushLog(formatInterrupt(event, nameOf));
@@ -353,6 +356,19 @@ export class Game {
   }
 
   // Texte flottant au-dessus de la cible d'un événement de combat.
+  // Le personnage touché réagit : léger recul, coup marqué, projection quand il est stun, parade quand il bloque.
+  private playReaction(event: CombatEvent) {
+    if (event.kind === "damage" && event.amount) {
+      const heavy = event.crit || event.amount >= HEAVY_HIT;
+      this.players.get(event.targetId)?.playReaction(heavy ? "heavy" : "light");
+    } else if (event.kind === "cc" && event.detail === "stun") {
+      this.players.get(event.targetId)?.playReaction("stun");
+    } else if (event.kind === "blocked" && event.detail) {
+      // detail : celui qui a bloqué (la cible elle-même, ou le Gardien qui la protège).
+      this.players.get(event.detail)?.playReaction("block");
+    }
+  }
+
   private showCombatText(event: CombatEvent) {
     const target = this.players.get(event.targetId);
     if (!target) return;
