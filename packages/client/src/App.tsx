@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
+import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { CLASS_BADGES } from "./game/classBadges";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
@@ -72,6 +73,12 @@ function HomeScreen() {
         <a href="https://soundimage.org" target="_blank" rel="noreferrer">
           soundimage.org
         </a>
+        <br />
+        Icônes : Lorc, Delapouite, Zeromancer, Sbed et Felbrigg,{" "}
+        <a href="https://game-icons.net" target="_blank" rel="noreferrer">
+          game-icons.net
+        </a>{" "}
+        (CC BY 3.0)
       </p>
     </div>
   );
@@ -428,10 +435,15 @@ function SelfCastBar() {
   return <div className="self-cast">{cast && <CastBar cast={cast} />}</div>;
 }
 
+// Barre d'action : une case par compétence, avec son icône (couleur de son école), sa touche, sa recharge en cadran
+// et son état (utilisable, ressource manquante, hors de portée, mauvaise position…). Survol : infobulle ; clic : lancer.
 function Hotbar() {
   const self = useHudStore((s) => s.self);
+  const target = useHudStore((s) => s.target);
   const cooldownEnds = useHudStore((s) => s.cooldownEnds);
+  const actions = useHudStore((s) => s.actions);
   const now = useNow(Object.values(cooldownEnds).some((end) => end > performance.now()));
+  const [hovered, setHovered] = useState<string | null>(null);
   const classDef = self ? getClass(self.classId) : undefined;
   if (!self || !classDef) return null;
 
@@ -441,22 +453,41 @@ function Hotbar() {
         const ability = getAbility(abilityId);
         if (!ability) return null;
         const remaining = Math.max(0, ((cooldownEnds[abilityId] ?? 0) - now) / 1000);
-        const affordable = self[ability.resource] >= ability.cost;
+        const status = abilityStatus(ability, self, target);
         const active = abilityId === "speedSong" && self.songActive;
         // Technique de mêlée en attente du prochain coup d'arme.
         const queued = abilityId === self.queuedAbility;
+        // Part du cadran déjà découverte (recharge écoulée), en degrés : elle grandit dans le sens des aiguilles
+        // d'une montre à partir de midi, le reste est dans l'ombre.
+        const elapsed = remaining > 0 && ability.cooldown > 0 ? (1 - remaining / ability.cooldown) * 360 : 0;
+        const classes = ["slot", `slot-${status.state}`, active && "slot-active", queued && "slot-queued"];
         return (
           <div
             key={abilityId}
-            className={`slot ${affordable ? "" : "slot-unaffordable"} ${active ? "slot-active" : ""} ${queued ? "slot-queued" : ""}`}
+            className={classes.filter(Boolean).join(" ")}
+            style={{ color: abilityColor(abilityId) }}
+            onClick={() => actions?.castAbility(abilityId)}
+            onMouseEnter={() => setHovered(abilityId)}
+            onMouseLeave={() => setHovered((h) => (h === abilityId ? null : h))}
           >
+            <span className="slot-icon" dangerouslySetInnerHTML={{ __html: abilityIcon(abilityId) ?? "" }} />
             <span className="slot-key">{index + 1}</span>
-            <span className="slot-name">{ability.name}</span>
-            <span className="slot-cost">
-              {ability.cost > 0 ? `${ability.cost} ${ability.resource === "mana" ? "mana" : "endu"}` : ""}
-              {ability.castTime > 0 ? ` · ${ability.castTime}s` : ""}
-            </span>
-            {remaining > 0 && <span className="slot-cooldown">{formatCooldown(remaining)}</span>}
+            {ability.cost > 0 && <span className="slot-cost">{ability.cost}</span>}
+            {remaining > 0 && (
+              <span className="slot-cooldown" style={{ background: `conic-gradient(transparent ${elapsed}deg, rgba(0, 0, 0, 0.72) 0)` }}>
+                {formatCooldown(remaining)}
+              </span>
+            )}
+            {hovered === abilityId && (
+              <div className="slot-tooltip">
+                <div className="tooltip-name" style={{ color: abilityColor(abilityId) }}>
+                  {ability.name}
+                </div>
+                <div className="tooltip-details">{abilityDetails(ability).join(" · ")}</div>
+                <div className="tooltip-description">{ability.description}</div>
+                {status.reason && <div className="tooltip-reason">{status.reason}</div>}
+              </div>
+            )}
           </div>
         );
       })}

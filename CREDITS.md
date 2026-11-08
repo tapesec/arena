@@ -11,6 +11,10 @@ importées par `scripts/import-assets.sh`.
   [soundimage.org](https://soundimage.org). Gratuite à condition de créditer l'auteur : crédit affiché sur l'écran
   d'accueil du jeu.
 
+- **Icônes de la barre d'action** — [game-icons.net](https://game-icons.net), licence CC BY 3.0 : Lorc, Delapouite,
+  Zeromancer, Sbed et Felbrigg. Fond retiré et couleur adaptée. Détail par compétence dans
+  `packages/client/src/icons/SOURCES.txt`. Crédit affiché sur l'écran d'accueil du jeu.
+
 ## Sans obligation de crédit
 
 - **Modèles 3D** (personnages, tenues, armes, village, nature, accessoires) et **animations** — [Quaternius](https://quaternius.com), CC0.

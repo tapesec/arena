@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ClassId, EffectKind, MatchPhase } from "@arena/shared";
+import type { ClassId, EffectKind, MatchPhase, RelativePosition } from "@arena/shared";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
@@ -47,6 +47,8 @@ export interface TargetFrame extends UnitFrame {
   inLineOfSight: boolean;
   // La cible est dans le cône de vision du joueur.
   facing: boolean;
+  // Où se trouve le joueur par rapport à la cible : devant, sur son flanc, dans son dos.
+  position: RelativePosition;
 }
 
 export interface MatchFrame {
@@ -93,6 +95,8 @@ export interface GameActions {
   addBots: () => void;
   // Cibler un joueur (clic dans la fenêtre de groupe).
   selectTarget: (playerId: string) => void;
+  // Lancer une compétence (clic sur la barre d'action).
+  castAbility: (abilityId: string) => void;
 }
 
 const MAX_LOG_LINES = 8;

@@ -29,6 +29,8 @@ export type AbilityEffect =
 export interface AbilityDef {
   id: string;
   name: string;
+  // Texte de l'infobulle de la barre d'action.
+  description: string;
   // Temps d'incantation en secondes ; 0 = instantané.
   castTime: number;
   resource: ResourceType;
@@ -54,6 +56,7 @@ const list: AbilityDef[] = [
   {
     id: "guard",
     name: "Garde",
+    description: "50 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m au plus). Relancer sur le même allié retire la protection.",
     castTime: 0,
     resource: "endurance",
     cost: 0,
@@ -65,6 +68,7 @@ const list: AbilityDef[] = [
   {
     id: "intercept",
     name: "Interception",
+    description: "Encaisse à la place d'un allié le prochain coup qui le vise (10 s, à 4 m au plus).",
     castTime: 0,
     resource: "endurance",
     cost: 15,
@@ -76,6 +80,7 @@ const list: AbilityDef[] = [
   {
     id: "shieldBash",
     name: "Coup de bouclier",
+    description: "Étourdit la cible 4 s. Technique de mêlée : part au prochain coup d'arme.",
     castTime: 0,
     resource: "endurance",
     cost: 40,
@@ -89,6 +94,7 @@ const list: AbilityDef[] = [
   {
     id: "firebolt",
     name: "Trait de feu",
+    description: "Projectile de feu : 250 dégâts.",
     castTime: 2.5,
     resource: "mana",
     cost: 80,
@@ -100,6 +106,7 @@ const list: AbilityDef[] = [
   {
     id: "blast",
     name: "Déflagration",
+    description: "Explosion autour de soi, sans cible : 350 dégâts au centre, jusqu'à 100 au bord, sur les ennemis à 5 m.",
     castTime: 2.5,
     resource: "mana",
     cost: 150,
@@ -112,6 +119,7 @@ const list: AbilityDef[] = [
   {
     id: "freeze",
     name: "Gel",
+    description: "Enracine la cible 10 s : elle repart lentement, puis à pleine vitesse. Les dégâts la libèrent.",
     castTime: 1.5,
     resource: "mana",
     cost: 60,
@@ -123,6 +131,7 @@ const list: AbilityDef[] = [
   {
     id: "concentration",
     name: "Concentration",
+    description: "Le prochain sort ne peut pas être interrompu.",
     castTime: 0,
     resource: "mana",
     cost: 0,
@@ -136,6 +145,7 @@ const list: AbilityDef[] = [
   {
     id: "bubble",
     name: "Bulle",
+    description: "Sur soi : absorbe entièrement le prochain coup de mêlée, effets compris, puis disparaît. Ne protège pas des sorts.",
     castTime: 2,
     resource: "mana",
     cost: 80,
@@ -148,6 +158,7 @@ const list: AbilityDef[] = [
   {
     id: "heal",
     name: "Soin",
+    description: "Rend 300 points de vie à un allié (à soi, sans allié ciblé).",
     castTime: 2,
     resource: "mana",
     cost: 80,
@@ -159,6 +170,7 @@ const list: AbilityDef[] = [
   {
     id: "groupHeal",
     name: "Soin de groupe",
+    description: "Rend 200 points de vie aux alliés à 20 m.",
     castTime: 3,
     resource: "mana",
     cost: 200,
@@ -171,6 +183,7 @@ const list: AbilityDef[] = [
   {
     id: "instantHeal",
     name: "Soin instantané",
+    description: "Rend aussitôt 200 points de vie à un allié.",
     castTime: 0,
     resource: "mana",
     cost: 60,
@@ -182,6 +195,7 @@ const list: AbilityDef[] = [
   {
     id: "purify",
     name: "Purification",
+    description: "Retire le mez d'un allié (pas le stun).",
     castTime: 0,
     resource: "mana",
     cost: 30,
@@ -193,6 +207,7 @@ const list: AbilityDef[] = [
   {
     id: "buffHp",
     name: "Buff de vie",
+    description: "+200 points de vie maximum, jusqu'à la mort du Prêtre ou de la cible.",
     castTime: 2,
     resource: "mana",
     cost: 100,
@@ -204,6 +219,7 @@ const list: AbilityDef[] = [
   {
     id: "buffStrength",
     name: "Buff de force",
+    description: "+15 % de dégâts de mêlée, jusqu'à la mort du Prêtre ou de la cible.",
     castTime: 2,
     resource: "mana",
     cost: 100,
@@ -215,6 +231,7 @@ const list: AbilityDef[] = [
   {
     id: "resurrect",
     name: "Résurrection",
+    description: "Relève un allié mort à 50 % de vie, sans aucun buff.",
     castTime: 4,
     resource: "mana",
     cost: 400,
@@ -227,6 +244,7 @@ const list: AbilityDef[] = [
   {
     id: "aoeMez",
     name: "Mez de zone",
+    description: "Endort 20 s les ennemis à 6 m de la cible. Les dégâts les réveillent.",
     castTime: 3,
     resource: "mana",
     cost: 200,
@@ -239,6 +257,7 @@ const list: AbilityDef[] = [
   {
     id: "mez",
     name: "Mez ciblé",
+    description: "Endort la cible 20 s. Les dégâts la réveillent.",
     castTime: 2,
     resource: "mana",
     cost: 100,
@@ -250,6 +269,7 @@ const list: AbilityDef[] = [
   {
     id: "aoeRoot",
     name: "Root de zone",
+    description: "Enracine 12 s les ennemis à 6 m de la cible. Les dégâts les libèrent.",
     castTime: 2.5,
     resource: "mana",
     cost: 120,
@@ -262,6 +282,7 @@ const list: AbilityDef[] = [
   {
     id: "silence",
     name: "Silence",
+    description: "Interrompt l'incantation en cours de la cible.",
     castTime: 1,
     resource: "mana",
     cost: 40,
@@ -273,6 +294,7 @@ const list: AbilityDef[] = [
   {
     id: "speedSong",
     name: "Chant de vitesse",
+    description: "Active ou coupe le chant : +40 % de vitesse aux alliés à 30 m. Se tait 5 s quand le Barde attaque ou est attaqué.",
     castTime: 0,
     resource: "mana",
     cost: 0,
@@ -285,6 +307,7 @@ const list: AbilityDef[] = [
   {
     id: "backstab",
     name: "Attaque dans le dos",
+    description: "270 dégâts, à la place du coup normal. Dans le dos de la cible. Technique de mêlée : part au prochain coup d'arme.",
     castTime: 0,
     resource: "endurance",
     cost: 25,
@@ -298,6 +321,7 @@ const list: AbilityDef[] = [
   {
     id: "flankStrike",
     name: "Attaque de flanc",
+    description: "190 dégâts, à la place du coup normal, et ralentit de 40 % pendant 8 s. Sur le flanc de la cible. Technique de mêlée : part au prochain coup d'arme.",
     castTime: 0,
     resource: "endurance",
     cost: 20,
@@ -314,6 +338,7 @@ const list: AbilityDef[] = [
   {
     id: "evasion",
     name: "Évasion",
+    description: "75 % de chances d'esquiver les attaques de mêlée pendant 8 s.",
     castTime: 0,
     resource: "endurance",
     cost: 20,
@@ -325,6 +350,7 @@ const list: AbilityDef[] = [
   {
     id: "rage",
     name: "Rage",
+    description: "Tous les coups sont critiques pendant 10 s.",
     castTime: 0,
     resource: "endurance",
     cost: 0,

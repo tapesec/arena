@@ -21,6 +21,7 @@ import {
   getClass,
   hasLineOfSight,
   isFacing,
+  positionRelativeTo,
   inputToDirection,
   isInMeleeRange,
   NO_INPUT,
@@ -156,6 +157,7 @@ export class Game {
       forceStart: () => this.room.send("forceStart"),
       addBots: () => this.room.send("addBots"),
       selectTarget: (playerId) => this.setTarget(playerId),
+      castAbility: (abilityId) => this.room.send("cast", { abilityId }),
     });
 
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
@@ -541,6 +543,7 @@ export class Game {
             inMeleeRange: isInMeleeRange(self.state, target.state),
             inLineOfSight: hasLineOfSight(self.state, target.state),
             facing: isFacing(self.state, target.state),
+            position: positionRelativeTo(target.state, self.state),
           }
         : null;
 

@@ -1,0 +1,26 @@
+Icônes de game-icons.net (https://game-icons.net), licence CC BY 3.0 — crédit obligatoire (voir CREDITS.md).
+Fond retiré et couleur remplacée par currentColor. Compétence ← auteur/icône :
+guard ← delapouite/cross-shield
+intercept ← delapouite/shield-impact
+shieldBash ← delapouite/shield-bash
+firebolt ← lorc/fireball
+blast ← lorc/bright-explosion
+freeze ← lorc/frozen-orb
+concentration ← lorc/meditation
+bubble ← lorc/shield-reflect
+heal ← zeromancer/heart-plus
+groupHeal ← lorc/beams-aura
+instantHeal ← sbed/health-increase
+purify ← delapouite/sparkles
+buffHp ← delapouite/heart-shield
+buffStrength ← delapouite/biceps
+resurrect ← lorc/angel-wings
+aoeMez ← lorc/sleepy
+mez ← delapouite/night-sleep
+aoeRoot ← delapouite/tree-roots
+silence ← delapouite/silenced
+speedSong ← delapouite/musical-notes
+backstab ← lorc/backstab
+flankStrike ← lorc/quick-slash
+evasion ← felbrigg/dodge
+rage ← delapouite/enrage
