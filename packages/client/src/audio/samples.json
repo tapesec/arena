@@ -1,0 +1,68 @@
+{
+  "_comment": "Sons enregistrés : chaque groupe réunit des variantes (une est tirée au hasard à chaque lecture). files : fichiers de assets-source/sounds (* = n'importe quels caractères). Converties par scripts/build-sounds.mjs en public/sounds/<id>_<n>.m4a.",
+  "groups": {
+    "swingSword": { "label": "Épée qui fend l'air", "category": "Armes", "files": ["melee sounds/sword sound.wav"] },
+    "swingMelee": { "label": "Coup porté (swoosh)", "category": "Armes", "files": ["melee sounds/melee sound.wav"] },
+    "swingHeavy": { "label": "Coup lourd (swoosh)", "category": "Armes", "files": ["melee sounds/animal melee sound.wav"] },
+
+    "hitMetalLight": { "label": "Métal léger (dague)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactMetal_light_*.ogg"] },
+    "hitMetal": { "label": "Métal (épée sur armure)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactMetal_medium_*.ogg"] },
+    "hitMetalHeavy": { "label": "Métal lourd (critique)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactMetal_heavy_*.ogg"] },
+    "hitPlate": { "label": "Plaque d'armure", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPlate_medium_*.ogg"] },
+    "hitPlateHeavy": { "label": "Plaque d'armure, lourd", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPlate_heavy_*.ogg"] },
+    "hitPunch": { "label": "Coup de poing", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPunch_medium_*.ogg"] },
+    "hitPunchHeavy": { "label": "Coup de poing, lourd", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPunch_heavy_*.ogg"] },
+    "hitWood": { "label": "Bois (bouclier)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactWood_medium_*.ogg"] },
+    "hitWoodHeavy": { "label": "Bois lourd (coup de bouclier)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactWood_heavy_*.ogg"] },
+    "hitSoft": { "label": "Choc sourd", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactSoft_medium_*.ogg"] },
+    "hitSoftHeavy": { "label": "Choc sourd, lourd (stun)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactSoft_heavy_*.ogg"] },
+
+    "malePain": { "label": "Douleur", "category": "Voix homme", "files": ["male-pain-sounds/*.wav"] },
+    "maleDeath": { "label": "Mort", "category": "Voix homme", "files": ["male-death-sounds/*.wav"] },
+
+    "female1Pain": { "label": "Douleur", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/damaged*.wav"] },
+    "female1Attack": { "label": "Cri d'attaque", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/attack*.wav"] },
+    "female1Healed": { "label": "Soignée", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/healed*.wav"] },
+    "female1Fire": { "label": "Sort de feu", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/fire.wav"] },
+    "female1Ice": { "label": "Sort de glace", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/freeze.wav"] },
+    "female1Heal": { "label": "Sort de soin", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/heal.wav"] },
+    "female1Curse": { "label": "Malédiction", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/curse.wav"] },
+
+    "female2Pain": { "label": "Douleur", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/damaged*.wav"] },
+    "female2Attack": { "label": "Cri d'attaque", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/attack*.wav"] },
+    "female2Healed": { "label": "Soignée", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/healed*.wav"] },
+    "female2Fire": { "label": "Sort de feu", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/fire.wav"] },
+    "female2Ice": { "label": "Sort de glace", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/freeze.wav"] },
+    "female2Heal": { "label": "Sort de soin", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/heal.wav"] },
+    "female2Curse": { "label": "Malédiction", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/curse.wav"] },
+
+    "female3Pain": { "label": "Douleur", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/damaged*.wav"] },
+    "female3Attack": { "label": "Cri d'attaque", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/attack*.wav"] },
+    "female3Healed": { "label": "Soignée", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/healed*.wav"] },
+    "female3Fire": { "label": "Sort de feu", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/fire.wav"] },
+    "female3Ice": { "label": "Sort de glace", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/freeze.wav"] },
+    "female3Heal": { "label": "Sort de soin", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/heal.wav"] },
+    "female3Curse": { "label": "Malédiction", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/curse.wav"] },
+
+    "stepGrass": { "label": "Pas sur l'herbe", "category": "Pas", "files": ["kenney_impact-sounds/Audio/footstep_grass_*.ogg"] },
+    "stepStone": { "label": "Pas sur la pierre (place)", "category": "Pas", "files": ["kenney_impact-sounds/Audio/footstep_concrete_*.ogg"] },
+    "stepDirt": { "label": "Pas sur la terre (chemins)", "category": "Pas", "files": ["Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_*.wav"] },
+    "stepWood": { "label": "Pas sur le bois", "category": "Pas", "files": ["kenney_impact-sounds/Audio/footstep_wood_*.ogg"] },
+
+    "spellFire": { "label": "Feu", "category": "Sorts", "files": ["spells/Fire.aif"] },
+    "spellGeneric": { "label": "Sort (Spell1)", "category": "Sorts", "files": ["spells/Spell1.aif"] },
+    "spellIceSnap": { "label": "Glace : coldsnap", "category": "Sorts", "files": ["icespells/coldsnap.wav"] },
+    "spellIce": { "label": "Glace : ice", "category": "Sorts", "files": ["icespells/ice.wav"] },
+    "spellHeal": { "label": "Soin (3 variantes)", "category": "Sorts", "files": ["3 heal spells/*.aif"] },
+    "spellFantasy0": { "label": "Sort Fantasy 0", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_00.wav"] },
+    "spellFantasy1": { "label": "Sort Fantasy 1", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_01.wav"] },
+    "spellFantasy2": { "label": "Sort Fantasy 2", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_02.wav"] },
+    "spellFantasy3": { "label": "Sort Fantasy 3", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_03.wav"] },
+    "spellFantasy4": { "label": "Sort Fantasy 4", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_04.wav"] },
+
+    "jingleWin": { "label": "Victoire", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Jingle_Win_00.wav"] },
+    "jingleLose": { "label": "Défaite", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Jingle_Lose_00.wav"] },
+    "jingleAchievement": { "label": "Succès", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Jingle_Achievement_00.wav"] },
+    "menuSelect": { "label": "Sélection (menu)", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Menu_Select_00.wav"] }
+  }
+}

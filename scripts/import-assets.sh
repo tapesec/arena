@@ -74,5 +74,11 @@ extract "$ALL" "$OUT/weapons-fbx/ultimate-rpg-items" 'Medieval/Ultimate RPG Item
 extract "$ALL" "$OUT/weapons-fbx/medieval-weapons" 'Medieval/Medieval Weapons Pack - Sept 2018/FBX/*'
 extract "$ALL" "$OUT/weapons-fbx/rpg-asset-pack" 'Medieval/RPG Asset Pack - May 2017/FBX/*'
 
+# Sons : dossier "sounds effect" des Téléchargements (packs déjà décompressés), copié tel quel.
+SOUNDS="$SRC/sounds effect"
+[[ -d "$SOUNDS" ]] || { echo "Dossier introuvable : $SOUNDS" >&2; exit 1; }
+mkdir -p "$OUT/sounds"
+rsync -a --exclude .DS_Store "$SOUNDS/" "$OUT/sounds/"
+
 echo "Assets extraits dans $OUT :"
 du -sh "$OUT"/*

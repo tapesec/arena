@@ -9,8 +9,23 @@ const MIN_REPEAT_INTERVAL = 0.06;
 const VOLUME_KEY = "arena.volume";
 const MUTED_KEY = "arena.muted";
 
+// Sons enregistrés (voir samples.json et scripts/build-sounds.mjs) : un groupe = plusieurs variantes.
+const SOUNDS_URL = "/sounds/";
+// Écart de vitesse de lecture tiré au hasard, pour qu'une même variante ne sonne jamais deux fois pareil.
+const RATE_JITTER = 0.06;
+// En dessous de ce niveau, le début d'un son est du silence (ajouté par l'encodeur AAC) : il est sauté.
+const SILENCE = 0.002;
+
+interface Variant {
+  buffer: AudioBuffer;
+  // Début du son, après le silence ajouté par l'encodeur (en secondes).
+  start: number;
+}
+
 export interface PlayOptions {
   volume?: number;
+  // Vitesse de lecture (1 = normale ; plus rapide = plus aigu).
+  rate?: number;
   // -1 (gauche) à 1 (droite).
   pan?: number;
   // Alerte qui concerne le joueur : jouée même quand beaucoup de sons sont en cours.
@@ -23,9 +38,13 @@ export class AudioManager {
   private context: AudioContext = ZZFX.audioContext;
   private master: GainNode;
   private activeSounds = 0;
-  private lastPlayed = new Map<SoundId, number>();
+  // Clé : identifiant d'un son généré ou d'un groupe de sons enregistrés.
+  private lastPlayed = new Map<string, number>();
   private volume: number;
   private muted: boolean;
+  private variantCounts: Promise<Record<string, number>> | null = null;
+  private samples = new Map<string, Promise<Variant[]>>();
+  private lastVariant = new Map<string, number>();
 
   constructor() {
     this.master = this.context.createGain();
@@ -85,9 +104,70 @@ export class AudioManager {
     }
   }
 
+  // Joue une variante, tirée au hasard, d'un groupe de sons enregistrés (chargé au premier usage).
+  async playSample(id: string, { volume = 1, pan = 0, priority = false, rate = 1 }: PlayOptions = {}) {
+    if (this.muted || volume <= 0.01) return;
+    const variants = await this.loadSample(id);
+    if (!variants.length) return;
+    const now = this.context.currentTime;
+    if (!priority) {
+      if (this.activeSounds >= MAX_CONCURRENT_SOUNDS) return;
+      if (now - (this.lastPlayed.get(id) ?? -Infinity) < MIN_REPEAT_INTERVAL) return;
+    }
+    this.lastPlayed.set(id, now);
+
+    // Jamais deux fois de suite la même variante.
+    let index = Math.floor(Math.random() * variants.length);
+    if (variants.length > 1 && index === this.lastVariant.get(id)) index = (index + 1) % variants.length;
+    this.lastVariant.set(id, index);
+    const variant = variants[index];
+
+    const source = this.context.createBufferSource();
+    source.buffer = variant.buffer;
+    source.playbackRate.value = rate * (1 + (Math.random() * 2 - 1) * RATE_JITTER);
+    const gain = this.context.createGain();
+    gain.gain.value = volume;
+    const panner = new StereoPannerNode(this.context, { pan: Math.max(-1, Math.min(1, pan)) });
+    source.connect(panner).connect(gain).connect(this.master);
+    this.activeSounds++;
+    source.onended = () => this.activeSounds--;
+    source.start(now, variant.start);
+  }
+
+  // Charge toutes les variantes d'un groupe (une seule fois).
+  loadSample(id: string): Promise<Variant[]> {
+    let loading = this.samples.get(id);
+    if (!loading) {
+      loading = this.loadVariants(id);
+      this.samples.set(id, loading);
+    }
+    return loading;
+  }
+
+  private async loadVariants(id: string): Promise<Variant[]> {
+    this.variantCounts ??= fetch(`${SOUNDS_URL}index.json`).then((r) => r.json() as Promise<Record<string, number>>);
+    const count = (await this.variantCounts)[id] ?? 0;
+    const variants = await Promise.all(
+      Array.from({ length: count }, async (_, i) => {
+        const response = await fetch(`${SOUNDS_URL}${id}_${i}.m4a`);
+        const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
+        return { buffer, start: soundStart(buffer) };
+      }),
+    );
+    return variants;
+  }
+
   private applyVolume() {
     this.master.gain.value = this.muted ? 0 : this.volume;
   }
+}
+
+// Instant où le son commence vraiment, après le silence de tête (un peu avant, pour garder l'attaque).
+function soundStart(buffer: AudioBuffer): number {
+  const data = buffer.getChannelData(0);
+  let i = 0;
+  while (i < data.length && Math.abs(data[i]) < SILENCE) i++;
+  return Math.max(0, i / buffer.sampleRate - 0.003);
 }
 
 // Le stockage du navigateur peut être indisponible (navigation privée…) : on s'en passe alors.
