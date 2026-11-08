@@ -161,7 +161,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
   | Arcaniste | Mage (femme), cheveux longs roux | Bâton de glace |
   | Prêtre | Noble (femme), chignon blond | Bâton à gemme dorée |
   | Barde | Paysan (homme), barbe | Dague, luth en bandoulière |
-- **Couleurs d'équipe** : la tenue est bleue ou rouge selon l'équipe, comme l'anneau au sol. Prêtre et Arcaniste utilisent les variantes du pack ; pour le Gardien (même armure argent dans les deux camps), la Lame et le Barde, le tissu est recoloré à la préparation des assets. Le Gardien reste le moins lisible : sa couleur tient à l'écharpe et à quelques détails.
+- **Couleurs d'équipe** : la tenue est bleue ou rouge selon l'équipe, comme l'anneau au sol. Prêtre et Arcaniste utilisent les variantes du pack ; pour le Gardien (même armure argent dans les deux camps), la Lame et le Barde, le tissu est recoloré à la préparation des assets. Le Gardien, presque tout en armure, porte en plus un bouclier peint à la couleur de son équipe.
 - **Animations** : au repos, course avant (vitesse de lecture calée sur la vitesse réelle), recul (course jouée à l'envers), pas de côté (marche latérale accélérée, les pieds glissent un peu), un coup d'auto-attaque par classe (prioritaire, joué sur tout le corps même en courant), compétences, incantation, mort. Les packs n'ont pas de course latérale ni arrière ; la bibliothèque 1 en version Source en a.
 - **Taille** : personnages agrandis de 20 % (2,2 m) pour la lisibilité, purement visuel. Caméra à 26 m par défaut, de 10 à 55 m à la molette.
 - Fait : les 5 classes. Bâtons en FBX, lus directement par Babylon (couleurs appliquées par le jeu).

@@ -21,6 +21,9 @@ const CHARACTER_SCALE = 1.2;
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
 
+// Peinture des équipes (0 bleu, 1 rouge), proche de l'anneau au sol.
+const TEAM_PAINT = ["#2c5cb8", "#b8302c"];
+
 // Bibliothèques d'animations : un squelette sans maillage et ses animations.
 const ANIMATION_LIBRARIES = ["animations/UAL1_Standard.glb", "animations/UAL2.glb"];
 
@@ -37,6 +40,8 @@ interface WeaponMount {
   // Les matériaux listés dans glow brillent légèrement (gemme, glace).
   colors?: Record<string, string>;
   glow?: string[];
+  // Matériaux peints à la couleur de l'équipe (la texture est retirée, le relief gardé).
+  teamPaint?: string[];
 }
 
 // Animations propres à une classe (les déplacements sont communs à tous).
@@ -69,7 +74,14 @@ const CHARACTERS: Record<string, CharacterDef> = {
     outfit: "MI_Knight",
     weapons: [
       { model: "weapons/sword.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0] },
-      { model: "weapons/shield.glb", bone: "lowerarm_l", position: [0, 0.15, 0], rotation: [0, -Math.PI / 2, 0] },
+      {
+        model: "weapons/shield.glb",
+        bone: "lowerarm_l",
+        position: [0, 0.15, 0],
+        rotation: [0, -Math.PI / 2, 0],
+        // Le Gardien est presque tout en armure : son bouclier porte la couleur de l'équipe.
+        teamPaint: ["MI_Trim_Furniture"],
+      },
     ],
     animations: {
       idle: "Idle_Shield_Loop",
@@ -168,6 +180,8 @@ export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
   // Matériaux de tenue par classe et par équipe, partagés par tous les personnages concernés.
   private outfits = new Map<string, PBRMaterial>();
+  // Matériaux d'arme peints, par matériau d'origine et par équipe.
+  private paints = new Map<string, PBRMaterial>();
 
   constructor(private scene: Scene) {
     registerBuiltInLoaders();
@@ -230,6 +244,7 @@ export class CharacterAssets {
 
     // Les armes sont accrochées aux os de la main ou de l'avant-bras et suivent leurs mouvements.
     const weapons: TransformNode[] = [];
+    const teamPainted: { mesh: AbstractMesh; base: PBRMaterial }[] = [];
     def.weapons.forEach((mount, i) => {
       const bone = bones.get(mount.bone);
       if (!bone) return;
@@ -248,6 +263,10 @@ export class CharacterAssets {
         } else (node as TransformNode).parent = attach;
       }
       if (mount.colors) paintWeapon(attach, mount.colors, mount.glow ?? []);
+      const paintable = mount.teamPaint ?? [];
+      for (const mesh of attach.getChildMeshes(false)) {
+        if (mesh.material && paintable.includes(mesh.material.name)) teamPainted.push({ mesh, base: mesh.material as PBRMaterial });
+      }
       weapons.push(attach);
     });
 
@@ -270,9 +289,11 @@ export class CharacterAssets {
       animations,
       weapons,
       setTeam: (team) => {
-        if (!baseOutfit) return;
-        const material = this.outfitMaterial(classId, team, baseOutfit);
-        for (const mesh of outfitMeshes) mesh.material = material;
+        if (baseOutfit) {
+          const material = this.outfitMaterial(classId, team, baseOutfit);
+          for (const mesh of outfitMeshes) mesh.material = material;
+        }
+        for (const { mesh, base } of teamPainted) mesh.material = this.paintMaterial(base, team);
       },
       // Matériaux et textures sont partagés par tous les personnages de la classe : on ne les libère pas.
       dispose() {
@@ -282,6 +303,18 @@ export class CharacterAssets {
         for (const skeleton of entries.skeletons) skeleton.dispose();
       },
     };
+  }
+
+  private paintMaterial(base: PBRMaterial, team: number): PBRMaterial {
+    const key = `${base.uniqueId}-${team}`;
+    let material = this.paints.get(key);
+    if (!material) {
+      material = base.clone(`${base.name}-${team}`);
+      material.albedoTexture = null;
+      material.albedoColor = Color3.FromHexString(TEAM_PAINT[team] ?? TEAM_PAINT[0]).toLinearSpace();
+      this.paints.set(key, material);
+    }
+    return material;
   }
 
   private outfitMaterial(classId: string, team: number, base: PBRMaterial): PBRMaterial {
