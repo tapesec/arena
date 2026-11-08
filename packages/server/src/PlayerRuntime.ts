@@ -1,4 +1,4 @@
-import { NO_INPUT, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
+import { NO_INPUT, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
 import type { EffectState, PlayerState } from "./state";
 
 export interface ActiveEffect {
@@ -31,6 +31,8 @@ export class PlayerRuntime {
   // Dernier coup de mêlée reçu (temps de la partie) et son auteur : sert aux bots pour fuir ou protéger.
   lastMeleeHitAt = -Infinity;
   lastMeleeAttackerId: string | null = null;
+  // Le stick fait avancer le personnage vers sa cible pendant ce tick.
+  stickMoving = false;
 
   constructor(
     readonly id: string,
@@ -59,8 +61,8 @@ export class PlayerRuntime {
     return this.incapacitated || this.has("root");
   }
 
+  // Le personnage se déplace (pivoter sur place ne compte pas) : interdit d'incanter.
   get isMoving(): boolean {
-    const i = this.input;
-    return i.up || i.down || i.left || i.right;
+    return movesBody(this.input) || this.stickMoving;
   }
 }

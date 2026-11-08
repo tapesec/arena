@@ -12,6 +12,8 @@ export const ENDURANCE_REGEN = 2;
 
 // Distance maximale entre les centres de deux personnages pour frapper au corps à corps.
 export const MELEE_RANGE = 3;
+// Distance à laquelle le stick (touche C) suit sa cible : bien à portée de mêlée.
+export const STICK_DISTANCE = 2;
 
 export const SPELL_RANGE = 30;
 

@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
-import { CLASSES, maxResource, type ClassId, type CombatEvent, type InterruptEvent } from "@arena/shared";
+import {
+  CLASSES,
+  NO_INPUT,
+  STICK_DISTANCE,
+  maxResource,
+  type ClassId,
+  type CombatEvent,
+  type InterruptEvent,
+  type MoveInput,
+} from "@arena/shared";
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime } from "./PlayerRuntime";
 import { PlayerState } from "./state";
@@ -326,5 +335,86 @@ describe("Règles communes", () => {
     world.combat.setTarget(pretre.id, enemy.id);
     world.cast(pretre, "purify");
     assert.equal(world.errors.at(-1)?.message, "Cible hostile");
+  });
+});
+
+// Raccourci pour construire une commande de déplacement.
+const keys = (pressed: Partial<MoveInput> = {}): MoveInput => ({ ...NO_INPUT, ...pressed });
+
+describe("Contrôles", () => {
+  it("Z avance dans la direction du personnage, Q et D le font pivoter sur place", () => {
+    const lame = world.spawn("l", "lame", 1, 0, 0, 0);
+    world.combat.setInput(lame.id, keys({ up: true }));
+    world.run(1);
+    assert.ok(lame.state.z > 5 && Math.abs(lame.state.x - OFFSET_X) < 1e-3);
+    world.combat.setInput(lame.id, keys({ right: true }));
+    const z = lame.state.z;
+    world.run(0.5);
+    assert.equal(lame.state.z, z);
+    assert.ok(lame.state.facing > 1);
+  });
+
+  it("clic droit maintenu : Q et D font un pas de côté sans tourner", () => {
+    const lame = world.spawn("l", "lame", 1, 0, 0, 0);
+    world.combat.setInput(lame.id, keys({ right: true, steer: true, yaw: 0 }));
+    world.run(0.5);
+    assert.ok(lame.state.x > OFFSET_X + 2 && Math.abs(lame.state.z) < 1e-3);
+    assert.equal(lame.state.facing, 0);
+  });
+
+  it("pivoter n'interrompt pas une incantation, avancer si", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 20, Math.PI);
+    world.cast(arcaniste, "firebolt", enemy);
+    world.combat.setInput(arcaniste.id, keys({ left: true }));
+    world.run(0.2);
+    assert.equal(world.interrupts.length, 0);
+    world.combat.setInput(arcaniste.id, keys({ up: true }));
+    world.run(0.1);
+    assert.equal(world.interrupts.at(-1)?.reason, "move");
+  });
+
+  it("F fait face à la cible en permanence, jusqu'à ce qu'on pivote", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, Math.PI);
+    const enemy = world.spawn("e", "lame", 1, 0, 10, Math.PI);
+    world.combat.setTarget(arcaniste.id, enemy.id);
+    world.combat.lockOnTarget(arcaniste.id, "face");
+    world.run(0.1);
+    assert.ok(Math.abs(arcaniste.state.facing) < 1e-3);
+    // La cible se déplace sur le côté : on continue de lui faire face, sans bouger.
+    enemy.state.x = OFFSET_X + 10;
+    world.run(0.1);
+    assert.ok(Math.abs(arcaniste.state.facing - Math.atan2(10, 10)) < 1e-3);
+    assert.equal(arcaniste.state.x, OFFSET_X);
+    world.combat.setInput(arcaniste.id, keys({ left: true }));
+    world.run(0.1);
+    assert.equal(arcaniste.state.lock, "");
+  });
+
+  it("C suit la cible ; le pas de côté le garde, avancer le lâche", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, Math.PI);
+    const enemy = world.spawn("e", "arcaniste", 1, 0, 10, Math.PI);
+    world.combat.setTarget(lame.id, enemy.id);
+    world.combat.lockOnTarget(lame.id, "stick");
+    world.run(2);
+    const gap = Math.hypot(enemy.state.x - lame.state.x, enemy.state.z - lame.state.z);
+    assert.ok(gap <= STICK_DISTANCE + 0.01, `encore à ${gap} m`);
+    world.combat.setInput(lame.id, keys({ left: true, steer: true, yaw: 0 }));
+    world.run(0.5);
+    assert.equal(lame.state.lock, "stick");
+    world.combat.setInput(lame.id, keys({ up: true }));
+    world.run(0.05);
+    assert.equal(lame.state.lock, "");
+  });
+
+  it("le stick se lâche quand on est rooté ou que la cible meurt", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 10, Math.PI);
+    world.combat.setTarget(lame.id, arcaniste.id);
+    world.combat.lockOnTarget(lame.id, "stick");
+    world.cast(arcaniste, "freeze", lame);
+    world.run(1.6);
+    assert.ok(lame.has("root"));
+    assert.equal(lame.state.lock, "");
   });
 });

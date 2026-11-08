@@ -19,9 +19,14 @@ import {
   SONG_RANGE,
   SONG_SPEED_MULTIPLIER,
   SONG_SUPPRESS_DURATION,
+  STICK_DISTANCE,
   STRENGTH_BUFF_BONUS,
   distance,
   facingTowards,
+  forwardOf,
+  isTurning,
+  moveDirection,
+  turnFacing,
   getAbility,
   hasLineOfSight,
   isFacing,
@@ -95,7 +100,22 @@ export class CombatSystem {
   setTarget(id: string, targetId: string | null) {
     const player = this.players.get(id);
     if (!player) return;
-    player.targetId = targetId && targetId !== id && this.players.has(targetId) ? targetId : null;
+    const next = targetId && targetId !== id && this.players.has(targetId) ? targetId : null;
+    // Changer de cible lâche le verrou (F ou C).
+    if (next !== player.targetId) player.state.lock = "";
+    player.targetId = next;
+  }
+
+  // F : faire face à la cible en permanence. C : la suivre (stick), en lui faisant face.
+  // Rappuyer ne les annule pas : ils s'arrêtent quand on avance, recule ou pivote,
+  // quand on meurt, quand on est contrôlé ou quand la cible disparaît (voir updateLock).
+  lockOnTarget(id: string, lock: "face" | "stick") {
+    const player = this.players.get(id);
+    if (!player?.alive) return;
+    const target = player.targetId ? this.players.get(player.targetId) : undefined;
+    if (!target?.alive) return this.sendError(player, "Aucune cible");
+    if (player.incapacitated || (lock === "stick" && player.has("root"))) return;
+    player.state.lock = lock;
   }
 
   toggleAttack(id: string) {
@@ -171,19 +191,54 @@ export class CombatSystem {
   }
 
   private updateMovement(player: PlayerRuntime, dt: number) {
-    if (player.immobilized) return;
+    const state = player.state;
+    player.stickMoving = false;
+    this.updateLock(player);
+    if (player.incapacitated) return;
+
+    // Orientation : verrou sur la cible, sinon la souris (clic droit), sinon la rotation au clavier.
+    // Pivoter n'interrompt pas l'incantation.
+    const input = player.input;
+    const target = state.lock && player.targetId ? this.players.get(player.targetId) : undefined;
+    if (target) state.facing = facingTowards(state, target.state);
+    else if (input.steer && input.yaw !== undefined) state.facing = input.yaw;
+    else state.facing = turnFacing(state.facing, input, dt);
+
+    if (player.has("root")) return;
+    const direction = moveDirection(input, state.facing);
+    // Stick : on avance vers la cible tant qu'on n'est pas assez près (les pas de côté restent possibles).
+    if (target && state.lock === "stick" && distance(state, target.state) > STICK_DISTANCE) {
+      const forward = forwardOf(state.facing);
+      direction.x += forward.x;
+      direction.z += forward.z;
+      player.stickMoving = true;
+    }
+
     const snare = player.getEffect("snare");
     const speed = (player.has("speed") ? SONG_SPEED_MULTIPLIER : 1) * (snare ? 1 - snare.value : 1);
-    const state = player.state;
-    let next = stepMovement(state, player.input, dt, speed);
+    let next = stepMovement(state, direction, dt, speed);
     if (this.confine) next = this.confine(player, next);
     if (next.x === state.x && next.z === state.z) return;
 
-    state.facing = Math.atan2(next.x - state.x, next.z - state.z);
     state.x = next.x;
     state.z = next.z;
     // Comme dans DAoC, bouger interrompt l'incantation.
     if (state.castAbility) this.interrupt(player, "move");
+  }
+
+  // Lâche le verrou F/C quand il n'a plus lieu d'être.
+  private updateLock(player: PlayerRuntime) {
+    const state = player.state;
+    if (!state.lock) return;
+    const target = player.targetId ? this.players.get(player.targetId) : undefined;
+    const input = player.input;
+    const released =
+      !target?.alive ||
+      player.incapacitated ||
+      (state.lock === "stick" && player.has("root")) ||
+      input.up !== input.down ||
+      isTurning(input);
+    if (released) state.lock = "";
   }
 
   private updateRegen(player: PlayerRuntime, dt: number) {
@@ -488,6 +543,7 @@ export class CombatSystem {
     const state = player.state;
     state.attacking = false;
     state.songActive = false;
+    state.lock = "";
     player.input = NO_INPUT;
     this.endCast(player);
     for (const effect of [...player.effects]) this.removeEffect(player, effect);

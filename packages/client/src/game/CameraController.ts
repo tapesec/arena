@@ -14,7 +14,11 @@ const ROTATION_SPEED = 0.006;
 // Fraction de zoom par cran de molette (deltaY ≈ 100 par cran).
 const ZOOM_SPEED = 0.001;
 
-// Caméra qui suit le joueur : clic droit maintenu pour tourner autour de lui, molette pour zoomer.
+// Vitesse à laquelle la caméra se replace dans le dos du personnage quand il pivote.
+const FOLLOW_RATE = 10;
+
+// Caméra qui suit le joueur, placée dans son dos. Clic droit maintenu : la souris tourne la caméra
+// (et le personnage avec elle, voir Game). Molette pour zoomer.
 export class CameraController {
   readonly camera: ArcRotateCamera;
   private dragging = false;
@@ -23,6 +27,8 @@ export class CameraController {
   constructor(
     scene: Scene,
     private canvas: HTMLCanvasElement,
+    // Prévenu quand le clic droit est enfoncé ou relâché.
+    private onSteerChange: (steering: boolean) => void = () => {},
   ) {
     this.camera = new ArcRotateCamera("camera", DEFAULT_ALPHA, BETA, DEFAULT_RADIUS, Vector3.Zero(), scene);
     this.camera.fov = 0.6;
@@ -48,12 +54,26 @@ export class CameraController {
     return Math.atan2(-Math.cos(this.camera.alpha), -Math.sin(this.camera.alpha));
   }
 
+  // Clic droit maintenu.
+  get steering(): boolean {
+    return this.dragging;
+  }
+
   follow(position: Vector3) {
     this.camera.target.copyFrom(position);
   }
 
-  reset() {
-    this.camera.alpha = DEFAULT_ALPHA;
+  // Replace progressivement la caméra dans le dos d'un personnage orienté selon facing.
+  // Inverse de yaw : la caméra regarde vers (sin facing, cos facing) quand α = atan2(-cos, -sin).
+  followFacing(facing: number, dt: number) {
+    const targetAlpha = Math.atan2(-Math.cos(facing), -Math.sin(facing));
+    const delta = Math.atan2(Math.sin(targetAlpha - this.camera.alpha), Math.cos(targetAlpha - this.camera.alpha));
+    this.camera.alpha += delta * (1 - Math.exp(-FOLLOW_RATE * dt));
+  }
+
+  // Zoom par défaut ; l'orientation est remise par défaut seulement si on ne suit pas de personnage.
+  reset(facing?: number) {
+    this.camera.alpha = facing === undefined ? DEFAULT_ALPHA : Math.atan2(-Math.cos(facing), -Math.sin(facing));
     this.camera.radius = DEFAULT_RADIUS;
   }
 
@@ -62,6 +82,7 @@ export class CameraController {
     this.dragging = true;
     this.lastX = event.clientX;
     this.canvas.setPointerCapture(event.pointerId);
+    this.onSteerChange(true);
   };
 
   private handlePointerMove = (event: PointerEvent) => {
@@ -72,8 +93,10 @@ export class CameraController {
 
   private handlePointerUp = (event: PointerEvent) => {
     if (event.button !== 2) return;
+    if (!this.dragging) return;
     this.dragging = false;
     this.canvas.releasePointerCapture(event.pointerId);
+    this.onSteerChange(false);
   };
 
   private handleWheel = (event: WheelEvent) => {

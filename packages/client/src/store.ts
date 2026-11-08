@@ -32,6 +32,8 @@ export interface SelfFrame extends UnitFrame {
   endurance: number;
   maxEndurance: number;
   attacking: boolean;
+  // Verrou sur la cible : "face" (F), "stick" (C) ou "".
+  lock: string;
   songActive: boolean;
 }
 

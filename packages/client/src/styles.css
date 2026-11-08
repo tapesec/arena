@@ -70,6 +70,10 @@ body,
   background: #b33a3a;
 }
 
+.tag-lock {
+  background: #3a6ab3;
+}
+
 .tag-in-range {
   background: #3a8a4a;
 }

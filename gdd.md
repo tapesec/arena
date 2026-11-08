@@ -9,7 +9,10 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Plateforme** : navigateur d'abord, puis client lourd (Electron/Tauri) pour Steam.
 - **Vue** : 3D isométrique.
 - **Combat** : tab-target (ciblage par Tab ou clic, pas de visée manuelle).
-- **Déplacement** : ZQSD/WASD.
+- **Déplacement** (contrôles à la DAoC) : Z/S avancent et reculent dans la direction du personnage, Q/D le font pivoter. Clic droit maintenu : la souris oriente le personnage et la caméra, Q/D deviennent des pas de côté. La caméra se place dans le dos du personnage ; V la recentre.
+- **Verrous sur la cible** : F fait face à la cible en permanence, C la suit (stick) en lui faisant face. Rappuyer ne les annule pas : avancer, reculer ou pivoter les lâche, de même que la mort, un mez ou un stun (et un root pour le stick), ou la perte de la cible. Le pas de côté les conserve (tourner autour de sa cible pendant un stick).
+- **Pivoter** n'interrompt pas une incantation ; avancer, reculer ou faire un pas de côté, si.
+- **Attaque automatique** : R.
 - **Stack** : TypeScript partout, Babylon.js côté client, serveur autoritaire en Node/Bun, logique de combat partagée.
 
 ## Format de jeu : arène 8v8 avec roaming
@@ -118,7 +121,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Taille de l'arène** : à caler en test, assez grande pour que la recherche prenne un peu de temps sans devenir ennuyeuse.
 - **Progression** : hors périmètre du prototype.
 - **Valeurs chiffrées** : toutes à valider en prototype.
-- **Contrôles** : le personnage regarde dans la direction où il marche (touche E pour faire face à sa cible). À revoir : garder le regard sur la cible pendant les déplacements ?
+- **Contrôles** : passés aux contrôles à la DAoC (voir Déplacement). Reculer va pour l'instant à la même vitesse qu'avancer.
 
 ## Choix faits pendant le prototype (provisoires, à valider en test)
 

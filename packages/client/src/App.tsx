@@ -219,6 +219,8 @@ function SelfPanel() {
           {self.name} <span className="unit-class">{self.className}</span>
         </span>
         {self.attacking && <span className="tag tag-attack">Attaque</span>}
+        {self.lock === "face" && <span className="tag tag-lock">Face</span>}
+        {self.lock === "stick" && <span className="tag tag-lock">Stick</span>}
       </div>
       <Bar value={self.hp} max={self.maxHp} kind="hp" deadLabel="Mort" />
       {self.maxMana > 0 && <Bar value={self.mana} max={self.maxMana} kind="mana" />}
@@ -395,11 +397,11 @@ function SoundControl() {
 function HelpPanel() {
   return (
     <div className="hud-panel help">
-      <div>ZQSD : se déplacer</div>
-      <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même</div>
-      <div>Échap : annuler la cible · E : faire face</div>
-      <div>F : activer/couper l'attaque</div>
-      <div>Clic droit + souris : tourner la caméra · molette : zoom · C : recentrer</div>
+      <div>Z/S : avancer/reculer · Q/D : pivoter</div>
+      <div>Clic droit maintenu : la souris oriente · Q/D : pas de côté</div>
+      <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même · Échap : annuler</div>
+      <div>F : faire face à la cible · C : la suivre (stick)</div>
+      <div>R : activer/couper l'attaque · molette : zoom · V : recentrer</div>
       <div>1 à 7 : compétences</div>
     </div>
   );

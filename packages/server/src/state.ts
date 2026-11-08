@@ -23,8 +23,10 @@ export const PlayerState = schema(
     team: t.uint8().default(0),
     x: t.float32().default(0),
     z: t.float32().default(0),
-    // Orientation en radians, déduite de la dernière direction de déplacement.
+    // Orientation en radians (0 = vers +z, angle croissant en tournant à droite).
     facing: t.float32().default(0),
+    // Verrou sur la cible : "face" (F, lui faire face en permanence), "stick" (C, la suivre), "" sinon.
+    lock: t.string().default(""),
     colorIndex: t.uint8().default(0),
     hp: t.uint16().default(0),
     maxHp: t.uint16().default(0),

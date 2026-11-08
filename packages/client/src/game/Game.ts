@@ -109,7 +109,9 @@ export class Game {
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.07, 0.08, 0.1, 1);
 
-    this.camera = new CameraController(this.scene, canvas);
+    this.camera = new CameraController(this.scene, canvas, () => {
+      if (!this.isSpectating) this.sendMove();
+    });
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.spellEffects = new SpellEffects(this.scene);
     this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
@@ -157,11 +159,11 @@ export class Game {
 
   private handleResize = () => this.engine.resize();
 
-  // Le serveur convertit les touches en direction selon l'orientation de la caméra : on la joint aux touches.
+  // Touches de déplacement, plus l'état du clic droit : maintenu, le personnage s'oriente comme la caméra.
   private sendMove() {
     this.sentYaw = this.camera.yaw;
     this.lastMoveSent = performance.now();
-    this.room.send("input", { ...this.moveKeys, yaw: this.sentYaw });
+    this.room.send("input", { ...this.moveKeys, steer: this.camera.steering, yaw: this.sentYaw });
   }
 
   // Mort pendant le combat : la caméra devient libre et le brouillard de guerre disparaît (côté serveur).
@@ -181,7 +183,9 @@ export class Game {
         this.sendMove();
       }
       this.camera.follow(self.root.position);
-      this.resendMoveIfCameraTurned();
+      // Clic droit : la souris oriente la caméra et le personnage suit. Sinon, la caméra se place dans son dos.
+      if (this.camera.steering) this.resendMoveIfCameraTurned();
+      else this.camera.followFacing(self.root.rotation.y, dt);
       return;
     }
     this.spectatorFocus ??= self.root.position.clone();
@@ -192,10 +196,8 @@ export class Game {
     this.camera.follow(this.spectatorFocus);
   }
 
-  // Si la caméra tourne pendant qu'on se déplace, la direction de marche change : on prévient le serveur.
+  // Clic droit maintenu : quand la souris tourne la caméra, le personnage doit tourner aussi.
   private resendMoveIfCameraTurned() {
-    const k = this.moveKeys;
-    if (!(k.up || k.down || k.left || k.right)) return;
     const turned = Math.abs(Math.atan2(Math.sin(this.camera.yaw - this.sentYaw), Math.cos(this.camera.yaw - this.sentYaw)));
     if (turned > YAW_RESEND_THRESHOLD && performance.now() - this.lastMoveSent > YAW_RESEND_MS) this.sendMove();
   }
@@ -360,12 +362,15 @@ export class Game {
       case "toggleAttack":
         this.room.send("toggleAttack");
         break;
-      case "faceTarget":
-        this.room.send("faceTarget");
+      case "faceLock":
+        this.room.send("faceLock");
+        break;
+      case "stick":
+        this.room.send("stick");
         break;
       case "resetCamera":
-        this.camera.reset();
-        // En mode spectateur, C ramène aussi la caméra sur son corps.
+        this.camera.reset(this.isSpectating ? undefined : this.self?.root.rotation.y);
+        // En mode spectateur, V ramène aussi la caméra sur son corps.
         if (this.spectatorFocus && this.self) this.spectatorFocus.copyFrom(this.self.root.position);
         break;
     }
@@ -450,6 +455,7 @@ export class Game {
           endurance: Math.floor(self.state.endurance),
           maxEndurance: self.state.maxEndurance,
           attacking: self.state.attacking,
+          lock: self.state.lock,
           songActive: self.state.songActive,
         }
       : null;

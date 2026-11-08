@@ -62,7 +62,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       this.combat.setTarget(client.sessionId, typeof targetId === "string" ? targetId : null);
     },
     toggleAttack: (client: Client) => this.combat.toggleAttack(client.sessionId),
-    faceTarget: (client: Client) => this.combat.faceTarget(client.sessionId),
+    faceLock: (client: Client) => this.combat.lockOnTarget(client.sessionId, "face"),
+    stick: (client: Client) => this.combat.lockOnTarget(client.sessionId, "stick"),
     cast: (client: Client, message: unknown) => {
       const abilityId = (message as { abilityId?: unknown } | null)?.abilityId;
       if (typeof abilityId === "string") this.combat.useAbility(client.sessionId, abilityId);
@@ -328,6 +329,7 @@ function sanitizeInput(message: unknown): MoveInput {
     down: raw.down === true,
     left: raw.left === true,
     right: raw.right === true,
+    steer: raw.steer === true,
     yaw: typeof raw.yaw === "number" && Number.isFinite(raw.yaw) ? raw.yaw : undefined,
   };
 }

@@ -33,6 +33,7 @@ export interface PlayerView {
   endurance: number;
   maxEndurance: number;
   attacking: boolean;
+  lock: string;
   songActive: boolean;
   castAbility: string;
   castElapsed: number;
@@ -155,7 +156,9 @@ export class PlayerVisual {
   update(smoothing: number) {
     this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
     this.root.position.z += (this.state.z - this.root.position.z) * smoothing;
-    this.root.rotation.y = this.state.facing;
+    // Rotation lissée par le chemin le plus court (l'orientation arrive par paliers à 20 Hz).
+    const turn = this.state.facing - this.root.rotation.y;
+    this.root.rotation.y += Math.atan2(Math.sin(turn), Math.cos(turn)) * smoothing;
 
     // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur.
     if (this.state.team !== this.team) {
