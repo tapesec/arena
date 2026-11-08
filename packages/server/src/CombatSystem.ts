@@ -178,7 +178,15 @@ export class CombatSystem {
     this.time += dt;
     const alive = [...this.players.values()].filter((p) => p.alive);
     for (const p of alive) this.updateEffectTimers(p, dt);
-    for (const p of alive) this.updateDerivedEffects(p);
+    for (const p of alive) {
+      const hadBubble = p.has("bubble");
+      this.updateDerivedEffects(p);
+      // Première application de la bulle depuis l'apparition ou la résurrection : les clients la montrent un instant.
+      if (!hadBubble && p.has("bubble") && !p.bubbleApplied) {
+        p.bubbleApplied = true;
+        this.emit({ kind: "bubble", sourceId: p.id, targetId: p.id, abilityId: "" });
+      }
+    }
     for (const p of alive) {
       this.updateMovement(p, dt);
       this.updateRegen(p, dt);
@@ -564,6 +572,7 @@ export class CombatSystem {
     state.songActive = false;
     state.lock = "";
     player.input = NO_INPUT;
+    player.bubbleApplied = false;
     this.endCast(player);
     for (const effect of [...player.effects]) this.removeEffect(player, effect);
     this.removeLinkedEffects(player);

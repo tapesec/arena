@@ -30,6 +30,8 @@ export class PlayerRuntime {
   effects: ActiveEffect[] = [];
   bubbleReadyAt = 0;
   songSuppressedUntil = 0;
+  // Bulle déjà appliquée depuis l'apparition ou la dernière résurrection : ses reformations ne sont pas signalées.
+  bubbleApplied = false;
   // Dernier coup de mêlée reçu (temps de la partie) et son auteur : sert aux bots pour fuir ou protéger.
   lastMeleeHitAt = -Infinity;
   lastMeleeAttackerId: string | null = null;

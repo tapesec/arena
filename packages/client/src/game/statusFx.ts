@@ -43,9 +43,7 @@ interface PlayerStatus {
   // Durée totale du root en cours, relevée à son apparition (le serveur n'envoie que le temps restant).
   rootDuration: number;
   bubble: Mesh | null;
-  // La bulle était-elle active à l'image précédente, et depuis quand se montre-t-elle.
-  hadBubble: boolean;
-  bubbleAge: number;
+
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
   body: Vector3;
@@ -70,6 +68,8 @@ const AURAS: Record<string, Aura> = {
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
 export class StatusFx {
   private statuses = new Map<PlayerVisual, PlayerStatus>();
+  // Instant (en secondes, horloge de StatusFx) où la bulle de chaque joueur a été appliquée, par identifiant.
+  private bubbleApplied = new Map<string, number>();
   private starMaterial: StandardMaterial;
   private iceMaterial: StandardMaterial;
   private bubbleMaterial: StandardMaterial;
@@ -112,7 +112,7 @@ export class StatusFx {
       this.updateMez(status, mez);
       this.updateStars(status, stun, player);
       this.updateRoot(status, root, player);
-      this.updateBubble(status, bubble, dt);
+      this.updateBubble(status, bubble, this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
     }
     // Joueurs disparus (déconnectés, sortis du champ de vision).
     for (const [player, status] of this.statuses) {
@@ -124,6 +124,11 @@ export class StatusFx {
       status.anchor.dispose(false, false);
       this.statuses.delete(player);
     }
+  }
+
+  // Le serveur signale la première application de la bulle d'un joueur : elle se montre pendant 2 s.
+  bubbleWasApplied(playerId: string) {
+    this.bubbleApplied.set(playerId, this.time);
   }
 
   dispose() {
@@ -144,8 +149,7 @@ export class StatusFx {
       mist: null,
       rootDuration: 0,
       bubble: null,
-      hadBubble: false,
-      bubbleAge: 0,
+
       auras: new Map(),
       body: new Vector3(),
       lastX: player.root.position.x,
@@ -235,13 +239,11 @@ export class StatusFx {
   }
 
   // Bulle irisée : un volume à peine teinté et un anneau lumineux sur son contour, toujours tourné vers la caméra.
-  // Elle apparaît quand le buff se forme, reste 2 s puis s'efface ; le buff, lui, dure jusqu'au coup qu'il absorbe.
-  private updateBubble(status: PlayerStatus, active: boolean, dt: number) {
-    const formed = active && !status.hadBubble;
-    status.hadBubble = active;
-    if (formed) status.bubbleAge = 0;
-    else status.bubbleAge += dt;
-    const shown = active && status.bubbleAge < BUBBLE_SHOWN;
+  // Elle n'apparaît que 2 s après sa première application (début du combat, résurrection), signalée par le serveur :
+  // ni à ses reformations, ni quand un adversaire entre dans le champ de vision avec sa bulle déjà formée.
+  // age : temps écoulé depuis cette application.
+  private updateBubble(status: PlayerStatus, active: boolean, age: number) {
+    const shown = active && age >= 0 && age < BUBBLE_SHOWN;
     if (shown && !status.bubble) {
       status.bubble = CreateSphere("bubble", { diameter: BUBBLE_DIAMETER, segments: 24 }, this.scene);
       status.bubble.material = this.bubbleMaterial;
@@ -263,8 +265,8 @@ export class StatusFx {
     }
     if (!status.bubble) return;
     // Apparition rapide, respiration légère, fondu final.
-    const appear = Math.min(1, status.bubbleAge / 0.2);
-    const fade = Math.min(1, (BUBBLE_SHOWN - status.bubbleAge) / BUBBLE_FADE);
+    const appear = Math.min(1, age / 0.2);
+    const fade = Math.min(1, (BUBBLE_SHOWN - age) / BUBBLE_FADE);
     status.bubble.scaling.setAll((0.85 + 0.15 * appear) * (1 + Math.sin(this.time * 3) * 0.025));
     const visibility = Math.min(appear, fade);
     status.bubble.visibility = visibility;

@@ -175,6 +175,26 @@ describe("Arcaniste", () => {
     assert.ok(arcaniste.has("bubble"));
   });
 
+  it("la Bulle n'est signalée qu'à sa première application, puis après une résurrection", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 0, 3, 0);
+    const lame = world.spawn("l", "lame", 1, 0, -2, 0);
+    world.run(DT);
+    assert.equal(world.eventsOf("bubble").length, 1);
+    // Absorbée puis reformée : pas de nouveau signal.
+    world.cast(lame, "backstab", arcaniste);
+    world.run(10.1);
+    assert.ok(arcaniste.has("bubble"));
+    assert.equal(world.eventsOf("bubble").length, 1);
+    // Morte puis ressuscitée : la bulle est de nouveau appliquée et signalée.
+    arcaniste.state.hp = 0;
+    (world.combat as unknown as { handleDeath(p: PlayerRuntime): void }).handleDeath(arcaniste);
+    world.cast(pretre, "resurrect", arcaniste);
+    world.run(4.2);
+    assert.ok(arcaniste.alive && arcaniste.has("bubble"));
+    assert.equal(world.eventsOf("bubble").length, 2);
+  });
+
   it("Concentration protège l'incantation suivante du Silence", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);

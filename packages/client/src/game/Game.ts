@@ -279,6 +279,8 @@ export class Game {
         this.players.get(event.sourceId)?.playAttack();
       }
       this.playReaction(event);
+      // Première application de la bulle d'un joueur : elle se montre un instant.
+      if (event.kind === "bubble") this.spellEffects.statuses.bubbleWasApplied(event.targetId);
       // La bulle de l'Arcaniste absorbe un coup : elle éclate.
       if (event.kind === "absorbed") {
         const target = this.players.get(event.targetId);

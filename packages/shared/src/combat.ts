@@ -110,7 +110,8 @@ export type CombatEventKind =
   | "resurrect"
   | "buff" // detail = type de buff
   | "guard"
-  | "unguard";
+  | "unguard"
+  | "bubble"; // bulle de l'Arcaniste appliquée pour la première fois depuis son apparition ou sa résurrection
 
 export interface CombatEvent {
   kind: CombatEventKind;
