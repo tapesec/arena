@@ -25,6 +25,9 @@ const STAR_SPEED = 4;
 const CRYSTALS = 7;
 const MELTED = 0.25;
 const BUBBLE_DIAMETER = 2.4;
+// La bulle (un buff, comme le bladeturn de DAoC) ne se montre que lorsqu'elle se forme : 2 s, dont un fondu final.
+const BUBBLE_SHOWN = 2;
+const BUBBLE_FADE = 0.5;
 
 // Affichage d'un personnage contrôlé ou protégé ; chaque élément n'est créé qu'au premier besoin.
 interface PlayerStatus {
@@ -40,6 +43,9 @@ interface PlayerStatus {
   // Durée totale du root en cours, relevée à son apparition (le serveur n'envoie que le temps restant).
   rootDuration: number;
   bubble: Mesh | null;
+  // La bulle était-elle active à l'image précédente, et depuis quand se montre-t-elle.
+  hadBubble: boolean;
+  bubbleAge: number;
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
   body: Vector3;
@@ -106,7 +112,7 @@ export class StatusFx {
       this.updateMez(status, mez);
       this.updateStars(status, stun, player);
       this.updateRoot(status, root, player);
-      this.updateBubble(status, bubble, player);
+      this.updateBubble(status, bubble, dt);
     }
     // Joueurs disparus (déconnectés, sortis du champ de vision).
     for (const [player, status] of this.statuses) {
@@ -138,6 +144,8 @@ export class StatusFx {
       mist: null,
       rootDuration: 0,
       bubble: null,
+      hadBubble: false,
+      bubbleAge: 0,
       auras: new Map(),
       body: new Vector3(),
       lastX: player.root.position.x,
@@ -227,9 +235,14 @@ export class StatusFx {
   }
 
   // Bulle irisée : un volume à peine teinté et un anneau lumineux sur son contour, toujours tourné vers la caméra.
-  // Ses reflets changent doucement de couleur, elle respire légèrement.
-  private updateBubble(status: PlayerStatus, active: boolean, player: PlayerVisual) {
-    if (active && !status.bubble) {
+  // Elle apparaît quand le buff se forme, reste 2 s puis s'efface ; le buff, lui, dure jusqu'au coup qu'il absorbe.
+  private updateBubble(status: PlayerStatus, active: boolean, dt: number) {
+    const formed = active && !status.hadBubble;
+    status.hadBubble = active;
+    if (formed) status.bubbleAge = 0;
+    else status.bubbleAge += dt;
+    const shown = active && status.bubbleAge < BUBBLE_SHOWN;
+    if (shown && !status.bubble) {
       status.bubble = CreateSphere("bubble", { diameter: BUBBLE_DIAMETER, segments: 24 }, this.scene);
       status.bubble.material = this.bubbleMaterial;
       status.bubble.isPickable = false;
@@ -244,12 +257,18 @@ export class StatusFx {
       rim.billboardMode = Mesh.BILLBOARDMODE_ALL;
       rim.parent = status.bubble;
     }
-    if (!active && status.bubble) {
+    if (!shown && status.bubble) {
       status.bubble.dispose();
       status.bubble = null;
     }
     if (!status.bubble) return;
-    status.bubble.scaling.setAll(1 + Math.sin(this.time * 3) * 0.025);
+    // Apparition rapide, respiration légère, fondu final.
+    const appear = Math.min(1, status.bubbleAge / 0.2);
+    const fade = Math.min(1, (BUBBLE_SHOWN - status.bubbleAge) / BUBBLE_FADE);
+    status.bubble.scaling.setAll((0.85 + 0.15 * appear) * (1 + Math.sin(this.time * 3) * 0.025));
+    const visibility = Math.min(appear, fade);
+    status.bubble.visibility = visibility;
+    for (const child of status.bubble.getChildMeshes()) child.visibility = visibility;
     // Teinte qui tourne lentement entre le bleu, le violet et le rose (matériaux partagés : toutes les bulles ensemble).
     const hue = 265 + Math.sin(this.time * 0.8) * 45;
     Color3.HSVtoRGBToRef(hue, 0.55, 1, this.rimMaterial.emissiveColor);
