@@ -121,7 +121,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Taille de l'arène** : à caler en test, assez grande pour que la recherche prenne un peu de temps sans devenir ennuyeuse.
 - **Progression** : hors périmètre du prototype.
 - **Valeurs chiffrées** : toutes à valider en prototype.
-- **Contrôles** : passés aux contrôles à la DAoC (voir Déplacement). Reculer va pour l'instant à la même vitesse qu'avancer.
+- **Contrôles** : passés aux contrôles à la DAoC (voir Déplacement). On recule à 70 % de la vitesse normale, comme dans DAoC.
 
 ## Choix faits pendant le prototype (provisoires, à valider en test)
 

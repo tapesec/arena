@@ -19,6 +19,9 @@ export const NO_INPUT: MoveInput = { up: false, down: false, left: false, right:
 // Vitesse de rotation au clavier, en radians par seconde.
 export const TURN_SPEED = 3;
 
+// Comme dans DAoC, on recule moins vite qu'on n'avance (limite le kite à reculons).
+export const BACKWARD_SPEED_FACTOR = 0.7;
+
 // Par défaut, la caméra isométrique regarde l'arène en diagonale :
 // "haut" à l'écran correspond à la direction (+x, +z) du monde, "droite" à (+x, -z).
 export const DEFAULT_CAMERA_YAW = Math.PI / 4;
@@ -31,6 +34,11 @@ export function isTurning(input: MoveInput): boolean {
 // Touches qui déplacent le corps (avancer, reculer, pas de côté). Pivoter n'en fait pas partie.
 export function movesBody(input: MoveInput): boolean {
   return input.up !== input.down || (!!input.steer && input.left !== input.right);
+}
+
+// Multiplicateur de vitesse propre aux touches : réduit quand on recule (même en diagonale).
+export function inputSpeedFactor(input: MoveInput): number {
+  return input.down && !input.up ? BACKWARD_SPEED_FACTOR : 1;
 }
 
 // Nouvelle orientation après rotation au clavier (vers la droite = angle croissant).

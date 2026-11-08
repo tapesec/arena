@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import {
+  BACKWARD_SPEED_FACTOR,
   CLASSES,
+  MOVE_SPEED,
   NO_INPUT,
   STICK_DISTANCE,
   maxResource,
@@ -352,6 +354,13 @@ describe("Contrôles", () => {
     world.run(0.5);
     assert.equal(lame.state.z, z);
     assert.ok(lame.state.facing > 1);
+  });
+
+  it("on recule moins vite qu'on n'avance", () => {
+    const lame = world.spawn("l", "lame", 1, 0, 0, Math.PI);
+    world.combat.setInput(lame.id, keys({ down: true }));
+    world.run(1);
+    assert.ok(Math.abs(lame.state.z - MOVE_SPEED * BACKWARD_SPEED_FACTOR) < 0.01, `z = ${lame.state.z}`);
   });
 
   it("clic droit maintenu : Q et D font un pas de côté sans tourner", () => {

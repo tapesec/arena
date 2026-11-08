@@ -24,6 +24,7 @@ import {
   distance,
   facingTowards,
   forwardOf,
+  inputSpeedFactor,
   isTurning,
   moveDirection,
   turnFacing,
@@ -215,7 +216,8 @@ export class CombatSystem {
     }
 
     const snare = player.getEffect("snare");
-    const speed = (player.has("speed") ? SONG_SPEED_MULTIPLIER : 1) * (snare ? 1 - snare.value : 1);
+    const speed =
+      (player.has("speed") ? SONG_SPEED_MULTIPLIER : 1) * (snare ? 1 - snare.value : 1) * inputSpeedFactor(input);
     let next = stepMovement(state, direction, dt, speed);
     if (this.confine) next = this.confine(player, next);
     if (next.x === state.x && next.z === state.z) return;
