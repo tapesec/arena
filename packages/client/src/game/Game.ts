@@ -47,6 +47,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
+import { audio } from "../audio/AudioManager";
 import { Nature } from "./nature";
 import { Village } from "./village";
 import { FogOfWar, type FogWatcher } from "./FogOfWar";
@@ -158,7 +159,7 @@ export class Game {
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
     // En développement : scène et joueurs accessibles depuis la console du navigateur.
     if (import.meta.env.DEV) {
-      Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village });
+      Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village, audio });
     }
 
     this.engine.runRenderLoop(() => this.renderFrame());
@@ -272,7 +273,7 @@ export class Game {
     this.room.onMessage("combat", (event: CombatEvent) => {
       for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
       this.showCombatText(event);
-      this.gameAudio.onCombat(event, this.players.get(event.targetId));
+      this.gameAudio.onCombat(event, this.players.get(event.sourceId), this.players.get(event.targetId));
       // Auto-attaque : le personnage qui frappe joue son coup.
       if (event.abilityId === AUTO_ATTACK_ID && SWING_EVENTS.has(event.kind)) {
         this.players.get(event.sourceId)?.playAttack();

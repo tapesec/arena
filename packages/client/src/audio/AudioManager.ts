@@ -1,8 +1,14 @@
 import { ZZFX } from "zzfx";
+import samples from "./samples.json";
 import { SOUNDS, type SoundId } from "./sounds";
 
+// Groupe de sons enregistrés (voir samples.json).
+export type SampleId = keyof typeof samples.groups;
+// Un son du jeu : généré (sounds.ts) ou enregistré (samples.json).
+export type SoundName = SoundId | SampleId;
+
 // Au-delà de ce nombre de sons en cours, les sons ordinaires sont ignorés (les alertes passent toujours).
-const MAX_CONCURRENT_SOUNDS = 12;
+const MAX_CONCURRENT_SOUNDS = 20;
 // Un même son n'est pas rejoué plus souvent que ça (en secondes) : évite l'effet "mitraillette" en 8v8.
 const MIN_REPEAT_INTERVAL = 0.06;
 
@@ -76,7 +82,12 @@ export class AudioManager {
     this.applyVolume();
   }
 
-  play(id: SoundId, { volume = 1, pan = 0, priority = false }: PlayOptions = {}) {
+  play(id: SoundName, options: PlayOptions = {}) {
+    if (id in SOUNDS) this.playSynth(id as SoundId, options);
+    else void this.playSample(id, options);
+  }
+
+  private playSynth(id: SoundId, { volume = 1, pan = 0, priority = false }: PlayOptions = {}) {
     if (this.muted || volume <= 0.01) return;
     const now = this.context.currentTime;
     if (!priority) {

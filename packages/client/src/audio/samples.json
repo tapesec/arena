@@ -1,68 +1,656 @@
 {
   "_comment": "Sons enregistrés : chaque groupe réunit des variantes (une est tirée au hasard à chaque lecture). files : fichiers de assets-source/sounds (* = n'importe quels caractères). Converties par scripts/build-sounds.mjs en public/sounds/<id>_<n>.m4a.",
   "groups": {
-    "swingSword": { "label": "Épée qui fend l'air", "category": "Armes", "files": ["melee sounds/sword sound.wav"] },
-    "swingMelee": { "label": "Coup porté (swoosh)", "category": "Armes", "files": ["melee sounds/melee sound.wav"] },
-    "swingHeavy": { "label": "Coup lourd (swoosh)", "category": "Armes", "files": ["melee sounds/animal melee sound.wav"] },
-
-    "hitMetalLight": { "label": "Métal léger (dague)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactMetal_light_*.ogg"] },
-    "hitMetal": { "label": "Métal (épée sur armure)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactMetal_medium_*.ogg"] },
-    "hitMetalHeavy": { "label": "Métal lourd (critique)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactMetal_heavy_*.ogg"] },
-    "hitPlate": { "label": "Plaque d'armure", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPlate_medium_*.ogg"] },
-    "hitPlateHeavy": { "label": "Plaque d'armure, lourd", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPlate_heavy_*.ogg"] },
-    "hitPunch": { "label": "Coup de poing", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPunch_medium_*.ogg"] },
-    "hitPunchHeavy": { "label": "Coup de poing, lourd", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactPunch_heavy_*.ogg"] },
-    "hitWood": { "label": "Bois (bouclier)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactWood_medium_*.ogg"] },
-    "hitWoodHeavy": { "label": "Bois lourd (coup de bouclier)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactWood_heavy_*.ogg"] },
-    "hitSoft": { "label": "Choc sourd", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactSoft_medium_*.ogg"] },
-    "hitSoftHeavy": { "label": "Choc sourd, lourd (stun)", "category": "Impacts", "files": ["kenney_impact-sounds/Audio/impactSoft_heavy_*.ogg"] },
-
-    "malePain": { "label": "Douleur", "category": "Voix homme", "files": ["male-pain-sounds/*.wav"] },
-    "maleDeath": { "label": "Mort", "category": "Voix homme", "files": ["male-death-sounds/*.wav"] },
-
-    "female1Pain": { "label": "Douleur", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/damaged*.wav"] },
-    "female1Attack": { "label": "Cri d'attaque", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/attack*.wav"] },
-    "female1Healed": { "label": "Soignée", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/healed*.wav"] },
-    "female1Fire": { "label": "Sort de feu", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/fire.wav"] },
-    "female1Ice": { "label": "Sort de glace", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/freeze.wav"] },
-    "female1Heal": { "label": "Sort de soin", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/heal.wav"] },
-    "female1Curse": { "label": "Malédiction", "category": "Voix femme 1", "files": ["RPG Voice Starter Pack female/Type 1/curse.wav"] },
-
-    "female2Pain": { "label": "Douleur", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/damaged*.wav"] },
-    "female2Attack": { "label": "Cri d'attaque", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/attack*.wav"] },
-    "female2Healed": { "label": "Soignée", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/healed*.wav"] },
-    "female2Fire": { "label": "Sort de feu", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/fire.wav"] },
-    "female2Ice": { "label": "Sort de glace", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/freeze.wav"] },
-    "female2Heal": { "label": "Sort de soin", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/heal.wav"] },
-    "female2Curse": { "label": "Malédiction", "category": "Voix femme 2", "files": ["RPG Voice Starter Pack female/Type 2/curse.wav"] },
-
-    "female3Pain": { "label": "Douleur", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/damaged*.wav"] },
-    "female3Attack": { "label": "Cri d'attaque", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/attack*.wav"] },
-    "female3Healed": { "label": "Soignée", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/healed*.wav"] },
-    "female3Fire": { "label": "Sort de feu", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/fire.wav"] },
-    "female3Ice": { "label": "Sort de glace", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/freeze.wav"] },
-    "female3Heal": { "label": "Sort de soin", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/heal.wav"] },
-    "female3Curse": { "label": "Malédiction", "category": "Voix femme 3", "files": ["RPG Voice Starter Pack female/Type 3/curse.wav"] },
-
-    "stepGrass": { "label": "Pas sur l'herbe", "category": "Pas", "files": ["kenney_impact-sounds/Audio/footstep_grass_*.ogg"] },
-    "stepStone": { "label": "Pas sur la pierre (place)", "category": "Pas", "files": ["kenney_impact-sounds/Audio/footstep_concrete_*.ogg"] },
-    "stepDirt": { "label": "Pas sur la terre (chemins)", "category": "Pas", "files": ["Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_*.wav"] },
-    "stepWood": { "label": "Pas sur le bois", "category": "Pas", "files": ["kenney_impact-sounds/Audio/footstep_wood_*.ogg"] },
-
-    "spellFire": { "label": "Feu", "category": "Sorts", "files": ["spells/Fire.aif"] },
-    "spellGeneric": { "label": "Sort (Spell1)", "category": "Sorts", "files": ["spells/Spell1.aif"] },
-    "spellIceSnap": { "label": "Glace : coldsnap", "category": "Sorts", "files": ["icespells/coldsnap.wav"] },
-    "spellIce": { "label": "Glace : ice", "category": "Sorts", "files": ["icespells/ice.wav"] },
-    "spellHeal": { "label": "Soin (3 variantes)", "category": "Sorts", "files": ["3 heal spells/*.aif"] },
-    "spellFantasy0": { "label": "Sort Fantasy 0", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_00.wav"] },
-    "spellFantasy1": { "label": "Sort Fantasy 1", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_01.wav"] },
-    "spellFantasy2": { "label": "Sort Fantasy 2", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_02.wav"] },
-    "spellFantasy3": { "label": "Sort Fantasy 3", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_03.wav"] },
-    "spellFantasy4": { "label": "Sort Fantasy 4", "category": "Sorts", "files": ["Fantasy Sound Library/Wav/Spell_04.wav"] },
-
-    "jingleWin": { "label": "Victoire", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Jingle_Win_00.wav"] },
-    "jingleLose": { "label": "Défaite", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Jingle_Lose_00.wav"] },
-    "jingleAchievement": { "label": "Succès", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Jingle_Achievement_00.wav"] },
-    "menuSelect": { "label": "Sélection (menu)", "category": "Partie", "files": ["Fantasy Sound Library/Wav/Menu_Select_00.wav"] }
+    "swingSword": {
+      "label": "Épée qui fend l'air",
+      "category": "Armes",
+      "files": [
+        "melee sounds/sword sound.wav"
+      ]
+    },
+    "swingMelee": {
+      "label": "Coup porté (swoosh)",
+      "category": "Armes",
+      "files": [
+        "melee sounds/melee sound.wav"
+      ]
+    },
+    "swingHeavy": {
+      "label": "Coup lourd (swoosh)",
+      "category": "Armes",
+      "files": [
+        "melee sounds/animal melee sound.wav"
+      ]
+    },
+    "hit": {
+      "label": "Coup qui porte (37 variantes)",
+      "category": "Armes",
+      "files": [
+        "hits/hit*.flac"
+      ]
+    },
+    "hitMetalLight": {
+      "label": "Métal léger (dague)",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactMetal_light_*.ogg"
+      ]
+    },
+    "hitMetal": {
+      "label": "Métal (épée sur armure)",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactMetal_medium_*.ogg"
+      ]
+    },
+    "hitMetalHeavy": {
+      "label": "Métal lourd (critique)",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactMetal_heavy_*.ogg"
+      ]
+    },
+    "hitPlate": {
+      "label": "Plaque d'armure",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactPlate_medium_*.ogg"
+      ]
+    },
+    "hitPlateHeavy": {
+      "label": "Plaque d'armure, lourd",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactPlate_heavy_*.ogg"
+      ]
+    },
+    "hitPunch": {
+      "label": "Coup de poing",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactPunch_medium_*.ogg"
+      ]
+    },
+    "hitPunchHeavy": {
+      "label": "Coup de poing, lourd",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactPunch_heavy_*.ogg"
+      ]
+    },
+    "hitWood": {
+      "label": "Bois (bouclier)",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactWood_medium_*.ogg"
+      ]
+    },
+    "hitWoodHeavy": {
+      "label": "Bois lourd (coup de bouclier)",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactWood_heavy_*.ogg"
+      ]
+    },
+    "hitSoft": {
+      "label": "Choc sourd",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactSoft_medium_*.ogg"
+      ]
+    },
+    "hitSoftHeavy": {
+      "label": "Choc sourd, lourd (stun)",
+      "category": "Impacts",
+      "files": [
+        "kenney_impact-sounds/Audio/impactSoft_heavy_*.ogg"
+      ]
+    },
+    "malePain": {
+      "label": "Douleur",
+      "category": "Voix homme",
+      "files": [
+        "male-pain-sounds/*.wav"
+      ]
+    },
+    "maleDeath": {
+      "label": "Mort",
+      "category": "Voix homme",
+      "files": [
+        "male-death-sounds/*.wav"
+      ]
+    },
+    "female1Pain": {
+      "label": "Douleur",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/damaged*.wav"
+      ]
+    },
+    "female1Attack": {
+      "label": "Cri d'attaque",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/attack*.wav"
+      ]
+    },
+    "female1Healed": {
+      "label": "Soignée",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/healed*.wav"
+      ]
+    },
+    "female1Fire": {
+      "label": "Sort de feu",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/fire.wav"
+      ]
+    },
+    "female1Ice": {
+      "label": "Sort de glace",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/freeze.wav"
+      ]
+    },
+    "female1Heal": {
+      "label": "Sort de soin",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/heal.wav"
+      ]
+    },
+    "female1Curse": {
+      "label": "Malédiction",
+      "category": "Voix femme 1",
+      "files": [
+        "RPG Voice Starter Pack female/Type 1/curse.wav"
+      ]
+    },
+    "female2Pain": {
+      "label": "Douleur",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/damaged*.wav"
+      ]
+    },
+    "female2Attack": {
+      "label": "Cri d'attaque",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/attack*.wav"
+      ]
+    },
+    "female2Healed": {
+      "label": "Soignée",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/healed*.wav"
+      ]
+    },
+    "female2Fire": {
+      "label": "Sort de feu",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/fire.wav"
+      ]
+    },
+    "female2Ice": {
+      "label": "Sort de glace",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/freeze.wav"
+      ]
+    },
+    "female2Heal": {
+      "label": "Sort de soin",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/heal.wav"
+      ]
+    },
+    "female2Curse": {
+      "label": "Malédiction",
+      "category": "Voix femme 2",
+      "files": [
+        "RPG Voice Starter Pack female/Type 2/curse.wav"
+      ]
+    },
+    "female3Pain": {
+      "label": "Douleur",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/damaged*.wav"
+      ]
+    },
+    "female3Attack": {
+      "label": "Cri d'attaque",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/attack*.wav"
+      ]
+    },
+    "female3Healed": {
+      "label": "Soignée",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/healed*.wav"
+      ]
+    },
+    "female3Fire": {
+      "label": "Sort de feu",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/fire.wav"
+      ]
+    },
+    "female3Ice": {
+      "label": "Sort de glace",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/freeze.wav"
+      ]
+    },
+    "female3Heal": {
+      "label": "Sort de soin",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/heal.wav"
+      ]
+    },
+    "female3Curse": {
+      "label": "Malédiction",
+      "category": "Voix femme 3",
+      "files": [
+        "RPG Voice Starter Pack female/Type 3/curse.wav"
+      ]
+    },
+    "stepGrass": {
+      "label": "Pas sur l'herbe",
+      "category": "Pas",
+      "files": [
+        "kenney_impact-sounds/Audio/footstep_grass_*.ogg"
+      ]
+    },
+    "stepStone": {
+      "label": "Pas sur la pierre (place)",
+      "category": "Pas",
+      "files": [
+        "kenney_impact-sounds/Audio/footstep_concrete_*.ogg"
+      ]
+    },
+    "stepDirt": {
+      "label": "Pas sur la terre (chemins)",
+      "category": "Pas",
+      "files": [
+        "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_*.wav"
+      ]
+    },
+    "stepWood": {
+      "label": "Pas sur le bois",
+      "category": "Pas",
+      "files": [
+        "kenney_impact-sounds/Audio/footstep_wood_*.ogg"
+      ]
+    },
+    "spellFire": {
+      "label": "Feu",
+      "category": "Sorts",
+      "files": [
+        "spells/Fire.aif"
+      ]
+    },
+    "spellGeneric": {
+      "label": "Sort (Spell1)",
+      "category": "Sorts",
+      "files": [
+        "spells/Spell1.aif"
+      ]
+    },
+    "spellIceSnap": {
+      "label": "Glace : coldsnap",
+      "category": "Sorts",
+      "files": [
+        "icespells/coldsnap.wav"
+      ]
+    },
+    "spellIce": {
+      "label": "Glace : ice",
+      "category": "Sorts",
+      "files": [
+        "icespells/ice.wav"
+      ]
+    },
+    "spellHeal": {
+      "label": "Soin (3 variantes)",
+      "category": "Sorts",
+      "files": [
+        "3 heal spells/*.aif"
+      ]
+    },
+    "spellFantasy0": {
+      "label": "Sort Fantasy 0",
+      "category": "Sorts",
+      "files": [
+        "Fantasy Sound Library/Wav/Spell_00.wav"
+      ]
+    },
+    "spellFantasy1": {
+      "label": "Sort Fantasy 1",
+      "category": "Sorts",
+      "files": [
+        "Fantasy Sound Library/Wav/Spell_01.wav"
+      ]
+    },
+    "spellFantasy2": {
+      "label": "Sort Fantasy 2",
+      "category": "Sorts",
+      "files": [
+        "Fantasy Sound Library/Wav/Spell_02.wav"
+      ]
+    },
+    "spellFantasy3": {
+      "label": "Sort Fantasy 3",
+      "category": "Sorts",
+      "files": [
+        "Fantasy Sound Library/Wav/Spell_03.wav"
+      ]
+    },
+    "spellFantasy4": {
+      "label": "Sort Fantasy 4",
+      "category": "Sorts",
+      "files": [
+        "Fantasy Sound Library/Wav/Spell_04.wav"
+      ]
+    },
+    "jingleWin": {
+      "label": "Victoire",
+      "category": "Partie",
+      "files": [
+        "Fantasy Sound Library/Wav/Jingle_Win_00.wav"
+      ]
+    },
+    "jingleLose": {
+      "label": "Défaite",
+      "category": "Partie",
+      "files": [
+        "Fantasy Sound Library/Wav/Jingle_Lose_00.wav"
+      ]
+    },
+    "jingleAchievement": {
+      "label": "Succès",
+      "category": "Partie",
+      "files": [
+        "Fantasy Sound Library/Wav/Jingle_Achievement_00.wav"
+      ]
+    },
+    "menuSelect": {
+      "label": "Sélection (menu)",
+      "category": "Partie",
+      "files": [
+        "Fantasy Sound Library/Wav/Menu_Select_00.wav"
+      ]
+    },
+    "hit01": {
+      "label": "Coup 01",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit01.mp3.flac"
+      ]
+    },
+    "hit02": {
+      "label": "Coup 02",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit02.mp3.flac"
+      ]
+    },
+    "hit03": {
+      "label": "Coup 03",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit03.mp3.flac"
+      ]
+    },
+    "hit04": {
+      "label": "Coup 04",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit04.mp3.flac"
+      ]
+    },
+    "hit05": {
+      "label": "Coup 05",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit05.mp3.flac"
+      ]
+    },
+    "hit06": {
+      "label": "Coup 06",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit06.mp3.flac"
+      ]
+    },
+    "hit07": {
+      "label": "Coup 07",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit07.mp3.flac"
+      ]
+    },
+    "hit08": {
+      "label": "Coup 08",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit08.mp3.flac"
+      ]
+    },
+    "hit09": {
+      "label": "Coup 09",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit09.mp3.flac"
+      ]
+    },
+    "hit10": {
+      "label": "Coup 10",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit10.mp3.flac"
+      ]
+    },
+    "hit11": {
+      "label": "Coup 11",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit11.mp3.flac"
+      ]
+    },
+    "hit12": {
+      "label": "Coup 12",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit12.mp3.flac"
+      ]
+    },
+    "hit13": {
+      "label": "Coup 13",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit13.mp3.flac"
+      ]
+    },
+    "hit14": {
+      "label": "Coup 14",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit14.mp3.flac"
+      ]
+    },
+    "hit15": {
+      "label": "Coup 15",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit15.mp3.flac"
+      ]
+    },
+    "hit16": {
+      "label": "Coup 16",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit16.mp3.flac"
+      ]
+    },
+    "hit17": {
+      "label": "Coup 17",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit17.mp3.flac"
+      ]
+    },
+    "hit18": {
+      "label": "Coup 18",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit18.mp3.flac"
+      ]
+    },
+    "hit19": {
+      "label": "Coup 19",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit19.mp3.flac"
+      ]
+    },
+    "hit20": {
+      "label": "Coup 20",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit20.mp3.flac"
+      ]
+    },
+    "hit21": {
+      "label": "Coup 21",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit21.mp3.flac"
+      ]
+    },
+    "hit22": {
+      "label": "Coup 22",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit22.mp3.flac"
+      ]
+    },
+    "hit23": {
+      "label": "Coup 23",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit23.mp3.flac"
+      ]
+    },
+    "hit24": {
+      "label": "Coup 24",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit24.mp3.flac"
+      ]
+    },
+    "hit25": {
+      "label": "Coup 25",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit25.mp3.flac"
+      ]
+    },
+    "hit26": {
+      "label": "Coup 26",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit26.mp3.flac"
+      ]
+    },
+    "hit27": {
+      "label": "Coup 27",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit27.mp3.flac"
+      ]
+    },
+    "hit28": {
+      "label": "Coup 28",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit28.mp3.flac"
+      ]
+    },
+    "hit29": {
+      "label": "Coup 29",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit29.mp3.flac"
+      ]
+    },
+    "hit30": {
+      "label": "Coup 30",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit30.mp3.flac"
+      ]
+    },
+    "hit31": {
+      "label": "Coup 31",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit31.mp3.flac"
+      ]
+    },
+    "hit32": {
+      "label": "Coup 32",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit32.mp3.flac"
+      ]
+    },
+    "hit33": {
+      "label": "Coup 33",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit33.mp3.flac"
+      ]
+    },
+    "hit34": {
+      "label": "Coup 34",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit34.mp3.flac"
+      ]
+    },
+    "hit35": {
+      "label": "Coup 35",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit35.mp3.flac"
+      ]
+    },
+    "hit36": {
+      "label": "Coup 36",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit36.mp3.flac"
+      ]
+    },
+    "hit37": {
+      "label": "Coup 37",
+      "category": "Coups, un par un",
+      "files": [
+        "hits/hit37.mp3.flac"
+      ]
+    }
   }
 }
