@@ -9,7 +9,36 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { getAbility } from "@arena/shared";
+import * as P from "./particles";
+import { ParticleFactory, type Recipe } from "./particles";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
+
+// Effets à particules par compétence : pendant le vol d'un projectile (trail), à son arrivée ou sur la cible
+// (impact, à hauteur du corps ; ground, aux pieds), et sur la zone d'effet (area, avec son rayon).
+// Une compétence sans entrée garde les formes simples (impulsion, éclair) de ABILITY_FX.
+interface Visual {
+  trail?: Recipe[];
+  impact?: Recipe[];
+  ground?: Recipe[];
+  area?: Recipe[];
+  // Projectile : diamètre du cœur lumineux (0 = particules seules).
+  core?: number;
+}
+const VISUALS: Record<string, Visual> = {
+  firebolt: { trail: [P.fireTrail, P.smokeTrail], impact: [P.fireBurst], core: 0.3 },
+  freeze: { trail: [P.frostTrail], impact: [P.frostBurst], core: 0.22 },
+  mez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], core: 0.2 },
+  silence: { trail: [P.silenceTrail], impact: [P.silencePuff], core: 0 },
+  aoeMez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], area: [P.arcaneMist], core: 0.25 },
+  aoeRoot: { trail: [P.frostTrail], impact: [P.frostBurst], area: [P.frostWave, P.frostField], core: 0.25 },
+  blast: { area: [P.fireWave, P.fireField] },
+  heal: { ground: [P.healColumn] },
+  instantHeal: { impact: [P.healFlash] },
+  groupHeal: { area: [P.healField] },
+};
+// Le disque qui montre la portée exacte d'une zone reste, plus discret quand des particules l'accompagnent.
+const AREA_ALPHA = 0.45;
+const AREA_ALPHA_WITH_PARTICLES = 0.22;
 
 // Hauteur (au-dessus des pieds) à laquelle voyagent les projectiles et apparaissent les impulsions.
 const BODY_CENTER = 1.1;
@@ -32,28 +61,49 @@ interface TransientEffect {
 export class SpellEffects {
   private effects: TransientEffect[] = [];
   private guardLinks = new Map<string, LinesMesh>();
+  private particles: ParticleFactory;
 
-  constructor(private scene: Scene) {}
+  constructor(private scene: Scene) {
+    this.particles = new ParticleFactory(scene);
+    this.particles.prewarm(P.RECIPES);
+  }
 
   // caster et target : les ancres des personnages (absentes si hors de vue).
   play(abilityId: string, caster: TransformNode | undefined, target: TransformNode | undefined) {
     const fx = ABILITY_FX[abilityId];
     if (!fx) return;
+    const visual = VISUALS[abilityId];
     const areaRadius = fx.area ? (getAbility(abilityId)?.radius ?? 0) : 0;
 
     if (fx.shape === "projectile" && caster && target) {
-      this.launchProjectile(fx, caster, target, () => {
-        if (areaRadius) this.spawnArea(fx.color, target.getAbsolutePosition(), areaRadius);
+      this.launchProjectile(fx, visual, caster, target, () => {
+        if (visual) this.burst(visual, target);
         else this.spawnPulse(fx.color, target, 0.6);
+        if (areaRadius) this.zone(fx, visual, target.getAbsolutePosition(), areaRadius);
       });
       return;
     }
-    // Une zone centrée sur le lanceur (Soin de groupe) ou sur la cible.
+    // Une zone centrée sur le lanceur (Déflagration, Soin de groupe) ou sur la cible.
     const anchor = target ?? caster;
     if (!anchor) return;
-    if (areaRadius) this.spawnArea(fx.color, (caster ?? anchor).getAbsolutePosition(), areaRadius);
-    if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
+    if (areaRadius) this.zone(fx, visual, (caster ?? anchor).getAbsolutePosition(), areaRadius);
+    if (visual) this.burst(visual, anchor);
+    else if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
     else this.spawnPulse(fx.color, anchor, 1);
+  }
+
+  // Particules d'impact sur un personnage : à hauteur du corps, ou aux pieds.
+  private burst(visual: Visual, anchor: TransformNode) {
+    const feet = anchor.getAbsolutePosition();
+    for (const recipe of visual.impact ?? []) recipe(this.particles, feet.add(new Vector3(0, BODY_CENTER, 0)));
+    for (const recipe of visual.ground ?? []) recipe(this.particles, feet.clone());
+  }
+
+  // Zone d'effet : le disque de portée, et les particules qui la remplissent.
+  private zone(fx: AbilityFx, visual: Visual | undefined, center: Vector3, radius: number) {
+    const recipes = visual?.area ?? [];
+    this.spawnArea(fx.color, center, radius, recipes.length ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA);
+    for (const recipe of recipes) recipe(this.particles, center.clone(), radius);
   }
 
   // Trait entre chaque joueur gardé et son Gardien. links : id du protégé → [ancre du protégé, ancre du Gardien].
@@ -83,6 +133,7 @@ export class SpellEffects {
   }
 
   update(dt: number) {
+    this.particles.update();
     for (const effect of [...this.effects]) {
       effect.age += dt;
       if (effect.age >= effect.duration) {
@@ -98,17 +149,21 @@ export class SpellEffects {
   dispose() {
     for (const effect of this.effects) effect.mesh.dispose(false, true);
     for (const line of this.guardLinks.values()) line.dispose();
+    this.particles.dispose();
     this.effects = [];
     this.guardLinks.clear();
   }
 
-  // Sphère lumineuse qui suit la cible même si elle bouge pendant le vol.
-  private launchProjectile(fx: AbilityFx, caster: TransformNode, target: TransformNode, onArrive: () => void) {
+  // Projectile qui suit la cible même si elle bouge pendant le vol : un cœur lumineux, et sa traînée de particules.
+  private launchProjectile(fx: AbilityFx, visual: Visual | undefined, caster: TransformNode, target: TransformNode, onArrive: () => void) {
     const from = caster.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
-    const mesh = CreateSphere("projectile", { diameter: 0.45, segments: 8 }, this.scene);
+    const mesh = CreateSphere("projectile", { diameter: visual?.core ?? 0.45, segments: 8 }, this.scene);
     mesh.material = this.glowMaterial(fx.color, 1);
     mesh.isPickable = false;
+    mesh.isVisible = (visual?.core ?? 0.45) > 0;
     mesh.position.copyFrom(from);
+    // Les traînées suivent la position du projectile (même vecteur) ; arrêtées à l'arrivée, elles s'éteignent seules.
+    const trails = (visual?.trail ?? []).map((recipe) => recipe(this.particles, mesh.position));
     this.effects.push({
       mesh,
       age: 0,
@@ -119,6 +174,12 @@ export class SpellEffects {
         Vector3.LerpToRef(from, to, progress, mesh.position);
       },
       onEnd: () => {
+        for (const trail of trails) {
+          if (!trail) continue;
+          // L'émetteur ne doit plus suivre le projectile, qui va disparaître.
+          trail.emitter = mesh.position.clone();
+          trail.stop();
+        }
         if (!target.isDisposed()) onArrive();
       },
     });
@@ -161,9 +222,9 @@ export class SpellEffects {
   }
 
   // Disque au sol qui s'étend jusqu'au rayon de la zone d'effet, puis s'estompe.
-  private spawnArea(color: Color3, center: Vector3, radius: number) {
+  private spawnArea(color: Color3, center: Vector3, radius: number, alpha = AREA_ALPHA) {
     const mesh = CreateDisc("area", { radius: 1, tessellation: 48 }, this.scene);
-    const material = this.glowMaterial(color, 0.45);
+    const material = this.glowMaterial(color, alpha);
     mesh.material = material;
     mesh.isPickable = false;
     mesh.rotation.x = Math.PI / 2;
@@ -174,7 +235,7 @@ export class SpellEffects {
       duration: AREA_DURATION,
       animate: (progress) => {
         mesh.scaling.setAll(radius * Math.min(1, 0.3 + progress * 2));
-        material.alpha = 0.45 * (1 - progress);
+        material.alpha = alpha * (1 - progress);
       },
     });
   }

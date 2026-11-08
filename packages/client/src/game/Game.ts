@@ -159,7 +159,7 @@ export class Game {
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
     // En développement : scène et joueurs accessibles depuis la console du navigateur.
     if (import.meta.env.DEV) {
-      Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village, audio });
+      Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village, audio, spellEffects: this.spellEffects });
     }
 
     this.engine.runRenderLoop(() => this.renderFrame());
