@@ -3,6 +3,10 @@ import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
+import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
@@ -26,6 +30,12 @@ interface WeaponMount {
   bone: string;
   position: [number, number, number];
   rotation: [number, number, number];
+  // Échelle du modèle : certains packs ne sont pas à l'échelle réelle (FBX en centimètres, armes de pirate géantes).
+  scale?: number;
+  // Couleurs par nom de matériau, pour les modèles FBX dont Babylon ne lit pas les couleurs.
+  // Les matériaux listés dans glow brillent légèrement (gemme, glace).
+  colors?: Record<string, string>;
+  glow?: string[];
 }
 
 // Animations propres à une classe (les déplacements sont communs à tous).
@@ -39,11 +49,17 @@ export interface CharacterAnimationSet {
 
 interface CharacterDef {
   model: string;
+  // Teinte des cheveux et sourcils (leur texture est grise, faite pour être teintée).
+  hairColor?: string;
   weapons: WeaponMount[];
   animations: CharacterAnimationSet;
 }
 
-// Classes qui ont déjà un modèle ; les autres restent en capsule pour l'instant.
+// Animations communes aux lanceurs de sorts : un coup de bâton ou de poing, et le sort qui part.
+const CASTER_ATTACKS = ["Sword_Attack"];
+const CAST_RELEASE = "Spell_Simple_Shoot";
+
+// Une classe sans entrée ici reste affichée en capsule.
 const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
     model: "characters/gardien.glb",
@@ -56,6 +72,69 @@ const CHARACTERS: Record<string, CharacterDef> = {
       attacks: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"],
       abilities: { shieldBash: "Shield_OneShot", guard: "Sword_Block", default: "Yes" },
     },
+  },
+  lame: {
+    model: "characters/lame.glb",
+    hairColor: "#3b2a1e",
+    weapons: [
+      { model: "weapons/dagger.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
+      { model: "weapons/dagger.glb", bone: "hand_l", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
+    ],
+    animations: {
+      idle: "Sword_Idle",
+      attacks: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"],
+      abilities: { backstab: "Sword_Regular_C", flankStrike: "Sword_Regular_B", evasion: "Roll", default: "Yes" },
+    },
+  },
+  arcaniste: {
+    model: "characters/arcaniste.glb",
+    hairColor: "#7a2418",
+    weapons: [
+      {
+        model: "weapons/ice-staff.fbx",
+        bone: "hand_r",
+        position: [0, 0.08, 0.02],
+        // Le modèle est à l'envers dans la main : on le retourne.
+        rotation: [Math.PI, 0, 0],
+        scale: 0.0065,
+        colors: { Ice: "#8fdcff", Staff: "#5b3d22" },
+        glow: ["Ice"],
+      },
+    ],
+    animations: { idle: "Idle_Loop", attacks: CASTER_ATTACKS, abilities: { default: CAST_RELEASE } },
+  },
+  pretre: {
+    model: "characters/pretre.glb",
+    hairColor: "#d8b46a",
+    weapons: [
+      {
+        model: "weapons/staff.fbx",
+        bone: "hand_r",
+        position: [0, 0.08, 0.02],
+        // Le modèle est à l'envers dans la main : on le retourne.
+        rotation: [Math.PI, 0, 0],
+        scale: 0.0065,
+        colors: { Wood: "#8a5a32", Gem: "#ffd966" },
+        glow: ["Gem"],
+      },
+    ],
+    animations: { idle: "Idle_Loop", attacks: CASTER_ATTACKS, abilities: { default: CAST_RELEASE } },
+  },
+  barde: {
+    model: "characters/barde.glb",
+    hairColor: "#5a3a22",
+    weapons: [
+      { model: "weapons/dagger.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
+      // Le luth est porté en bandoulière dans le dos, manche au-dessus de l'épaule (orientation calculée en jeu).
+      {
+        model: "weapons/lute.glb",
+        bone: "spine_03",
+        position: [0, 0.1, -0.18],
+        rotation: [(13 * Math.PI) / 12, (13 * Math.PI) / 12, Math.PI / 12],
+        scale: 0.6,
+      },
+    ],
+    animations: { idle: "Idle_Loop", attacks: ["Sword_Attack"], abilities: { default: CAST_RELEASE } },
   },
 };
 
@@ -148,15 +227,26 @@ export class CharacterAssets {
       attach.parent = bone;
       attach.position.set(...mount.position);
       attach.rotation.set(...mount.rotation);
+      attach.scaling.setAll(mount.scale ?? 1);
       for (const node of weapon.rootNodes) {
-        // Le nœud racine ajouté par le chargeur glTF retourne l'axe z ; le squelette l'a déjà fait.
-        for (const child of node.getChildren()) (child as TransformNode).parent = attach;
-        node.dispose();
+        if (node.name === "__root__" || node.name === "__fbx_root__") {
+          // Le nœud racine ajouté par le chargeur (glTF ou FBX) change de repère ; le squelette l'a déjà fait.
+          for (const child of node.getChildren()) (child as TransformNode).parent = attach;
+          node.dispose();
+        } else (node as TransformNode).parent = attach;
       }
+      if (mount.colors) paintWeapon(attach, mount.colors, mount.glow ?? []);
       weapons.push(attach);
     });
 
     const meshes = root.getChildMeshes(false);
+    if (def.hairColor) {
+      const color = Color3.FromHexString(def.hairColor);
+      for (const mesh of meshes) {
+        const material = mesh.material as PBRMaterial | null;
+        if (material?.name.startsWith("MI_Hair")) material.albedoColor = color;
+      }
+    }
     for (const attach of weapons) meshes.push(...attach.getChildMeshes(false));
 
     return {
@@ -165,11 +255,29 @@ export class CharacterAssets {
       meshes,
       animations,
       weapons,
+      // Matériaux et textures sont partagés par tous les personnages de la classe : on ne les libère pas.
       dispose() {
         for (const group of animations.values()) group.dispose();
-        for (const attach of weapons) attach.dispose(false, true);
-        root.dispose(false, true);
+        for (const attach of weapons) attach.dispose(false, false);
+        root.dispose(false, false);
+        for (const skeleton of entries.skeletons) skeleton.dispose();
       },
     };
+  }
+}
+
+// Colore les matériaux d'une arme d'après leur nom (sous-matériaux compris).
+function paintWeapon(attach: TransformNode, colors: Record<string, string>, glow: string[]) {
+  for (const mesh of attach.getChildMeshes(false)) {
+    const material = mesh.material;
+    const materials = material instanceof MultiMaterial ? material.subMaterials : [material];
+    for (const sub of materials) {
+      const hex = sub && colors[sub.name];
+      if (!hex || !(sub instanceof StandardMaterial)) continue;
+      const color = Color3.FromHexString(hex);
+      sub.diffuseColor = color;
+      sub.specularColor = new Color3(0.15, 0.15, 0.15);
+      if (glow.includes(sub.name)) sub.emissiveColor = color.scale(0.45);
+    }
   }
 }

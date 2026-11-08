@@ -39,6 +39,9 @@ BASE='Characters and Animals/Universal Base Characters\[Standard\]'
 extract "$ALL" "$OUT/base/bodies" "$BASE/Base Characters/Godot - UE/*"
 extract "$ALL" "$OUT/base/hair" "$BASE/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/*"
 extract "$ALL" "$OUT/base" "$BASE/License*"
+# Les corps de base référencent deux textures sous un nom qui n'existe pas dans l'archive.
+cp "$OUT/base/bodies/T_Eye_Normal.png" "$OUT/base/bodies/T_Eye_Normal_png.png"
+cp "$OUT/base/bodies/T_Hair_1_Normal.png" "$OUT/base/bodies/T_Hair_1_Normal_png.png"
 
 # Animations : bibliothèque 1 (gratuite) et 2 (Source), sans root motion (le serveur déplace les personnages).
 extract "$ALL" "$OUT/animations" 'Animation/Universal Animation Library 1\[Standard\]/Unreal-Godot/UAL1_Standard.glb'

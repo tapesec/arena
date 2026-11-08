@@ -153,7 +153,14 @@ Traque et élimine les cibles fragiles, en priorité les casters.
   - Universal Animation Library 1 (gratuite) et 2 (Source).
   - Armes : packs gratuits (épée, bouclier, dagues, luth ; bâtons en FBX, à convertir).
 - **Chaîne de production** : `scripts/import-assets.sh` extrait des archives téléchargées les fichiers utiles vers `assets-source/` (non versionné, ~730 Mo). `node scripts/build-assets.mjs` produit les modèles du jeu dans `packages/client/public/models/` : textures ramenées à 1024 px en WebP, animations triées et sans maillage (~4 Mo au total).
-- **Tenues par classe** (proposition) : Gardien en chevalier, Lame en rôdeur, Arcaniste en mage, Prêtre en noble, Barde en paysan ou chevalier en tissu.
+- **Personnages** : la tenue de chaque classe reçoit la tête du corps de base (découpée à la préparation, avec yeux et sourcils) et des cheveux teintés.
+  | Classe | Tenue | Équipement |
+  |---|---|---|
+  | Gardien | Chevalier (homme), heaume | Épée, bouclier |
+  | Lame | Rôdeur (homme), capuche | Deux dagues |
+  | Arcaniste | Mage (femme), cheveux longs roux | Bâton de glace |
+  | Prêtre | Noble (femme), chignon blond | Bâton à gemme dorée |
+  | Barde | Paysan (homme), barbe | Dague, luth en bandoulière |
 - **Animations** : au repos, course avant (vitesse de lecture calée sur la vitesse réelle), recul (course jouée à l'envers), pas de côté (marche latérale accélérée, les pieds glissent un peu), coups d'auto-attaque à tour de rôle (prioritaires, joués sur tout le corps même en courant), compétences, incantation, mort. Les packs n'ont pas de course latérale ni arrière ; la bibliothèque 1 en version Source en a.
 - **Taille** : personnages agrandis de 20 % (2,2 m) pour la lisibilité, purement visuel. Caméra à 26 m par défaut, de 10 à 55 m à la molette.
-- Fait : le Gardien. Les autres classes restent en capsule pour l'instant.
+- Fait : les 5 classes. Bâtons en FBX, lus directement par Babylon (couleurs appliquées par le jeu).
