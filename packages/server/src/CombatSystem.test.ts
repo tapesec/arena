@@ -329,16 +329,37 @@ describe("Immunités aux contrôles", () => {
 });
 
 describe("Règles communes", () => {
-  it("le root empêche de bouger mais pas d'incanter, et casse aux dégâts", () => {
+  it("le root arrête net, puis la vitesse remonte jusqu'à la normale ; il casse aux dégâts", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const enemy = world.spawn("e", "pretre", 1, 0, 10, Math.PI);
     world.cast(arcaniste, "freeze", enemy);
     world.run(1.6);
     assert.ok(enemy.has("root"));
-    world.combat.setInput(enemy.id, { up: true, down: false, left: false, right: false });
-    world.run(0.5);
-    assert.equal(enemy.state.z, 10);
-    world.combat.setInput(enemy.id, { up: false, down: false, left: false, right: false });
+    const root = enemy.getEffect("root")!;
+    // Avance pendant 0,2 s : au début presque à l'arrêt, puis à mi-durée à environ la moitié de la vitesse.
+    const stride = () => {
+      const start = enemy.state.z;
+      world.combat.setInput(enemy.id, { up: true, down: false, left: false, right: false });
+      world.run(0.2);
+      world.combat.setInput(enemy.id, { up: false, down: false, left: false, right: false });
+      return Math.abs(enemy.state.z - start);
+    };
+    const early = stride();
+    world.run(root.remaining - root.duration / 2);
+    const middle = stride();
+    world.run(root.remaining);
+    assert.ok(!enemy.has("root"));
+    const free = stride();
+    assert.ok(early < free * 0.1, `début ${early} contre ${free}`);
+    assert.ok(Math.abs(middle / free - 0.5) < 0.1, `mi-durée ${middle} contre ${free}`);
+  });
+
+  it("le root casse aux dégâts", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "pretre", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "freeze", enemy);
+    world.run(1.6);
+    assert.ok(enemy.has("root"));
     world.cast(arcaniste, "firebolt", enemy);
     world.run(2.6);
     assert.ok(!enemy.has("root"));

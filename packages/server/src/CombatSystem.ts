@@ -205,7 +205,10 @@ export class CombatSystem {
     else if (input.steer && input.yaw !== undefined) state.facing = input.yaw;
     else state.facing = turnFacing(state.facing, input, dt);
 
-    if (player.has("root")) return;
+    // Root : arrêt net, puis la vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet.
+    const root = player.getEffect("root");
+    const rootFactor = root ? 1 - root.remaining / root.duration : 1;
+    if (rootFactor <= 0) return;
     const direction = moveDirection(input, state.facing);
     // Stick : on avance vers la cible tant qu'on n'est pas assez près (les pas de côté restent possibles).
     if (target && state.lock === "stick" && distance(state, target.state) > STICK_DISTANCE) {
@@ -217,7 +220,10 @@ export class CombatSystem {
 
     const snare = player.getEffect("snare");
     const speed =
-      (player.has("speed") ? SONG_SPEED_MULTIPLIER : 1) * (snare ? 1 - snare.value : 1) * inputSpeedFactor(input);
+      (player.has("speed") ? SONG_SPEED_MULTIPLIER : 1) *
+      (snare ? 1 - snare.value : 1) *
+      rootFactor *
+      inputSpeedFactor(input);
     let next = stepMovement(state, direction, dt, speed);
     if (this.confine) next = this.confine(player, next);
     if (next.x === state.x && next.z === state.z) return;
@@ -620,6 +626,7 @@ export class CombatSystem {
     const existing = player.getEffect(kind);
     if (existing) {
       existing.remaining = duration;
+      existing.duration = duration;
       existing.sourceId = sourceId;
       existing.value = value;
       existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
@@ -631,7 +638,7 @@ export class CombatSystem {
     view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
     view.source = sourceId;
     player.state.effects.push(view);
-    player.effects.push({ kind, remaining: duration, sourceId, value, view });
+    player.effects.push({ kind, remaining: duration, duration, sourceId, value, view });
 
     if (kind === "buffHp") {
       player.state.maxHp += HP_BUFF_AMOUNT;

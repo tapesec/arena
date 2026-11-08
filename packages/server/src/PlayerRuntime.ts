@@ -5,6 +5,8 @@ export interface ActiveEffect {
   kind: EffectKind;
   // Durée restante en secondes (Infinity pour un effet permanent).
   remaining: number;
+  // Durée totale, au moment de l'application ou du dernier rafraîchissement.
+  duration: number;
   // Joueur à l'origine de l'effet (Prêtre pour un buff, Gardien pour une garde…).
   sourceId: string;
   // Valeur propre à l'effet, par exemple le pourcentage de ralentissement.
@@ -57,6 +59,7 @@ export class PlayerRuntime {
     return this.has("mez") || this.has("stun");
   }
 
+  // Mez, stun, ou root (qui ne laisse que lentement reprendre de la vitesse).
   get immobilized(): boolean {
     return this.incapacitated || this.has("root");
   }

@@ -42,7 +42,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Contrôle de foule** :
   - **Mez** : la cible ne peut plus rien faire. Cassé par le moindre dégât.
   - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts.
-  - **Root** : la cible ne peut plus se déplacer mais peut agir. Cassé par les dégâts.
+  - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
   - **Snare** : ralentissement.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
 
@@ -163,7 +163,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
   | Barde | Paysan (homme), barbe | Dague, luth en bandoulière |
 - **Couleurs d'équipe** : chaque joueur voit ses alliés en tenue bleue et ses ennemis en tenue rouge, quelle que soit son équipe (pas d'anneau de couleur aux pieds). Prêtre et Arcaniste utilisent les variantes du pack ; pour le Gardien (même armure argent dans les deux camps), la Lame et le Barde, le tissu est recoloré à la préparation des assets. Le Gardien, presque tout en armure, porte en plus un bouclier peint à la couleur de son équipe.
 - **Au-dessus des têtes** : le pictogramme de la classe, suivi du pseudo en bleu pour un allié, ou du nom de la classe en rouge pour un ennemi.
-- **Animations** : au repos, course avant (vitesse de lecture calée sur la vitesse réelle), recul (course jouée à l'envers), pas de côté (marche latérale accélérée, les pieds glissent un peu), un coup d'auto-attaque par classe (prioritaire, joué sur tout le corps même en courant), compétences, incantation, mort. Les packs n'ont pas de course latérale ni arrière ; la bibliothèque 1 en version Source en a.
+- **Animations** : au repos, course avant (vitesse de lecture calée sur la vitesse réelle), recul (course jouée à l'envers), marche sous 2,5 m/s (reprise après un root, par exemple), pas de côté (marche latérale accélérée, les pieds glissent un peu), un coup d'auto-attaque par classe (prioritaire, joué sur tout le corps même en courant), compétences, incantation, mort. Les packs n'ont pas de course latérale ni arrière ; la bibliothèque 1 en version Source en a.
 - **Réactions aux coups** : léger recul sur un dégât, coup marqué sur un critique ou au-delà de 200 dégâts, projection quand on est stun, parade quand un Gardien bloque. Une réaction au plus toutes les 0,5 s, jamais par-dessus un coup ou une compétence du personnage (sauf le stun) ; elles se jouent aussi en courant. Rien de particulier pour le mez (on le confondrait avec la mort), l'esquive, la bulle et l'interception.
 - **Taille** : personnages agrandis de 20 % (2,2 m) pour la lisibilité, purement visuel. Caméra à 26 m par défaut, de 10 à 55 m à la molette.
 - Fait : les 5 classes. Bâtons en FBX, lus directement par Babylon (couleurs appliquées par le jeu).

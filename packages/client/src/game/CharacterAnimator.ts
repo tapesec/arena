@@ -4,6 +4,10 @@ import type { CharacterAnimationSet } from "./characterAssets";
 // Vitesse (m/s) à laquelle chaque animation de déplacement a été enregistrée : on accélère ou ralentit
 // la lecture pour que les pieds suivent la vitesse réelle du personnage (mesuré sur les versions root motion).
 const JOG_SPEED = 5.36;
+// Estimée d'après l'amplitude du pas et la durée du cycle, comparées à celles de la course.
+const WALK_SPEED = 1.5;
+// En dessous, le personnage marche plutôt que de courir au ralenti (reprise après un root, ralentissement).
+const RUN_THRESHOLD = 2.5;
 const STRAFE_SPEED = 0.65;
 // Au-delà, une marche latérale accélérée devient ridicule : on accepte que les pieds glissent un peu.
 const MAX_STRAFE_RATE = 2.5;
@@ -14,8 +18,7 @@ const BLENDING_SPEED = 0.12;
 
 const LOCOMOTION = {
   forward: "Jog_Fwd_Loop",
-  // Pas de course arrière dans les packs : la course avant jouée à l'envers.
-  backward: "Jog_Fwd_Loop",
+  walk: "Walk_Loop",
   left: "Walk_L_Loop",
   right: "Walk_R_Loop",
 } as const;
@@ -105,9 +108,16 @@ export class CharacterAnimator {
     }
     // Angle du déplacement par rapport au regard : 0 devant, ±π derrière, positif vers la droite.
     const angle = Math.atan2(input.right, input.forward);
-    if (Math.abs(angle) <= Math.PI / 3) this.play(LOCOMOTION.forward, true, speed / JOG_SPEED);
-    else if (Math.abs(angle) >= (2 * Math.PI) / 3) this.play(LOCOMOTION.backward, true, -speed / JOG_SPEED, "backward");
-    else {
+    const forward = Math.abs(angle) <= Math.PI / 3;
+    const backward = Math.abs(angle) >= (2 * Math.PI) / 3;
+    if (forward || backward) {
+      const walking = speed < RUN_THRESHOLD;
+      const name = walking ? LOCOMOTION.walk : LOCOMOTION.forward;
+      const rate = speed / (walking ? WALK_SPEED : JOG_SPEED);
+      // Pas d'animation de recul dans les packs : celle d'avancer, jouée à l'envers.
+      if (forward) this.play(name, true, rate);
+      else this.play(name, true, -rate, `${name}:backward`);
+    } else {
       const rate = Math.min(speed / STRAFE_SPEED, MAX_STRAFE_RATE);
       this.play(angle > 0 ? LOCOMOTION.right : LOCOMOTION.left, true, rate);
     }
