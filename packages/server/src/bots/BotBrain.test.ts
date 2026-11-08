@@ -5,13 +5,16 @@ import { CombatSystem } from "../CombatSystem";
 import { PlayerRuntime } from "../PlayerRuntime";
 import { PlayerState } from "../state";
 import { computeTeamVisibility } from "../visibility";
-import type { BotBrain } from "./BotBrain";
+import { HUMAN_ERRORS, type BotBrain } from "./BotBrain";
 import { createBotBrain } from "./classBots";
 import { pickBotClass } from "./composition";
 import { Pathfinder } from "./Pathfinder";
 
 const DT = 0.05;
 const pathfinder = new Pathfinder();
+
+// Les comportements sont testés sans erreur humaine, pour être reproductibles.
+HUMAN_ERRORS.enabled = false;
 
 // Petite arène de test : système de combat sans réseau, bots et joueurs passifs.
 class Sim {
@@ -136,5 +139,23 @@ describe("Bots : partie complète", () => {
       [...sim.combat.players.values()].filter((p) => p.state.team === team && p.alive).length;
     const elapsed = sim.run(600, () => aliveIn(0) === 0 || aliveIn(1) === 0);
     assert.ok(aliveIn(0) === 0 || aliveIn(1) === 0, `pas de vainqueur après ${elapsed.toFixed(0)} s (${aliveIn(0)} contre ${aliveIn(1)})`);
+  });
+});
+
+describe("Bots : erreur humaine", () => {
+  it("un bot met un court instant à remarquer un ennemi qui apparaît", () => {
+    HUMAN_ERRORS.enabled = true;
+    try {
+      const sim = new Sim();
+      const barde = sim.spawn("b", "barde", 0, 5, -20, 0, true);
+      const e1 = sim.spawn("e1", "arcaniste", 1, 5, 0);
+      sim.spawn("e2", "pretre", 1, 7, 0);
+      sim.run(HUMAN_ERRORS.reactionMin - 0.1);
+      assert.equal(barde.state.castAbility, "", "le bot a réagi instantanément");
+      sim.run(5);
+      assert.ok(e1.has("mez"), "le bot n'a jamais réagi");
+    } finally {
+      HUMAN_ERRORS.enabled = false;
+    }
   });
 });

@@ -45,6 +45,19 @@ const ESCORT_DISTANCE = 3;
 // Angles essayés (en degrés) si la direction de fuite idéale est bloquée.
 const FLEE_ANGLES = [0, 30, -30, 60, -60, 90, -90, 120, -120];
 
+// Erreur humaine : les bots ne sont pas des machines parfaites. Modifiable (les tests la coupent).
+export const HUMAN_ERRORS = {
+  enabled: true,
+  // Délai (en secondes) avant de remarquer un ennemi qui vient d'apparaître.
+  reactionMin: 0.3,
+  reactionMax: 0.8,
+  // Probabilité de laisser passer une décision : hésitation, distraction. Retarde tout,
+  // y compris les soins, la fuite et les interruptions.
+  hesitation: 0.15,
+  // Probabilité, en choisissant une nouvelle cible, de prendre un ennemi au hasard plutôt que le meilleur.
+  wrongTarget: 0.15,
+};
+
 // Base commune des bots : perception, utilisation des compétences et déplacements.
 // Chaque classe définit son comportement dans think() (voir classBots.ts).
 // Un bot joue avec les mêmes commandes qu'un joueur : il ne fait que choisir quoi envoyer.
@@ -63,6 +76,8 @@ export class BotBrain {
   private lastInput: MoveInput = NO_INPUT;
   private lastPosition: Position | null = null;
   private stuckTime = 0;
+  // Instant (temps de la partie) à partir duquel chaque ennemi visible est remarqué.
+  private noticedAt = new Map<string, number>();
 
   constructor(
     readonly player: PlayerRuntime,
@@ -79,12 +94,29 @@ export class BotBrain {
     if (this.thinkTimer <= 0) {
       this.thinkTimer += THINK_INTERVAL;
       this.world = world;
+      this.updateNoticed();
       this.rememberEnemies();
       if (world.phase === "preparation") this.prepare();
-      else if (world.phase === "fighting") this.think();
-      else this.stop();
+      else if (world.phase === "fighting") {
+        // Hésitation : le bot continue ce qu'il faisait au lieu de réagir.
+        if (!(HUMAN_ERRORS.enabled && Math.random() < HUMAN_ERRORS.hesitation)) this.think();
+      } else this.stop();
     }
     this.steer(dt);
+  }
+
+  // Temps de réaction : un ennemi qui apparaît n'est pris en compte qu'après un court délai.
+  private updateNoticed() {
+    for (const id of this.noticedAt.keys()) {
+      if (!this.world.visible.has(id)) this.noticedAt.delete(id);
+    }
+    for (const id of this.world.visible) {
+      if (this.noticedAt.has(id)) continue;
+      const delay = HUMAN_ERRORS.enabled
+        ? HUMAN_ERRORS.reactionMin + Math.random() * (HUMAN_ERRORS.reactionMax - HUMAN_ERRORS.reactionMin)
+        : 0;
+      this.noticedAt.set(id, this.combat.now + delay);
+    }
   }
 
   // Retient la position de l'ennemi visible le plus proche, pour y retourner s'il disparaît.
@@ -120,7 +152,10 @@ export class BotBrain {
 
   protected enemies(): PlayerRuntime[] {
     return [...this.world.players.values()].filter(
-      (p) => p.alive && p.state.team !== this.player.state.team && this.world.visible.has(p.id),
+      (p) =>
+        p.alive &&
+        p.state.team !== this.player.state.team &&
+        (this.noticedAt.get(p.id) ?? Infinity) <= this.combat.now,
     );
   }
 
@@ -162,7 +197,12 @@ export class BotBrain {
     const bestRank = Math.min(...enemies.map(rank));
     const candidates = enemies.filter((p) => rank(p) === bestRank);
     const current = candidates.find((p) => p.id === this.player.targetId);
-    return current ?? this.nearest(candidates);
+    if (current) return current;
+    // Erreur de jugement : de temps en temps, une cible moins pertinente.
+    if (HUMAN_ERRORS.enabled && enemies.length > 0 && Math.random() < HUMAN_ERRORS.wrongTarget) {
+      return enemies[Math.floor(Math.random() * enemies.length)];
+    }
+    return this.nearest(candidates);
   }
 
   // Ennemis de mêlée proches, ou qui viennent de nous frapper au corps à corps.
