@@ -6,3 +6,4 @@ export * from "./constants";
 export * from "./effects";
 export * from "./match";
 export * from "./movement";
+export * from "./terrain";

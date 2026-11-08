@@ -1,10 +1,10 @@
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import { ARENA_SIZE, VISION_RANGE, hasLineOfSight, type Position } from "@arena/shared";
+import { createTerrainMesh } from "./terrainMesh";
 
 // Une case par mètre : la texture est étirée sur l'arène, le filtrage adoucit les bords.
 const CELLS = ARENA_SIZE;
@@ -31,8 +31,8 @@ export class FogOfWar {
   private recomputeTimer = 0;
 
   constructor(scene: Scene) {
-    this.mesh = CreateGround("fog", { width: ARENA_SIZE, height: ARENA_SIZE }, scene);
-    this.mesh.position.y = FOG_HEIGHT;
+    // Le brouillard épouse le relief, juste au-dessus du sol.
+    this.mesh = createTerrainMesh("fog", scene, FOG_HEIGHT);
     this.mesh.isPickable = false;
 
     this.texture = new DynamicTexture("fogTexture", { width: CELLS, height: CELLS }, scene, false);

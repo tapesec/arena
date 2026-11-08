@@ -7,7 +7,7 @@ import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import type { EffectKind } from "@arena/shared";
+import { terrainHeight, type EffectKind } from "@arena/shared";
 import { ABILITY_FX } from "./spellFx";
 
 export interface EffectView {
@@ -156,6 +156,8 @@ export class PlayerVisual {
   update(smoothing: number) {
     this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
     this.root.position.z += (this.state.z - this.root.position.z) * smoothing;
+    // Le personnage suit le relief.
+    this.root.position.y = terrainHeight(this.root.position.x, this.root.position.z);
     // Rotation lissée par le chemin le plus court (l'orientation arrive par paliers à 20 Hz).
     const turn = this.state.facing - this.root.rotation.y;
     this.root.rotation.y += Math.atan2(Math.sin(turn), Math.cos(turn)) * smoothing;

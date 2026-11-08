@@ -167,7 +167,7 @@ export class SpellEffects {
     mesh.material = material;
     mesh.isPickable = false;
     mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(center.x, 0.06, center.z);
+    mesh.position.set(center.x, center.y + 0.06, center.z);
     this.effects.push({
       mesh,
       age: 0,

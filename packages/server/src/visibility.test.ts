@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { START_ZONES, terrainHeight } from "@arena/shared";
 import { computeTeamVisibility, type VisibilityUnit } from "./visibility";
 
 const unit = (id: string, team: number, x: number, z: number, alive = true): VisibilityUnit => ({ id, team, x, z, alive });
@@ -25,5 +26,30 @@ describe("Brouillard de guerre", () => {
   it("un allié mort ne fournit plus de vision", () => {
     const seen = computeTeamVisibility([unit("mort", 0, 5, 0, false), unit("vivant", 0, -40, -40), unit("e", 1, 5, 5)]);
     assert.ok(!seen.get(0)!.has("e"));
+  });
+});
+
+describe("Relief", () => {
+  it("le centre, les zones de départ et les zones ouvertes sont plats", () => {
+    for (const p of [{ x: 0, z: 0 }, ...START_ZONES, { x: 37, z: 10 }, { x: -37, z: -10 }]) {
+      assert.ok(Math.abs(terrainHeight(p.x, p.z)) < 0.01, `sol non plat en (${p.x}, ${p.z})`);
+    }
+  });
+
+  it("le relief est symétrique, comme la carte", () => {
+    for (const p of [{ x: 34, z: -30 }, { x: 16, z: 28 }, { x: 12.5, z: -40.5 }]) {
+      assert.ok(Math.abs(terrainHeight(p.x, p.z) - terrainHeight(-p.x, -p.z)) < 1e-6);
+    }
+  });
+
+  it("une grande butte cache un ennemi placé derrière", () => {
+    assert.ok(terrainHeight(34, -30) > 3, "la butte est trop basse");
+    const seen = computeTeamVisibility([unit("a", 0, 34, -42), unit("e", 1, 34, -18)]);
+    assert.ok(!seen.get(0)!.has("e"));
+  });
+
+  it("depuis le sommet de la butte, on voit par-dessus", () => {
+    const seen = computeTeamVisibility([unit("a", 0, 34, -30), unit("e", 1, 34, -18)]);
+    assert.ok(seen.get(0)!.has("e"));
   });
 });

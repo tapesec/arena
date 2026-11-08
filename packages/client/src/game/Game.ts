@@ -8,7 +8,6 @@ import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
-import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -24,6 +23,7 @@ import {
   SPELL_RANGE,
   START_ZONES,
   TAB_TARGET_RANGE,
+  terrainHeight,
   distance,
   getAbility,
   getClass,
@@ -55,6 +55,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
 import { FogOfWar } from "./FogOfWar";
+import { createTerrainMesh } from "./terrainMesh";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
@@ -202,6 +203,7 @@ export class Game {
     const limit = ARENA_SIZE / 2;
     this.spectatorFocus.x = Math.max(-limit, Math.min(limit, this.spectatorFocus.x + dir.x * SPECTATOR_SPEED * dt));
     this.spectatorFocus.z = Math.max(-limit, Math.min(limit, this.spectatorFocus.z + dir.z * SPECTATOR_SPEED * dt));
+    this.spectatorFocus.y = terrainHeight(this.spectatorFocus.x, this.spectatorFocus.z);
     this.camera.follow(this.spectatorFocus);
   }
 
@@ -217,13 +219,24 @@ export class Game {
     const sun = new DirectionalLight("sun", new Vector3(-0.5, -1, 0.3), this.scene);
     sun.intensity = 0.7;
 
-    const ground = CreateGround("ground", { width: ARENA_SIZE, height: ARENA_SIZE }, this.scene);
+    // Sol éclairé (la lumière dessine les collines), recouvert d'une grille transparente.
+    const ground = createTerrainMesh("ground", this.scene);
+    const groundMat = new StandardMaterial("groundMat", this.scene);
+    groundMat.diffuseColor = new Color3(0.3, 0.33, 0.37);
+    groundMat.specularColor = Color3.Black();
+    ground.material = groundMat;
+    ground.isPickable = false;
+    const gridLayer = createTerrainMesh("gridLayer", this.scene, 0.02);
     const grid = new GridMaterial("grid", this.scene);
     grid.mainColor = new Color3(0.16, 0.18, 0.2);
-    grid.lineColor = new Color3(0.35, 0.4, 0.45);
+    grid.lineColor = new Color3(0.5, 0.56, 0.62);
     grid.gridRatio = 2;
     grid.majorUnitFrequency = 5;
-    ground.material = grid;
+    // Fond de grille semi-transparent : laisse voir l'éclairage du sol, donc les collines.
+    grid.opacity = 0.6;
+    grid.backFaceCulling = false;
+    gridLayer.material = grid;
+    gridLayer.isPickable = false;
 
     // Les obstacles viennent de la même définition que celle utilisée par le serveur.
     const obstacleMat = new StandardMaterial("obstacleMat", this.scene);
@@ -234,7 +247,7 @@ export class Game {
         { width: o.halfWidth * 2, depth: o.halfDepth * 2, height: OBSTACLE_HEIGHT },
         this.scene,
       );
-      box.position.set(o.x, OBSTACLE_HEIGHT / 2, o.z);
+      box.position.set(o.x, terrainHeight(o.x, o.z) + OBSTACLE_HEIGHT / 2, o.z);
       box.material = obstacleMat;
       box.isPickable = false;
     }
@@ -457,7 +470,7 @@ export class Game {
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
     this.targetMarker.setEnabled(!!target);
-    if (target) this.targetMarker.position.set(target.root.position.x, 0.06, target.root.position.z);
+    if (target) this.targetMarker.position.set(target.root.position.x, target.root.position.y + 0.06, target.root.position.z);
 
     this.refreshHud(self, target);
     this.scene.render();
