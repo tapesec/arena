@@ -11,7 +11,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { Scene } from "@babylonjs/core/scene";
-import { frostMist, mezHalo, type ParticleFactory } from "./particles";
+import { frostMist, mezHalo, notesAura, rageFlames, speedDust, type ParticleFactory, type Recipe } from "./particles";
 import type { PlayerVisual } from "./PlayerVisual";
 
 // Hauteur de la tête des personnages (agrandis à 2,2 m), et du milieu du corps.
@@ -36,7 +36,26 @@ interface PlayerStatus {
   // Durée totale du root en cours, relevée à son apparition (le serveur n'envoie que le temps restant).
   rootDuration: number;
   bubble: Mesh | null;
+  // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
+  auras: Map<string, ParticleSystem>;
+  body: Vector3;
+  lastX: number;
+  lastZ: number;
 }
+
+// Auras continues : recette, point d'attache (pieds, corps, tête) et condition d'affichage.
+interface Aura {
+  recipe: Recipe;
+  at: "feet" | "body" | "head";
+  active: (player: PlayerVisual, speed: number) => boolean;
+}
+// En dessous de cette vitesse (m/s), un personnage accéléré ne soulève pas de poussière.
+const DUST_SPEED = 3;
+const AURAS: Record<string, Aura> = {
+  rage: { recipe: rageFlames, at: "feet", active: (p) => p.hasEffect("rage") },
+  dust: { recipe: speedDust, at: "feet", active: (p, speed) => p.hasEffect("speed") && speed > DUST_SPEED },
+  notes: { recipe: notesAura, at: "head", active: (p) => p.state.songActive },
+};
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
 export class StatusFx {
@@ -65,11 +84,17 @@ export class StatusFx {
       const stun = alive && player.hasEffect("stun");
       const root = alive ? remaining(player, "root") : 0;
       const bubble = alive && player.hasEffect("bubble");
+      const aura = alive && (player.hasEffect("rage") || player.hasEffect("speed") || player.state.songActive);
       let status = this.statuses.get(player);
-      if (!status && !mez && !stun && !root && !bubble) continue;
+      if (!status && !mez && !stun && !root && !bubble && !aura) continue;
       status ??= this.track(player);
+      const speed = Math.hypot(player.root.position.x - status.lastX, player.root.position.z - status.lastZ) / Math.max(dt, 1e-3);
+      status.lastX = player.root.position.x;
+      status.lastZ = player.root.position.z;
       status.feet.copyFrom(player.root.position);
       status.head.copyFrom(player.root.position).y += HEAD;
+      status.body.copyFrom(player.root.position).y += BODY;
+      this.updateAuras(status, alive, player, speed);
       this.updateMez(status, mez);
       this.updateStars(status, stun, player);
       this.updateRoot(status, root, player);
@@ -79,6 +104,7 @@ export class StatusFx {
     for (const [player, status] of this.statuses) {
       if (seen.has(player) && !player.root.isDisposed()) continue;
       this.updateMez(status, false);
+      this.updateAuras(status, false, player, 0);
       status.mist?.stop();
       status.stars?.dispose();
       status.crystals?.dispose();
@@ -106,9 +132,29 @@ export class StatusFx {
       mist: null,
       rootDuration: 0,
       bubble: null,
+      auras: new Map(),
+      body: new Vector3(),
+      lastX: player.root.position.x,
+      lastZ: player.root.position.z,
     };
     this.statuses.set(player, status);
     return status;
+  }
+
+  // Démarre ou arrête chaque aura continue selon l'état du personnage.
+  private updateAuras(status: PlayerStatus, alive: boolean, player: PlayerVisual, speed: number) {
+    for (const [name, aura] of Object.entries(AURAS)) {
+      const active = alive && aura.active(player, speed);
+      const system = status.auras.get(name);
+      if (active && !system) {
+        const created = aura.recipe(this.particles, status[aura.at]);
+        if (created) status.auras.set(name, created);
+      } else if (!active && system) {
+        system.emitter = status[aura.at].clone();
+        system.stop();
+        status.auras.delete(name);
+      }
+    }
   }
 
   // Volutes violettes autour de la tête, tant que dure le mez (les « Zzz » sont affichés à part).

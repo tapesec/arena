@@ -279,6 +279,11 @@ export class Game {
         this.players.get(event.sourceId)?.playAttack();
       }
       this.playReaction(event);
+      // Coup critique : gerbe d'étincelles dorées sur la cible.
+      if (event.kind === "damage" && event.crit) {
+        const target = this.players.get(event.targetId);
+        if (target) this.spellEffects.critHit(target.root);
+      }
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       hud.pushLog(formatInterrupt(event, nameOf));

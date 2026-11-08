@@ -11,7 +11,7 @@ import type { Scene } from "@babylonjs/core/scene";
 // Au-delà de ce nombre de systèmes actifs, les nouveaux effets secondaires (fumée…) sont ignorés.
 const MAX_ACTIVE = 40;
 
-export type ParticleTexture = "glow" | "spark";
+export type ParticleTexture = "glow" | "spark" | "note";
 
 // Une recette : à partir d'un point (déplaçable, pour suivre un projectile ou un personnage), crée et démarre
 // un système de particules. Un système "continu" émet tant qu'on ne l'arrête pas ; une "gerbe" émet tout d'un
@@ -25,7 +25,7 @@ export class ParticleFactory {
   private stopping = new Set<ParticleSystem>();
 
   constructor(private scene: Scene) {
-    this.textures = { glow: glowTexture(scene), spark: sparkTexture(scene) };
+    this.textures = { glow: glowTexture(scene), spark: sparkTexture(scene), note: noteTexture(scene) };
   }
 
   // Crée un système à l'emplacement "at" (le vecteur est partagé : le déplacer déplace l'émetteur).
@@ -104,6 +104,22 @@ function sparkTexture(scene: Scene): DynamicTexture {
   ctx.lineTo(size * 0.4, size / 2);
   ctx.closePath();
   ctx.fill();
+  texture.hasAlpha = true;
+  texture.update();
+  return texture;
+}
+
+// Note de musique (croche), pour le Chant de vitesse.
+function noteTexture(scene: Scene): DynamicTexture {
+  const size = 64;
+  const texture = new DynamicTexture("fx-note", size, scene, true);
+  const ctx = texture.getContext() as CanvasRenderingContext2D;
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = "white";
+  ctx.font = "bold 52px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("♪", size / 2, size / 2 + 2);
   texture.hasAlpha = true;
   texture.update();
   return texture;
@@ -497,7 +513,161 @@ export const frostMist: Recipe = (fx, at) => {
   return s;
 };
 
+// ——— Finition ———
+
+// Gerbe d'étincelles dorées d'un coup critique (ou d'une estafilade).
+export const critSparks: Recipe = (fx, at, radius = 1) => {
+  const s = fx.create("critSparks", 60, at, "spark");
+  if (!s) return null;
+  sphereBurst(s, 0.2);
+  s.manualEmitCount = Math.round(35 * radius);
+  s.minLifeTime = 0.2;
+  s.maxLifeTime = 0.45;
+  s.minSize = 0.12;
+  s.maxSize = 0.3;
+  s.minEmitPower = 3;
+  s.maxEmitPower = 6;
+  s.gravity = new Vector3(0, -6, 0);
+  gradient(s, [0, rgba("#fff4c0", 0.9)], [0.4, rgba("#ffc040", 0.7)], [1, rgba("#a05000", 0)]);
+  s.start();
+  s.targetStopDuration = 0.05;
+  return s;
+};
+
+// Buff : spirale d'étincelles dorées qui monte autour du personnage.
+export const buffSpiral: Recipe = (fx, at) => {
+  const s = fx.create("buffSpiral", 140, at, "glow");
+  if (!s) return null;
+  const start = performance.now();
+  // L'angle de naissance tourne avec le temps : les particules, qui montent, dessinent une spirale.
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = ((performance.now() - start) / 1000) * 14;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * 0.6, 0.1, Math.sin(angle) * 0.6, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, 1, 0);
+  s.emitRate = 160;
+  s.minLifeTime = 0.6;
+  s.maxLifeTime = 0.8;
+  s.minSize = 0.15;
+  s.maxSize = 0.3;
+  s.minEmitPower = s.maxEmitPower = 3;
+  gradient(s, [0, rgba("#fff0b0", 0.8)], [0.5, rgba("#ffcc40", 0.6)], [1, rgba("#a07000", 0)]);
+  s.start();
+  s.targetStopDuration = 0.6;
+  return s;
+};
+
+// Résurrection : pluie d'étincelles dorées qui tombe du ciel sur le personnage.
+export const resurrectRain: Recipe = (fx, at) => {
+  const s = fx.create("resurrectRain", 300, at, "glow");
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 0.8;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, 6, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, -1, 0);
+  s.emitRate = 220;
+  s.minLifeTime = 0.8;
+  s.maxLifeTime = 1.1;
+  s.minSize = 0.15;
+  s.maxSize = 0.35;
+  s.minEmitPower = 5;
+  s.maxEmitPower = 7;
+  gradient(s, [0, rgba("#fff8d0", 0.8)], [0.6, rgba("#ffd860", 0.6)], [1, rgba("#c08000", 0)]);
+  s.start();
+  s.targetStopDuration = 1.2;
+  return s;
+};
+
+// Chant de vitesse : quelques notes qui jaillissent quand le Barde commence à chanter.
+export const noteBurst: Recipe = (fx, at) => {
+  const s = fx.create("noteBurst", 30, at, "note");
+  if (!s) return null;
+  sphereBurst(s, 0.4);
+  s.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  s.manualEmitCount = 14;
+  s.minLifeTime = 0.8;
+  s.maxLifeTime = 1.2;
+  s.minSize = 0.3;
+  s.maxSize = 0.45;
+  s.minEmitPower = 1;
+  s.maxEmitPower = 2;
+  s.gravity = new Vector3(0, 1, 0);
+  gradient(s, [0, rgba("#ffe070", 1)], [0.7, rgba("#ffb030", 0.9)], [1, rgba("#ff9020", 0)]);
+  s.start();
+  s.targetStopDuration = 0.05;
+  return s;
+};
+
+// Chant en cours : notes qui flottent autour du Barde.
+export const notesAura: Recipe = (fx, at) => {
+  const s = fx.create("notesAura", 30, at, "note", true);
+  if (!s) return null;
+  sphereBurst(s, 0.7);
+  s.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  s.emitRate = 5;
+  s.minLifeTime = 1.2;
+  s.maxLifeTime = 1.8;
+  s.minSize = 0.25;
+  s.maxSize = 0.4;
+  s.minEmitPower = 0.1;
+  s.maxEmitPower = 0.3;
+  s.gravity = new Vector3(0, 0.6, 0);
+  gradient(s, [0, rgba("#ffe070", 0)], [0.2, rgba("#ffd050", 0.9)], [1, rgba("#ff9020", 0)]);
+  s.start();
+  return s;
+};
+
+// Accéléré par le chant : poussière soulevée aux pieds pendant la course.
+export const speedDust: Recipe = (fx, at) => {
+  const s = fx.create("speedDust", 60, at, "glow", true);
+  if (!s) return null;
+  s.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+  sphereBurst(s, 0.3);
+  s.emitRate = 35;
+  s.minLifeTime = 0.4;
+  s.maxLifeTime = 0.7;
+  s.minSize = 0.35;
+  s.maxSize = 0.7;
+  s.minEmitPower = 0.2;
+  s.maxEmitPower = 0.6;
+  s.gravity = new Vector3(0, 0.5, 0);
+  gradient(s, [0, rgba("#8a6a48", 0.55)], [1, rgba("#6a5038", 0)]);
+  s.start();
+  return s;
+};
+
+// Rage : flammèches rouges qui montent autour de la Lame.
+export const rageFlames: Recipe = (fx, at) => {
+  const s = fx.create("rageFlames", 120, at, "glow");
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 0.35 + Math.random() * 0.2;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, Math.random() * 1.6, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, 1, 0);
+  s.emitRate = 140;
+  s.minLifeTime = 0.3;
+  s.maxLifeTime = 0.6;
+  s.minSize = 0.18;
+  s.maxSize = 0.38;
+  s.minEmitPower = 1;
+  s.maxEmitPower = 2;
+  gradient(s, [0, rgba("#ff9050", 0.8)], [0.4, rgba("#ff2010", 0.7)], [1, rgba("#500000", 0)]);
+  s.start();
+  return s;
+};
+
 export const RECIPES: Recipe[] = [
+  critSparks,
+  buffSpiral,
+  resurrectRain,
+  noteBurst,
+  notesAura,
+  speedDust,
+  rageFlames,
   mezHalo,
   frostMist,
   fireTrail,

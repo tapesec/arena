@@ -1,11 +1,14 @@
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Constants } from "@babylonjs/core/Engines/constants";
+import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
+import { CreateRibbon } from "@babylonjs/core/Meshes/Builders/ribbonBuilder";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { CreateLines } from "@babylonjs/core/Meshes/Builders/linesBuilder";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { getAbility } from "@arena/shared";
@@ -24,6 +27,10 @@ interface Visual {
   area?: Recipe[];
   // Projectile : diamètre du cœur lumineux (0 = particules seules).
   core?: number;
+  // Estafilade lumineuse sur la cible (coups spéciaux de mêlée).
+  slash?: boolean;
+  // Rayon de lumière qui descend sur la cible (résurrection).
+  beam?: boolean;
 }
 const VISUALS: Record<string, Visual> = {
   firebolt: { trail: [P.fireTrail, P.smokeTrail], impact: [P.fireBurst], core: 0.3 },
@@ -36,7 +43,16 @@ const VISUALS: Record<string, Visual> = {
   heal: { ground: [P.healColumn] },
   instantHeal: { impact: [P.healFlash] },
   groupHeal: { area: [P.healField] },
+  backstab: { slash: true },
+  flankStrike: { slash: true },
+  buffHp: { ground: [P.buffSpiral] },
+  buffStrength: { ground: [P.buffSpiral] },
+  resurrect: { ground: [P.resurrectRain], beam: true },
+  speedSong: { impact: [P.noteBurst] },
 };
+const SLASH_DURATION = 0.25;
+const BEAM_DURATION = 1.4;
+const BEAM_HEIGHT = 9;
 // Le disque qui montre la portée exacte d'une zone reste, plus discret quand des particules l'accompagnent.
 const AREA_ALPHA = 0.45;
 const AREA_ALPHA_WITH_PARTICLES = 0.22;
@@ -96,11 +112,76 @@ export class SpellEffects {
     else this.spawnPulse(fx.color, anchor, 1);
   }
 
+  // Coup critique : gerbe d'étincelles dorées sur la cible.
+  critHit(anchor: TransformNode) {
+    P.critSparks(this.particles, anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0)));
+  }
+
   // Particules d'impact sur un personnage : à hauteur du corps, ou aux pieds.
   private burst(visual: Visual, anchor: TransformNode) {
     const feet = anchor.getAbsolutePosition();
-    for (const recipe of visual.impact ?? []) recipe(this.particles, feet.add(new Vector3(0, BODY_CENTER, 0)));
+    const body = feet.add(new Vector3(0, BODY_CENTER, 0));
+    for (const recipe of visual.impact ?? []) recipe(this.particles, body.clone());
     for (const recipe of visual.ground ?? []) recipe(this.particles, feet.clone());
+    if (visual.slash) {
+      this.spawnSlash(body);
+      P.critSparks(this.particles, body.clone(), 0.6);
+    }
+    if (visual.beam) this.spawnBeam(feet);
+  }
+
+  // Estafilade : croissant lumineux tourné vers la caméra, incliné au hasard, qui s'élargit et s'éteint.
+  private spawnSlash(at: Vector3) {
+    const outer: Vector3[] = [];
+    const inner: Vector3[] = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      const angle = -1.1 + t * 2.2;
+      // Plus épais au milieu, effilé aux deux bouts.
+      const thickness = 0.28 * Math.sin(Math.PI * t);
+      outer.push(new Vector3(Math.sin(angle), Math.cos(angle) - 0.5, 0));
+      inner.push(new Vector3(Math.sin(angle) * (1 - thickness), (Math.cos(angle) - 0.5) * (1 - thickness) - thickness * 0.5, 0));
+    }
+    const mesh = CreateRibbon("slash", { pathArray: [outer, inner], sideOrientation: Mesh.DOUBLESIDE }, this.scene);
+    const material = this.glowMaterial(new Color3(1, 0.95, 0.8), 1);
+    material.alphaMode = Constants.ALPHA_ADD;
+    mesh.material = material;
+    mesh.isPickable = false;
+    mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
+    mesh.position.copyFrom(at);
+    mesh.rotation.z = Math.random() * Math.PI * 2;
+    this.effects.push({
+      mesh,
+      age: 0,
+      duration: SLASH_DURATION,
+      animate: (progress) => {
+        mesh.scaling.setAll(0.8 + progress * 0.6);
+        material.alpha = 1 - progress;
+      },
+    });
+  }
+
+  // Rayon de lumière dorée qui descend du ciel sur le personnage, puis s'estompe.
+  private spawnBeam(feet: Vector3) {
+    const mesh = CreateCylinder("beam", { height: BEAM_HEIGHT, diameterTop: 1.6, diameterBottom: 1, tessellation: 24, cap: Mesh.NO_CAP }, this.scene);
+    const material = this.glowMaterial(new Color3(1, 0.85, 0.45), 0);
+    material.alphaMode = Constants.ALPHA_ADD;
+    material.backFaceCulling = false;
+    mesh.material = material;
+    mesh.isPickable = false;
+    mesh.position.set(feet.x, feet.y + BEAM_HEIGHT / 2, feet.z);
+    this.effects.push({
+      mesh,
+      age: 0,
+      duration: BEAM_DURATION,
+      animate: (progress) => {
+        // Descend du ciel pendant le premier quart, puis s'estompe.
+        const drop = Math.min(1, progress * 4);
+        mesh.scaling.y = drop;
+        mesh.position.y = feet.y + BEAM_HEIGHT * (1 - drop / 2);
+        material.alpha = 0.55 * (progress < 0.25 ? 1 : 1 - (progress - 0.25) / 0.75);
+      },
+    });
   }
 
   // Zone d'effet : le disque de portée, et les particules qui la remplissent.
