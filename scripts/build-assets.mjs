@@ -261,6 +261,39 @@ function recolorTexture(data, { from, width, to, minSaturation, boost = 1, light
   }
 }
 
+// Textures du sol, répétées sur le terrain : herbe et terre teintées à partir d'un bruit, pavés de la place.
+const GROUND_TINTS = {
+  grass: ["#41702a", "#7aa646"],
+  dirt: ["#6e5034", "#a88660"],
+};
+const GROUND_SIZE = 512;
+
+async function buildGround() {
+  const noise = await sharp(path.join(SOURCE, "ground/T_Noise_Terrain.png"))
+    .resize(GROUND_SIZE, GROUND_SIZE)
+    .greyscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  for (const [name, [dark, light]] of Object.entries(GROUND_TINTS)) {
+    const [a, b] = [hexToRgb(dark), hexToRgb(light)];
+    const pixels = Buffer.alloc(GROUND_SIZE * GROUND_SIZE * 3);
+    for (let i = 0; i < GROUND_SIZE * GROUND_SIZE; i++) {
+      const t = noise.data[i * noise.info.channels] / 255;
+      for (let c = 0; c < 3; c++) pixels[i * 3 + c] = a[c] + (b[c] - a[c]) * t;
+    }
+    const target = `ground/${name}.webp`;
+    await sharp(pixels, { raw: { width: GROUND_SIZE, height: GROUND_SIZE, channels: 3 } }).webp().toFile(path.join(OUT, target));
+    report(target);
+  }
+  const target = "ground/paving.webp";
+  await sharp(path.join(SOURCE, "ground/T_UnevenBrick_BaseColor.png")).resize(TEXTURE_SIZE, TEXTURE_SIZE).webp().toFile(path.join(OUT, target));
+  report(target);
+}
+
+function hexToRgb(hex) {
+  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+}
+
 // Bibliothèque d'animations : on retire le mannequin (seul le squelette sert) et les animations inutiles.
 async function buildAnimations(file, keep) {
   const doc = await io.read(path.join(SOURCE, "animations", file));
@@ -295,6 +328,8 @@ async function report(target) {
 await mkdir(path.join(OUT, "characters"), { recursive: true });
 await mkdir(path.join(OUT, "animations"), { recursive: true });
 await mkdir(path.join(OUT, "weapons"), { recursive: true });
+await mkdir(path.join(OUT, "ground"), { recursive: true });
+await buildGround();
 for (const [file, keep] of Object.entries(ANIMATIONS)) await buildAnimations(file, keep);
 for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
 for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);

@@ -1,10 +1,8 @@
 import "@babylonjs/core/Culling/ray"; // Effet de bord : active scene.pick() pour le ciblage au clic.
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { PointerEventTypes, type PointerInfo } from "@babylonjs/core/Events/pointerEvents";
-import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
-import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
+import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
@@ -12,7 +10,6 @@ import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
-import { GridMaterial } from "@babylonjs/materials/grid/gridMaterial";
 import { Callbacks, type Room } from "@colyseus/sdk";
 import {
   ARENA_SIZE,
@@ -54,8 +51,8 @@ import {
 } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay } from "./WorldOverlay";
+import { createGround, createLights, createSky } from "./environment";
 import { FogOfWar, type FogWatcher } from "./FogOfWar";
-import { createTerrainMesh } from "./terrainMesh";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
@@ -123,7 +120,6 @@ export class Game {
   ) {
     this.engine = new Engine(canvas, true);
     this.scene = new Scene(this.engine);
-    this.scene.clearColor = new Color4(0.07, 0.08, 0.1, 1);
 
     this.camera = new CameraController(this.scene, canvas, () => {
       if (!this.isSpectating) this.sendMove();
@@ -228,29 +224,9 @@ export class Game {
   }
 
   private createEnvironment() {
-    const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), this.scene);
-    hemi.intensity = 0.6;
-    const sun = new DirectionalLight("sun", new Vector3(-0.5, -1, 0.3), this.scene);
-    sun.intensity = 0.7;
-
-    // Sol éclairé (la lumière dessine les collines), recouvert d'une grille transparente.
-    const ground = createTerrainMesh("ground", this.scene);
-    const groundMat = new StandardMaterial("groundMat", this.scene);
-    groundMat.diffuseColor = new Color3(0.3, 0.33, 0.37);
-    groundMat.specularColor = Color3.Black();
-    ground.material = groundMat;
-    ground.isPickable = false;
-    const gridLayer = createTerrainMesh("gridLayer", this.scene, 0.02);
-    const grid = new GridMaterial("grid", this.scene);
-    grid.mainColor = new Color3(0.16, 0.18, 0.2);
-    grid.lineColor = new Color3(0.5, 0.56, 0.62);
-    grid.gridRatio = 2;
-    grid.majorUnitFrequency = 5;
-    // Fond de grille semi-transparent : laisse voir l'éclairage du sol, donc les collines.
-    grid.opacity = 0.6;
-    grid.backFaceCulling = false;
-    gridLayer.material = grid;
-    gridLayer.isPickable = false;
+    createLights(this.scene);
+    createSky(this.scene);
+    createGround(this.scene);
 
     // Les obstacles viennent de la même définition que celle utilisée par le serveur.
     const obstacleMat = new StandardMaterial("obstacleMat", this.scene);

@@ -57,6 +57,10 @@ extract "$ALL" "$OUT/weapons" \
 PROPS='Medieval/Fantasy Props MegaKit\[Standard\] - June 2025/Exports/glTF'
 extract "$ALL" "$OUT/weapons" "$PROPS/Sword_Bronze.*" "$PROPS/Shield_Wooden.*" "$PROPS/T_Trim_*"
 
+# Sol : bruit de terrain (base de l'herbe et de la terre) et pavés, tirés du village médiéval.
+VILLAGE='Medieval/Medieval Village MegaKit\[Standard\] - Jan 2025'
+extract "$ALL" "$OUT/ground" "$VILLAGE/Textures/T_Noise_Terrain.png" "$VILLAGE/Textures/T_UnevenBrick_BaseColor.png"
+
 # Armes en FBX (bâtons, boucliers, dagues…) : à convertir en glTF plus tard si besoin.
 extract "$ALL" "$OUT/weapons-fbx/ultimate-rpg-items" 'Medieval/Ultimate RPG Items Pack - Aug 2019/FBX/*'
 extract "$ALL" "$OUT/weapons-fbx/medieval-weapons" 'Medieval/Medieval Weapons Pack - Sept 2018/FBX/*'
