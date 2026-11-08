@@ -6,6 +6,7 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
@@ -49,6 +50,8 @@ export interface CharacterAnimationSet {
 
 interface CharacterDef {
   model: string;
+  // Matériau de la tenue, dont la couleur dépend de l'équipe (textures characters/<classe>-<équipe>.webp).
+  outfit: string;
   // Teinte des cheveux et sourcils (leur texture est grise, faite pour être teintée).
   hairColor?: string;
   weapons: WeaponMount[];
@@ -63,6 +66,7 @@ const CAST_RELEASE = "Spell_Simple_Shoot";
 const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
     model: "characters/gardien.glb",
+    outfit: "MI_Knight",
     weapons: [
       { model: "weapons/sword.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0] },
       { model: "weapons/shield.glb", bone: "lowerarm_l", position: [0, 0.15, 0], rotation: [0, -Math.PI / 2, 0] },
@@ -75,6 +79,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
   },
   lame: {
     model: "characters/lame.glb",
+    outfit: "MI_Ranger",
     hairColor: "#3b2a1e",
     weapons: [
       { model: "weapons/dagger.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
@@ -88,6 +93,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
   },
   arcaniste: {
     model: "characters/arcaniste.glb",
+    outfit: "MI_Wizard",
     hairColor: "#7a2418",
     weapons: [
       {
@@ -105,6 +111,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
   },
   pretre: {
     model: "characters/pretre.glb",
+    outfit: "MI_Noble",
     hairColor: "#d8b46a",
     weapons: [
       {
@@ -122,6 +129,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
   },
   barde: {
     model: "characters/barde.glb",
+    outfit: "MI_Peasant",
     hairColor: "#5a3a22",
     weapons: [
       { model: "weapons/dagger.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
@@ -150,12 +158,16 @@ export interface CharacterInstance {
   animations: Map<string, AnimationGroup>;
   // Points d'attache des armes, exposés pour les régler en développement.
   weapons: TransformNode[];
+  // Habille le personnage aux couleurs de son équipe.
+  setTeam(team: number): void;
   dispose(): void;
 }
 
 // Charge une seule fois chaque fichier, puis crée autant d'instances que de joueurs.
 export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
+  // Matériaux de tenue par classe et par équipe, partagés par tous les personnages concernés.
+  private outfits = new Map<string, PBRMaterial>();
 
   constructor(private scene: Scene) {
     registerBuiltInLoaders();
@@ -247,6 +259,8 @@ export class CharacterAssets {
         if (material?.name.startsWith("MI_Hair")) material.albedoColor = color;
       }
     }
+    const outfitMeshes = meshes.filter((mesh) => mesh.material?.name === def.outfit);
+    const baseOutfit = outfitMeshes[0]?.material as PBRMaterial | undefined;
     for (const attach of weapons) meshes.push(...attach.getChildMeshes(false));
 
     return {
@@ -255,6 +269,11 @@ export class CharacterAssets {
       meshes,
       animations,
       weapons,
+      setTeam: (team) => {
+        if (!baseOutfit) return;
+        const material = this.outfitMaterial(classId, team, baseOutfit);
+        for (const mesh of outfitMeshes) mesh.material = material;
+      },
       // Matériaux et textures sont partagés par tous les personnages de la classe : on ne les libère pas.
       dispose() {
         for (const group of animations.values()) group.dispose();
@@ -263,6 +282,17 @@ export class CharacterAssets {
         for (const skeleton of entries.skeletons) skeleton.dispose();
       },
     };
+  }
+
+  private outfitMaterial(classId: string, team: number, base: PBRMaterial): PBRMaterial {
+    const key = `${classId}-${team}`;
+    let material = this.outfits.get(key);
+    if (!material) {
+      material = base.clone(`${base.name}-${team}`);
+      material.albedoTexture = new Texture(`${MODELS_URL}characters/${key}.webp`, this.scene, false, false);
+      this.outfits.set(key, material);
+    }
+    return material;
   }
 }
 

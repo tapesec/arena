@@ -196,6 +196,7 @@ export class PlayerVisual {
       this.team = this.state.team;
       this.aliveColor = teamColor(this.team, this.state.colorIndex);
       if (this.isAlive) this.material.diffuseColor = this.aliveColor;
+      this.model?.setTeam(this.team);
     }
 
     if (this.isAlive !== this.wasAlive) {
@@ -241,6 +242,7 @@ export class PlayerVisual {
         return;
       }
       this.model = model;
+      model.setTeam(this.team);
       // Cliquer sur le personnage le cible, comme la capsule.
       for (const mesh of model.meshes) {
         mesh.metadata = { sessionId: this.sessionId };
