@@ -1,2 +1,4 @@
 node_modules
 dist
+# Assets bruts extraits des archives Quaternius (trop lourds) : régénérer avec scripts/import-assets.sh
+assets-source
