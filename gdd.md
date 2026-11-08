@@ -24,6 +24,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Pas de score** pour le prototype : une partie se gagne ou se perd, c'est tout.
 - **L'arène** : une grande carte simple (sol plat, obstacles basiques pour la ligne de vue, pas d'investissement dans les décors pour le moment), couverte d'un **brouillard de guerre**. Chaque équipe ne voit que ce que ses membres voient : il faut se déplacer et explorer pour trouver l'équipe adverse. À l'écran, le sol est assombri hors de la vue de son équipe (35 m autour de chaque allié vivant, masqué derrière les obstacles).
 - **Les zones de départ** : chaque équipe commence dans sa propre zone, aux deux extrémités de l'arène.
+- **La carte** (100 × 100 m, symétrique par rotation de 180°) : des ruines carrées au centre (une entrée par côté, un pilier au milieu), des piliers sur les approches, des murs et des blocs sur les flancs pour contourner à couvert, deux grandes zones ouvertes où un groupe est exposé, et un seul abri près de chaque zone de départ.
 - **La phase de préparation** : 10 s dans la zone de départ avant l'ouverture, pour former le plan et poser les buffs du Prêtre.
 - **La mort** : un joueur mort reste au sol jusqu'à la fin de la partie, sauf s'il est ressuscité. Aucune réapparition.
 - **La fin de partie** : dès qu'une équipe est entièrement morte, l'autre gagne.

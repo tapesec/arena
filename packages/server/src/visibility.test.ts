@@ -11,14 +11,14 @@ describe("Brouillard de guerre", () => {
   });
 
   it("un ennemi est vu à portée de vue, pas au-delà", () => {
-    const seen = computeTeamVisibility([unit("a", 0, 5, -20), unit("near", 1, 5, 10), unit("far", 1, 5, 30)]);
+    const seen = computeTeamVisibility([unit("a", 0, 37, -9), unit("near", 1, 37, 21), unit("far", 1, 37, 30)]);
     assert.ok(seen.get(0)!.has("near"));
     assert.ok(!seen.get(0)!.has("far"));
   });
 
   it("un pilier entre les deux bloque la vue", () => {
-    // Pilier en (10, 0).
-    const seen = computeTeamVisibility([unit("a", 0, 4, 0), unit("e", 1, 16, 0)]);
+    // Pilier au centre des ruines, en (0, 0).
+    const seen = computeTeamVisibility([unit("a", 0, -5, 0), unit("e", 1, 5, 0)]);
     assert.ok(!seen.get(0)!.has("e"));
   });
 

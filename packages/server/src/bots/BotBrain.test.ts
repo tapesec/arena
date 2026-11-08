@@ -11,6 +11,10 @@ import { pickBotClass } from "./composition";
 import { Pathfinder } from "./Pathfinder";
 
 const DT = 0.05;
+
+// Les tests de comportement se déroulent dans la zone ouverte de l'arène (sans obstacle ni relief),
+// autour de (37, 10) : leurs positions sont décalées d'autant.
+const LANE = { x: 33, z: 25 };
 const pathfinder = new Pathfinder();
 
 // Les comportements sont testés sans erreur humaine, pour être reproductibles.
@@ -22,13 +26,13 @@ class Sim {
   bots: BotBrain[] = [];
 
   // facing : 0 regarde vers +z, π vers -z.
-  spawn(id: string, classId: ClassId, team: number, x: number, z: number, facing = 0, bot = false): PlayerRuntime {
+  spawn(id: string, classId: ClassId, team: number, x: number, z: number, facing = 0, bot = false, inLane = true): PlayerRuntime {
     const classDef = CLASSES[classId];
     const state = new PlayerState();
     state.team = team;
     state.classId = classId;
-    state.x = x;
-    state.z = z;
+    state.x = inLane ? x + LANE.x : x;
+    state.z = inLane ? z + LANE.z : z;
     state.facing = facing;
     state.hp = state.maxHp = classDef.maxHp;
     if (classDef.resource === "mana") state.mana = state.maxMana = maxResource("mana");
@@ -65,8 +69,8 @@ class Sim {
 describe("Bots : déplacements", () => {
   it("une Lame traverse l'arène, trouve l'ennemi et l'élimine", () => {
     const sim = new Sim();
-    const lame = sim.spawn("bot", "lame", 0, START_ZONES[0].x, START_ZONES[0].z, 0, true);
-    const enemy = sim.spawn("cible", "barde", 1, START_ZONES[1].x, START_ZONES[1].z);
+    const lame = sim.spawn("bot", "lame", 0, START_ZONES[0].x, START_ZONES[0].z, 0, true, false);
+    const enemy = sim.spawn("cible", "barde", 1, START_ZONES[1].x, START_ZONES[1].z, 0, false, false);
     const elapsed = sim.run(120, () => !enemy.alive);
     assert.ok(!enemy.alive, `cible toujours en vie après ${elapsed.toFixed(0)} s (bot en ${lame.state.x.toFixed(1)}, ${lame.state.z.toFixed(1)})`);
   });
@@ -79,7 +83,6 @@ describe("Bots : déplacements", () => {
   });
 });
 
-// Les positions de ces tests sont dans un couloir de l'arène sans obstacle (x entre 3 et 8).
 describe("Bots : comportement par classe", () => {
   it("un Arcaniste frappé au corps à corps s'éloigne", () => {
     const sim = new Sim();
@@ -132,7 +135,7 @@ describe("Bots : partie complète", () => {
         const classId = pickBotClass(classes);
         classes.push(classId);
         const pos = spawnPosition(START_ZONES[team], i, 8);
-        sim.spawn(`t${team}-${i}`, classId, team, pos.x, pos.z, team === 0 ? Math.PI / 4 : (-3 * Math.PI) / 4, true);
+        sim.spawn(`t${team}-${i}`, classId, team, pos.x, pos.z, team === 0 ? Math.PI / 4 : (-3 * Math.PI) / 4, true, false);
       }
     }
     const aliveIn = (team: number) =>

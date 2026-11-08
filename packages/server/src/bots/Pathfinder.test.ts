@@ -16,14 +16,15 @@ function assertWalkable(from: Position, path: Position[]) {
 
 describe("Recherche de chemin", () => {
   it("va tout droit quand rien ne bloque", () => {
-    const path = pathfinder.findPath({ x: 5, z: -20 }, { x: 5, z: -30 });
-    assert.deepEqual(path, [{ x: 5, z: -30 }]);
+    // Zone ouverte de l'arène, autour de (37, 10).
+    const path = pathfinder.findPath({ x: 38, z: 5 }, { x: 38, z: -5 });
+    assert.deepEqual(path, [{ x: 38, z: -5 }]);
   });
 
   it("contourne un pilier", () => {
-    // Pilier en (10, 0) : le trajet direct le traverse.
-    const from = { x: 4, z: 0 };
-    const to = { x: 16, z: 0 };
+    // Pilier au centre des ruines, en (0, 0) : le trajet direct le traverse.
+    const from = { x: -5, z: 0 };
+    const to = { x: 5, z: 0 };
     const path = pathfinder.findPath(from, to)!;
     assert.ok(path.length >= 2);
     assertWalkable(from, path);

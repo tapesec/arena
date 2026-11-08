@@ -18,8 +18,9 @@ import { PlayerState } from "./state";
 
 const DT = 0.05;
 
-// Décalage appliqué à toutes les positions : un couloir de l.arène sans pilier ni muret.
-const OFFSET_X = 5;
+// Décalage appliqué à toutes les positions : la zone ouverte de l'arène (sans obstacle ni relief),
+// autour de (37, 10).
+const OFFSET_X = 28;
 
 // Monde de test : système de combat sans réseau, avec un hasard contrôlé.
 class World {
