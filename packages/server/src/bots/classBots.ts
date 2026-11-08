@@ -13,6 +13,8 @@ const CASTER_MAX_DISTANCE = 26;
 
 // Rayon dans lequel un ennemi de mêlée fait fuir un lanceur de sorts (en plus d'un coup reçu).
 const CASTER_DANGER_RADIUS = 3.5;
+// Un Arcaniste ne relance sa bulle qu'à cette distance des ennemis de mêlée.
+const BUBBLE_SAFE_DISTANCE = 8;
 // Distance minimale gardée face à un lanceur de sorts ennemi (moins dangereux au contact).
 const CASTER_VS_CASTER_MIN_DISTANCE = 8;
 
@@ -105,6 +107,12 @@ const BLAST_REACH = 4;
 // Arcaniste : gros dégâts à distance ; Gel sur les ennemis de mêlée qui approchent ;
 // Déflagration quand plusieurs ennemis sont collés à lui.
 class ArcanisteBot extends CasterBot {
+  // Préparation : se protéger d'une bulle avant le combat.
+  protected prepare() {
+    this.stop();
+    if (!this.isCasting && !this.self.has("bubble")) this.tryUse("bubble");
+  }
+
   protected think() {
     // Plusieurs ennemis tout près : Déflagration, protégée par Concentration si elle est prête.
     const close = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH).length;
@@ -125,6 +133,10 @@ class ArcanisteBot extends CasterBot {
       (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneRoot"),
     );
     if (approaching && this.tryUse("freeze", approaching)) return;
+
+    // Bulle : la relancer une fois à bonne distance de la mêlée (une incantation de 2 s au contact serait risquée).
+    const safe = this.meleeThreats(BUBBLE_SAFE_DISTANCE).length === 0;
+    if (safe && !this.self.has("bubble") && this.tryUse("bubble")) return;
 
     const target = this.pickTarget(DAMAGE_PRIORITY);
     if (!target) return this.advance();

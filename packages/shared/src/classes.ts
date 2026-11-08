@@ -2,7 +2,7 @@ import { MAX_ENDURANCE, MAX_MANA, type ResourceType } from "./combat";
 
 export type ClassId = "gardien" | "arcaniste" | "pretre" | "barde" | "lame";
 
-export type Passive = "shieldBlock" | "bubble" | "regenAura";
+export type Passive = "shieldBlock" | "regenAura";
 
 export interface ClassDef {
   id: ClassId;
@@ -35,8 +35,8 @@ const list: ClassDef[] = [
     maxHp: 900,
     resource: "mana",
     autoAttack: { damage: 30, interval: 2.5 },
-    abilities: ["firebolt", "blast", "freeze", "concentration"],
-    passives: ["bubble"],
+    abilities: ["firebolt", "blast", "freeze", "concentration", "bubble"],
+    passives: [],
   },
   {
     id: "pretre",

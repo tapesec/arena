@@ -126,7 +126,7 @@ export class StatusFx {
     }
   }
 
-  // Le serveur signale la première application de la bulle d'un joueur : elle se montre pendant 2 s.
+  // L'Arcaniste vient de lancer sa bulle : elle se montre pendant 2 s.
   bubbleWasApplied(playerId: string) {
     this.bubbleApplied.set(playerId, this.time);
   }
@@ -239,9 +239,8 @@ export class StatusFx {
   }
 
   // Bulle irisée : un volume à peine teinté et un anneau lumineux sur son contour, toujours tourné vers la caméra.
-  // Elle n'apparaît que 2 s après sa première application (début du combat, résurrection), signalée par le serveur :
-  // ni à ses reformations, ni quand un adversaire entre dans le champ de vision avec sa bulle déjà formée.
-  // age : temps écoulé depuis cette application.
+  // Elle n'apparaît que 2 s après son lancement (voir bubbleWasApplied), pas quand un adversaire entre dans le
+  // champ de vision avec sa bulle déjà posée. age : temps écoulé depuis le lancement.
   private updateBubble(status: PlayerStatus, active: boolean, age: number) {
     const shown = active && age >= 0 && age < BUBBLE_SHOWN;
     if (shown && !status.bubble) {

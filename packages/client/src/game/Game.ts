@@ -279,8 +279,6 @@ export class Game {
         this.players.get(event.sourceId)?.playAttack();
       }
       this.playReaction(event);
-      // Première application de la bulle d'un joueur : elle se montre un instant.
-      if (event.kind === "bubble") this.spellEffects.statuses.bubbleWasApplied(event.targetId);
       // La bulle de l'Arcaniste absorbe un coup : elle éclate.
       if (event.kind === "absorbed") {
         const target = this.players.get(event.targetId);
@@ -301,6 +299,8 @@ export class Game {
     });
     this.room.onMessage("ability", (event: AbilityUsedEvent) => {
       this.players.get(event.casterId)?.playAbility(event.abilityId);
+      // L'Arcaniste lance sa bulle : elle se montre un instant.
+      if (event.abilityId === "bubble") this.spellEffects.statuses.bubbleWasApplied(event.casterId);
       this.spellEffects.play(event.abilityId, this.players.get(event.casterId)?.root, this.players.get(event.targetId)?.root);
       this.gameAudio.onAbility(event.abilityId, this.players.get(event.casterId), this.players.get(event.targetId));
     });

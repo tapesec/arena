@@ -23,6 +23,7 @@ const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
   mez: { impact: [{ sound: "spellFantasy2" }] },
   aoeMez: { impact: [{ sound: "spellFantasy2" }] },
   concentration: { cast: [{ sound: "spellGeneric" }] },
+  bubble: { cast: [{ sound: "spellFantasy1", rate: 1.3 }] },
   silence: { impact: [{ sound: "spellFantasy1" }] },
   heal: { impact: [{ sound: "spellHeal" }] },
   groupHeal: { cast: [{ sound: "spellHeal" }] },

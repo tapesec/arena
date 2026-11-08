@@ -161,38 +161,28 @@ describe("Arcaniste", () => {
     assert.equal(lost(ally), 0);
   });
 
-  it("la Bulle absorbe un coup de mêlée puis se reforme après 10 s", () => {
+  it("la Bulle se lance sur soi, absorbe un coup de mêlée puis disparaît sans se reformer", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const lame = world.spawn("l", "lame", 1, 0, -2, 0);
-    world.run(DT); // la bulle apparaît au premier tick
+    world.run(1);
+    assert.ok(!arcaniste.has("bubble"), "pas de bulle d'office");
+    world.cast(arcaniste, "bubble");
+    world.run(2.1);
     assert.ok(arcaniste.has("bubble"));
     world.cast(lame, "backstab", arcaniste);
     assert.equal(world.eventsOf("absorbed").length, 1);
     assert.equal(arcaniste.state.hp, arcaniste.state.maxHp);
-    world.run(DT);
-    assert.ok(!arcaniste.has("bubble"));
-    world.run(10);
-    assert.ok(arcaniste.has("bubble"));
+    world.run(12);
+    assert.ok(!arcaniste.has("bubble"), "pas de reformation automatique");
   });
 
-  it("la Bulle n'est signalée qu'à sa première application, puis après une résurrection", () => {
+  it("la Bulle ne se lance que sur l'Arcaniste", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
-    const pretre = world.spawn("p", "pretre", 0, 3, 0);
-    const lame = world.spawn("l", "lame", 1, 0, -2, 0);
-    world.run(DT);
-    assert.equal(world.eventsOf("bubble").length, 1);
-    // Absorbée puis reformée : pas de nouveau signal.
-    world.cast(lame, "backstab", arcaniste);
-    world.run(10.1);
+    const ally = world.spawn("x", "pretre", 0, 3, 0);
+    world.cast(arcaniste, "bubble", ally);
+    world.run(2.1);
     assert.ok(arcaniste.has("bubble"));
-    assert.equal(world.eventsOf("bubble").length, 1);
-    // Morte puis ressuscitée : la bulle est de nouveau appliquée et signalée.
-    arcaniste.state.hp = 0;
-    (world.combat as unknown as { handleDeath(p: PlayerRuntime): void }).handleDeath(arcaniste);
-    world.cast(pretre, "resurrect", arcaniste);
-    world.run(4.2);
-    assert.ok(arcaniste.alive && arcaniste.has("bubble"));
-    assert.equal(world.eventsOf("bubble").length, 2);
+    assert.ok(!ally.has("bubble"));
   });
 
   it("Concentration protège l'incantation suivante du Silence", () => {

@@ -33,7 +33,6 @@ export const SHIELD_BLOCK_CHANCE = 0.3;
 export const INTERCEPT_RANGE = 4;
 
 // Arcaniste : délai de reformation de la bulle.
-export const BUBBLE_COOLDOWN = 10;
 
 // Prêtre
 export const HP_BUFF_AMOUNT = 200;
@@ -110,8 +109,7 @@ export type CombatEventKind =
   | "resurrect"
   | "buff" // detail = type de buff
   | "guard"
-  | "unguard"
-  | "bubble"; // bulle de l'Arcaniste appliquée pour la première fois depuis son apparition ou sa résurrection
+  | "unguard";
 
 export interface CombatEvent {
   kind: CombatEventKind;

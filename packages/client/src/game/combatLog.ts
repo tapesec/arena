@@ -56,9 +56,6 @@ export function formatCombatEvent(event: CombatEvent, nameOf: (id: string) => st
       return [`${source} ${sourceIsSelf ? "protégez" : "protège"} ${target}`];
     case "unguard":
       return [`${source} ${sourceIsSelf ? "ne protégez plus" : "ne protège plus"} ${target}`];
-    // Signal d'affichage seulement (voir StatusFx) : rien dans le journal.
-    case "bubble":
-      return [];
   }
 }
 

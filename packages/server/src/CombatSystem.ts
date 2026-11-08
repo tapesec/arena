@@ -2,7 +2,6 @@ import {
   AURA_ENDURANCE_REGEN,
   AURA_MANA_REGEN,
   AURA_RANGE,
-  BUBBLE_COOLDOWN,
   CRIT_CHANCE,
   CRIT_MULTIPLIER,
   ENDURANCE_REGEN,
@@ -178,15 +177,7 @@ export class CombatSystem {
     this.time += dt;
     const alive = [...this.players.values()].filter((p) => p.alive);
     for (const p of alive) this.updateEffectTimers(p, dt);
-    for (const p of alive) {
-      const hadBubble = p.has("bubble");
-      this.updateDerivedEffects(p);
-      // Première application de la bulle depuis l'apparition ou la résurrection : les clients la montrent un instant.
-      if (!hadBubble && p.has("bubble") && !p.bubbleApplied) {
-        p.bubbleApplied = true;
-        this.emit({ kind: "bubble", sourceId: p.id, targetId: p.id, abilityId: "" });
-      }
-    }
+    for (const p of alive) this.updateDerivedEffects(p);
     for (const p of alive) {
       this.updateMovement(p, dt);
       this.updateRegen(p, dt);
@@ -522,8 +513,10 @@ export class CombatSystem {
       this.emit({ kind: "evaded", ...base });
       return true;
     }
-    if (target.classDef.passives.includes("bubble") && this.time >= target.bubbleReadyAt) {
-      target.bubbleReadyAt = this.time + BUBBLE_COOLDOWN;
+    // Bulle de l'Arcaniste : elle absorbe le coup et disparaît.
+    const bubble = target.getEffect("bubble");
+    if (bubble) {
+      this.removeEffect(target, bubble);
       this.emit({ kind: "absorbed", ...base });
       return true;
     }
@@ -572,7 +565,6 @@ export class CombatSystem {
     state.songActive = false;
     state.lock = "";
     player.input = NO_INPUT;
-    player.bubbleApplied = false;
     this.endCast(player);
     for (const effect of [...player.effects]) this.removeEffect(player, effect);
     this.removeLinkedEffects(player);
@@ -603,7 +595,7 @@ export class CombatSystem {
     }
   }
 
-  // Effets qui dépendent de la situation : chant du Barde, aura du Prêtre, bulle prête.
+  // Effets qui dépendent de la situation : chant du Barde, aura du Prêtre.
   private updateDerivedEffects(player: PlayerRuntime) {
     const allies = [...this.players.values()].filter((p) => p.alive && !this.areEnemies(p, player));
     const near = (p: PlayerRuntime, range: number) => distance(p.state, player.state) <= range;
@@ -619,11 +611,6 @@ export class CombatSystem {
       player,
       "regenAura",
       allies.some((p) => p.classDef.passives.includes("regenAura") && near(p, AURA_RANGE)),
-    );
-    this.setDerivedEffect(
-      player,
-      "bubble",
-      player.classDef.passives.includes("bubble") && this.time >= player.bubbleReadyAt,
     );
   }
 

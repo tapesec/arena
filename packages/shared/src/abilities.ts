@@ -21,7 +21,7 @@ export type AbilityEffect =
   | { type: "cleanse" }
   | { type: "resurrect"; hpRatio: number }
   | { type: "buff"; buff: "buffHp" | "buffStrength" }
-  | { type: "status"; status: "evasion" | "rage" | "concentration"; duration: number }
+  | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble"; duration: number }
   | { type: "guard" }
   | { type: "intercept"; duration: number }
   | { type: "toggleSong" };
@@ -129,6 +129,19 @@ const list: AbilityDef[] = [
     cooldown: 180,
     target: "self",
     effects: [{ type: "status", status: "concentration", duration: INFINITE }],
+  },
+  // Bulle (comme le bladeturn de DAoC), sur l'Arcaniste seulement : absorbe entièrement le prochain coup de mêlée,
+  // puis disparaît.
+  {
+    id: "bubble",
+    name: "Bulle",
+    castTime: 2,
+    resource: "mana",
+    cost: 80,
+    range: 0,
+    cooldown: 10,
+    target: "self",
+    effects: [{ type: "status", status: "bubble", duration: INFINITE }],
   },
   // --- Prêtre ---
   {
