@@ -41,7 +41,7 @@ interface WeaponMount {
 // Animations propres à une classe (les déplacements sont communs à tous).
 export interface CharacterAnimationSet {
   idle: string;
-  // Coups d'auto-attaque, joués à tour de rôle.
+  // Coup d'auto-attaque (une seule animation par classe ; plusieurs seraient jouées à tour de rôle).
   attacks: string[];
   // Animation jouée au déclenchement d'une compétence ; "default" pour celles qui ne sont pas listées.
   abilities: Record<string, string>;
@@ -69,7 +69,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
     ],
     animations: {
       idle: "Idle_Shield_Loop",
-      attacks: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"],
+      attacks: ["Sword_Regular_A"],
       abilities: { shieldBash: "Shield_OneShot", guard: "Sword_Block", default: "Yes" },
     },
   },
@@ -82,7 +82,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
     ],
     animations: {
       idle: "Sword_Idle",
-      attacks: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"],
+      attacks: ["Sword_Regular_B"],
       abilities: { backstab: "Sword_Regular_C", flankStrike: "Sword_Regular_B", evasion: "Roll", default: "Yes" },
     },
   },
