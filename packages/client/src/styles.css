@@ -831,3 +831,14 @@ body,
   text-align: center;
   text-shadow: 0 0 2px #000;
 }
+
+/* Crédits sous le bouton de l'écran d'accueil. */
+.credits {
+  margin-top: 28px;
+  font-size: 12px;
+  color: #8a93a3;
+}
+
+.credits a {
+  color: inherit;
+}

@@ -22,6 +22,13 @@ const RATE_JITTER = 0.06;
 // En dessous de ce niveau, le début d'un son est du silence (ajouté par l'encodeur AAC) : il est sauté.
 const SILENCE = 0.002;
 
+// Musiques (voir scripts/build-sounds.mjs) : boucles jouées sur leur durée d'origine.
+const MUSIC_URL = "/music/";
+// Volume de la musique : doux pendant l'attente, normal en combat (sous les bruitages).
+export type MusicLevel = "soft" | "normal";
+const MUSIC_LEVELS: Record<MusicLevel, number> = { soft: 0.18, normal: 0.5 };
+const MUSIC_FADE = 2;
+
 interface Variant {
   buffer: AudioBuffer;
   // Début du son, après le silence ajouté par l'encodeur (en secondes).
@@ -51,10 +58,18 @@ export class AudioManager {
   private variantCounts: Promise<Record<string, number>> | null = null;
   private samples = new Map<string, Promise<Variant[]>>();
   private lastVariant = new Map<string, number>();
+  // Voie de la musique : son propre volume (fondus), sous le volume général.
+  private musicGain: GainNode;
+  private music: { id: string; source: AudioBufferSourceNode } | null = null;
+  private musicLoading: string | null = null;
+  private musicLevel: MusicLevel = "soft";
 
   constructor() {
     this.master = this.context.createGain();
     this.master.connect(this.context.destination);
+    this.musicGain = this.context.createGain();
+    this.musicGain.gain.value = 0;
+    this.musicGain.connect(this.master);
     this.volume = readNumber(VOLUME_KEY, 0.8);
     this.muted = readNumber(MUTED_KEY, 0) === 1;
     this.applyVolume();
@@ -166,6 +181,43 @@ export class AudioManager {
       }),
     );
     return variants;
+  }
+
+  // Lance une musique en boucle (sans effet si elle joue déjà), au niveau demandé.
+  async playMusic(id: string, level: MusicLevel = this.musicLevel) {
+    this.setMusicLevel(level);
+    if (this.music?.id === id || this.musicLoading === id) return;
+    this.music?.source.stop();
+    this.music = null;
+    this.musicLoading = id;
+    const [index, buffer] = await Promise.all([
+      fetch(`${MUSIC_URL}index.json`).then((r) => r.json() as Promise<Record<string, { duration: number }>>),
+      fetch(`${MUSIC_URL}${id}.m4a`)
+        .then((r) => r.arrayBuffer())
+        .then((data) => this.context.decodeAudioData(data)),
+    ]);
+    // Une autre musique a été demandée pendant le chargement.
+    if (this.musicLoading !== id) return;
+    this.musicLoading = null;
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    // Boucle sur la durée d'origine : l'encodeur peut ajouter quelques millisecondes de silence à la fin.
+    source.loop = true;
+    source.loopStart = 0;
+    source.loopEnd = Math.min(index[id]?.duration ?? buffer.duration, buffer.duration);
+    source.connect(this.musicGain);
+    source.start();
+    this.music = { id, source };
+  }
+
+  // Monte ou baisse la musique en fondu.
+  setMusicLevel(level: MusicLevel) {
+    this.musicLevel = level;
+    const gain = this.musicGain.gain;
+    const now = this.context.currentTime;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(MUSIC_LEVELS[level], now + MUSIC_FADE);
   }
 
   private applyVolume() {

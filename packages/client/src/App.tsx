@@ -30,11 +30,19 @@ function HomeScreen() {
           // Premier clic : le navigateur autorise alors le son.
           audio.unlock();
           audio.play("click");
+          // La musique démarre doucement pendant l'attente (voir Hud).
+          void audio.playMusic("lastEncounter", "soft");
           joinGame();
         }}
       >
         Rejoindre une partie
       </button>
+      <p className="credits">
+        Musique : « The Last Encounter », Eric Matyas,{" "}
+        <a href="https://soundimage.org" target="_blank" rel="noreferrer">
+          soundimage.org
+        </a>
+      </p>
     </div>
   );
 }
@@ -43,6 +51,11 @@ function Hud() {
   const status = useHudStore((s) => s.status);
   const error = useHudStore((s) => s.error);
   const phase = useHudStore((s) => s.match?.phase);
+
+  // Musique douce pendant l'attente (file, choix de classe, préparation), normale en combat.
+  useEffect(() => {
+    audio.setMusicLevel(phase === "fighting" ? "normal" : "soft");
+  }, [phase]);
 
   if (status === "connecting") return <div className="screen">Connexion au serveur…</div>;
   if (status === "error") return <ErrorScreen message={error} />;

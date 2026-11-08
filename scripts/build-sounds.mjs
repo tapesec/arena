@@ -19,6 +19,14 @@ const PEAK = 0.9;
 const MAX_GAIN = 20;
 const BITRATE = 96000;
 
+// Musiques : boucles faites pour s'enchaîner sans coupure, gardées en stéréo et mieux encodées.
+// Le jeu boucle sur la durée d'origine (public/music/index.json), à l'échantillon près.
+const MUSIC = {
+  lastEncounter: "music/The Last Encounter Long Loop.wav",
+};
+const MUSIC_OUT = path.join(ROOT, "packages/client/public/music");
+const MUSIC_BITRATE = 160000;
+
 const { groups } = JSON.parse(readFileSync(CATALOG, "utf8"));
 const work = mkdtempSync(path.join(tmpdir(), "arena-sounds-"));
 rmSync(OUT, { recursive: true, force: true });
@@ -47,6 +55,20 @@ for (const [id, group] of Object.entries(groups)) {
 rmSync(work, { recursive: true, force: true });
 writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index, null, 2) + "\n");
 console.log(`${count} fichiers, ${(total / 1024 / 1024).toFixed(2)} Mo`);
+
+rmSync(MUSIC_OUT, { recursive: true, force: true });
+mkdirSync(MUSIC_OUT, { recursive: true });
+const musicIndex = {};
+for (const [id, source] of Object.entries(MUSIC)) {
+  const input = path.join(ROOT, "assets-source", source);
+  const info = execFileSync("afinfo", [input]).toString();
+  const duration = Number(/estimated duration: ([\d.]+)/.exec(info)[1]);
+  const target = path.join(MUSIC_OUT, `${id}.m4a`);
+  execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", String(MUSIC_BITRATE), input, target]);
+  musicIndex[id] = { duration };
+  console.log(`musique ${id} : ${duration.toFixed(2)} s, ${(statSync(target).size / 1024 / 1024).toFixed(2)} Mo`);
+}
+writeFileSync(path.join(MUSIC_OUT, "index.json"), JSON.stringify(musicIndex, null, 2) + "\n");
 
 // Motif "dossier/nom*.ext" : les fichiers du dossier qui correspondent, triés.
 function expand(pattern) {

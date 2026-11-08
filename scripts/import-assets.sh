@@ -80,5 +80,11 @@ SOUNDS="$SRC/sounds effect"
 mkdir -p "$OUT/sounds"
 rsync -a --exclude .DS_Store "$SOUNDS/" "$OUT/sounds/"
 
+# Musique : « The Last Encounter » (Eric Matyas, soundimage.org — crédit obligatoire, voir CREDITS.md).
+MUSIC="$SRC/The Last Encounter Collection"
+[[ -d "$MUSIC" ]] || { echo "Dossier introuvable : $MUSIC" >&2; exit 1; }
+mkdir -p "$OUT/music"
+rsync -a --exclude .DS_Store "$MUSIC/" "$OUT/music/"
+
 echo "Assets extraits dans $OUT :"
 du -sh "$OUT"/*
