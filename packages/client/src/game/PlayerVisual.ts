@@ -226,6 +226,7 @@ export class PlayerVisual {
   // Charge le personnage animé de la classe (la classe est choisie après l'arrivée du joueur).
   private loadModel() {
     this.modelClass = this.state.classId;
+    this.animator?.dispose();
     this.model?.dispose();
     this.model = null;
     this.animator = null;
@@ -298,6 +299,7 @@ export class PlayerVisual {
 
   dispose() {
     this.disposed = true;
+    this.animator?.dispose();
     this.model?.dispose();
     this.root.dispose(false, true);
   }

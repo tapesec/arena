@@ -155,7 +155,8 @@ export class Game {
     });
 
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
-    if (import.meta.env.DEV) (window as unknown as { scene: Scene }).scene = this.scene;
+    // En développement : scène et joueurs accessibles depuis la console du navigateur.
+    if (import.meta.env.DEV) Object.assign(window, { scene: this.scene, players: this.players });
 
     this.engine.runRenderLoop(() => this.renderFrame());
     window.addEventListener("resize", this.handleResize);

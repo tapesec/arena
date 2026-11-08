@@ -5,6 +5,7 @@ import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
+import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 
 // Modèles 3D produits par scripts/build-assets.mjs, servis depuis public/models/.
 const MODELS_URL = "/models/";
@@ -90,7 +91,9 @@ export class CharacterAssets {
   private load(url: string): Promise<AssetContainer> {
     let container = this.containers.get(url);
     if (!container) {
-      container = LoadAssetContainerAsync(MODELS_URL + url, this.scene).then((loaded) => {
+      // Aucune animation lancée au chargement : elles sont jouées sur les personnages, pas sur les modèles d'origine.
+      const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
+      container = LoadAssetContainerAsync(MODELS_URL + url, this.scene, options).then((loaded) => {
         // Sans image d'environnement à refléter, le métal sort presque noir : on l'atténue.
         for (const material of loaded.materials) {
           if (material.getClassName() === "PBRMaterial") (material as unknown as { metallic: number }).metallic = METALLIC;
