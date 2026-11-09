@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
@@ -109,6 +109,7 @@ function Hud() {
       <FlashMessage />
       <div className="hud-bottom">
         <SelfCastBar />
+        <SwingBar />
         <Hotbar />
       </div>
       <CombatLog />
@@ -494,6 +495,47 @@ function Hotbar() {
     </div>
   );
 }
+
+// Jauge de coup d'arme, au-dessus de la barre, tant que l'attaque automatique est active : elle se remplit jusqu'au
+// prochain coup, prend la couleur de la technique en attente (dont l'icône s'affiche au bout), éclate quand l'arme
+// frappe, et clignote en rouge, pleine, quand le coup est prêt mais ne peut pas partir (hors de portée, pas de face...).
+function SwingBar() {
+  const attacking = useHudStore((s) => s.self?.attacking ?? false);
+  const queuedAbility = useHudStore((s) => s.self?.queuedAbility ?? "");
+  const swing = useHudStore((s) => s.swing);
+  const barRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+
+  // La jauge avance à chaque image sans repasser par React.
+  useEffect(() => {
+    if (!attacking || !swing) return;
+    let frame = 0;
+    const update = () => {
+      const duration = swing.end - swing.start;
+      const progress = duration > 0 ? Math.min(1, (performance.now() - swing.start) / duration) : 1;
+      if (fillRef.current) fillRef.current.style.width = `${progress * 100}%`;
+      // Une petite marge couvre le délai du réseau avant que le serveur n'annonce le coup.
+      barRef.current?.classList.toggle("swing-late", performance.now() > swing.end + LATE_MARGIN_MS);
+      frame = requestAnimationFrame(update);
+    };
+    update();
+    return () => cancelAnimationFrame(frame);
+  }, [attacking, swing]);
+
+  if (!attacking || !swing) return null;
+  const color = queuedAbility ? abilityColor(queuedAbility) : "#e8e2d0";
+  return (
+    <div className="swing-bar" ref={barRef}>
+      {/* Remonté à chaque coup pour rejouer l'éclat. */}
+      <div key={swing.start} className={`swing-fill ${swing.struck ? "swing-struck" : ""}`} ref={fillRef} style={{ background: color }} />
+      {queuedAbility && (
+        <span className="swing-queued" style={{ color }} dangerouslySetInnerHTML={{ __html: abilityIcon(queuedAbility) ?? "" }} />
+      )}
+    </div>
+  );
+}
+
+const LATE_MARGIN_MS = 250;
 
 function formatCooldown(seconds: number): string {
   if (seconds >= 60) return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;

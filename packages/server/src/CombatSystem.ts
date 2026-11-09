@@ -39,6 +39,7 @@ import {
   type AbilityUsedEvent,
   type CombatEvent,
   type CooldownEvent,
+  type SwingEvent,
   type CrowdControl,
   type EffectKind,
   type InterruptEvent,
@@ -127,6 +128,7 @@ export class CombatSystem {
     player.state.attacking = !player.state.attacking;
     // Couper l'attaque annule la technique en attente.
     if (!player.state.attacking) player.state.queuedAbility = "";
+    else this.sendSwing(player, false);
   }
 
   // Tourne le personnage vers sa cible sans le déplacer (équivalent du /face de DAoC).
@@ -312,6 +314,7 @@ export class CombatSystem {
 
     const auto = attacker.classDef.autoAttack;
     attacker.swingTimer = auto.interval;
+    this.sendSwing(attacker, true);
     // Une technique en attente remplace le coup normal ; si ses conditions ne sont pas remplies, le coup reste normal.
     const queued = attacker.state.queuedAbility ? getAbility(attacker.state.queuedAbility) : undefined;
     attacker.state.queuedAbility = "";
@@ -737,6 +740,11 @@ export class CombatSystem {
 
   private emit(event: CombatEvent) {
     this.out.broadcast("combat", event, [event.sourceId, event.targetId]);
+  }
+
+  private sendSwing(player: PlayerRuntime, struck: boolean) {
+    const event: SwingEvent = { remaining: player.swingTimer, struck };
+    this.out.sendTo(player.id, "swing", event);
   }
 
   private sendError(player: PlayerRuntime, message: string) {

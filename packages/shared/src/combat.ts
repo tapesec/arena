@@ -143,3 +143,11 @@ export interface CooldownEvent {
   abilityId: string;
   duration: number;
 }
+
+// Envoyé uniquement au joueur concerné : secondes avant que son arme puisse frapper de nouveau.
+// Envoyé à chaque coup d'arme et quand il active l'attaque automatique, pour la jauge de coup de la barre d'action.
+export interface SwingEvent {
+  remaining: number;
+  // Vrai si l'arme vient de frapper (faux quand l'attaque vient d'être activée).
+  struck: boolean;
+}

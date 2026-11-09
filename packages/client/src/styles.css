@@ -941,3 +941,57 @@ body,
 .credits a {
   color: inherit;
 }
+
+/* Jauge de coup d'arme, au-dessus de la barre d'action. */
+.swing-bar {
+  position: relative;
+  width: 240px;
+  height: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(10, 12, 16, 0.8);
+}
+
+.swing-fill {
+  height: 100%;
+  width: 0;
+}
+
+/* L'arme vient de frapper : bref éclat blanc. */
+.swing-struck {
+  animation: swing-flash 0.25s ease-out;
+}
+
+@keyframes swing-flash {
+  from {
+    box-shadow: 0 0 12px 4px #ffffff;
+    filter: brightness(2.5);
+  }
+}
+
+/* Coup prêt mais bloqué (hors de portée, pas face à la cible...) : la jauge pleine clignote en rouge. */
+.swing-late .swing-fill {
+  background: #d23c3c !important;
+  animation: swing-late-blink 0.5s steps(2, jump-none) infinite;
+}
+
+@keyframes swing-late-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Icône de la technique en attente, au bout de la jauge. */
+.swing-queued {
+  position: absolute;
+  right: -26px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+}
+
+.swing-queued svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}

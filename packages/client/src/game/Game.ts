@@ -29,6 +29,7 @@ import {
   type AbilityUsedEvent,
   type CombatEvent,
   type CooldownEvent,
+  type SwingEvent,
   type EffectCategory,
   type EffectKind,
   type InterruptEvent,
@@ -315,6 +316,7 @@ export class Game {
       hud.startCooldown(event.abilityId, event.duration);
       this.gameAudio.onCooldown(event.duration);
     });
+    this.room.onMessage("swing", (event: SwingEvent) => hud.startSwing(event.remaining, event.struck));
     this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
   }
 

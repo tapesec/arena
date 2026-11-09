@@ -119,6 +119,9 @@ interface HudState {
   combatLog: string[];
   // Instant (performance.now()) de fin de recharge, par compétence.
   cooldownEnds: Record<string, number>;
+  // Prochain coup d'arme : instants (performance.now()) de début et de fin de l'attente, null avant le premier ;
+  // struck : l'attente a commencé par un coup (la jauge le signale d'un éclat).
+  swing: { start: number; end: number; struck: boolean } | null;
   // Message bref affiché au centre de l'écran ("Cible hors de portée"...).
   flashMessage: string | null;
   actions: GameActions | null;
@@ -130,6 +133,7 @@ interface HudState {
   setActions: (actions: GameActions | null) => void;
   pushLog: (line: string) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
+  startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
 }
 
@@ -144,6 +148,7 @@ const freshGame = {
   group: [],
   combatLog: [],
   cooldownEnds: {},
+  swing: null,
   flashMessage: null,
 };
 
@@ -161,6 +166,10 @@ export const useHudStore = create<HudState>((set) => ({
   pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),
   startCooldown: (abilityId, durationSeconds) =>
     set((s) => ({ cooldownEnds: { ...s.cooldownEnds, [abilityId]: performance.now() + durationSeconds * 1000 } })),
+  startSwing: (remainingSeconds, struck) => {
+    const now = performance.now();
+    set({ swing: { start: now, end: now + remainingSeconds * 1000, struck } });
+  },
   flash: (message) => {
     clearTimeout(errorTimeout);
     set({ flashMessage: message });
