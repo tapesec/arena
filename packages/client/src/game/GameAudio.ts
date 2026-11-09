@@ -41,7 +41,7 @@ const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
   // Gardien. Charge et Rempart : sons d'impact et de sort en attendant mieux (pas de galop ni de grondement).
   charge: { cast: [{ sound: "swingHeavy", rate: 0.8 }] },
   chargeImpact: { impact: [{ sound: "hitPlateHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
-  taunt: { cast: [{ sound: "warcry" }] },
+  taunt: { cast: [{ sound: "provocation_face_me_coward_1" }] },
   rallyCry: { cast: [{ sound: "ralliement_hold_the_line" }] },
   rampart: { cast: [{ sound: "hitPlateHeavy", rate: 0.8 }, { sound: "spellFire", rate: 0.6, volume: 0.7 }] },
 };

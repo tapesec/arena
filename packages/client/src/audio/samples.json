@@ -1,5 +1,5 @@
 {
-  "_comment": "Sons enregistrés : chaque groupe réunit des variantes (une est tirée au hasard à chaque lecture). files : fichiers de assets-source/sounds (* = n'importe quels caractères). Converties par scripts/build-sounds.mjs en public/sounds/<id>_<n>.m4a.",
+  "_comment": "Sons enregistrés : chaque groupe réunit des variantes (une est tirée au hasard à chaque lecture). files : fichiers de assets-source/sounds (* = n'importe quels caractères). Converties par scripts/build-sounds.mjs en public/sounds/<id>_<n>.m4a. maxDuration (facultatif) : coupe le son à cette durée en secondes, avec un fondu de sortie.",
   "groups": {
     "swingSword": {
       "label": "Épée qui fend l'air",
@@ -659,11 +659,11 @@
         "ElevenLabs/bouclier_blocage_sourd.mp3"
       ]
     },
-    "warcry": {
-      "label": "Cri de guerre (Provocation)",
+    "provocation_face_me_coward_1": {
+      "label": "« Face me, coward! » (Provocation, ElevenLabs)",
       "category": "Voix Gardien",
       "files": [
-        "warcry/warcry.wav"
+        "ElevenLabs/provocation_face_me_coward_1.mp3"
       ]
     },
     "ralliement_hold_the_line": {
@@ -678,7 +678,8 @@
       "category": "Sorts",
       "files": [
         "Magic SFX Preview Pack/Healing Full.wav"
-      ]
+      ],
+      "maxDuration": 1.5
     }
   }
 }

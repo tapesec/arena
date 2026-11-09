@@ -18,6 +18,8 @@ const SAMPLE_RATE = 44100;
 const PEAK = 0.9;
 const MAX_GAIN = 20;
 const BITRATE = 96000;
+// Fondu de sortie d'un son coupé par maxDuration (en secondes).
+const TRIM_FADE = 0.2;
 
 // Musiques, gardées en stéréo et mieux encodées. Le jeu boucle sur la durée indiquée dans public/music/index.json :
 // la durée d'origine pour une boucle faite pour s'enchaîner, ou la fin du son pour un morceau complet
@@ -48,7 +50,7 @@ for (const [id, group] of Object.entries(groups)) {
     const normalized = path.join(work, "normalized.wav");
     const target = path.join(OUT, `${id}_${i}.m4a`);
     execFileSync("afconvert", ["-f", "WAVE", "-d", `LEI16@${SAMPLE_RATE}`, "-c", "1", file, wav]);
-    normalize(wav, normalized);
+    normalize(wav, normalized, group.maxDuration);
     execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", String(BITRATE), normalized, target]);
     total += statSync(target).size;
     count++;
@@ -97,10 +99,21 @@ function expand(pattern) {
     .map((name) => path.join(dir, name));
 }
 
-// Ramène la crête d'un WAV 16 bits mono à PEAK.
-function normalize(input, output) {
-  const buffer = readFileSync(input);
-  const { offset, length } = dataChunk(buffer);
+// Ramène la crête d'un WAV 16 bits mono à PEAK ; avec maxDuration, coupe le son à cette durée avec un fondu.
+function normalize(input, output, maxDuration) {
+  let buffer = readFileSync(input);
+  let { offset, length } = dataChunk(buffer);
+  if (maxDuration && length > maxDuration * SAMPLE_RATE * 2) {
+    length = Math.round(maxDuration * SAMPLE_RATE) * 2;
+    const fade = Math.round(TRIM_FADE * SAMPLE_RATE) * 2;
+    for (let i = length - fade; i < length; i += 2) {
+      buffer.writeInt16LE(Math.round((buffer.readInt16LE(offset + i) * (length - i)) / fade), offset + i);
+    }
+    // En-têtes RIFF et "data" mis à la nouvelle taille.
+    buffer = buffer.subarray(0, offset + length);
+    buffer.writeUInt32LE(length, offset - 4);
+    buffer.writeUInt32LE(buffer.length - 8, 4);
+  }
   let peak = 1;
   for (let i = offset; i < offset + length; i += 2) peak = Math.max(peak, Math.abs(buffer.readInt16LE(i)));
   const gain = Math.min(MAX_GAIN, (PEAK * 32767) / peak);
