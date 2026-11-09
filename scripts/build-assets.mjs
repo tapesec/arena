@@ -18,7 +18,7 @@ const TEXTURE_SIZE = 1024;
 
 // Animations gardées, par bibliothèque. Les autres (pêche, zombies, nage…) sont retirées.
 const ANIMATIONS = {
-  "UAL1_Standard.glb": [
+  "UAL1.glb": [
     "Idle_Loop",
     "Walk_Loop",
     "Jog_Fwd_Loop",

@@ -32,7 +32,7 @@ interface AnimationEntry {
 // Triées par nom : les variantes (Sword_Heavy_A, Sword_Heavy_A_Rec…) se suivent.
 const ANIMATIONS = (catalog as AnimationEntry[]).slice().sort((a, b) => a.name.localeCompare(b.name));
 const CATEGORIES = [...new Set(ANIMATIONS.map((a) => a.category))];
-const LIBRARIES = ["/dev-models/animations/UAL1_Standard.glb", "/dev-models/animations/UAL2.glb"];
+const LIBRARIES = ["/dev-models/animations/UAL1.glb", "/dev-models/animations/UAL2.glb"];
 
 // Disposition : une grille verticale de cases face à la caméra, une animation par case.
 const COLUMNS = 6;

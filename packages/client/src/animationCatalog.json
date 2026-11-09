@@ -1,7 +1,7 @@
 [
  {
   "name": "A_TPose",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Divers",
@@ -10,7 +10,7 @@
  },
  {
   "name": "Crouch_Fwd_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Déplacement",
@@ -19,7 +19,7 @@
  },
  {
   "name": "Crouch_Idle_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Déplacement",
@@ -28,7 +28,7 @@
  },
  {
   "name": "Dance_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Attente / émote",
@@ -37,7 +37,7 @@
  },
  {
   "name": "Death01",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Réaction",
@@ -46,7 +46,7 @@
  },
  {
   "name": "Driving_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Divers",
@@ -55,7 +55,7 @@
  },
  {
   "name": "Fixing_Kneeling",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Divers",
@@ -64,7 +64,7 @@
  },
  {
   "name": "Hit_Chest",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Réaction",
@@ -73,7 +73,7 @@
  },
  {
   "name": "Hit_Head",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Réaction",
@@ -82,7 +82,7 @@
  },
  {
   "name": "Idle_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Attente / émote",
@@ -91,7 +91,7 @@
  },
  {
   "name": "Idle_Talking_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Attente / émote",
@@ -100,7 +100,7 @@
  },
  {
   "name": "Idle_Torch_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Attente / émote",
@@ -109,7 +109,7 @@
  },
  {
   "name": "Interact",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Divers",
@@ -118,7 +118,7 @@
  },
  {
   "name": "Jog_Fwd_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Déplacement",
@@ -127,7 +127,7 @@
  },
  {
   "name": "Jump_Land",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Déplacement",
@@ -136,7 +136,7 @@
  },
  {
   "name": "Jump_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Déplacement",
@@ -145,7 +145,7 @@
  },
  {
   "name": "Jump_Start",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Déplacement",
@@ -154,7 +154,7 @@
  },
  {
   "name": "PickUp_Table",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Divers",
@@ -163,7 +163,7 @@
  },
  {
   "name": "Pistol_Aim_Down",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Combat",
@@ -172,7 +172,7 @@
  },
  {
   "name": "Pistol_Aim_Neutral",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Combat",
@@ -181,7 +181,7 @@
  },
  {
   "name": "Pistol_Aim_Up",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Combat",
@@ -190,7 +190,7 @@
  },
  {
   "name": "Pistol_Idle_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Combat",
@@ -199,7 +199,7 @@
  },
  {
   "name": "Pistol_Reload",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Combat",
@@ -208,7 +208,7 @@
  },
  {
   "name": "Pistol_Shoot",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Combat",
@@ -217,7 +217,7 @@
  },
  {
   "name": "Punch_Cross",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Combat",
@@ -226,7 +226,7 @@
  },
  {
   "name": "Punch_Jab",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Combat",
@@ -235,7 +235,7 @@
  },
  {
   "name": "Push_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Divers",
@@ -244,7 +244,7 @@
  },
  {
   "name": "Roll",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Déplacement",
@@ -253,7 +253,7 @@
  },
  {
   "name": "Sitting_Enter",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Divers",
@@ -262,7 +262,7 @@
  },
  {
   "name": "Sitting_Exit",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": false,
   "category": "Divers",
@@ -271,7 +271,7 @@
  },
  {
   "name": "Sitting_Idle_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Divers",
@@ -280,7 +280,7 @@
  },
  {
   "name": "Sitting_Talking_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Divers",
@@ -289,7 +289,7 @@
  },
  {
   "name": "Spell_Simple_Enter",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Sort / action",
@@ -298,7 +298,7 @@
  },
  {
   "name": "Spell_Simple_Exit",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Sort / action",
@@ -307,7 +307,7 @@
  },
  {
   "name": "Spell_Simple_Idle_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Sort / action",
@@ -316,7 +316,7 @@
  },
  {
   "name": "Spell_Simple_Shoot",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Sort / action",
@@ -325,7 +325,7 @@
  },
  {
   "name": "Sprint_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Déplacement",
@@ -334,7 +334,7 @@
  },
  {
   "name": "Swim_Fwd_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Déplacement",
@@ -343,7 +343,7 @@
  },
  {
   "name": "Swim_Idle_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Déplacement",
@@ -352,7 +352,7 @@
  },
  {
   "name": "Sword_Attack",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": false,
   "category": "Combat",
@@ -361,7 +361,7 @@
  },
  {
   "name": "Sword_Idle",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Combat",
@@ -370,7 +370,7 @@
  },
  {
   "name": "Walk_Formal_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": false,
   "loop": true,
   "category": "Déplacement",
@@ -379,7 +379,7 @@
  },
  {
   "name": "Walk_Loop",
-  "pack": "UAL1 (Standard)",
+  "pack": "UAL1 (Pro)",
   "inGame": true,
   "loop": true,
   "category": "Déplacement",
@@ -1581,6 +1581,699 @@
   "loop": true,
   "category": "Déplacement",
   "description": "Marche en titubant vers la droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "BackFlip",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Salto arrière.",
+  "usedFor": ""
+ },
+ {
+  "name": "Celebration",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Célèbre une victoire.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Down_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Descend une échelle ou une paroi.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "S'accroche à une paroi.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Lâche la paroi.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Idle_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroché à une paroi, immobile.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Left_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Se déplace à gauche sur une paroi.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Right_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Se déplace à droite sur une paroi.",
+  "usedFor": ""
+ },
+ {
+  "name": "Climb_Up_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Grimpe une échelle ou une paroi.",
+  "usedFor": ""
+ },
+ {
+  "name": "ClimbLedge",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Se hisse sur un rebord.",
+  "usedFor": ""
+ },
+ {
+  "name": "Counter_Angry",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Derrière un comptoir, s'énerve.",
+  "usedFor": ""
+ },
+ {
+  "name": "Counter_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Se place derrière un comptoir.",
+  "usedFor": ""
+ },
+ {
+  "name": "Counter_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Quitte le comptoir.",
+  "usedFor": ""
+ },
+ {
+  "name": "Counter_Give",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Tend un objet par-dessus un comptoir.",
+  "usedFor": ""
+ },
+ {
+  "name": "Counter_Idle_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Attend derrière un comptoir.",
+  "usedFor": ""
+ },
+ {
+  "name": "Counter_Show",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Montre quelque chose sur un comptoir.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Bwd_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Rampe en arrière.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Se met à ramper.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Se relève après avoir rampé.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Fwd_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Rampe en avant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Idle_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Allongé, prêt à ramper.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Left_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Rampe vers la gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crawl_Right_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Rampe vers la droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Bwd_L_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, recule en diagonale gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Bwd_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, recule.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Bwd_R_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, recule en diagonale droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "S'accroupit.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Se relève.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Fwd_L_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, avance en diagonale gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Fwd_R_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, avance en diagonale droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Left_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, pas de côté à gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Right_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, pas de côté à droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crying",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Pleure.",
+  "usedFor": ""
+ },
+ {
+  "name": "Death02",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Chute au sol, mort (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Dodge_Left",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Esquive d'un bond sur la gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Dodge_Right",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Esquive d'un bond sur la droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Drink",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Boit (potion).",
+  "usedFor": ""
+ },
+ {
+  "name": "GroundSit_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "S'assoit par terre.",
+  "usedFor": ""
+ },
+ {
+  "name": "GroundSit_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Se relève du sol.",
+  "usedFor": ""
+ },
+ {
+  "name": "GroundSit_Idle_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Assis par terre.",
+  "usedFor": ""
+ },
+ {
+  "name": "Hit_Shoulder_L",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Encaisse un coup à l'épaule gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Hit_Shoulder_R",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Encaisse un coup à l'épaule droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Hit_Stomach",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Encaisse un coup au ventre, se plie.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_LookAround_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Regarde autour de lui.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Paper",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Pierre-feuille-ciseaux : feuille.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Rock",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Pierre-feuille-ciseaux : pierre.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Scissors",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Pierre-feuille-ciseaux : ciseaux.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Tired_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Attente, essoufflé.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Bwd_L_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en arrière en diagonale gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Bwd_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en arrière.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Bwd_R_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en arrière en diagonale droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Fwd_L_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en diagonale avant gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Fwd_LeanL_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en virant à gauche, penché.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Fwd_LeanR_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en virant à droite, penché.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Fwd_R_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en diagonale avant droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Left_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court de côté vers la gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Right_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court de côté vers la droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Kick",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup de pied.",
+  "usedFor": ""
+ },
+ {
+  "name": "PickUp_Kneeling",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Ramasse un objet au sol, à genoux.",
+  "usedFor": ""
+ },
+ {
+  "name": "PunchKick_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Se met en garde (mains nues).",
+  "usedFor": ""
+ },
+ {
+  "name": "PunchKick_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Quitte la garde (mains nues).",
+  "usedFor": ""
+ },
+ {
+  "name": "Push_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Se met en position pour pousser.",
+  "usedFor": ""
+ },
+ {
+  "name": "Push_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Arrête de pousser.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sitting_Idle02_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Assis (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Sitting_Idle03_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Assis (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Sitting_Nodding_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Assis, hoche la tête.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Double_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Lève les deux mains pour commencer un sort.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Double_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Baisse les deux mains après un sort.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Double_Idle_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Sort / action",
+  "description": "Concentre un sort, les deux mains tendues en avant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Double_Shoot_Loop",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": true,
+  "category": "Sort / action",
+  "description": "Projette un sort à deux mains, en boucle.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sprint_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Démarre une course rapide.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sprint_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "S'arrête après une course rapide.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Attack_Standing",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée sans bouger les pieds.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Enter",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Dégaine l'épée.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Exit",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Rengaine l'épée.",
+  "usedFor": ""
+ },
+ {
+  "name": "Turn90_L",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Quart de tour à gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Turn90_R",
+  "pack": "UAL1 (Pro)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Quart de tour à droite.",
   "usedFor": ""
  }
 ]

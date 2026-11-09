@@ -14,7 +14,7 @@ import { dedup, prune, resample } from "@gltf-transform/functions";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = path.join(ROOT, "assets-source", "animations");
 const OUT = path.join(ROOT, "packages", "client", "public", "dev-models", "animations");
-const LIBRARIES = ["UAL1_Standard.glb", "UAL2.glb"];
+const LIBRARIES = ["UAL1.glb", "UAL2.glb"];
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 await mkdir(OUT, { recursive: true });

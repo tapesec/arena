@@ -10,9 +10,10 @@ OUT="$ROOT/assets-source"
 
 ALL="$SRC/All in One - Quaternius[Patreon].zip"
 OUTFITS="$SRC/Modular Character Outfits - Fantasy[Source].zip"
+UAL1="$SRC/Universal Animation Library[Pro].zip"
 UAL2="$SRC/Universal Animation Library 2[Source].zip"
 
-for f in "$ALL" "$OUTFITS" "$UAL2"; do
+for f in "$ALL" "$OUTFITS" "$UAL1" "$UAL2"; do
   [[ -f "$f" ]] || { echo "Archive introuvable : $f" >&2; exit 1; }
 done
 
@@ -43,8 +44,8 @@ extract "$ALL" "$OUT/base" "$BASE/License*"
 cp "$OUT/base/bodies/T_Eye_Normal.png" "$OUT/base/bodies/T_Eye_Normal_png.png"
 cp "$OUT/base/bodies/T_Hair_1_Normal.png" "$OUT/base/bodies/T_Hair_1_Normal_png.png"
 
-# Animations : bibliothèque 1 (gratuite) et 2 (Source), sans root motion (le serveur déplace les personnages).
-extract "$ALL" "$OUT/animations" 'Animation/Universal Animation Library 1\[Standard\]/Unreal-Godot/UAL1_Standard.glb'
+# Animations : bibliothèque 1 (Pro) et 2 (Source), sans root motion (le serveur déplace les personnages).
+extract "$UAL1" "$OUT/animations" 'Unreal-Godot/UAL1.glb'
 extract "$UAL2" "$OUT/animations" 'Unreal-Godot/UAL2.glb'
 extract "$UAL2" "$OUT/animations" 'Female Mannequin/Unreal-Godot/Mannequin_F.glb'
 

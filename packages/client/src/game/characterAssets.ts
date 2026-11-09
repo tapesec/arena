@@ -26,7 +26,7 @@ const METALLIC = 0.25;
 const TEAM_PAINT = ["#2c5cb8", "#b8302c"];
 
 // Bibliothèques d'animations : un squelette sans maillage et ses animations.
-const ANIMATION_LIBRARIES = ["animations/UAL1_Standard.glb", "animations/UAL2.glb"];
+const ANIMATION_LIBRARIES = ["animations/UAL1.glb", "animations/UAL2.glb"];
 
 // Arme tenue dans une main : os du squelette auquel elle est attachée, et placement dans la main
 // (position en mètres, rotation en radians, dans le repère de l'os).
