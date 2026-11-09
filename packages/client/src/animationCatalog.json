@@ -1,0 +1,1586 @@
+[
+ {
+  "name": "A_TPose",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Pose de référence (bras en croix), pas une animation de jeu.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Fwd_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Avance accroupi.",
+  "usedFor": ""
+ },
+ {
+  "name": "Crouch_Idle_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Accroupi, immobile.",
+  "usedFor": ""
+ },
+ {
+  "name": "Dance_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Danse.",
+  "usedFor": ""
+ },
+ {
+  "name": "Death01",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Chute au sol, mort.",
+  "usedFor": "Mort"
+ },
+ {
+  "name": "Driving_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Conduit un véhicule.",
+  "usedFor": ""
+ },
+ {
+  "name": "Fixing_Kneeling",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Répare quelque chose à genoux.",
+  "usedFor": ""
+ },
+ {
+  "name": "Hit_Chest",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Encaisse un coup à la poitrine.",
+  "usedFor": "Réaction à un coup léger"
+ },
+ {
+  "name": "Hit_Head",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Encaisse un coup à la tête.",
+  "usedFor": "Réaction à un gros coup (critique ou plus de 200 dégâts)"
+ },
+ {
+  "name": "Idle_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Attente, debout.",
+  "usedFor": "Attente des lanceurs de sorts"
+ },
+ {
+  "name": "Idle_Talking_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Parle en gesticulant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Torch_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Attente, torche à la main.",
+  "usedFor": ""
+ },
+ {
+  "name": "Interact",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Geste pour actionner quelque chose.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jog_Fwd_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Course.",
+  "usedFor": "Course"
+ },
+ {
+  "name": "Jump_Land",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Réception de saut.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jump_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "En l'air pendant un saut.",
+  "usedFor": ""
+ },
+ {
+  "name": "Jump_Start",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Impulsion de saut.",
+  "usedFor": ""
+ },
+ {
+  "name": "PickUp_Table",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Ramasse un objet sur une table.",
+  "usedFor": ""
+ },
+ {
+  "name": "Pistol_Aim_Down",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Vise au pistolet vers le bas.",
+  "usedFor": ""
+ },
+ {
+  "name": "Pistol_Aim_Neutral",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Vise au pistolet.",
+  "usedFor": ""
+ },
+ {
+  "name": "Pistol_Aim_Up",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Vise au pistolet vers le haut.",
+  "usedFor": ""
+ },
+ {
+  "name": "Pistol_Idle_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Combat",
+  "description": "Attente, pistolet en main.",
+  "usedFor": ""
+ },
+ {
+  "name": "Pistol_Reload",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Recharge un pistolet.",
+  "usedFor": ""
+ },
+ {
+  "name": "Pistol_Shoot",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Tire au pistolet.",
+  "usedFor": ""
+ },
+ {
+  "name": "Punch_Cross",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup de poing direct.",
+  "usedFor": ""
+ },
+ {
+  "name": "Punch_Jab",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup de poing rapide.",
+  "usedFor": ""
+ },
+ {
+  "name": "Push_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Pousse un objet lourd.",
+  "usedFor": ""
+ },
+ {
+  "name": "Roll",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Roulade avant.",
+  "usedFor": "Évasion"
+ },
+ {
+  "name": "Sitting_Enter",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "S'assoit.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sitting_Exit",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Se relève.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sitting_Idle_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Assis.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sitting_Talking_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Assis, parle.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Simple_Enter",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Lève la main pour commencer un sort.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Simple_Exit",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Baisse la main après un sort.",
+  "usedFor": ""
+ },
+ {
+  "name": "Spell_Simple_Idle_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Sort / action",
+  "description": "Concentre un sort, main tendue.",
+  "usedFor": "Incantation (tous les sorts)"
+ },
+ {
+  "name": "Spell_Simple_Shoot",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Projette un sort d'un geste de la main.",
+  "usedFor": "Lancement d'un sort"
+ },
+ {
+  "name": "Sprint_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Course rapide.",
+  "usedFor": ""
+ },
+ {
+  "name": "Swim_Fwd_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Nage.",
+  "usedFor": ""
+ },
+ {
+  "name": "Swim_Idle_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Fait du surplace dans l'eau.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Attack",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée simple.",
+  "usedFor": "Attaque auto des lanceurs de sorts"
+ },
+ {
+  "name": "Sword_Idle",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Combat",
+  "description": "Attente, épée en garde.",
+  "usedFor": "Attente de la Lame"
+ },
+ {
+  "name": "Walk_Formal_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche droite, posée.",
+  "usedFor": ""
+ },
+ {
+  "name": "Walk_Loop",
+  "pack": "UAL1 (Standard)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche.",
+  "usedFor": "Marche (root, déplacement lent)"
+ },
+ {
+  "name": "Bandage_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Sort / action",
+  "description": "Se bande une blessure.",
+  "usedFor": ""
+ },
+ {
+  "name": "Bow_Aim_Down",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Vise à l'arc vers le bas.",
+  "usedFor": ""
+ },
+ {
+  "name": "Bow_Aim_Neutral",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Vise à l'arc.",
+  "usedFor": ""
+ },
+ {
+  "name": "Bow_Aim_Up",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Vise à l'arc vers le haut.",
+  "usedFor": ""
+ },
+ {
+  "name": "Bow_Notch",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Encoche une flèche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Bow_RapidShoot_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Combat",
+  "description": "Tir à l'arc en rafale.",
+  "usedFor": ""
+ },
+ {
+  "name": "Bow_Shoot",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Tire une flèche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Chest_Open",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Ouvre un coffre.",
+  "usedFor": ""
+ },
+ {
+  "name": "ClimbUp_1m",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Escalade un rebord de 1 m.",
+  "usedFor": ""
+ },
+ {
+  "name": "ClimbUp_2m",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Escalade un mur de 2 m.",
+  "usedFor": ""
+ },
+ {
+  "name": "Consume",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Boit ou mange (potion).",
+  "usedFor": ""
+ },
+ {
+  "name": "DoubleJump",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Double saut.",
+  "usedFor": ""
+ },
+ {
+  "name": "Farm_Harvest",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Récolte.",
+  "usedFor": ""
+ },
+ {
+  "name": "Farm_PickingTree",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Cueille dans un arbre.",
+  "usedFor": ""
+ },
+ {
+  "name": "Farm_PlantSeed",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Plante une graine.",
+  "usedFor": ""
+ },
+ {
+  "name": "Farm_ScatteringSeeds",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Sème à la volée.",
+  "usedFor": ""
+ },
+ {
+  "name": "Farm_Watering",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Arrose.",
+  "usedFor": ""
+ },
+ {
+  "name": "Fish_Cast",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Lance une ligne de pêche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Fish_Cast_Idle_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Attend, ligne lancée.",
+  "usedFor": ""
+ },
+ {
+  "name": "Fish_OH_Idle_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Attente, canne en main.",
+  "usedFor": ""
+ },
+ {
+  "name": "Fish_Reel",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Remonte la ligne.",
+  "usedFor": ""
+ },
+ {
+  "name": "Fish_Reel_Failed",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Rate sa prise.",
+  "usedFor": ""
+ },
+ {
+  "name": "GetOffWall_2m",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Descend d'un mur de 2 m.",
+  "usedFor": ""
+ },
+ {
+  "name": "Hit_Knockback",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Projeté en arrière par un choc.",
+  "usedFor": "Projection au début d'un stun"
+ },
+ {
+  "name": "Idle_FoldArms_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Attente, bras croisés.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Lantern_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Attente, lanterne à la main.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_No_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Réaction",
+  "description": "Fait « non » de la tête.",
+  "usedFor": "Stun (après la projection)"
+ },
+ {
+  "name": "Idle_Rail_Call",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Accoudé à une rambarde, appelle.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Rail_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Accoudé à une rambarde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Shield_Break",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Garde au bouclier brisée, déséquilibré.",
+  "usedFor": ""
+ },
+ {
+  "name": "Idle_Shield_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Attente, bouclier levé.",
+  "usedFor": "Attente du Gardien"
+ },
+ {
+  "name": "Idle_TalkingPhone_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Parle au téléphone.",
+  "usedFor": ""
+ },
+ {
+  "name": "IdleToLay",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "S'allonge au sol.",
+  "usedFor": ""
+ },
+ {
+  "name": "JogToFlip",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Course puis salto avant.",
+  "usedFor": ""
+ },
+ {
+  "name": "KipUp",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Se relève d'un bond depuis le sol.",
+  "usedFor": ""
+ },
+ {
+  "name": "LayToIdle",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Se relève depuis le sol.",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Soulevé en l'air (par un sort).",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir_Fall",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Retombe après avoir été soulevé.",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir_Fall_Air_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Réaction",
+  "description": "Chute en l'air.",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir_Fall_Impact",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Touche le sol après une chute.",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir_Hit_L",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Frappé en l'air, côté gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir_Hit_R",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Frappé en l'air, côté droit.",
+  "usedFor": ""
+ },
+ {
+  "name": "LiftAir_Idle_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Réaction",
+  "description": "Suspendu en l'air, impuissant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Melee_Combo",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Enchaînement de coups à mains nues.",
+  "usedFor": ""
+ },
+ {
+  "name": "Melee_Hook",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Crochet du poing.",
+  "usedFor": ""
+ },
+ {
+  "name": "Melee_Hook_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde après un crochet.",
+  "usedFor": ""
+ },
+ {
+  "name": "Melee_Knee",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup de genou.",
+  "usedFor": ""
+ },
+ {
+  "name": "Melee_Knee_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde après un coup de genou.",
+  "usedFor": ""
+ },
+ {
+  "name": "Melee_Uppercut",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Uppercut.",
+  "usedFor": ""
+ },
+ {
+  "name": "Mining_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Pioche.",
+  "usedFor": ""
+ },
+ {
+  "name": "MonsterTransformation",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Se transforme en monstre (posture bestiale, rugissement).",
+  "usedFor": "Rage"
+ },
+ {
+  "name": "NinjaJump_Double",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Double saut acrobatique.",
+  "usedFor": ""
+ },
+ {
+  "name": "NinjaJump_Idle_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "En l'air, acrobatique.",
+  "usedFor": ""
+ },
+ {
+  "name": "NinjaJump_Land",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Réception acrobatique.",
+  "usedFor": ""
+ },
+ {
+  "name": "NinjaJump_Start",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Impulsion de saut acrobatique.",
+  "usedFor": ""
+ },
+ {
+  "name": "OverhandThrow",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Lance un objet par-dessus l'épaule (dague, grenade).",
+  "usedFor": ""
+ },
+ {
+  "name": "SafetyVault",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Saute par-dessus un obstacle.",
+  "usedFor": ""
+ },
+ {
+  "name": "Shield_Dash",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Charge, bouclier en avant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Shield_OneShot",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup de bouclier.",
+  "usedFor": "Coup de bouclier"
+ },
+ {
+  "name": "Slide_Exit",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Fin de glissade.",
+  "usedFor": ""
+ },
+ {
+  "name": "Slide_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Glissade au sol.",
+  "usedFor": ""
+ },
+ {
+  "name": "Slide_Start",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Début de glissade.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sprint_Shield_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Course rapide, bouclier levé.",
+  "usedFor": ""
+ },
+ {
+  "name": "StepUp",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Monte une marche haute.",
+  "usedFor": ""
+ },
+ {
+  "name": "Surprise",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Sursaute, surpris.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Aerial_A",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée en l'air.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Aerial_A_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour après un coup en l'air.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Aerial_B",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Second coup d'épée en l'air.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Aerial_Combo_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Combat",
+  "description": "Enchaînement d'épée en l'air.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Aerial_Idle_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Combat",
+  "description": "En l'air, épée en main.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Block",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Parade à l'épée.",
+  "usedFor": "Garde, blocage au bouclier"
+ },
+ {
+  "name": "Sword_Dash",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Ruée en avant, épée en avant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_GroundPound",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Frappe le sol de l'épée en sautant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_A",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée lourd.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_A_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde après un coup lourd.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_B",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée lourd (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_B_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_C",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée lourd (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_C_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_Combo",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Enchaînement de coups lourds.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Heavy_D",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée lourd final.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_A",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée rapide.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_A_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde après un coup rapide.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_B",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée rapide (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_B_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_C",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée rapide (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_C_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_Combo",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Enchaînement de coups rapides.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Light_D",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée rapide final.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Regular_A",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée.",
+  "usedFor": "Attaque auto du Gardien"
+ },
+ {
+  "name": "Sword_Regular_A_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Regular_B",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée (variante).",
+  "usedFor": "Attaque auto de la Lame, Attaque de flanc"
+ },
+ {
+  "name": "Sword_Regular_B_Rec",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Retour en garde.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_Regular_C",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée (variante).",
+  "usedFor": "Attaque dans le dos"
+ },
+ {
+  "name": "Sword_Regular_Combo",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Enchaînement de coups d'épée.",
+  "usedFor": ""
+ },
+ {
+  "name": "Sword_UpperCut",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Coup d'épée de bas en haut.",
+  "usedFor": ""
+ },
+ {
+  "name": "TreeChopping_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Divers",
+  "description": "Coupe du bois.",
+  "usedFor": ""
+ },
+ {
+  "name": "Turn180_L",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Demi-tour par la gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Turn180_R",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Demi-tour par la droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Walk_Bwd_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Recule en diagonale gauche.",
+  "usedFor": "Recul en diagonale"
+ },
+ {
+  "name": "Walk_Bwd_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Recule.",
+  "usedFor": "Recul"
+ },
+ {
+  "name": "Walk_Bwd_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Recule en diagonale droite.",
+  "usedFor": "Recul en diagonale"
+ },
+ {
+  "name": "Walk_Carry_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en portant une charge.",
+  "usedFor": ""
+ },
+ {
+  "name": "Walk_Fwd_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en diagonale gauche.",
+  "usedFor": "Marche en diagonale"
+ },
+ {
+  "name": "Walk_Fwd_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche (variante).",
+  "usedFor": ""
+ },
+ {
+  "name": "Walk_Fwd_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en diagonale droite.",
+  "usedFor": "Marche en diagonale"
+ },
+ {
+  "name": "Walk_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Pas de côté à gauche.",
+  "usedFor": "Pas de côté"
+ },
+ {
+  "name": "Walk_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Pas de côté à droite.",
+  "usedFor": "Pas de côté"
+ },
+ {
+  "name": "WallRun_Jump_L",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Saute depuis un mur (gauche).",
+  "usedFor": ""
+ },
+ {
+  "name": "WallRun_Jump_R",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Déplacement",
+  "description": "Saute depuis un mur (droite).",
+  "usedFor": ""
+ },
+ {
+  "name": "WallRun_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court sur un mur (gauche).",
+  "usedFor": ""
+ },
+ {
+  "name": "WallRun_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court sur un mur (droite).",
+  "usedFor": ""
+ },
+ {
+  "name": "Yes",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Fait « oui » de la tête.",
+  "usedFor": "Compétences du Gardien sans animation propre"
+ },
+ {
+  "name": "Zombie_Bite",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Mord (zombie).",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Idle_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Titube sur place.",
+  "usedFor": "Stun (titube jusqu'à la fin)"
+ },
+ {
+  "name": "Zombie_Run_Bwd_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant à reculons en diagonale gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_Bwd_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant à reculons.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_Bwd_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant à reculons en diagonale droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_Fwd_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant en diagonale avant gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_Fwd_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant vers l'avant.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_Fwd_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant en diagonale avant droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant vers la gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Run_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Court en titubant vers la droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Scratch",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Griffe (zombie).",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Spawn",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": false,
+  "category": "Divers",
+  "description": "Sort de terre (zombie).",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_Bwd_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant à reculons en diagonale gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_Bwd_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant à reculons.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_Bwd_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant à reculons en diagonale droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_Fwd_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant en diagonale avant gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_Fwd_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": true,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant vers l'avant.",
+  "usedFor": "Root (marche entravée)"
+ },
+ {
+  "name": "Zombie_Walk_Fwd_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant en diagonale avant droite.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_L_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant vers la gauche.",
+  "usedFor": ""
+ },
+ {
+  "name": "Zombie_Walk_R_Loop",
+  "pack": "UAL2 (Source)",
+  "inGame": false,
+  "loop": true,
+  "category": "Déplacement",
+  "description": "Marche en titubant vers la droite.",
+  "usedFor": ""
+ }
+]

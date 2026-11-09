@@ -192,13 +192,17 @@ export class CharacterAssets {
   // Matériaux d'arme peints, par matériau d'origine et par équipe.
   private paints = new Map<string, PBRMaterial>();
 
-  constructor(private scene: Scene) {
+  // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
+  constructor(
+    private scene: Scene,
+    private libraries: string[] = ANIMATION_LIBRARIES,
+  ) {
     registerBuiltInLoaders();
   }
 
   // Lance le téléchargement de tout ce qui est connu, pour qu'il soit prêt à l'apparition des joueurs.
   preload() {
-    for (const url of ANIMATION_LIBRARIES) void this.load(url);
+    for (const url of this.libraries) void this.load(url);
     for (const def of Object.values(CHARACTERS)) {
       void this.load(def.model);
       for (const weapon of def.weapons) void this.load(weapon.model);
@@ -210,7 +214,8 @@ export class CharacterAssets {
     if (!container) {
       // Aucune animation lancée au chargement : elles sont jouées sur les personnages, pas sur les modèles d'origine.
       const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
-      container = LoadAssetContainerAsync(MODELS_URL + url, this.scene, options).then((loaded) => {
+      // Un chemin absolu (commençant par /) est pris tel quel, les autres sont relatifs à public/models/.
+      container = LoadAssetContainerAsync(url.startsWith("/") ? url : MODELS_URL + url, this.scene, options).then((loaded) => {
         // Sans image d'environnement à refléter, le métal sort presque noir : on l'atténue.
         for (const material of loaded.materials) {
           if (material.getClassName() === "PBRMaterial") (material as unknown as { metallic: number }).metallic = METALLIC;
@@ -222,12 +227,14 @@ export class CharacterAssets {
     return container;
   }
 
-  async create(classId: string, parent: TransformNode): Promise<CharacterInstance | null> {
+  // only : si fourni, seules ces animations sont rebranchées sur le personnage (la page de visualisation en
+  // affiche une par personnage ; les rebrancher toutes coûterait cher en mémoire).
+  async create(classId: string, parent: TransformNode, only?: ReadonlySet<string>): Promise<CharacterInstance | null> {
     const def = CHARACTERS[classId];
     if (!def) return null;
     const [character, libraries, weaponContainers] = await Promise.all([
       this.load(def.model),
-      Promise.all(ANIMATION_LIBRARIES.map((url) => this.load(url))),
+      Promise.all(this.libraries.map((url) => this.load(url))),
       Promise.all(def.weapons.map((w) => this.load(w.model))),
     ]);
 
@@ -245,6 +252,7 @@ export class CharacterAssets {
     const animations = new Map<string, AnimationGroup>();
     for (const library of libraries) {
       for (const group of library.animationGroups) {
+        if (only && !only.has(group.name)) continue;
         const clone = group.clone(group.name, (target: { name: string }) => bones.get(target.name) ?? null);
         clone.stop();
         animations.set(group.name, clone);

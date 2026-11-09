@@ -2,3 +2,6 @@ node_modules
 dist
 # Assets bruts extraits des archives Quaternius (trop lourds) : régénérer avec scripts/import-assets.sh
 assets-source
+
+# Bibliothèques d'animations complètes de la page de visualisation : node scripts/build-animation-catalog.mjs
+packages/client/public/dev-models
