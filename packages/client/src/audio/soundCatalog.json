@@ -78,18 +78,6 @@
   "duration": 1.88
  },
  {
-  "name": "ralliement_cor_4_original",
-  "pack": "ElevenLabs",
-  "file": "ElevenLabs/ralliement_cor_4_original.mp3",
-  "duration": 2.04
- },
- {
-  "name": "ralliement_cor_double",
-  "pack": "ElevenLabs",
-  "file": "ElevenLabs/ralliement_cor_double.wav",
-  "duration": 1.7
- },
- {
   "name": "ralliement_hold_the_line",
   "pack": "ElevenLabs",
   "file": "ElevenLabs/ralliement_hold_the_line.mp3",
