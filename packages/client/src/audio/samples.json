@@ -651,6 +651,34 @@
       "files": [
         "hits/hit37.mp3.flac"
       ]
+    },
+    "bouclier_blocage_sourd": {
+      "label": "Blocage au bouclier, choc sourd (ElevenLabs)",
+      "category": "Impacts",
+      "files": [
+        "ElevenLabs/bouclier_blocage_sourd.mp3"
+      ]
+    },
+    "warcry": {
+      "label": "Cri de guerre (Provocation)",
+      "category": "Voix Gardien",
+      "files": [
+        "warcry/warcry.wav"
+      ]
+    },
+    "ralliement_hold_the_line": {
+      "label": "« Hold the line! » (Cri de ralliement, ElevenLabs)",
+      "category": "Voix Gardien",
+      "files": [
+        "ElevenLabs/ralliement_hold_the_line.mp3"
+      ]
+    },
+    "Healing_Full": {
+      "label": "Soin cristallin (Magic SFX)",
+      "category": "Sorts",
+      "files": [
+        "Magic SFX Preview Pack/Healing Full.wav"
+      ]
     }
   }
 }

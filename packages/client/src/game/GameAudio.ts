@@ -25,7 +25,7 @@ const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
   concentration: { cast: [{ sound: "spellGeneric" }] },
   bubble: { cast: [{ sound: "spellFantasy1", rate: 1.3 }] },
   silence: { impact: [{ sound: "spellFantasy1" }] },
-  heal: { impact: [{ sound: "spellHeal" }] },
+  heal: { impact: [{ sound: "Healing_Full" }] },
   groupHeal: { cast: [{ sound: "spellHeal" }] },
   instantHeal: { impact: [{ sound: "spellHeal" }] },
   buffHp: { impact: [{ sound: "spellFantasy0" }] },
@@ -38,11 +38,11 @@ const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
   shieldBash: { impact: [{ sound: "hitWoodHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
   evasion: { cast: [{ sound: "evade" }] },
   rage: { cast: [{ sound: "crit" }] },
-  // Gardien. Pas de cor, de cri de guerre ni de galop dans les sons du jeu : sons d'impact et de sort en attendant.
+  // Gardien. Charge et Rempart : sons d'impact et de sort en attendant mieux (pas de galop ni de grondement).
   charge: { cast: [{ sound: "swingHeavy", rate: 0.8 }] },
   chargeImpact: { impact: [{ sound: "hitPlateHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
-  taunt: { cast: [{ sound: "hitPunchHeavy" }, { sound: "hitPunchHeavy", rate: 0.9, volume: 0.8 }] },
-  rallyCry: { cast: [{ sound: "spellFantasy0", rate: 0.7 }] },
+  taunt: { cast: [{ sound: "warcry" }] },
+  rallyCry: { cast: [{ sound: "ralliement_hold_the_line" }] },
   rampart: { cast: [{ sound: "hitPlateHeavy", rate: 0.8 }, { sound: "spellFire", rate: 0.6, volume: 0.7 }] },
 };
 // Attaques au corps à corps : le geste de l'arme chez l'attaquant, puis le coup qui porte chez la cible.
@@ -173,7 +173,7 @@ export class GameAudio {
         this.healed(target);
         break;
       case "blocked":
-        this.playCues([{ sound: "hitWood" }], position, melee ? HIT_DELAY : 0);
+        this.playCues([{ sound: "bouclier_blocage_sourd" }], position, melee ? HIT_DELAY : 0);
         break;
       case "evaded":
         this.playAt("evade", position);
