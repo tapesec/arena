@@ -84,6 +84,12 @@
   "duration": 1.7
  },
  {
+  "name": "ralliement_hold_the_line",
+  "pack": "ElevenLabs",
+  "file": "ElevenLabs/ralliement_hold_the_line.mp3",
+  "duration": 1.72
+ },
+ {
   "name": "fanfare",
   "pack": "Divers",
   "file": "fanfare.ogg",
