@@ -68,13 +68,28 @@ interface CharacterDef {
 const CASTER_ATTACKS = ["Sword_Attack"];
 const CAST_RELEASE = "Spell_Simple_Shoot";
 
+// Prise en main d'une arme à une main, mesurée sur les doigts refermés des animations d'épée : la poignée passe
+// dans le poing, perpendiculaire aux doigts (axe z de l'os de la main), lame côté pouce. Les modèles d'arme ont
+// leur lame vers +y et leur garde vers x : on les tourne pour que la lame suive l'axe z de la main et que la garde
+// suive l'axe des doigts (y). La main gauche est le miroir de la droite : seul le côté de la paume change (x).
+const GRIP_ROTATION: [number, number, number] = [0, Math.PI / 2, Math.PI / 2];
+// Centre du poing fermé dans le repère de l'os de la main : côté paume (x) et à mi-chemin des phalanges (y).
+const PALM = 0.03;
+const GRIP_HEIGHT = 0.1;
+// Recul le long de la poignée pour que la main tienne le milieu du manche, pas la garde (selon l'arme).
+const SWORD_HANDLE = 0.09;
+const DAGGER_HANDLE = 0.05;
+function grip(hand: "r" | "l", handle: number): Pick<WeaponMount, "bone" | "position" | "rotation"> {
+  return { bone: `hand_${hand}`, position: [hand === "r" ? -PALM : PALM, GRIP_HEIGHT, handle], rotation: GRIP_ROTATION };
+}
+
 // Une classe sans entrée ici reste affichée en capsule.
 const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
     model: "characters/gardien.glb",
     outfit: "MI_Knight",
     weapons: [
-      { model: "weapons/sword.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0] },
+      { model: "weapons/sword.glb", ...grip("r", SWORD_HANDLE) },
       {
         model: "weapons/shield.glb",
         bone: "lowerarm_l",
@@ -95,8 +110,8 @@ const CHARACTERS: Record<string, CharacterDef> = {
     outfit: "MI_Ranger",
     hairColor: "#3b2a1e",
     weapons: [
-      { model: "weapons/dagger.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
-      { model: "weapons/dagger.glb", bone: "hand_l", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
+      { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35 },
+      { model: "weapons/dagger.glb", ...grip("l", DAGGER_HANDLE), scale: 0.35 },
     ],
     animations: {
       idle: "Sword_Idle",
@@ -151,7 +166,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
     outfit: "MI_Peasant",
     hairColor: "#5a3a22",
     weapons: [
-      { model: "weapons/dagger.glb", bone: "hand_r", position: [0, 0.08, 0.02], rotation: [0, 0, 0], scale: 0.35 },
+      { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35 },
       // Le luth est porté en bandoulière dans le dos, manche au-dessus de l'épaule (orientation calculée en jeu).
       {
         model: "weapons/lute.glb",

@@ -54,7 +54,7 @@ interface Cell {
 // La scène Babylon : une seule pour toute la page, les personnages y sont recréés à chaque changement de page.
 class Stage {
   private engine: Engine;
-  private scene: Scene;
+  readonly scene: Scene;
   private camera: FreeCamera;
   private assets: CharacterAssets;
   private instances: CharacterInstance[] = [];
@@ -223,6 +223,8 @@ function AnimationViewer() {
   useEffect(() => {
     const stage = new Stage(canvasRef.current!);
     stageRef.current = stage;
+    // Accès depuis la console, pour régler les armes en main.
+    Object.assign(window, { stage });
     // Les noms suivent les cases à chaque image (elles bougent quand la fenêtre change de taille).
     stage.onFrame = () => {
       const labels = labelsRef.current?.children;
