@@ -84,11 +84,22 @@ Gros dégâts à distance, à condition d'être protégé.
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
-| Trait de feu | 250 dégâts sur une cible. | 2,5 s | 80 mana | — |
-| Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 5 m (pas les alliés), 350 dégâts au centre, décroissant jusqu'à 100 au bord. | 2,5 s | 150 mana | — |
+| Trait de feu | 250 dégâts sur une cible. | 2 s | 100 mana | — |
+| Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 7 m (pas les alliés), 450 dégâts au centre, décroissant jusqu'à 100 au bord. | 2 s | 150 mana | — |
+| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 90 s |
+| Trait de givre | 150 dégâts de givre et snare 4 s (contrôle magique). | 2 s | 100 mana | — |
+| Near sight | 15 s : la portée des sorts de la cible est réduite de 75 % (30 m → 7,5 m) ; une incantation en cours échoue si la cible est trop loin à la fin. Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire. | 1,5 s | 100 mana | — |
+| Brûlure | Dot de feu : 400 dégâts en 10 s, un tic par seconde. Comme dans DAoC, chaque tic libère du mez et du root mais n'interrompt pas l'incantation (et n'est pas intercepté). Relancée, elle repart de zéro. | 2 s | 200 mana | — |
+| Nova de givre | Root 12 s sur les ennemis à 15 m autour du lanceur, sans cible. | 1,5 s | 200 mana | 60 s |
+| Puissance arcanique (ultime) | 15 s : tous les sorts de dégâts de l'Arcaniste sont critiques (× 1,5), tics de la Brûlure compris. | Instantané | 400 mana | 3 min |
+
+À débloquer (programmés, pas encore dans la barre) :
+
+| Compétence | Effet | Incantation | Coût | Recharge |
+|---|---|---|---|---|
 | Gel | Root de 10 s. | 1,5 s | 60 mana | — |
-| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 3 min |
 | Bulle | Sur l'Arcaniste seulement (comme le bladeturn de DAoC) : absorbe entièrement le prochain coup de mêlée, puis disparaît. Seul un coup au corps à corps la casse : elle ne protège pas des sorts. Elle arrête l'attaque entière, effets compris (le Coup de bouclier ne stun pas, l'attaque de flanc ne ralentit pas) ; si un Gardien intercepte le coup, c'est lui qui le prend et la bulle reste. Cassée, elle n'interrompt pas l'incantation en cours. À relancer. | 2 s | 80 mana | 10 s |
+| Transfert | Téléportation de 10 m vers l'avant ; possible rooté, sans retirer le root. Pas encore programmé. | Instantané | 100 mana | 30 s |
 
 ### 3. Prêtre — healer
 

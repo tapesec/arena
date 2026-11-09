@@ -41,7 +41,9 @@ export const TAUNT_HALT_DURATION = 0.5;
 // Ralentissement de tous les snares.
 export const SNARE_SLOW = 0.4;
 
-// Arcaniste : délai de reformation de la bulle.
+// Arcaniste : portée des sorts restante sous Near sight (réduite de 75 %), intervalle entre deux tics d'un dot.
+export const NEAR_SIGHT_FACTOR = 0.25;
+export const DOT_INTERVAL = 1;
 
 // Prêtre
 export const HP_BUFF_AMOUNT = 200;
@@ -118,6 +120,7 @@ export type CombatEventKind =
   | "cleanse"
   | "resurrect"
   | "buff" // detail = type de buff
+  | "debuff" // effet néfaste qui n'est pas un contrôle (detail = type, ex. "nearSight")
   | "guard"
   | "unguard";
 

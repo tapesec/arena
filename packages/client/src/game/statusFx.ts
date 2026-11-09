@@ -6,12 +6,18 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import { CreatePlane } from "@babylonjs/core/Meshes/Builders/planeBuilder";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
+import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { Scene } from "@babylonjs/core/scene";
+import { getAbility } from "@arena/shared";
 import {
+  arcaneColumn,
+  arcaneSparks,
+  burning,
+  burningSmoke,
   chargeStreak,
   frostMist,
   mezHalo,
@@ -54,6 +60,8 @@ interface PlayerStatus {
   // Durée totale du root en cours, relevée à son apparition (le serveur n'envoie que le temps restant).
   rootDuration: number;
   bubble: Mesh | null;
+  // Cercles de la Nova de givre en cours d'incantation.
+  nova: TransformNode | null;
 
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
@@ -78,7 +86,16 @@ const AURAS: Record<string, Aura> = {
   rampart: { recipe: rampartFlames, at: "feet", active: (p) => p.hasEffect("rampart") },
   charge: { recipe: chargeStreak, at: "body", active: (p) => p.state.charging },
   rally: { recipe: rallyHalo, at: "head", active: (p) => p.hasEffect("magicImmune") },
+  // Arcaniste : la cible de la Brûlure brûle tant que dure le dot ; colonne et éclairs de la Puissance arcanique.
+  burn: { recipe: burning, at: "feet", active: (p) => p.hasEffect("burning") },
+  burnSmoke: { recipe: burningSmoke, at: "feet", active: (p) => p.hasEffect("burning") },
+  arcaneColumn: { recipe: arcaneColumn, at: "feet", active: (p) => p.hasEffect("arcanePower") },
+  arcaneSparks: { recipe: arcaneSparks, at: "feet", active: (p) => p.hasEffect("arcanePower") },
 };
+
+// Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
+const NOVA_RINGS = 3;
+const NOVA_RING_PERIOD = 1.2;
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
 export class StatusFx {
@@ -89,6 +106,8 @@ export class StatusFx {
   private iceMaterial: StandardMaterial;
   private bubbleMaterial: StandardMaterial;
   private rimMaterial: StandardMaterial;
+  private novaMaterial: StandardMaterial;
+  private novaRadius = getAbility("frostNova")?.radius ?? 15;
   private time = 0;
 
   constructor(
@@ -99,6 +118,7 @@ export class StatusFx {
     this.iceMaterial = iceMaterial(scene);
     this.bubbleMaterial = bubbleMaterial(scene);
     this.rimMaterial = rimMaterial(scene);
+    this.novaMaterial = novaMaterial(scene);
   }
 
   update(dt: number, players: Iterable<PlayerVisual>) {
@@ -112,8 +132,9 @@ export class StatusFx {
       const root = alive ? remaining(player, "root") : 0;
       const bubble = alive && player.hasEffect("bubble");
       const aura = alive && Object.values(AURAS).some((a) => a.active(player, Infinity));
+      const nova = alive && player.state.castAbility === "frostNova";
       let status = this.statuses.get(player);
-      if (!status && !mez && !stun && !root && !bubble && !aura) continue;
+      if (!status && !mez && !stun && !root && !bubble && !aura && !nova) continue;
       status ??= this.track(player);
       const speed = Math.hypot(player.root.position.x - status.lastX, player.root.position.z - status.lastZ) / Math.max(dt, 1e-3);
       status.lastX = player.root.position.x;
@@ -128,6 +149,7 @@ export class StatusFx {
       this.updateStars(status, stun, player);
       this.updateRoot(status, root, player);
       this.updateBubble(status, bubble, this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
+      this.updateNova(status, nova);
     }
     // Joueurs disparus (déconnectés, sortis du champ de vision).
     for (const [player, status] of this.statuses) {
@@ -164,6 +186,7 @@ export class StatusFx {
       mist: null,
       rootDuration: 0,
       bubble: null,
+      nova: null,
 
       auras: new Map(),
       body: new Vector3(),
@@ -251,6 +274,40 @@ export class StatusFx {
     if (left > status.rootDuration) status.rootDuration = left;
     const solid = left / status.rootDuration;
     status.crystals.scaling.set(1, MELTED + (1 - MELTED) * solid, 1).scaleInPlace(0.6 + 0.4 * solid);
+  }
+
+  // Nova de givre en incantation : des anneaux bleus semi-transparents partent de l'Arcaniste jusqu'au bord de la
+  // zone, l'un après l'autre, en s'estompant.
+  private updateNova(status: PlayerStatus, active: boolean) {
+    if (active && !status.nova) {
+      status.nova = new TransformNode("novaRings", this.scene);
+      status.nova.parent = status.anchor;
+      for (let i = 0; i < NOVA_RINGS; i++) {
+        const ring = CreateTorus("novaRing", { diameter: 2, thickness: 0.04, tessellation: 64 }, this.scene);
+        ring.material = this.novaMaterial;
+        ring.isPickable = false;
+        ring.parent = status.nova;
+        ring.position.y = 0.08;
+        const disc = CreateDisc("novaDisc", { radius: 1, tessellation: 64 }, this.scene);
+        disc.material = this.novaMaterial;
+        disc.isPickable = false;
+        disc.rotation.x = Math.PI / 2;
+        disc.position.y = -0.03;
+        disc.parent = ring;
+        disc.visibility = 0.25;
+      }
+    }
+    if (!active && status.nova) {
+      status.nova.dispose();
+      status.nova = null;
+    }
+    if (!status.nova) return;
+    status.nova.getChildMeshes(true).forEach((ring, i) => {
+      const phase = (this.time / NOVA_RING_PERIOD + i / NOVA_RINGS) % 1;
+      ring.scaling.set(this.novaRadius * phase, 1, this.novaRadius * phase);
+      ring.visibility = 0.8 * (1 - phase);
+      for (const disc of ring.getChildMeshes()) disc.visibility = 0.2 * (1 - phase);
+    });
   }
 
   // Bulle irisée : un volume à peine teinté et un anneau lumineux sur son contour, toujours tourné vers la caméra.
@@ -352,6 +409,19 @@ function starMaterial(scene: Scene): StandardMaterial {
   material.emissiveColor = new Color3(1, 0.85, 0.3);
   material.disableLighting = true;
   material.backFaceCulling = false;
+  return material;
+}
+
+// Anneaux de la Nova de givre : bleu glacé, lumineux, en mode additif.
+function novaMaterial(scene: Scene): StandardMaterial {
+  const material = new StandardMaterial("novaRing", scene);
+  material.diffuseColor = Color3.Black();
+  material.specularColor = Color3.Black();
+  material.emissiveColor = new Color3(0.35, 0.7, 1);
+  material.disableLighting = true;
+  material.alphaMode = Constants.ALPHA_ADD;
+  material.backFaceCulling = false;
+  material.alpha = 0.6;
   return material;
 }
 

@@ -25,7 +25,11 @@ export type EffectKind =
   | "magicImmune"
   // Rempart : le Gardien ne peut plus rien faire, son groupe proche est protégé de la mêlée.
   | "rampart"
-  | "meleeImmune";
+  | "meleeImmune"
+  // Arcaniste : portée des sorts réduite, dot de feu, sorts critiques.
+  | "nearSight"
+  | "burning"
+  | "arcanePower";
 
 export type EffectCategory = "control" | "debuff" | "immunity" | "buff";
 
@@ -52,6 +56,9 @@ export const EFFECTS: Record<EffectKind, { label: string; category: EffectCatego
   magicImmune: { label: "Immunisé magie", category: "immunity" },
   rampart: { label: "Rempart", category: "buff" },
   meleeImmune: { label: "Protégé (Rempart)", category: "buff" },
+  nearSight: { label: "Vision réduite", category: "debuff" },
+  burning: { label: "Brûlure", category: "debuff" },
+  arcanePower: { label: "Puissance arcanique", category: "buff" },
 };
 
 // Durée restante envoyée pour un effet sans limite de temps.

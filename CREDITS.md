@@ -12,7 +12,7 @@ importées par `scripts/import-assets.sh`.
   d'accueil du jeu.
 
 - **Icônes de la barre d'action** — [game-icons.net](https://game-icons.net), licence CC BY 3.0 : Lorc, Delapouite,
-  Zeromancer, Sbed et Felbrigg. Fond retiré et couleur adaptée. Détail par compétence dans
+  Zeromancer, Sbed, Felbrigg et Skoll. Fond retiré et couleur adaptée. Détail par compétence dans
   `packages/client/src/icons/SOURCES.txt`. Crédit affiché sur l'écran d'accueil du jeu.
 
 ## Sans obligation de crédit
@@ -24,4 +24,6 @@ importées par `scripts/import-assets.sh`.
 - **Sons de mêlée** (épée, coups) — qubodup / Iwan Gabovitch, édités par remaxim, OpenGameArt, CC0.
 - **Autres sons** (impacts « hits », voix de femme RPG Voice Starter Pack de Cici Fyre, cris d'homme, sorts de glace,
   de soin et de feu, Fantasy Sound Library) — licences vérifiées par l'auteur du jeu, sans obligation de crédit.
+- **Sons des sorts de l'Arcaniste** (Trait de givre, Nova de givre, Brûlure) — Sonniss, GDC 2026 Game Audio Bundle
+  (Epic Stock Media), libres de droits, sans obligation de crédit.
 - **Sons rétro** (alertes, interface) — générés par [ZzFX](https://github.com/KilledByAPixel/ZzFX).

@@ -208,7 +208,21 @@ const CHARACTERS: Record<string, CharacterDef> = {
         glow: ["Ice"],
       },
     ],
-    animations: { idle: "Idle_Loop", attacks: CASTER_ATTACKS, abilities: { default: CAST_RELEASE } },
+    animations: {
+      idle: "Idle_Loop",
+      attacks: CASTER_ATTACKS,
+      // Gestes à la fin de l'incantation (le bâton est rangé dans le dos pendant le sort, voir PlayerVisual).
+      abilities: {
+        firebolt: "Mixamo_Casting_Spell",
+        frostbolt: "Mixamo_Casting_Spell",
+        blast: "Mixamo_2H_Area_Attack_02",
+        frostNova: "Mixamo_2H_Area_Attack_02",
+        nearSight: "Mixamo_2H_Magic_Attack_05",
+        burn: "Mixamo_2H_Magic_Attack_04",
+        bubble: "Mixamo_2H_Cast_01",
+        default: CAST_RELEASE,
+      },
+    },
   },
   pretre: {
     model: "characters/pretre.glb",

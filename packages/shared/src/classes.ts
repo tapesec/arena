@@ -14,6 +14,8 @@ export interface ClassDef {
   autoAttack: { damage: number; interval: number };
   // Compétences dans l'ordre de la barre (touches 1, 2, 3…).
   abilities: string[];
+  // Compétences « à débloquer » déjà programmées, pas encore dans la barre (la progression viendra plus tard).
+  unlockable?: string[];
   passives: Passive[];
 }
 
@@ -35,7 +37,8 @@ const list: ClassDef[] = [
     maxHp: 900,
     resource: "mana",
     autoAttack: { damage: 30, interval: 2.5 },
-    abilities: ["firebolt", "blast", "freeze", "concentration", "bubble"],
+    abilities: ["firebolt", "blast", "concentration", "frostbolt", "nearSight", "burn", "frostNova", "arcanePower"],
+    unlockable: ["freeze", "bubble"],
     passives: [],
   },
   {

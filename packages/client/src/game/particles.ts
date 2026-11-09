@@ -791,7 +791,79 @@ export const rallyHalo: Recipe = (fx, at) => {
   return s;
 };
 
+// ——— Arcaniste ———
+
+// Givre du Trait de givre : éclats bleu pâle qui scintillent sur tout le corps tant que la cible est ralentie.
+export const frostCoat: Recipe = (fx, at) => {
+  const s = fx.create("frostCoat", 90, at, "spark", true);
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 0.15 + Math.random() * 0.25;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, 0.1 + Math.random() * 1.8, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set((Math.random() - 0.5) * 0.2, -0.3, (Math.random() - 0.5) * 0.2);
+  s.emitRate = 60;
+  s.minLifeTime = 0.4;
+  s.maxLifeTime = 0.9;
+  s.minSize = 0.08;
+  s.maxSize = 0.2;
+  s.minEmitPower = 0.05;
+  s.maxEmitPower = 0.2;
+  gradient(s, [0, rgba("#ffffff", 0.9)], [0.4, rgba("#a8e4ff", 0.7)], [1, rgba("#3080d0", 0)]);
+  s.start();
+  return s;
+};
+
+// Puissance arcanique : colonne d'énergie violette qui monte du lanceur…
+export const arcaneColumn: Recipe = (fx, at) => {
+  const s = fx.create("arcaneColumn", 260, at, "glow");
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 0.45;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, Math.random() * 0.5, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, 1, 0);
+  s.emitRate = 220;
+  s.minLifeTime = 0.6;
+  s.maxLifeTime = 1;
+  s.minSize = 0.25;
+  s.maxSize = 0.5;
+  s.minEmitPower = 3.5;
+  s.maxEmitPower = 5;
+  gradient(s, [0, rgba("#f0d8ff", 0.7)], [0.3, rgba("#b060ff", 0.6)], [0.7, rgba("#7020d0", 0.35)], [1, rgba("#300060", 0)]);
+  s.start();
+  return s;
+};
+
+// … entourée d'éclairs : étincelles vives, très brèves, qui crépitent autour de la colonne.
+export const arcaneSparks: Recipe = (fx, at) => {
+  const s = fx.create("arcaneSparks", 120, at, "spark", true);
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 0.6 + Math.random() * 0.25;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, Math.random() * 3.5, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) =>
+    direction.set(Math.random() - 0.5, (Math.random() - 0.5) * 2, Math.random() - 0.5);
+  s.emitRate = 90;
+  s.minLifeTime = 0.06;
+  s.maxLifeTime = 0.15;
+  s.minSize = 0.2;
+  s.maxSize = 0.45;
+  s.minEmitPower = 4;
+  s.maxEmitPower = 8;
+  gradient(s, [0, rgba("#ffffff", 1)], [0.5, rgba("#d8b0ff", 0.9)], [1, rgba("#8040ff", 0)]);
+  s.start();
+  return s;
+};
+
 export const RECIPES: Recipe[] = [
+  frostCoat,
+  arcaneColumn,
+  arcaneSparks,
   rampartFlames,
   chargeStreak,
   rallyWave,

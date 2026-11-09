@@ -661,6 +661,24 @@ body,
   animation-delay: 0.2s;
 }
 
+/* Near sight : deux yeux fermés, violets, qui clignent lentement. */
+.status-nearSight {
+  gap: 6px;
+  color: #d9b8ff;
+  filter: drop-shadow(0 0 2px #000);
+  animation: blink 2.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
 /* Stun : des étoiles qui tournent. */
 .status-stun {
   animation: spin 1.2s linear infinite;

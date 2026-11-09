@@ -12,7 +12,7 @@ import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { getAbility } from "@arena/shared";
+import { getAbility, type AbilityDef } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
@@ -37,6 +37,10 @@ interface Visual {
 const VISUALS: Record<string, Visual> = {
   firebolt: { trail: [P.fireTrail, P.smokeTrail], impact: [P.fireBurst], core: 0.3 },
   freeze: { trail: [P.frostTrail], impact: [P.frostBurst], core: 0.22 },
+  frostbolt: { trail: [P.frostTrail], impact: [P.frostBurst], core: 0.22 },
+  nearSight: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], core: 0.15 },
+  burn: { impact: [P.fireBurst] },
+  frostNova: { area: [P.frostWave, P.frostField] },
   mez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], core: 0.2 },
   silence: { trail: [P.silenceTrail], impact: [P.silencePuff], core: 0 },
   aoeMez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], area: [P.arcaneMist], core: 0.25 },
@@ -56,13 +60,15 @@ const VISUALS: Record<string, Visual> = {
   resurrect: { ground: [P.resurrectRain], beam: true },
   speedSong: { impact: [P.noteBurst] },
 };
-// Type de dégâts magiques de chaque sort, et effet sur la cible touchée : elle brûle, gèle… un instant.
-// Aujourd'hui, seuls des sorts de feu infligent des dégâts magiques.
-type School = "fire";
-const DAMAGE_SCHOOLS: Record<string, School> = { firebolt: "fire", blast: "fire" };
+// Effet sur la cible touchée par un sort de dégâts, selon son type (AbilityDef.school) : elle brûle un instant, ou
+// se couvre de givre le temps du ralentissement du Trait de givre. La Brûlure (un dot) a son effet à part, qui
+// dure autant qu'elle (voir StatusFx).
+type School = NonNullable<AbilityDef["school"]>;
 const AFFLICTIONS: Record<School, { recipes: Recipe[]; duration: number }> = {
   fire: { recipes: [P.burning, P.burningSmoke], duration: 1.2 },
+  frost: { recipes: [P.frostCoat], duration: 4 },
 };
+const OWN_AFFLICTION = new Set(["burn"]);
 
 const SLASH_DURATION = 0.25;
 const BUBBLE_POP_DURATION = 0.3;
@@ -132,8 +138,8 @@ export class SpellEffects {
   // Dégâts magiques subis : la cible brûle (ou gèle…) un instant, selon le type du sort.
   // Un projectile n'a d'effet qu'à son arrivée.
   magicHit(abilityId: string, target: TransformNode) {
-    const school = DAMAGE_SCHOOLS[abilityId];
-    if (!school) return;
+    const school = getAbility(abilityId)?.school;
+    if (!school || OWN_AFFLICTION.has(abilityId)) return;
     const affliction = AFFLICTIONS[school];
     const start = () => {
       if (target.isDisposed()) return;

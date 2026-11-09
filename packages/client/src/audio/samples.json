@@ -680,6 +680,27 @@
         "Magic SFX Preview Pack/Healing Full.wav"
       ],
       "maxDuration": 1.5
+    },
+    "ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03": {
+      "label": "Glace qui se brise (Trait de givre, Nova de givre ; Sonniss)",
+      "category": "Sorts",
+      "files": [
+        "Sonniss GDC 2026/Epic Stock Media - Tower Defense Game/ICEBrk_Skill Freeze Whoosh Break Impact Layered Movement Shatter 03_ESM_TDG.wav"
+      ]
+    },
+    "Wind_effects_5": {
+      "label": "Souffle de vent (Near sight ; Magic SFX)",
+      "category": "Sorts",
+      "files": [
+        "Magic SFX Preview Pack/Wind effects 5.wav"
+      ]
+    },
+    "FIREWhsh_Whoosh_Fire_Deep_Growl_Monster_Saturated_Crisp_03": {
+      "label": "Souffle de feu grondant (Brûlure ; Sonniss)",
+      "category": "Sorts",
+      "files": [
+        "Sonniss GDC 2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts/FIREWhsh_Whoosh Fire Deep Growl Monster Saturated Crisp 03_ESM_EMWI.wav"
+      ]
     }
   }
 }

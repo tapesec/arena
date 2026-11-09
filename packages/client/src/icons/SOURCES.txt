@@ -4,10 +4,15 @@ guard ← delapouite/cross-shield
 intercept ← delapouite/shield-impact
 shieldBash ← delapouite/shield-bash
 firebolt ← lorc/fireball
-blast ← lorc/bright-explosion
-freeze ← lorc/frozen-orb
+blast ← lorc/fire-ring
+freeze ← delapouite/frozen-body
 concentration ← lorc/meditation
 bubble ← lorc/shield-reflect
+frostbolt ← lorc/ice-bolt
+nearSight ← skoll/sight-disabled
+burn ← lorc/burning-embers
+frostNova ← lorc/snowflake-2
+arcanePower ← lorc/embrassed-energy
 heal ← zeromancer/heart-plus
 groupHeal ← lorc/beams-aura
 instantHeal ← sbed/health-increase

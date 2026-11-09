@@ -48,7 +48,9 @@ class World {
 
   // facing : 0 regarde vers +z, π vers -z.
   spawn(id: string, classId: ClassId, team: number, x: number, z: number, facing = 0): PlayerRuntime {
-    const classDef = CLASSES[classId];
+    // Les compétences à débloquer sont testées aussi : le joueur de test les a toutes.
+    const base = CLASSES[classId];
+    const classDef = { ...base, abilities: [...base.abilities, ...(base.unlockable ?? [])] };
     const state = new PlayerState();
     state.team = team;
     state.classId = classId;
@@ -193,13 +195,14 @@ describe("Arcaniste", () => {
   it("Déflagration frappe les ennemis autour du lanceur, sans cible, plus fort au centre", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const close = world.spawn("c", "lame", 1, 0, 0.5);
-    const edge = world.spawn("e", "lame", 1, 0, -4.5);
-    const far = world.spawn("f", "lame", 1, 6, 0);
+    const edge = world.spawn("e", "lame", 1, 0, -6.5);
+    const far = world.spawn("f", "lame", 1, 8, 0);
     const ally = world.spawn("x", "pretre", 0, 1, 0);
     world.cast(arcaniste, "blast");
-    world.run(2.6);
+    world.run(2.1);
     const lost = (p: typeof close) => p.state.maxHp - p.state.hp;
-    assert.equal(lost(close), 325);
+    // 450 au centre, 100 au bord (7 m) : 0,5 m → 425, 6,5 m → 125.
+    assert.equal(lost(close), 425);
     assert.equal(lost(edge), 125);
     assert.equal(lost(far), 0);
     assert.equal(lost(ally), 0);
@@ -301,6 +304,88 @@ describe("Arcaniste", () => {
     world.run(1.1);
     assert.equal(arcaniste.state.castAbility, "");
     assert.equal(world.interrupts[0]?.reason, "silence");
+  });
+
+  it("Trait de givre : 150 dégâts et snare magique de 4 s", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "frostbolt", lame);
+    world.run(2.05);
+    assert.equal(lame.state.hp, lame.state.maxHp - 150);
+    const snare = lame.getEffect("snare");
+    assert.ok(snare?.magic, "snare magique (le Cri de ralliement le retire)");
+    assert.ok(Math.abs(snare!.remaining - 4) < 0.1);
+  });
+
+  it("Brûlure : 40 dégâts par seconde pendant 10 s, sans interrompre l'incantation", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "burn", pretre);
+    world.run(2.05);
+    assert.ok(pretre.has("burning"));
+    assert.equal(pretre.state.hp, pretre.state.maxHp);
+    world.cast(pretre, "heal", pretre);
+    world.run(1.6);
+    assert.ok(pretre.state.castAbility === "heal" || world.eventsOf("heal").length > 0, "le soin n'est pas interrompu");
+    assert.equal(world.interrupts.length, 0);
+    world.run(10);
+    const ticks = world.eventsOf("damage").filter((e) => e.abilityId === "burn");
+    assert.equal(ticks.length, 10);
+    assert.ok(ticks.every((e) => e.amount === 40));
+    assert.ok(!pretre.has("burning"));
+  });
+
+  it("Brûlure : un tic libère du root", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "frostNova");
+    world.run(1.55);
+    assert.ok(lame.has("root"));
+    world.cast(arcaniste, "burn", lame);
+    world.run(3.1);
+    assert.ok(!lame.has("root"));
+  });
+
+  it("Nova de givre : root 12 s sur les ennemis à 15 m, sans cible", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const near = world.spawn("n", "lame", 1, 0, 14);
+    const far = world.spawn("f", "lame", 1, 0, -16);
+    world.cast(arcaniste, "frostNova");
+    world.run(1.55);
+    assert.ok(Math.abs(near.getEffect("root")!.remaining - 12) < 0.1);
+    assert.ok(!far.has("root"));
+  });
+
+  it("Near sight : portée des sorts réduite de 75 %, l'incantation en cours échoue hors de portée ; pas un contrôle magique", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "arcaniste", 1, 0, 10, Math.PI);
+    const gardien = world.spawn("g", "gardien", 1, 1, 10);
+    world.cast(gardien, "rallyCry");
+    world.cast(enemy, "firebolt", arcaniste);
+    world.cast(arcaniste, "nearSight", enemy);
+    world.run(1.55);
+    assert.ok(enemy.has("nearSight"), "le Cri de ralliement n'en protège pas");
+    world.run(0.5);
+    assert.equal(arcaniste.state.hp, arcaniste.state.maxHp, "le Trait de feu échoue à 10 m (portée 7,5 m)");
+    assert.ok(world.errors.some((e) => e.id === "e" && e.message.includes("vision réduite")));
+    world.cast(enemy, "firebolt", arcaniste);
+    world.run(0.1);
+    assert.equal(enemy.state.castAbility, "");
+    world.run(15);
+    assert.ok(!enemy.has("nearSight"));
+  });
+
+  it("Puissance arcanique : tous les sorts de dégâts sont critiques pendant 15 s", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "arcanePower");
+    world.cast(arcaniste, "firebolt", lame);
+    world.run(2.05);
+    const hit = world.eventsOf("damage").find((e) => e.abilityId === "firebolt");
+    assert.equal(hit?.amount, 375);
+    assert.ok(hit?.crit);
+    world.run(15);
+    assert.ok(!arcaniste.has("arcanePower"));
   });
 });
 

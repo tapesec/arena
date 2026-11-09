@@ -13,8 +13,6 @@ const CASTER_MAX_DISTANCE = 26;
 
 // Rayon dans lequel un ennemi de mêlée fait fuir un lanceur de sorts (en plus d'un coup reçu).
 const CASTER_DANGER_RADIUS = 3.5;
-// Un Arcaniste ne relance sa bulle qu'à cette distance des ennemis de mêlée.
-const BUBBLE_SAFE_DISTANCE = 8;
 // Distance minimale gardée face à un lanceur de sorts ennemi (moins dangereux au contact).
 const CASTER_VS_CASTER_MIN_DISTANCE = 8;
 
@@ -102,17 +100,14 @@ abstract class CasterBot extends BotBrain {
 }
 
 // Distance en deçà de laquelle un ennemi prend assez de dégâts de Déflagration pour qu'elle vaille le coup.
-const BLAST_REACH = 4;
+const BLAST_REACH = 5;
+// La Nova de givre (15 m) vaut le coup quand un ennemi de mêlée est déjà assez près.
+const NOVA_REACH = 8;
 
-// Arcaniste : gros dégâts à distance ; Gel sur les ennemis de mêlée qui approchent ;
-// Déflagration quand plusieurs ennemis sont collés à lui.
+// Arcaniste : gros dégâts à distance ; Nova de givre quand la mêlée arrive, Trait de givre pour la ralentir ;
+// Déflagration quand plusieurs ennemis sont collés à lui ; Near sight sur les lanceurs de sorts ; Brûlure, puis
+// Trait de feu. Puissance arcanique dès qu'il a une cible.
 class ArcanisteBot extends CasterBot {
-  // Préparation : se protéger d'une bulle avant le combat.
-  protected prepare() {
-    this.stop();
-    if (!this.isCasting && !this.self.has("bubble")) this.tryUse("bubble");
-  }
-
   protected think() {
     // Plusieurs ennemis tout près : Déflagration, protégée par Concentration si elle est prête.
     const close = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH).length;
@@ -120,28 +115,30 @@ class ArcanisteBot extends CasterBot {
       if (this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
       if (this.tryUse("blast")) return;
     }
-    const contact = this.meleeThreats(MELEE_RANGE + 0.5)[0];
-    // Au contact : Concentration puis Gel, impossible à interrompre, pour s'en débarrasser.
-    if (contact && !this.isCasting && !contact.has("immuneRoot") && this.isReady("concentration")) {
-      if (this.tryUse("concentration") && this.tryUse("freeze", contact)) return;
+    // La mêlée arrive : Nova de givre (protégée par Concentration au contact) pour s'en débarrasser.
+    const rootable = this.meleeThreats(NOVA_REACH).filter((e) => !e.has("immuneRoot") && !e.has("magicImmune"));
+    if (rootable.length > 0 && !this.isCasting && this.isReady("frostNova")) {
+      const contact = rootable.some((e) => this.distanceTo(e) <= MELEE_RANGE + 0.5);
+      if (contact && this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("frostNova")) return;
+      if (this.tryUse("frostNova")) return;
     }
     if (this.evadeMelee()) return;
     if (this.isCasting) return;
 
-    // Un ennemi de mêlée qui approche : on l'immobilise avant qu'il arrive.
+    // Un ennemi de mêlée qui approche : on le ralentit avant qu'il arrive.
     const approaching = this.enemies().find(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneRoot"),
+      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 15 && !e.has("snare") && !e.has("root"),
     );
-    if (approaching && this.tryUse("freeze", approaching)) return;
-
-    // Bulle : la relancer une fois à bonne distance de la mêlée (une incantation de 2 s au contact serait risquée).
-    const safe = this.meleeThreats(BUBBLE_SAFE_DISTANCE).length === 0;
-    if (safe && !this.self.has("bubble") && this.tryUse("bubble")) return;
+    if (approaching && this.tryUse("frostbolt", approaching)) return;
 
     const target = this.pickTarget(DAMAGE_PRIORITY);
     if (!target) return this.advance();
     if (!this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
 
+    this.tryUse("arcanePower");
+    // Un lanceur de sorts ennemi : sa portée réduite le force à venir au contact.
+    if (CASTER_CLASSES.includes(target.classDef.id) && !target.has("nearSight") && this.tryUse("nearSight", target)) return;
+    if (!target.has("burning") && this.tryUse("burn", target)) return;
     this.tryUse("firebolt", target);
   }
 }

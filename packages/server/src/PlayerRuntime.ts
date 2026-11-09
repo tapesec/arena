@@ -13,6 +13,8 @@ export interface ActiveEffect {
   value: number;
   // Posé par un sort magique (mana) : le Cri de ralliement le retire et en protège.
   magic: boolean;
+  // Dégâts sur la durée (Brûlure) : compétence d'origine, tics déjà infligés et nombre total ; value = dégâts par tic.
+  ticks?: { abilityId: string; done: number; total: number };
   // Copie synchronisée vers les clients.
   view: EffectState;
 }

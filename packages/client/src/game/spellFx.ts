@@ -40,6 +40,11 @@ export const ABILITY_FX: Record<string, AbilityFx> = {
   freeze: { color: FROST, shape: "projectile" },
   concentration: { color: ARCANE, shape: "pulse" },
   bubble: { color: ARCANE, shape: "pulse" },
+  frostbolt: { color: FROST, shape: "projectile" },
+  nearSight: { color: ARCANE, shape: "projectile" },
+  burn: { color: FIRE, shape: "pulse" },
+  frostNova: { color: FROST, shape: "pulse", area: true },
+  arcanePower: { color: ARCANE, shape: "pulse" },
   // Prêtre
   heal: { color: NATURE, shape: "pulse" },
   groupHeal: { color: NATURE, shape: "pulse", area: true },

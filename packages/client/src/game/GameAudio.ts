@@ -4,7 +4,7 @@ import { audio, type SoundName } from "../audio/AudioManager";
 import type { CameraController } from "./CameraController";
 import { isGrass } from "./environment";
 import type { PlayerVisual } from "./PlayerVisual";
-import { PROJECTILE_TRAVEL_TIME } from "./spellFx";
+import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 
 // Un son à jouer, avec son réglage : volume, vitesse de lecture (plus lente = plus grave) et délai en secondes.
 interface Cue {
@@ -23,6 +23,12 @@ const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
   mez: { impact: [{ sound: "spellFantasy2" }] },
   aoeMez: { impact: [{ sound: "spellFantasy2" }] },
   concentration: { cast: [{ sound: "spellGeneric" }] },
+  frostbolt: { impact: [{ sound: "ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03" }] },
+  nearSight: { impact: [{ sound: "Wind_effects_5" }] },
+  burn: { impact: [{ sound: "FIREWhsh_Whoosh_Fire_Deep_Growl_Monster_Saturated_Crisp_03" }] },
+  frostNova: { cast: [{ sound: "ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03", rate: 0.85 }] },
+  // Pas encore de son choisi dans le tableur : un son de sort générique, plus grave.
+  arcanePower: { cast: [{ sound: "spellGeneric", rate: 0.7 }, { sound: "spellFantasy3", volume: 0.7 }] },
   bubble: { cast: [{ sound: "spellFantasy1", rate: 1.3 }] },
   silence: { impact: [{ sound: "spellFantasy1" }] },
   heal: { impact: [{ sound: "Healing_Full" }] },
@@ -144,7 +150,7 @@ export class GameAudio {
     if (sounds.cast && caster) this.playCues(sounds.cast, caster.root.position);
     if (sounds.impact && target) {
       // Un sort à projectile résonne à son arrivée.
-      const delay = abilityId === "firebolt" ? PROJECTILE_TRAVEL_TIME : 0;
+      const delay = isProjectile(abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
       this.playCues(sounds.impact, target.root.position, delay);
     }
   }

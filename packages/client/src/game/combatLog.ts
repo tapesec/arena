@@ -1,6 +1,7 @@
 import { getAbility, type CombatEvent, type InterruptEvent } from "@arena/shared";
 
 const CONTROL_NAMES: Record<string, string> = { mez: "mez", stun: "stun", root: "root" };
+const DEBUFF_NAMES: Record<string, string> = { nearSight: "vision réduite" };
 const BUFF_NAMES: Record<string, string> = { buffHp: "vie", buffStrength: "force" };
 const INTERRUPT_CAUSES: Record<InterruptEvent["reason"], string> = {
   damage: "dégâts",
@@ -55,6 +56,8 @@ export function formatCombatEvent(event: CombatEvent, nameOf: (id: string) => st
       return [`${source} ${sourceIsSelf ? "purifiez" : "purifie"} ${target}`];
     case "resurrect":
       return [`${source} ${sourceIsSelf ? "ressuscitez" : "ressuscite"} ${target}`];
+    case "debuff":
+      return [`${target} : ${DEBUFF_NAMES[event.detail ?? ""] ?? event.detail} (${ability})`];
     case "buff":
       return [`${source} → ${target} : buff de ${BUFF_NAMES[event.detail ?? ""] ?? event.detail}`];
     case "guard":

@@ -63,7 +63,7 @@ import { CharacterAssets } from "./characterAssets";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
 // Textes flottants des événements de combat.
-const CONTROL_LABELS: Record<string, string> = { mez: "Mez", stun: "Stun", root: "Root" };
+const CONTROL_LABELS: Record<string, string> = { mez: "Mez", stun: "Stun", root: "Root", nearSight: "Vision réduite" };
 const INFO_LABELS: Partial<Record<CombatEvent["kind"], string>> = {
   blocked: "Bloqué",
   evaded: "Esquivé",
@@ -373,6 +373,7 @@ export class Game {
         this.overlay.addText(anchor, "Ressuscité", "heal");
         break;
       case "cc":
+      case "debuff":
         this.overlay.addText(anchor, CONTROL_LABELS[event.detail ?? ""] ?? "", "control", false, delay);
         break;
       default:
@@ -477,7 +478,16 @@ export class Game {
       // Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez garde ses « Zzz » ; une
       // cible provoquée porte des points d'exclamation rouges pendant les premières secondes.
       const taunted = player.effectRemaining("taunted") > TAUNT_DURATION - TAUNT_MARK_DURATION;
-      const control = !player.isAlive ? null : player.hasEffect("mez") ? "mez" : taunted ? "taunt" : null;
+      // Near sight : deux yeux fermés tant que dure l'effet.
+      const control = !player.isAlive
+        ? null
+        : player.hasEffect("mez")
+          ? "mez"
+          : taunted
+            ? "taunt"
+            : player.hasEffect("nearSight")
+              ? "nearSight"
+              : null;
       this.overlay.setIndicator(player.sessionId, player.root, control);
       const classId = player.state.classId as ClassId | "";
       const enemy = !!this.self && player.state.team !== this.self.state.team;

@@ -16,7 +16,12 @@ const TEXT_HEIGHT = 3.35;
 const MAX_TEXTS = 60;
 
 export type FloatingTextStyle = "damageDealt" | "damageTaken" | "heal" | "info" | "control";
-export type StatusIndicator = "mez" | "stun" | "taunt";
+export type StatusIndicator = "mez" | "stun" | "taunt" | "nearSight";
+
+// Near sight : deux yeux fermés (paupière et cils), dessinés en SVG.
+const CLOSED_EYE =
+  '<svg viewBox="0 0 24 14" width="22" height="13"><path d="M2 4 Q12 13 22 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
+  '<path d="M6 8.2 L4.5 11.5 M12 9.6 L12 13 M18 8.2 L19.5 11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
 interface FloatingText {
   element: HTMLDivElement;
@@ -79,11 +84,19 @@ export class WorldOverlay {
     const element = document.createElement("div");
     element.className = `status-indicator status-${kind}`;
     // Chaque lettre ou étoile est un élément à part, pour pouvoir l'animer en décalé.
-    const symbols = { mez: ["Z", "z", "z"], stun: ["★", "★", "★"], taunt: ["!", "!", "!"] }[kind];
-    for (const symbol of symbols) {
-      const span = document.createElement("span");
-      span.textContent = symbol;
-      element.appendChild(span);
+    if (kind === "nearSight") {
+      for (let i = 0; i < 2; i++) {
+        const span = document.createElement("span");
+        span.innerHTML = CLOSED_EYE;
+        element.appendChild(span);
+      }
+    } else {
+      const symbols = { mez: ["Z", "z", "z"], stun: ["★", "★", "★"], taunt: ["!", "!", "!"] }[kind];
+      for (const symbol of symbols) {
+        const span = document.createElement("span");
+        span.textContent = symbol;
+        element.appendChild(span);
+      }
     }
     this.container.appendChild(element);
     this.indicators.set(playerId, { element, anchor, kind });

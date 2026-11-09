@@ -6,6 +6,7 @@ import {
   CHARGE_SPEED_MULTIPLIER,
   CRIT_CHANCE,
   CRIT_MULTIPLIER,
+  DOT_INTERVAL,
   ENDURANCE_REGEN,
   EVASION_CHANCE,
   GUARD_BLOCK_CHANCE,
@@ -16,6 +17,7 @@ import {
   MOVE_SPEED,
   RAMPART_RADIUS,
   MANA_REGEN,
+  NEAR_SIGHT_FACTOR,
   NO_INPUT,
   PERMANENT,
   SHIELD_BLOCK_CHANCE,
@@ -383,7 +385,10 @@ export class CombatSystem {
     }
 
     if (target !== caster) {
-      if (distance(caster.state, target.state) > ability.range) return "Cible hors de portée";
+      // Near sight : la portée des sorts du lanceur est réduite (une incantation finit donc hors de portée).
+      const reduced = isMagic(ability) && caster.has("nearSight");
+      const range = reduced ? ability.range * NEAR_SIGHT_FACTOR : ability.range;
+      if (distance(caster.state, target.state) > range) return reduced ? "Cible hors de portée (vision réduite)" : "Cible hors de portée";
       if (ability.minRange && distance(caster.state, target.state) < ability.minRange) return "Cible trop proche";
       if (!hasLineOfSight(caster.state, target.state)) return "Cible hors de vue";
     }
@@ -468,6 +473,20 @@ export class CombatSystem {
     switch (effect.type) {
       case "damage":
         this.dealDamage(caster, target, effect.amount, ability.id, !!ability.melee, avoidanceDone);
+        break;
+      case "dot": {
+        // Relancer la Brûlure la fait repartir de zéro.
+        const ticks = Math.round(effect.duration / DOT_INTERVAL);
+        const burning = this.addEffect(target, "burning", effect.duration, caster.id, effect.amount / ticks);
+        burning.ticks = { abilityId: ability.id, done: 0, total: ticks };
+        this.noteHostileAction(target);
+        break;
+      }
+      case "nearSight":
+        // Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire.
+        this.noteHostileAction(target);
+        this.addEffect(target, "nearSight", effect.duration, caster.id);
+        this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "nearSight" });
         break;
       case "heal":
         this.heal(caster, target, effect.amount, ability.id);
@@ -554,6 +573,7 @@ export class CombatSystem {
   // --- Dégâts, soins, contrôles ---
 
   // avoidanceDone : pour une attaque spéciale de mêlée, l'évitement a déjà été tranché avant ses effets.
+  // dot : tic d'un dégât sur la durée, qui n'est pas intercepté et n'interrompt pas l'incantation.
   private dealDamage(
     source: PlayerRuntime,
     target: PlayerRuntime,
@@ -561,13 +581,14 @@ export class CombatSystem {
     abilityId: string,
     melee: boolean,
     avoidanceDone = false,
+    dot = false,
   ) {
     if (!target.alive) return;
     this.noteHostileAction(source);
     this.noteHostileAction(target);
 
     // Interception : le Gardien prend le coup s'il est assez proche.
-    const intercept = target.getEffect("intercept");
+    const intercept = dot ? undefined : target.getEffect("intercept");
     const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;
     if (intercept && interceptor?.alive && distance(interceptor.state, target.state) <= INTERCEPT_RANGE) {
       this.removeEffect(target, intercept);
@@ -587,6 +608,10 @@ export class CombatSystem {
       if (source.has("buffStrength")) amount *= 1 + STRENGTH_BUFF_BONUS;
       crit = source.has("rage") || this.random() < CRIT_CHANCE;
       if (crit) amount *= CRIT_MULTIPLIER;
+    } else if (source.has("arcanePower")) {
+      // Puissance arcanique : tous les sorts de dégâts sont critiques, tics de la Brûlure compris.
+      crit = true;
+      amount *= CRIT_MULTIPLIER;
     }
     amount = Math.round(amount);
 
@@ -599,8 +624,8 @@ export class CombatSystem {
       this.handleDeath(target);
       return;
     }
-    // Tout dégât interrompt l'incantation (sauf Concentration) et brise mez et root.
-    if (state.castAbility && !target.castProtected) this.interrupt(target, "damage");
+    // Tout dégât interrompt l'incantation (sauf Concentration, et sauf un dot) et brise mez et root.
+    if (state.castAbility && !target.castProtected && !dot) this.interrupt(target, "damage");
     for (const kind of ["mez", "root"] as const) {
       const control = target.getEffect(kind);
       if (control) this.removeEffect(target, control);
@@ -718,8 +743,22 @@ export class CombatSystem {
     for (const effect of [...player.effects]) {
       if (!Number.isFinite(effect.remaining)) continue;
       effect.remaining -= dt;
-      if (effect.remaining <= 0) this.removeEffect(player, effect);
+      if (effect.ticks) this.updateDot(player, effect);
+      if (!player.effects.includes(effect)) continue;
+      if (effect.remaining <= 0 || (effect.ticks && effect.ticks.done >= effect.ticks.total)) this.removeEffect(player, effect);
       else effect.view.remaining = effect.remaining;
+    }
+  }
+
+  // Dégâts sur la durée : un tic par DOT_INTERVAL écoulé, le dernier à la fin de l'effet.
+  private updateDot(player: PlayerRuntime, effect: ActiveEffect) {
+    const ticks = effect.ticks!;
+    const source = this.players.get(effect.sourceId);
+    if (!source) return this.removeEffect(player, effect);
+    const elapsed = effect.duration - effect.remaining;
+    while (ticks.done < ticks.total && elapsed >= (ticks.done + 1) * DOT_INTERVAL - 1e-6 && player.alive) {
+      ticks.done++;
+      this.dealDamage(source, player, effect.value, ticks.abilityId, false, false, true);
     }
   }
 
@@ -840,7 +879,14 @@ export class CombatSystem {
     this.emit({ kind: "taunt", sourceId: caster.id, targetId: target.id, abilityId });
   }
 
-  private addEffect(player: PlayerRuntime, kind: EffectKind, duration: number, sourceId: string, value = 0, magic = false) {
+  private addEffect(
+    player: PlayerRuntime,
+    kind: EffectKind,
+    duration: number,
+    sourceId: string,
+    value = 0,
+    magic = false,
+  ): ActiveEffect {
     const existing = player.getEffect(kind);
     if (existing) {
       existing.remaining = duration;
@@ -848,21 +894,24 @@ export class CombatSystem {
       existing.sourceId = sourceId;
       existing.value = value;
       existing.magic = magic;
+      existing.ticks = undefined;
       existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
       existing.view.source = sourceId;
-      return;
+      return existing;
     }
     const view = new EffectState();
     view.kind = kind;
     view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
     view.source = sourceId;
     player.state.effects.push(view);
-    player.effects.push({ kind, remaining: duration, duration, sourceId, value, magic, view });
+    const effect: ActiveEffect = { kind, remaining: duration, duration, sourceId, value, magic, view };
+    player.effects.push(effect);
 
     if (kind === "buffHp") {
       player.state.maxHp += HP_BUFF_AMOUNT;
       player.state.hp += HP_BUFF_AMOUNT;
     }
+    return effect;
   }
 
   private removeEffect(player: PlayerRuntime, effect: ActiveEffect) {

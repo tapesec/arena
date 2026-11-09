@@ -29,7 +29,7 @@
  {
   "name": "Dance_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": true,
+  "inGame": false,
   "loop": true,
   "category": "Attente / émote",
   "description": "Danse.",
@@ -218,7 +218,7 @@
  {
   "name": "Punch_Cross",
   "pack": "UAL1 (Pro)",
-  "inGame": true,
+  "inGame": false,
   "loop": false,
   "category": "Combat",
   "description": "Coup de poing direct.",
@@ -227,7 +227,7 @@
  {
   "name": "Punch_Jab",
   "pack": "UAL1 (Pro)",
-  "inGame": true,
+  "inGame": false,
   "loop": false,
   "category": "Combat",
   "description": "Coup de poing rapide.",
@@ -290,7 +290,7 @@
  {
   "name": "Spell_Simple_Enter",
   "pack": "UAL1 (Pro)",
-  "inGame": true,
+  "inGame": false,
   "loop": false,
   "category": "Sort / action",
   "description": "Lève la main pour commencer un sort.",
@@ -299,7 +299,7 @@
  {
   "name": "Spell_Simple_Exit",
   "pack": "UAL1 (Pro)",
-  "inGame": true,
+  "inGame": false,
   "loop": false,
   "category": "Sort / action",
   "description": "Baisse la main après un sort.",
@@ -321,7 +321,7 @@
   "loop": false,
   "category": "Sort / action",
   "description": "Projette un sort d'un geste de la main.",
-  "usedFor": "Lancement d'un sort"
+  "usedFor": "Lancement d'un sort sans animation propre"
  },
  {
   "name": "Sprint_Loop",
@@ -330,7 +330,7 @@
   "loop": true,
   "category": "Déplacement",
   "description": "Course rapide.",
-  "usedFor": ""
+  "usedFor": "Course de la Charge (Gardien)"
  },
  {
   "name": "Swim_Fwd_Loop",
@@ -384,7 +384,7 @@
   "loop": true,
   "category": "Déplacement",
   "description": "Marche.",
-  "usedFor": "Marche (root, déplacement lent)"
+  "usedFor": "Marche (root, déplacement lent, recul joué à l'envers)"
  },
  {
   "name": "Bandage_Loop",
@@ -1023,7 +1023,7 @@
   "loop": false,
   "category": "Combat",
   "description": "Parade à l'épée.",
-  "usedFor": "Garde, blocage au bouclier"
+  "usedFor": "Garde, blocage au bouclier, parade"
  },
  {
   "name": "Sword_Dash",
@@ -1082,11 +1082,11 @@
  {
   "name": "Sword_Heavy_C",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Combat",
   "description": "Coup d'épée lourd (variante).",
-  "usedFor": ""
+  "usedFor": "Coup puissant (Gardien)"
  },
  {
   "name": "Sword_Heavy_C_Rec",
@@ -1109,11 +1109,11 @@
  {
   "name": "Sword_Heavy_D",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Combat",
   "description": "Coup d'épée lourd final.",
-  "usedFor": ""
+  "usedFor": "Frappe handicapante (Gardien)"
  },
  {
   "name": "Sword_Light_A",
@@ -1280,29 +1280,29 @@
  {
   "name": "Walk_Bwd_L_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": true,
+  "inGame": false,
   "loop": true,
   "category": "Déplacement",
   "description": "Recule en diagonale gauche.",
-  "usedFor": "Recul en diagonale"
+  "usedFor": ""
  },
  {
   "name": "Walk_Bwd_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": true,
+  "inGame": false,
   "loop": true,
   "category": "Déplacement",
   "description": "Recule.",
-  "usedFor": "Recul"
+  "usedFor": ""
  },
  {
   "name": "Walk_Bwd_R_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": true,
+  "inGame": false,
   "loop": true,
   "category": "Déplacement",
   "description": "Recule en diagonale droite.",
-  "usedFor": "Recul en diagonale"
+  "usedFor": ""
  },
  {
   "name": "Walk_Carry_Loop",
@@ -1316,11 +1316,11 @@
  {
   "name": "Walk_Fwd_L_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": true,
+  "inGame": false,
   "loop": true,
   "category": "Déplacement",
   "description": "Marche en diagonale gauche.",
-  "usedFor": "Marche en diagonale"
+  "usedFor": ""
  },
  {
   "name": "Walk_Fwd_Loop",
@@ -1334,11 +1334,11 @@
  {
   "name": "Walk_Fwd_R_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": true,
+  "inGame": false,
   "loop": true,
   "category": "Déplacement",
   "description": "Marche en diagonale droite.",
-  "usedFor": "Marche en diagonale"
+  "usedFor": ""
  },
  {
   "name": "Walk_L_Loop",
@@ -1401,7 +1401,7 @@
   "loop": false,
   "category": "Attente / émote",
   "description": "Fait « oui » de la tête.",
-  "usedFor": "Compétences du Gardien sans animation propre"
+  "usedFor": "Compétences du Gardien sans animation propre (Interception)"
  },
  {
   "name": "Zombie_Bite",
@@ -2306,29 +2306,29 @@
  {
   "name": "Mixamo_Casting_Spell",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Sort / action",
   "description": "Lance un sort (Mixamo : Casting Spell).",
-  "usedFor": ""
+  "usedFor": "Trait de feu, Trait de givre (Arcaniste)"
  },
  {
   "name": "Mixamo_2H_Area_Attack_02",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Sort / action",
   "description": "Sort de zone à deux mains (Mixamo : Standing 2H Magic Area Attack 02).",
-  "usedFor": ""
+  "usedFor": "Déflagration, Nova de givre (Arcaniste)"
  },
  {
   "name": "Mixamo_2H_Magic_Attack_04",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Sort / action",
   "description": "Attaque magique à deux mains (Mixamo : Standing 2H Magic Attack 04).",
-  "usedFor": ""
+  "usedFor": "Brûlure (Arcaniste)"
  },
  {
   "name": "Mixamo_2H_Cast_01",
@@ -2342,11 +2342,11 @@
  {
   "name": "Mixamo_2H_Magic_Attack_05",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Sort / action",
   "description": "Attaque magique à deux mains (Mixamo : Standing 2H Magic Attack 05).",
-  "usedFor": ""
+  "usedFor": "Near sight (Arcaniste)"
  },
  {
   "name": "Mixamo_Guitar_Playing",
@@ -2360,29 +2360,29 @@
  {
   "name": "Mixamo_Sword_Shield_Attack",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Combat",
   "description": "Attaque sautée à l'épée et au bouclier : bondit puis frappe (Mixamo : Sword And Shield Attack).",
-  "usedFor": ""
+  "usedFor": "Arrivée de la Charge (Gardien)"
  },
  {
   "name": "Mixamo_Taunt_Chest_Thump",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Attente / émote",
   "description": "Provocation : se frappe la poitrine (Mixamo : Standing Taunt Chest Thump).",
-  "usedFor": ""
+  "usedFor": "Provocation (Gardien)"
  },
  {
   "name": "Mixamo_Shield_Block_Idle",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Combat",
   "description": "En garde derrière le bouclier, en attente (Mixamo : Sword And Shield Block Idle).",
-  "usedFor": ""
+  "usedFor": "Rempart (Gardien)"
  },
  {
   "name": "Mixamo_Shield_Block",
@@ -2405,10 +2405,10 @@
  {
   "name": "Mixamo_Waving",
   "pack": "Mixamo",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Attente / émote",
   "description": "Fait signe de la main (Mixamo : Waving).",
-  "usedFor": ""
+  "usedFor": "Cri de ralliement (Gardien)"
  }
 ]

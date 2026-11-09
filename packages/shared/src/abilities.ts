@@ -1,4 +1,4 @@
-import { MELEE_RANGE, SNARE_SLOW, SPELL_RANGE, type ResourceType } from "./combat";
+import { MELEE_RANGE, NEAR_SIGHT_FACTOR, SNARE_SLOW, SPELL_RANGE, type ResourceType } from "./combat";
 
 // À qui s'applique la compétence :
 // - enemy : la cible actuelle, qui doit être un ennemi vivant
@@ -14,6 +14,8 @@ export type CrowdControl = "mez" | "stun" | "root";
 export type AbilityEffect =
   // edgeAmount : dégâts en bordure d'une zone d'effet, qui décroissent depuis amount au centre.
   | { type: "damage"; amount: number; edgeAmount?: number }
+  // Dégâts sur la durée (dot) : amount au total, en tics d'une seconde pendant duration.
+  | { type: "dot"; amount: number; duration: number }
   | { type: "heal"; amount: number }
   | { type: "cc"; cc: CrowdControl; duration: number }
   | { type: "snare"; slow: number; duration: number }
@@ -21,7 +23,9 @@ export type AbilityEffect =
   | { type: "cleanse" }
   | { type: "resurrect"; hpRatio: number }
   | { type: "buff"; buff: "buffHp" | "buffStrength" }
-  | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble"; duration: number }
+  | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble" | "arcanePower"; duration: number }
+  // Vision réduite : portée des sorts de la cible réduite (voir NEAR_SIGHT_FACTOR).
+  | { type: "nearSight"; duration: number }
   | { type: "guard" }
   | { type: "intercept"; duration: number }
   | { type: "toggleSong" }
@@ -52,6 +56,8 @@ export interface AbilityDef {
   melee?: boolean;
   // Position exigée par rapport à la cible.
   position?: "back" | "side";
+  // Type des dégâts magiques (feu, givre) : pour l'affichage seulement, il n'y a pas encore de résistances.
+  school?: "fire" | "frost";
   // Zone d'effet : autour de la cible pour une compétence visant un ennemi, autour du lanceur sinon.
   radius?: number;
   effects: AbilityEffect[];
@@ -187,27 +193,109 @@ const list: AbilityDef[] = [
     id: "firebolt",
     name: "Trait de feu",
     description: "Projectile de feu : 250 dégâts.",
-    castTime: 2.5,
+    castTime: 2,
     resource: "mana",
-    cost: 80,
+    cost: 100,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "enemy",
+    school: "fire",
     effects: [{ type: "damage", amount: 250 }],
   },
   {
     id: "blast",
     name: "Déflagration",
-    description: "Explosion autour de soi, sans cible : 350 dégâts au centre, jusqu'à 100 au bord, sur les ennemis à 5 m.",
-    castTime: 2.5,
+    description: "Explosion autour de soi, sans cible : 450 dégâts au centre, jusqu'à 100 au bord, sur les ennemis à 7 m.",
+    castTime: 2,
     resource: "mana",
     cost: 150,
     range: 0,
     cooldown: 0,
     target: "enemiesAround",
-    radius: 5,
-    effects: [{ type: "damage", amount: 350, edgeAmount: 100 }],
+    radius: 7,
+    school: "fire",
+    effects: [{ type: "damage", amount: 450, edgeAmount: 100 }],
   },
+  {
+    id: "concentration",
+    name: "Concentration",
+    description: "Le prochain sort ne peut pas être interrompu.",
+    castTime: 0,
+    resource: "mana",
+    cost: 0,
+    range: 0,
+    cooldown: 90,
+    target: "self",
+    effects: [{ type: "status", status: "concentration", duration: INFINITE }],
+  },
+  {
+    id: "frostbolt",
+    name: "Trait de givre",
+    description: "Projectile de givre : 150 dégâts, et ralentit la cible de 40 % pendant 4 s.",
+    castTime: 2,
+    resource: "mana",
+    cost: 100,
+    range: SPELL_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    school: "frost",
+    effects: [
+      { type: "damage", amount: 150 },
+      { type: "snare", slow: SNARE_SLOW, duration: 4 },
+    ],
+  },
+  {
+    id: "nearSight",
+    name: "Near sight",
+    description: `Pendant 15 s, la portée des sorts de la cible est réduite de ${Math.round((1 - NEAR_SIGHT_FACTOR) * 100)} %.`,
+    castTime: 1.5,
+    resource: "mana",
+    cost: 100,
+    range: SPELL_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    effects: [{ type: "nearSight", duration: 15 }],
+  },
+  {
+    id: "burn",
+    name: "Brûlure",
+    description: "La cible brûle : 400 dégâts en 10 s (40 par seconde). Libère du mez et du root, mais n'interrompt pas l'incantation.",
+    castTime: 2,
+    resource: "mana",
+    cost: 200,
+    range: SPELL_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    school: "fire",
+    effects: [{ type: "dot", amount: 400, duration: 10 }],
+  },
+  {
+    id: "frostNova",
+    name: "Nova de givre",
+    description: "Enracine 12 s les ennemis à 15 m autour de soi : ils repartent lentement, puis à pleine vitesse. Les dégâts les libèrent.",
+    castTime: 1.5,
+    resource: "mana",
+    cost: 200,
+    range: 0,
+    cooldown: 60,
+    target: "enemiesAround",
+    radius: 15,
+    school: "frost",
+    effects: [{ type: "cc", cc: "root", duration: 12 }],
+  },
+  {
+    id: "arcanePower",
+    name: "Puissance arcanique",
+    description: "Pendant 15 s, tous les sorts de dégâts de l'Arcaniste sont critiques (× 1,5).",
+    castTime: 0,
+    resource: "mana",
+    cost: 400,
+    range: 0,
+    cooldown: 180,
+    target: "self",
+    effects: [{ type: "status", status: "arcanePower", duration: 15 }],
+  },
+  // Sorts à débloquer (pas encore dans la barre, voir ClassDef.unlockable).
   {
     id: "freeze",
     name: "Gel",
@@ -218,22 +306,10 @@ const list: AbilityDef[] = [
     range: SPELL_RANGE,
     cooldown: 0,
     target: "enemy",
+    school: "frost",
     effects: [{ type: "cc", cc: "root", duration: 10 }],
   },
-  {
-    id: "concentration",
-    name: "Concentration",
-    description: "Le prochain sort ne peut pas être interrompu.",
-    castTime: 0,
-    resource: "mana",
-    cost: 0,
-    range: 0,
-    cooldown: 180,
-    target: "self",
-    effects: [{ type: "status", status: "concentration", duration: INFINITE }],
-  },
-  // Bulle (comme le bladeturn de DAoC), sur l'Arcaniste seulement : absorbe entièrement le prochain coup de mêlée,
-  // puis disparaît.
+  // Bulle (comme le bladeturn de DAoC) : absorbe entièrement le prochain coup de mêlée, puis disparaît.
   {
     id: "bubble",
     name: "Bulle",

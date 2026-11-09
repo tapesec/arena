@@ -83,7 +83,7 @@ function HomeScreen() {
           soundimage.org
         </a>
         <br />
-        Icônes : Lorc, Delapouite, Zeromancer, Sbed et Felbrigg,{" "}
+        Icônes : Lorc, Delapouite, Zeromancer, Sbed, Felbrigg et Skoll,{" "}
         <a href="https://game-icons.net" target="_blank" rel="noreferrer">
           game-icons.net
         </a>{" "}
