@@ -48,7 +48,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
   - **Techniques de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc), comme les styles de DAoC : la technique part au prochain coup d'arme, à la place du coup normal (aussitôt si l'arme est prête). Elle est mise en attente et s'allume sur la barre ; une autre technique la remplace ; couper l'attaque l'annule ; la lancer active l'attaque. Ses conditions (portée, position, face à la cible, endurance) sont vérifiées au moment du coup : si elles manquent, le coup reste normal et un message l'indique. Une technique au plus par coup d'arme (toutes les 2 s pour la Lame et le Gardien).
   - **Attaques spéciales de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
-  - **Snare** : ralentissement.
+  - **Snare** : ralentissement d'un pourcentage fixe. Un seul snare à la fois : le dernier reçu remplace le précédent (pourcentage et durée), même s'il est plus faible. Pas d'immunité (choix confirmé le 2026-11-09).
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
 
 ## Classes
