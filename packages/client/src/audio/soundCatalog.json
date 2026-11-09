@@ -66,6 +66,12 @@
   "duration": 0.84
  },
  {
+  "name": "bouclier_blocage_sourd",
+  "pack": "ElevenLabs",
+  "file": "ElevenLabs/bouclier_blocage_sourd.mp3",
+  "duration": 1.04
+ },
+ {
   "name": "provocation_face_me_coward_1",
   "pack": "ElevenLabs",
   "file": "ElevenLabs/provocation_face_me_coward_1.mp3",
