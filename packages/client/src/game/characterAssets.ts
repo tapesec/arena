@@ -83,6 +83,19 @@ function grip(hand: "r" | "l", handle: number): Pick<WeaponMount, "bone" | "posi
   return { bone: `hand_${hand}`, position: [hand === "r" ? -PALM : PALM, GRIP_HEIGHT, handle], rotation: GRIP_ROTATION };
 }
 
+// Bâton des lanceurs de sorts : il traverse la paume et reste vertical dans la pose d'incantation (la main pend le
+// long du corps, elle n'est pas faite pour un bâton). UP_IN_HAND est la verticale du monde exprimée dans le repère
+// de l'os de la main pendant Spell_Simple_Idle_Loop ; la main tient le bâton un peu au-dessus de son milieu.
+const UP_IN_HAND: [number, number, number] = [0.506, -0.77, 0.388];
+function staffGrip(gripAboveMiddle: number): Pick<WeaponMount, "bone" | "position" | "rotation"> {
+  const [ux, uy, uz] = UP_IN_HAND;
+  // Rotation qui amène l'axe du bâton (y du modèle) sur UP_IN_HAND : angles x et z, sans y.
+  const z = Math.asin(-ux);
+  const x = Math.atan2(uz / Math.cos(z), uy / Math.cos(z));
+  const g = gripAboveMiddle;
+  return { bone: "hand_r", position: [-PALM - ux * g, GRIP_HEIGHT - uy * g, -uz * g], rotation: [x, 0, z] };
+}
+
 // Une classe sans entrée ici reste affichée en capsule.
 const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
@@ -132,10 +145,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
     weapons: [
       {
         model: "weapons/ice-staff.fbx",
-        bone: "hand_r",
-        position: [0, 0.08, 0.02],
-        // Le modèle est à l'envers dans la main : on le retourne.
-        rotation: [Math.PI, 0, 0],
+        ...staffGrip(0.15),
         scale: 0.0065,
         colors: { Ice: "#8fdcff", Staff: "#5b3d22" },
         glow: ["Ice"],
@@ -150,10 +160,8 @@ const CHARACTERS: Record<string, CharacterDef> = {
     weapons: [
       {
         model: "weapons/staff.fbx",
-        bone: "hand_r",
-        position: [0, 0.08, 0.02],
-        // Le modèle est à l'envers dans la main : on le retourne.
-        rotation: [Math.PI, 0, 0],
+        // Son origine est plus basse que celle du bâton de glace : on le prend plus haut pour qu'il touche aussi le sol.
+        ...staffGrip(0.3),
         scale: 0.0065,
         colors: { Wood: "#8a5a32", Gem: "#ffd966" },
         glow: ["Gem"],
