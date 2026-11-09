@@ -87,6 +87,11 @@ export class CharacterAnimator {
     this.playAction(name, "attack");
   }
 
+  // Le geste d'une compétence est en cours (le lanceur range alors son bâton dans le dos).
+  get performingAbility(): boolean {
+    return this.actionKind === "ability" && this.action?.isPlaying === true;
+  }
+
   ability(abilityId: string) {
     this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability");
   }

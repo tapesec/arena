@@ -43,7 +43,12 @@ interface WeaponMount {
   glow?: string[];
   // Matériaux peints à la couleur de l'équipe (la texture est retirée, le relief gardé).
   teamPaint?: string[];
+  // Où ranger l'arme quand le personnage lance un sort (le bâton passe dans le dos).
+  stow?: Placement;
 }
+
+// Placement d'une arme sur un os du squelette.
+type Placement = Pick<WeaponMount, "bone" | "position" | "rotation">;
 
 // Animations propres à une classe (les déplacements sont communs à tous).
 export interface CharacterAnimationSet {
@@ -87,13 +92,38 @@ function grip(hand: "r" | "l", handle: number): Pick<WeaponMount, "bone" | "posi
 // long du corps, elle n'est pas faite pour un bâton). UP_IN_HAND est la verticale du monde exprimée dans le repère
 // de l'os de la main pendant Spell_Simple_Idle_Loop ; la main tient le bâton un peu au-dessus de son milieu.
 const UP_IN_HAND: [number, number, number] = [0.506, -0.77, 0.388];
-function staffGrip(gripAboveMiddle: number): Pick<WeaponMount, "bone" | "position" | "rotation"> {
+function staffGrip(gripAboveMiddle: number): Placement {
   const [ux, uy, uz] = UP_IN_HAND;
-  // Rotation qui amène l'axe du bâton (y du modèle) sur UP_IN_HAND : angles x et z, sans y.
-  const z = Math.asin(-ux);
-  const x = Math.atan2(uz / Math.cos(z), uy / Math.cos(z));
   const g = gripAboveMiddle;
-  return { bone: "hand_r", position: [-PALM - ux * g, GRIP_HEIGHT - uy * g, -uz * g], rotation: [x, 0, z] };
+  return { bone: "hand_r", position: [-PALM - ux * g, GRIP_HEIGHT - uy * g, -uz * g], rotation: alignModelY(UP_IN_HAND) };
+}
+
+// Bâton rangé dans le dos pendant un sort, en travers, le haut au-dessus de l'épaule droite. Repère du buste dans
+// l'os spine_03, mesuré sur la pose d'attente : le haut, l'avant et la droite du personnage.
+const TORSO_UP: [number, number, number] = [0, 0.97, -0.24];
+const TORSO_FORWARD: [number, number, number] = [0, 0.24, 0.97];
+const TORSO_RIGHT: [number, number, number] = [-1, 0, 0];
+// Inclinaison du bâton par rapport à la verticale, distance derrière le dos et décalage vers le bas.
+const STOW_TILT = (30 * Math.PI) / 180;
+const STOW_BACK = 0.2;
+const STOW_DOWN = 0.05;
+function staffStow(middle: number): Placement {
+  const axis = normalize(TORSO_UP.map((u, i) => u * Math.cos(STOW_TILT) + TORSO_RIGHT[i] * Math.sin(STOW_TILT)));
+  // Le milieu du bâton (middle, sur l'axe du modèle) se place derrière le dos.
+  const position = TORSO_FORWARD.map((f, i) => -f * STOW_BACK - TORSO_UP[i] * STOW_DOWN - axis[i] * middle);
+  return { bone: "spine_03", position: position as [number, number, number], rotation: alignModelY(axis) };
+}
+
+// Rotation (angles x et z, sans y) qui amène l'axe y du modèle sur la direction donnée.
+function alignModelY(direction: readonly number[]): [number, number, number] {
+  const [dx, dy, dz] = normalize(direction);
+  const z = Math.asin(-dx);
+  return [Math.atan2(dz / Math.cos(z), dy / Math.cos(z)), 0, z];
+}
+
+function normalize(v: readonly number[]): [number, number, number] {
+  const length = Math.hypot(...v);
+  return [v[0] / length, v[1] / length, v[2] / length];
 }
 
 // Une classe sans entrée ici reste affichée en capsule.
@@ -146,6 +176,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
       {
         model: "weapons/ice-staff.fbx",
         ...staffGrip(0.15),
+        stow: staffStow(-0.03),
         scale: 0.0065,
         colors: { Ice: "#8fdcff", Staff: "#5b3d22" },
         glow: ["Ice"],
@@ -162,6 +193,7 @@ const CHARACTERS: Record<string, CharacterDef> = {
         model: "weapons/staff.fbx",
         // Son origine est plus basse que celle du bâton de glace : on le prend plus haut pour qu'il touche aussi le sol.
         ...staffGrip(0.3),
+        stow: staffStow(0.125),
         scale: 0.0065,
         colors: { Wood: "#8a5a32", Gem: "#ffd966" },
         glow: ["Gem"],
@@ -202,6 +234,8 @@ export interface CharacterInstance {
   weapons: TransformNode[];
   // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
   setTeam(team: number): void;
+  // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
+  setStowed(stowed: boolean): void;
   dispose(): void;
 }
 
@@ -284,6 +318,8 @@ export class CharacterAssets {
 
     // Les armes sont accrochées aux os de la main ou de l'avant-bras et suivent leurs mouvements.
     const weapons: TransformNode[] = [];
+    // Armes qui se rangent : leur attache, et où la mettre en main ou rangée.
+    const stowable: { attach: TransformNode; held: Placement; stowed: Placement }[] = [];
     const teamPainted: { mesh: AbstractMesh; base: PBRMaterial }[] = [];
     def.weapons.forEach((mount, i) => {
       const bone = bones.get(mount.bone);
@@ -303,6 +339,7 @@ export class CharacterAssets {
         } else (node as TransformNode).parent = attach;
       }
       if (mount.colors) paintWeapon(attach, mount.colors, mount.glow ?? []);
+      if (mount.stow) stowable.push({ attach, held: mount, stowed: mount.stow });
       const paintable = mount.teamPaint ?? [];
       for (const mesh of attach.getChildMeshes(false)) {
         if (mesh.material && paintable.includes(mesh.material.name)) teamPainted.push({ mesh, base: mesh.material as PBRMaterial });
@@ -335,6 +372,16 @@ export class CharacterAssets {
           for (const mesh of outfitMeshes) mesh.material = material;
         }
         for (const { mesh, base } of teamPainted) mesh.material = this.paintMaterial(base, team);
+      },
+      setStowed: (stowed) => {
+        for (const weapon of stowable) {
+          const placement = stowed ? weapon.stowed : weapon.held;
+          const bone = bones.get(placement.bone);
+          if (!bone || weapon.attach.parent === bone) continue;
+          weapon.attach.parent = bone;
+          weapon.attach.position.set(...placement.position);
+          weapon.attach.rotation.set(...placement.rotation);
+        }
       },
       // Matériaux et textures sont partagés par tous les personnages de la classe : on ne les libère pas.
       dispose() {

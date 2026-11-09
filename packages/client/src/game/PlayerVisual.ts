@@ -248,14 +248,17 @@ export class PlayerVisual {
     const k = 1 - Math.exp(-VELOCITY_SMOOTHING * dt);
     this.forwardSpeed += (forward - this.forwardSpeed) * k;
     this.rightSpeed += (right - this.rightSpeed) * k;
+    const casting = this.state.castAbility !== "";
     this.animator?.update({
       alive: this.isAlive,
-      casting: this.state.castAbility !== "",
+      casting,
       stunned: this.hasEffect("stun"),
       rooted: this.hasEffect("root"),
       forward: this.forwardSpeed,
       right: this.rightSpeed,
     });
+    // Le bâton passe dans le dos pendant l'incantation et le geste du sort, puis revient en main.
+    this.model?.setStowed(this.isAlive && (casting || (this.animator?.performingAbility ?? false)));
   }
 
   // La lueur d'incantation pulse, et prend la couleur du sort en cours.
