@@ -127,7 +127,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 
 - **Parties qui s'éternisent** : si une équipe se cache ou fuit sans arrêt, la partie peut ne jamais finir. Piste possible : une zone qui rétrécit après quelques minutes, ou une durée maximale.
 - **Taille de l'arène** : à caler en test, assez grande pour que la recherche prenne un peu de temps sans devenir ennuyeuse.
-- **Progression** : hors périmètre du prototype.
+- **Progression** (décidée le 2026-11-09, à construire plus tard) : **horizontale**. Monter en rang débloque des compétences de puissance équivalente (des options), jamais de la puissance brute, pour qu'un débutant reste compétitif face à un vétéran sans matchmaking par niveau. Barre de **8 compétences** par classe : **3 fixes**, les compétences de base données à l'ouverture du compte, et **5 au choix** parmi le catalogue de la classe, débloqué au fil des rangs (une compétence « ultime » au plus). Les rangs exigent des comptes persistants : en attendant, on conçoit et équilibre le catalogue avec tout débloqué.
 - **Valeurs chiffrées** : toutes à valider en prototype.
 - **Contrôles** : passés aux contrôles à la DAoC (voir Déplacement). On recule à 70 % de la vitesse normale, comme dans DAoC.
 
