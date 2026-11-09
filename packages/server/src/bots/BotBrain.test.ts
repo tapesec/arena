@@ -126,6 +126,62 @@ describe("Bots : comportement par classe", () => {
   });
 });
 
+describe("Bots : Gardien", () => {
+  it("charge un lanceur de sorts ennemi quand son protégé est tranquille", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 5, -10, 0, true);
+    sim.spawn("p", "pretre", 0, 6, -11);
+    const caster = sim.spawn("e", "arcaniste", 1, 5, 8, Math.PI);
+    sim.run(4, () => caster.has("stun"));
+    assert.ok(caster.has("stun"), "la Charge doit stun le lanceur de sorts");
+    assert.ok(distance(gardien.state, caster.state) <= MELEE_RANGE);
+  });
+
+  it("provoque la Lame qui frappe son protégé, puis la frappe (Coup de bouclier, Coup puissant)", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 6, -12, 0, true);
+    const arcaniste = sim.spawn("a", "arcaniste", 0, 5, -10);
+    const lame = sim.spawn("l", "lame", 1, 5, -8, Math.PI);
+    sim.combat.setTarget(lame.id, arcaniste.id);
+    sim.combat.toggleAttack(lame.id);
+    sim.run(2.5, () => lame.has("taunted"));
+    assert.equal(lame.getEffect("taunted")?.sourceId, gardien.id);
+    sim.run(8);
+    assert.ok(lame.has("immuneStun"), "Coup de bouclier");
+    assert.ok(gardien.cooldowns.has("shieldBash"));
+  });
+
+  it("lance le Cri de ralliement quand deux alliés sont rootés par un sort", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 5, -10, 0, true);
+    const a1 = sim.spawn("a1", "pretre", 0, 7, -10);
+    const a2 = sim.spawn("a2", "arcaniste", 0, 3, -10);
+    // À 9 m : trop près pour que le Gardien charge le Barde.
+    const barde = sim.spawn("b", "barde", 1, 5, -1, Math.PI);
+    sim.combat.setTarget(barde.id, a1.id);
+    sim.combat.useAbility(barde.id, "aoeRoot");
+    sim.run(4, () => gardien.has("magicImmune"));
+    // Le root a bien été posé (immunité au root), puis retiré par le cri.
+    assert.ok(a1.has("immuneRoot") && a2.has("immuneRoot"), "le Barde devait rooter les deux alliés");
+    assert.ok(gardien.has("magicImmune"), "pas de Cri de ralliement");
+    assert.ok(!a1.has("root") && !a2.has("root") && a1.has("magicImmune"));
+  });
+
+  it("lève le Rempart quand trois combattants de mêlée assaillent le groupe", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 5, -10, 0, true);
+    const pretre = sim.spawn("p", "pretre", 0, 5, -14);
+    for (const [i, x] of [4, 5, 6].entries()) {
+      const lame = sim.spawn(`l${i}`, "lame", 1, x, -12.5, Math.PI);
+      sim.combat.setTarget(lame.id, pretre.id);
+      sim.combat.toggleAttack(lame.id);
+    }
+    sim.run(2, () => gardien.has("rampart"));
+    assert.ok(gardien.has("rampart"));
+    assert.ok(pretre.has("meleeImmune"));
+  });
+});
+
 describe("Bots : partie complète", () => {
   it("une partie à 16 bots se termine par une victoire", () => {
     const sim = new Sim();

@@ -1,4 +1,12 @@
-import { MELEE_RANGE, distance, positionRelativeTo, type ClassId } from "@arena/shared";
+import {
+  MELEE_RANGE,
+  RAMPART_RADIUS,
+  distance,
+  getAbility,
+  positionRelativeTo,
+  type ClassId,
+  type EffectKind,
+} from "@arena/shared";
 import type { CombatSystem } from "../CombatSystem";
 import type { PlayerRuntime } from "../PlayerRuntime";
 import { BotBrain, CASTER_CLASSES, MELEE_CLASSES } from "./BotBrain";
@@ -6,6 +14,11 @@ import type { Pathfinder } from "./Pathfinder";
 
 // Priorité de cible des Lames et des Arcanistes : lanceurs de sorts, puis Lames, puis Gardiens.
 const DAMAGE_PRIORITY: ClassId[][] = [CASTER_CLASSES, ["lame"], ["gardien"]];
+
+// Gardien : distance minimale de la Charge, rayon du Cri de ralliement, contrôles qu'il retire.
+const CHARGE_MIN = getAbility("charge")?.minRange ?? 10;
+const RALLY_RADIUS = getAbility("rallyCry")?.radius ?? 20;
+const RALLY_CONTROLS: EffectKind[] = ["mez", "root"];
 
 // Distance que les lanceurs de sorts cherchent à garder avec l'ennemi (la portée des sorts est de 30 m).
 const CASTER_MIN_DISTANCE = 15;
@@ -265,13 +278,27 @@ class GardienBot extends BotBrain {
   }
 
   protected think() {
+    // Pendant la Charge et le Rempart, le Gardien ne peut rien faire d'autre.
+    if (this.self.charge || this.self.has("rampart")) return;
     const ward = this.chooseWard();
+    if (ward) this.ensureGuard(ward);
+
+    // Rempart : le groupe est submergé par la mêlée, ou le protégé va mourir sous les coups.
+    if (this.shouldRampart(ward) && this.tryUse("rampart")) return;
+    // Cri de ralliement : plusieurs alliés pris par des contrôles magiques (instantané, la suite continue).
+    if (this.shouldRally(ward)) this.tryUse("rallyCry");
+
+    // Provocation : l'ennemi qui frappe le protégé, ou qui achève un allié (au corps à corps ou par un sort).
+    const taunted = this.tauntTarget(ward);
+    if (taunted && this.tryUse("taunt", taunted)) return;
+
     if (!ward) {
       const target = this.pickTarget(DAMAGE_PRIORITY);
-      return target ? this.meleeAttack(target) : this.advance();
+      if (!target) return this.advance();
+      if (this.distanceTo(target) >= CHARGE_MIN && this.tryUse("charge", target)) return;
+      return this.fight(target);
     }
 
-    this.ensureGuard(ward);
     const attacked = this.combat.now - ward.lastMeleeHitAt < 3;
     if (attacked && this.hpRatio(ward) < 0.4) this.tryUse("intercept", ward);
 
@@ -281,17 +308,68 @@ class GardienBot extends BotBrain {
       attacker?.alive && this.world.visible.has(attacker.id)
         ? attacker
         : this.nearest(this.enemies().filter((e) => distance(e.state, ward.state) <= 8));
+    if (threat) return this.fight(threat);
 
-    if (threat) {
-      if (this.distanceTo(threat) <= MELEE_RANGE && !threat.has("stun") && !threat.has("immuneStun")) {
-        this.tryUse("shieldBash", threat);
-      }
-      return this.meleeAttack(threat);
-    }
+    // Le protégé est tranquille : Charge sur un lanceur de sorts ennemi, de préférence en pleine incantation.
+    const casters = this.enemies().filter((e) => CASTER_CLASSES.includes(e.classDef.id) && this.distanceTo(e) >= CHARGE_MIN);
+    const caster = casters.find((e) => e.state.castAbility) ?? this.nearest(casters);
+    if (caster && this.tryUse("charge", caster)) return;
+
     // Rien à signaler : rejoindre le protégé (la Garde ne fonctionne qu'à 4 m),
     // puis mener le groupe : le protégé suit le Gardien.
     if (this.distanceTo(ward) > 5) this.moveTo(ward.state, 2.5);
     else this.advance();
+  }
+
+  // Au contact : Coup de bouclier (stun), sinon Frappe handicapante dans le dos, sinon Coup puissant.
+  // Une technique déjà en attente n'est pas remplacée.
+  private fight(target: PlayerRuntime) {
+    this.meleeAttack(target);
+    if (this.distanceTo(target) > MELEE_RANGE || this.self.state.queuedAbility) return;
+    if (!target.has("stun") && !target.has("immuneStun") && this.tryUse("shieldBash", target)) return;
+    const behind = positionRelativeTo(target.state, this.self.state) === "back";
+    if (behind && !target.has("snare") && this.tryUse("cripplingStrike", target)) return;
+    this.tryUse("powerStrike", target);
+  }
+
+  // Ennemi à provoquer : celui qui frappe le protégé, ou celui qui frappe (ou vise d'un sort) un allié à moins de
+  // la moitié de sa vie.
+  private tauntTarget(ward: PlayerRuntime | undefined): PlayerRuntime | undefined {
+    if (!this.isReady("taunt")) return undefined;
+    const enemies = this.enemies();
+    const recent = (p: PlayerRuntime) => this.combat.now - p.lastMeleeHitAt < 2;
+    if (ward && recent(ward)) {
+      const attacker = enemies.find((e) => e.id === ward.lastMeleeAttackerId);
+      if (attacker && !attacker.has("taunted")) return attacker;
+    }
+    const wounded = this.allies().filter((a) => a !== this.self && this.hpRatio(a) < 0.5);
+    for (const ally of wounded) {
+      const hitter = recent(ally) ? enemies.find((e) => e.id === ally.lastMeleeAttackerId) : undefined;
+      const caster = enemies.find((e) => e.state.castAbility && e.castTargetId === ally.id);
+      const enemy = hitter ?? caster;
+      if (enemy && !enemy.has("taunted")) return enemy;
+    }
+    return undefined;
+  }
+
+  // Au moins deux alliés à portée du cri sous un contrôle magique, ou le Gardien lui-même, ou son protégé.
+  private shouldRally(ward: PlayerRuntime | undefined): boolean {
+    if (!this.isReady("rallyCry")) return false;
+    const controlled = (p: PlayerRuntime) => p.effects.some((e) => e.magic && RALLY_CONTROLS.includes(e.kind));
+    const near = this.allies().filter((a) => this.distanceTo(a) <= RALLY_RADIUS);
+    const count = near.filter(controlled).length;
+    return count >= 2 || controlled(this.self) || (!!ward && near.includes(ward) && controlled(ward));
+  }
+
+  // Au moins trois ennemis de mêlée au contact du groupe (alliés à 30 m), ou le protégé sous 30 % sous les coups.
+  private shouldRampart(ward: PlayerRuntime | undefined): boolean {
+    if (!this.isReady("rampart")) return false;
+    const group = this.allies().filter((a) => this.distanceTo(a) <= RAMPART_RADIUS);
+    const attackers = this.enemies().filter(
+      (e) => MELEE_CLASSES.includes(e.classDef.id) && group.some((a) => distance(e.state, a.state) <= MELEE_RANGE + 1),
+    );
+    if (attackers.length >= 3) return true;
+    return !!ward && group.includes(ward) && this.hpRatio(ward) < 0.3 && this.combat.now - ward.lastMeleeHitAt < 2;
   }
 
   // Le lanceur de sorts allié attaqué le plus récemment, sinon le plus proche.
