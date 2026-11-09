@@ -41,9 +41,23 @@ const files = all.filter((file) => {
 // Nom court et unique : le nom du fichier sans extension(s) ; en cas de doublon (ex. les trois voix de femme),
 // préfixé par les dossiers parents jusqu'à être unique.
 const clean = (text) => text.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "");
+// Bundles Sonniss : un dossier par bibliothèque, fichiers nommés "CATÉGORIE_Description_Éditeur_Bibliothèque" ;
+// le nom garde la catégorie et la description, le pack est la bibliothèque.
+const BUNDLE = /^Sonniss GDC \d+$/;
+const isBundle = (file) => BUNDLE.test(file.split(path.sep)[0]);
+const baseName = (file) => {
+  const name = path.basename(file).replace(/(\.[a-z0-9]+)+$/i, "");
+  return clean(isBundle(file) ? name.split("_").slice(0, 2).join("_") : name);
+};
+const packOf = (file) => {
+  const parts = file.split(path.sep);
+  if (parts.length === 1) return "Divers";
+  return isBundle(file) && parts.length > 2 ? `${parts[0]} · ${parts[1].replace(/^344 Audio - /, "")}` : parts[0];
+};
 const candidates = (file) => {
   const parts = file.split(path.sep);
-  const base = clean(parts.pop().replace(/(\.[a-z0-9]+)+$/i, ""));
+  parts.pop();
+  const base = baseName(file);
   const names = [base];
   for (let i = parts.length - 1; i >= 0; i--) names.push(`${clean(parts.slice(i).join("_"))}_${base}`);
   return names;
@@ -68,7 +82,7 @@ for (const file of files) {
   size += statSync(target).size;
   const info = execFileSync("afinfo", [input]).toString();
   const duration = Number(/estimated duration: ([\d.]+)/.exec(info)?.[1] ?? 0);
-  const pack = file.includes(path.sep) ? file.split(path.sep)[0] : "Divers";
+  const pack = packOf(file);
   catalog.push({ name, pack, file: file.split(path.sep).join("/"), duration: Math.round(duration * 100) / 100 });
 }
 rmSync(work, { recursive: true, force: true });

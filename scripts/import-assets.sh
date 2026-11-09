@@ -88,6 +88,14 @@ for zip in "$SOUNDS"/*.zip; do
   unzip -oq "$zip" -x '__MACOSX/*' -d "$pack"
 done
 
+# Bundles gratuits Sonniss #GameAudioGDC (libres de droits, sans crédit obligatoire) : un dossier par partie
+# téléchargée, réunies dans "Sonniss GDC 2026" (un sous-dossier par bibliothèque).
+for bundle in "$SRC"/Sonniss.com-GDC2026-GameAudioBundle*; do
+  [[ -d "$bundle" ]] || continue
+  mkdir -p "$OUT/sounds/Sonniss GDC 2026"
+  rsync -a --exclude .DS_Store "$bundle/" "$OUT/sounds/Sonniss GDC 2026/"
+done
+
 # Musiques : « The Last Encounter » (Eric Matyas, soundimage.org) et « Woodland Fantasy » (Matthew Pablo) —
 # crédits obligatoires, voir CREDITS.md.
 MUSIC="$SRC/The Last Encounter Collection"

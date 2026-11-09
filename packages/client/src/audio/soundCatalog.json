@@ -1998,6 +1998,498 @@
   "duration": 0.59
  },
  {
+  "name": "AEROJet_Blast_Off_Clean",
+  "pack": "Sonniss GDC 2026 · Air Designed",
+  "file": "Sonniss GDC 2026/344 Audio - Air Designed/AEROJet_Blast Off Clean_344 Audio_Air Designed.wav",
+  "duration": 8.74
+ },
+ {
+  "name": "AEROJet_Unidentified_Encounter",
+  "pack": "Sonniss GDC 2026 · Air Designed",
+  "file": "Sonniss GDC 2026/344 Audio - Air Designed/AEROJet_Unidentified Encounter_344 Audio_Air Designed.wav",
+  "duration": 58.04
+ },
+ {
+  "name": "VOXMale_Boxer_Level_Up_1",
+  "pack": "Sonniss GDC 2026 · Anime Fight Voices Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Anime Fight Voices Vol. 1/VOXMale_Boxer Level Up 1_344 Audio_Anime Fight Voices.wav",
+  "duration": 5.2
+ },
+ {
+  "name": "VOXMale_Male_Adventurer_Active_Yell_19",
+  "pack": "Sonniss GDC 2026 · Anime Fight Voices Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Anime Fight Voices Vol. 1/VOXMale_Male Adventurer, Active Yell 19_344 Audio_Anime Fight Voices.wav",
+  "duration": 0.44
+ },
+ {
+  "name": "VOXMale_Warrior_Opponent_Attack_Ai_yah_2",
+  "pack": "Sonniss GDC 2026 · Anime Fight Voices Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Anime Fight Voices Vol. 1/VOXMale_Warrior Opponent Attack, 'Ai yah' 2_344 Audio_Anime Fight Voices.wav",
+  "duration": 0.92
+ },
+ {
+  "name": "VOXFem_Anime_Adult_Warrior_Breaths_40",
+  "pack": "Sonniss GDC 2026 · Anime Fight Voices Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Anime Fight Voices Vol. 2/VOXFem_Anime, Adult Warrior Breaths 40_344 Audio_Anime Fight Voices Vol 2.wav",
+  "duration": 0.91
+ },
+ {
+  "name": "VOXFem_Anime_Schoolgirl_Fight_Exhale_15",
+  "pack": "Sonniss GDC 2026 · Anime Fight Voices Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Anime Fight Voices Vol. 2/VOXFem_Anime, Schoolgirl Fight Exhale 15_344 Audio_Anime Fight Voices Vol 2.wav",
+  "duration": 0.67
+ },
+ {
+  "name": "VOXFem_Anime_Warrior_Elf_Princess_Aggressive_Yell",
+  "pack": "Sonniss GDC 2026 · Anime Fight Voices Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Anime Fight Voices Vol. 2/VOXFem_Anime, Warrior Elf Princess Aggressive Yell_344 Audio_Anime Fight Voices Vol 2_14.wav",
+  "duration": 1.6
+ },
+ {
+  "name": "PAPRMisc_Antique_Books_Flicking_Through_Pages_11",
+  "pack": "Sonniss GDC 2026 · Antique Books",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Books/PAPRMisc_Antique Books Flicking Through Pages 11_344 Audio_Antiques - Books.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "PAPRMisc_Antique_Books_Slow_Page_Turns_6",
+  "pack": "Sonniss GDC 2026 · Antique Books",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Books/PAPRMisc_Antique Books Slow Page Turns 6_344 Audio_Antiques - Books.wav",
+  "duration": 13.75
+ },
+ {
+  "name": "PAPRMisc_Pile_Of_Antique_Books_Falling_Over_8",
+  "pack": "Sonniss GDC 2026 · Antique Books",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Books/PAPRMisc_Pile Of Antique Books Falling Over 8_344 Audio_Antiques - Books.wav",
+  "duration": 2.8
+ },
+ {
+  "name": "CLOCKTick_Crooked_Antique_Clock",
+  "pack": "Sonniss GDC 2026 · Antique Clocks",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Clocks/CLOCKTick_Crooked Antique Clock_344 Audio_Antique Clocks.wav",
+  "duration": 60
+ },
+ {
+  "name": "CLOCKTick_You_re_Running_Late",
+  "pack": "Sonniss GDC 2026 · Antique Clocks",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Clocks/CLOCKTick_You're Running Late _344 Audio_Antique Clocks.wav",
+  "duration": 60
+ },
+ {
+  "name": "OBJLug_Rumaging_Through_Suitcase_Antique_Suitcase",
+  "pack": "Sonniss GDC 2026 · Antique Luggage",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Luggage/OBJLug_Rumaging Through Suitcase, Antique Suitcase_344 Audio_Antiques - Luggage_02.wav",
+  "duration": 8.74
+ },
+ {
+  "name": "OBJLug_Suitcase_Being_Locked_Antique_Suitcase_1",
+  "pack": "Sonniss GDC 2026 · Antique Luggage",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Luggage/OBJLug_Suitcase Being Locked, Antique Suitcase 1_344 Audio_Antiques - Luggage.wav",
+  "duration": 9.12
+ },
+ {
+  "name": "OBJLug_Suitcase_Opening_and_Closing_Antique_Suitcase",
+  "pack": "Sonniss GDC 2026 · Antique Luggage",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Luggage/OBJLug_Suitcase Opening and Closing, Antique Suitcase_344 Audio_Antiques - Luggage_01.wav",
+  "duration": 8.21
+ },
+ {
+  "name": "METLMvmt_Antique_Measuring_Tape",
+  "pack": "Sonniss GDC 2026 · Antique Small Metals",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Small Metals/METLMvmt_  Antique Measuring Tape_344 Audio_Antique Small Metals.wav",
+  "duration": 0.69
+ },
+ {
+  "name": "METLMvmt_Opening_Lid_Of_Antique_Blowtorch",
+  "pack": "Sonniss GDC 2026 · Antique Small Metals",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Small Metals/METLMvmt_  Opening Lid Of Antique Blowtorch_344 Audio_Antique Small Metals.wav",
+  "duration": 1.45
+ },
+ {
+  "name": "METLMvmt_Tinkering_Antique_Lock",
+  "pack": "Sonniss GDC 2026 · Antique Small Metals",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Small Metals/METLMvmt_  Tinkering Antique Lock_344 Audio_Antique Small Metals.wav",
+  "duration": 4.05
+ },
+ {
+  "name": "COMTelph_Antique_Telephone_Ear_Piece_Falling_Down",
+  "pack": "Sonniss GDC 2026 · Antique Telephone",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Telephone/COMTelph_Antique Telephone Ear Piece Falling Down_344 Audio_Antiques - Telephone_03.wav",
+  "duration": 1.25
+ },
+ {
+  "name": "COMTelph_Antique_Telephone_Pick_Up_Drop_Ear_Piece",
+  "pack": "Sonniss GDC 2026 · Antique Telephone",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Telephone/COMTelph_Antique Telephone Pick Up & Drop Ear Piece_344 Audio_Antiques - Telephone_05.wav",
+  "duration": 3.22
+ },
+ {
+  "name": "COMTelph_Antique_Telephone_Rotary_Dial_Number_9",
+  "pack": "Sonniss GDC 2026 · Antique Telephone",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Telephone/COMTelph_Antique Telephone Rotary Dial Number  9_344 Audio_Antiques - Telephone.wav",
+  "duration": 2.45
+ },
+ {
+  "name": "COMType_Typewriter_Carriage_Movement_Typewriter",
+  "pack": "Sonniss GDC 2026 · Antique Typewriter",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Typewriter/COMType_Typewriter Carriage Movement, Typewriter_344 Audio_Antiques - Typewriter_01.wav",
+  "duration": 4.19
+ },
+ {
+  "name": "COMType_Typewriter_Paper_Movements_Typewriter_04",
+  "pack": "Sonniss GDC 2026 · Antique Typewriter",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Typewriter/COMType_Typewriter Paper Movements, Typewriter 04_344 Audio_Antiques - Typewriter.wav",
+  "duration": 3.54
+ },
+ {
+  "name": "COMType_Typewriter_Space_Key_Typewriter_05",
+  "pack": "Sonniss GDC 2026 · Antique Typewriter",
+  "file": "Sonniss GDC 2026/344 Audio - Antique Typewriter/COMType_Typewriter Space Key, Typewriter 05_344 Audio_Antiques - Typewriter.wav",
+  "duration": 0.54
+ },
+ {
+  "name": "OBJFurn_Barber_Chair_Foot_Pump_4",
+  "pack": "Sonniss GDC 2026 · Barbershop Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Barbershop Vol. 1/OBJFurn_Barber Chair, Foot Pump 4_344 Audio_Barbershop Vol 1.wav",
+  "duration": 7.32
+ },
+ {
+  "name": "OBJMisc_Hair_Dryer_On_Idle_Off_4",
+  "pack": "Sonniss GDC 2026 · Barbershop Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Barbershop Vol. 1/OBJMisc_Hair Dryer, On, Idle, Off 4_344 Audio_Barbershop Vol 1.wav",
+  "duration": 12.32
+ },
+ {
+  "name": "OBJMisc_Spray_Bottle_Spray_1",
+  "pack": "Sonniss GDC 2026 · Barbershop Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Barbershop Vol. 1/OBJMisc_Spray Bottle, Spray 1_344 Audio_Barbershop Vol 1.wav",
+  "duration": 0.52
+ },
+ {
+  "name": "OBJMisc_Hair_Brush_Plastic_Bristles_Brushing_Hair",
+  "pack": "Sonniss GDC 2026 · Barbershop Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Barbershop Vol. 2/OBJMisc_Hair Brush, Plastic Bristles, Brushing Hair_344 Audio_Barbershop Vol 2.wav",
+  "duration": 6
+ },
+ {
+  "name": "OBJMisc_Hair_Scissor_Snips_4",
+  "pack": "Sonniss GDC 2026 · Barbershop Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Barbershop Vol. 2/OBJMisc_Hair Scissor, Snips 4_344 Audio_Barbershop Vol 2.wav",
+  "duration": 5.16
+ },
+ {
+  "name": "OBJMisc_Wahl_Sterling_Trimmer_On_Idle_Off",
+  "pack": "Sonniss GDC 2026 · Barbershop Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Barbershop Vol. 2/OBJMisc_Wahl Sterling Trimmer, On, Idle, Off_344 Audio_Barbershop Vol 2.wav",
+  "duration": 44.68
+ },
+ {
+  "name": "DSGNBass_Bass_Drop_Downer_Fast_16",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 1/DSGNBass_Bass Drop & Downer Fast 16_344 Audio_Bass Drops & Downers.wav",
+  "duration": 2.13
+ },
+ {
+  "name": "DSGNBass_Bass_Drop_Downer_Medium_04",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 1/DSGNBass_Bass Drop & Downer Medium 04_344 Audio_Bass Drops & Downers.wav",
+  "duration": 4.49
+ },
+ {
+  "name": "DSGNBass_Bass_Drop_Downer_Slow_10",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 1/DSGNBass_Bass Drop & Downer Slow 10_344 Audio_Bass Drops & Downers.wav",
+  "duration": 7.96
+ },
+ {
+  "name": "DSGNBass_Bass_Drop_Downer_Fast_12",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 2/DSGNBass_Bass Drop & Downer Fast 12_344 Audio_Bass Drops & Downers Vol 2.wav",
+  "duration": 2.64
+ },
+ {
+  "name": "DSGNBass_Bass_Drop_Downer_Medium_15",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 2/DSGNBass_Bass Drop & Downer Medium 15_344 Audio_Bass Drops & Downers Vol 2.wav",
+  "duration": 3.54
+ },
+ {
+  "name": "DSGNBass_Bass_Drop_Downer_Slow_07",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 2/DSGNBass_Bass Drop & Downer Slow 07_344 Audio_Bass Drops & Downers Vol 2.wav",
+  "duration": 4.54
+ },
+ {
+  "name": "DSGNBass_Jump_Start_Drop_3",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 3",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 3/DSGNBass_Jump Start Drop 3_344 Audio_Bass Drops and Downers Vol 3.wav",
+  "duration": 3.7
+ },
+ {
+  "name": "DSGNBass_Rattling_Downer_3",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 3",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 3/DSGNBass_Rattling Downer 3_344 Audio_Bass Drops and Downers Vol 3.wav",
+  "duration": 5.59
+ },
+ {
+  "name": "DSGNBass_Tone_Downer_Reverb",
+  "pack": "Sonniss GDC 2026 · Bass Drops & Downers Vol. 3",
+  "file": "Sonniss GDC 2026/344 Audio - Bass Drops & Downers Vol. 3/DSGNBass_Tone Downer (Reverb)_344 Audio_Bass Drops and Downers Vol 3.wav",
+  "duration": 5.85
+ },
+ {
+  "name": "VOXMale_Police_Radio_Burglary_Calm_Update_Warning",
+  "pack": "Sonniss GDC 2026 · British Police Radio Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - British Police Radio Vol. 1/VOXMale_Police Radio, Burglary, Calm, Update, Warning_344 Audio_British Police Radio.wav",
+  "duration": 7.44
+ },
+ {
+  "name": "VOXMale_Police_Radio_Car_Theft_Relaxed_Update_Helpful",
+  "pack": "Sonniss GDC 2026 · British Police Radio Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - British Police Radio Vol. 1/VOXMale_Police Radio, Car Theft, Relaxed, Update, Helpful_344 Audio_British Police Radio.wav",
+  "duration": 5.9
+ },
+ {
+  "name": "VOXMale_Police_Vehicle_Calm_Standing_By",
+  "pack": "Sonniss GDC 2026 · British Police Radio Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - British Police Radio Vol. 1/VOXMale_Police, Vehicle, Calm, 'Standing By'_344 Audio_British Police Radio.wav",
+  "duration": 2.4
+ },
+ {
+  "name": "VEHInt_CLIMATE_CONTROL_SYSTEM_FAN_SPEED_DIAL_FAST",
+  "pack": "Sonniss GDC 2026 · Car Foley Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Car Foley Vol. 1/VEHInt_CLIMATE CONTROL SYSTEM, FAN SPEED DIAL, FAST_344 Audio_Car Foley Vol 1.wav",
+  "duration": 1.71
+ },
+ {
+  "name": "VEHInt_CUP_HOLDER_RELEASE_1",
+  "pack": "Sonniss GDC 2026 · Car Foley Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Car Foley Vol. 1/VEHInt_CUP HOLDER, RELEASE 1_344 Audio_Car Foley Vol 1.wav",
+  "duration": 1.08
+ },
+ {
+  "name": "VEHInt_LIGHTING_CONTROL_RELEASE_HEADLIGHT_FLASH",
+  "pack": "Sonniss GDC 2026 · Car Foley Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Car Foley Vol. 1/VEHInt_LIGHTING CONTROL, RELEASE, HEADLIGHT FLASH_344 Audio_Car Foley Vol 1.wav",
+  "duration": 0.53
+ },
+ {
+  "name": "GAMECas_Automatic_Shuffler_Shuffling_1",
+  "pack": "Sonniss GDC 2026 · Casino Cards Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Casino Cards Vol. 1/GAMECas_Automatic Shuffler, Shuffling 1_344 Audio_Casino Cards Vol 1.wav",
+  "duration": 5.17
+ },
+ {
+  "name": "GAMECas_Dealing_3",
+  "pack": "Sonniss GDC 2026 · Casino Cards Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Casino Cards Vol. 1/GAMECas_Dealing 3_344 Audio_Casino Cards Vol 1.wav",
+  "duration": 6.97
+ },
+ {
+  "name": "GAMECas_Pick_Up_Multiple_Cards_At_Once_5",
+  "pack": "Sonniss GDC 2026 · Casino Cards Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Casino Cards Vol. 1/GAMECas_Pick Up Multiple Cards At Once 5_344 Audio_Casino Cards Vol 1.wav",
+  "duration": 0.38
+ },
+ {
+  "name": "MAGMisc_Magic_Christmas_Bells_2",
+  "pack": "Sonniss GDC 2026 · Christmas Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Christmas Vol. 1/MAGMisc_Magic Christmas Bells 2_344 Audio_Christmas.wav",
+  "duration": 17.79
+ },
+ {
+  "name": "MAGMisc_Sleigh_Movement_Pulling",
+  "pack": "Sonniss GDC 2026 · Christmas Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Christmas Vol. 1/MAGMisc_Sleigh Movement, Pulling_344 Audio_Christmas.wav",
+  "duration": 11.44
+ },
+ {
+  "name": "MAGMisc_Wrapping_Paper_Opening_Present_1",
+  "pack": "Sonniss GDC 2026 · Christmas Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Christmas Vol. 1/MAGMisc_Wrapping Paper, Opening Present 1_344 Audio_Christmas.wav",
+  "duration": 5.62
+ },
+ {
+  "name": "FOLYProp_Sitting_Down_Creaky_Seat_Squeaks_3",
+  "pack": "Sonniss GDC 2026 · Cinema Experience Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Cinema Experience Vol. 1/FOLYProp_Sitting Down, Creaky Seat, Squeaks 3_344 Audio_CInema Experience.wav",
+  "duration": 4.47
+ },
+ {
+  "name": "FOODMisc_Broom_Sweeping_Up_Snacks_On_Hard_Floor_2",
+  "pack": "Sonniss GDC 2026 · Cinema Experience Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Cinema Experience Vol. 1/FOODMisc_Broom Sweeping Up Snacks On Hard Floor 2_344 Audio_CInema Experience.wav",
+  "duration": 5.96
+ },
+ {
+  "name": "VOXReac_Spectator_Female_Various_Questions",
+  "pack": "Sonniss GDC 2026 · Cinema Experience Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Cinema Experience Vol. 1/VOXReac_Spectator, Female, Various Questions_344 Audio_Cinema Experience.wav",
+  "duration": 17.95
+ },
+ {
+  "name": "FGHTGrab_Choking_Tension_03",
+  "pack": "Sonniss GDC 2026 · Cinematic Fight Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Cinematic Fight Vol. 1/FGHTGrab_Choking, Tension 03_344 Audio_Cinematic Fight Vol 1.wav",
+  "duration": 8.87
+ },
+ {
+  "name": "FGHTImpt_4_x_Punch_Body_02",
+  "pack": "Sonniss GDC 2026 · Cinematic Fight Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Cinematic Fight Vol. 1/FGHTImpt_4 x Punch, Body 02_344 Audio_Cinematic Fight Vol 1.wav",
+  "duration": 3.91
+ },
+ {
+  "name": "EQUISprt_Climbing_Gear_Carabiner_Screwing_Lock_01",
+  "pack": "Sonniss GDC 2026 · Climbing Gear Foley Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Climbing Gear Foley Vol. 1/EQUISprt_Climbing Gear, Carabiner, Screwing Lock 01_344 Audio_Climbing Gear Foley Vol 1.wav",
+  "duration": 3.19
+ },
+ {
+  "name": "EQUISprt_Climbing_Gear_Flicking_Carabiner_On_Rope",
+  "pack": "Sonniss GDC 2026 · Climbing Gear Foley Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Climbing Gear Foley Vol. 1/EQUISprt_Climbing Gear, Flicking Carabiner On Rope_344 Audio_Climbing Gear Foley Vol 1.wav",
+  "duration": 6.23
+ },
+ {
+  "name": "ANMLRept_Hatchling_Calling_Out",
+  "pack": "Sonniss GDC 2026 · Dinosaurs Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Dinosaurs Vol. 1/ANMLRept_Hatchling Calling Out_344 Audio_Dinosaurs.wav",
+  "duration": 1.76
+ },
+ {
+  "name": "ANMLRept_Raptor_Flair",
+  "pack": "Sonniss GDC 2026 · Dinosaurs Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Dinosaurs Vol. 1/ANMLRept_Raptor Flair_344 Audio_Dinosaurs.wav",
+  "duration": 1.78
+ },
+ {
+  "name": "ANMLRept_T_Rex",
+  "pack": "Sonniss GDC 2026 · Dinosaurs Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Dinosaurs Vol. 1/ANMLRept_T Rex_344 Audio_Dinosaurs.wav",
+  "duration": 5.71
+ },
+ {
+  "name": "ANMLRept_Dinosaur_Eating_Meat_01",
+  "pack": "Sonniss GDC 2026 · Dinosaurs Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Dinosaurs Vol. 2/ANMLRept_Dinosaur Eating Meat 01_344 Audio_Dinosaurs Vol 2.wav",
+  "duration": 19.46
+ },
+ {
+  "name": "ANMLRept_Dinosaur_Egg_Hatching_02",
+  "pack": "Sonniss GDC 2026 · Dinosaurs Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Dinosaurs Vol. 2/ANMLRept_Dinosaur Egg Hatching 02_344 Audio_Dinosaurs Vol 2.wav",
+  "duration": 1.67
+ },
+ {
+  "name": "ANMLRept_Large_Herbivore_Roar_01",
+  "pack": "Sonniss GDC 2026 · Dinosaurs Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Dinosaurs Vol. 2/ANMLRept_Large Herbivore Roar 01_344 Audio_Dinosaurs Vol 2.wav",
+  "duration": 12.46
+ },
+ {
+  "name": "ANMLDog_Dog_Barks_Multiple_Indoors_Perspective",
+  "pack": "Sonniss GDC 2026 · Dog Vocalisations Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Dog Vocalisations Vol. 1/ANMLDog_Dog Barks, Multiple, Indoors, Perspective,_344 Audio_Dog Vocalisations_02.wav",
+  "duration": 5.93
+ },
+ {
+  "name": "ANMLDog_Dog_Shuffle_Grunt_Movement_Lying_Down",
+  "pack": "Sonniss GDC 2026 · Dog Vocalisations Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Dog Vocalisations Vol. 1/ANMLDog_Dog Shuffle, Grunt, Movement, Lying Down_344 Audio_Dog Vocalisations.wav",
+  "duration": 5.36
+ },
+ {
+  "name": "AMBSubn_Ambience_Forest_Crickets_Birds_Connecticut_02",
+  "pack": "Sonniss GDC 2026 · East Coast America Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - East Coast America Vol. 1/AMBSubn_Ambience, Forest Crickets, Birds, Connecticut 02_344 Audio_East Coast America.wav",
+  "duration": 52.3
+ },
+ {
+  "name": "AMBSubn_Electricity_Hum_Lightbulb_Coil_Pickup_01",
+  "pack": "Sonniss GDC 2026 · East Coast America Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - East Coast America Vol. 1/AMBSubn_Electricity Hum, Lightbulb,  Coil Pickup 01_344 Audio_East Coast America.wav",
+  "duration": 61.8
+ },
+ {
+  "name": "METLMisc_Metal_Slow_Whoosh_Rattle_Pass_By_x4_01",
+  "pack": "Sonniss GDC 2026 · Elemental Palette Designed Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Elemental Palette Designed Vol. 1/METLMisc_Metal, Slow Whoosh, Rattle, Pass By x4 01_344 Audio_Elemental Palette Designed Vol 1.wav",
+  "duration": 1.21
+ },
+ {
+  "name": "WATRMisc_Water_Liquid_Impact_Bubble_Sci_Fi_Hit_04",
+  "pack": "Sonniss GDC 2026 · Elemental Palette Designed Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Elemental Palette Designed Vol. 1/WATRMisc_Water, Liquid Impact, Bubble, Sci Fi, Hit 04_344 Audio_Elemental Palette Designed Vol 1.wav",
+  "duration": 1.21
+ },
+ {
+  "name": "WINDDsgn_Wind_Rush_Whoosh_Long_x5_01",
+  "pack": "Sonniss GDC 2026 · Elemental Palette Designed Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Elemental Palette Designed Vol. 1/WINDDsgn_Wind, Rush, Whoosh, Long x5 01_344 Audio_Elemental Palette Designed Vol 1.wav",
+  "duration": 1.05
+ },
+ {
+  "name": "METLFric_Large_Metal_Box_Drag_Geofon",
+  "pack": "Sonniss GDC 2026 · Extreme Winds Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Extreme Winds Vol. 1/METLFric_Large Metal Box, Drag, Geofon_344 Audio_Extreme Winds Vol 1.wav",
+  "duration": 67.28
+ },
+ {
+  "name": "WINDDsgn_EXT_Eye_Of_The_Storm",
+  "pack": "Sonniss GDC 2026 · Extreme Winds Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Extreme Winds Vol. 1/WINDDsgn_EXT, Eye Of The Storm_344 Audio_Extreme Winds Vol 1.wav",
+  "duration": 180.18
+ },
+ {
+  "name": "AMBDsgn_Evil_Spell_Ambience",
+  "pack": "Sonniss GDC 2026 · Ghostly Presences Vol. 1",
+  "file": "Sonniss GDC 2026/344 Audio - Ghostly Presences Vol. 1/AMBDsgn_Evil Spell Ambience_344 Audio_Ghostly Presences.wav",
+  "duration": 180.03
+ },
+ {
+  "name": "METLImpt_Metal_Bangs_Metal_Hits_Banging_On_Doors",
+  "pack": "Sonniss GDC 2026 · Haunting Ambiences Vol. 3",
+  "file": "Sonniss GDC 2026/344 Audio - Haunting Ambiences Vol. 3/METLImpt_Metal Bangs, Metal Hits, Banging On Doors_344 Audio_Haunting Ambiences Vol 3.wav",
+  "duration": 180.18
+ },
+ {
+  "name": "WOODImpt_Wooden_Hit_Dark_Heavy_Hit_Vampire_s_Prison",
+  "pack": "Sonniss GDC 2026 · Haunting Ambiences Vol. 3",
+  "file": "Sonniss GDC 2026/344 Audio - Haunting Ambiences Vol. 3/WOODImpt_Wooden Hit, Dark, Heavy Hit, Vampire's Prison_344 Audio_Haunting Ambiences Vol 3.wav",
+  "duration": 180.18
+ },
+ {
+  "name": "FIRECrkl_Fire_Crackling_Popping_Witch_s_Cauldron",
+  "pack": "Sonniss GDC 2026 · Haunting Ambiences Vol. 5",
+  "file": "Sonniss GDC 2026/344 Audio - Haunting Ambiences Vol. 5/FIRECrkl_Fire Crackling, Popping, Witch's Cauldron_344 Audio_Haunting Ambiences Vol 5.wav",
+  "duration": 180
+ },
+ {
+  "name": "HMNBrth_Respirator_Specimen_Breathing_Mad_Scientist_Lab",
+  "pack": "Sonniss GDC 2026 · Haunting Ambiences Vol. 5",
+  "file": "Sonniss GDC 2026/344 Audio - Haunting Ambiences Vol. 5/HMNBrth_Respirator, Specimen Breathing, Mad Scientist Lab_344 Audio_Haunting Ambiences Vol 5.wav",
+  "duration": 180
+ },
+ {
+  "name": "WEAPArmr_Metal_Shield_Spin_On_Floor_Buckler_MKH",
+  "pack": "Sonniss GDC 2026 · Historical Weapons Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Historical Weapons Vol. 2/WEAPArmr_Metal Shield Spin On Floor, Buckler MKH_344 Audio_Medieval Weapons Vol 2.wav",
+  "duration": 36.25
+ },
+ {
+  "name": "WEAPBlnt_Spear_And_Stick_Impact_Wooden_MKH_2",
+  "pack": "Sonniss GDC 2026 · Historical Weapons Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Historical Weapons Vol. 2/WEAPBlnt_Spear And Stick Impact, Wooden MKH 2_344 Audio_Medieval Weapons Vol 2.wav",
+  "duration": 11.29
+ },
+ {
+  "name": "WEAPSwrd_Sword_Slide_Cuts_Metallic_Impact_CM4_2",
+  "pack": "Sonniss GDC 2026 · Historical Weapons Vol. 2",
+  "file": "Sonniss GDC 2026/344 Audio - Historical Weapons Vol. 2/WEAPSwrd_Sword Slide Cuts, Metallic, Impact CM4 2_344 Audio_Medieval Weapons Vol 2.wav",
+  "duration": 12.96
+ },
+ {
   "name": "Fire",
   "pack": "spells",
   "file": "spells/Fire.aif",
