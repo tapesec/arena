@@ -23,8 +23,8 @@ const LOCOMOTION = {
   right: "Walk_R_Loop",
 } as const;
 
-// Incantation : animation Mixamo « Standing Idle 03 » (à la place de Spell_Simple_Idle_Loop).
-const CAST_LOOP = "Mixamo_Idle_03";
+// Incantation par défaut ; une classe peut en donner une autre pour certains sorts (CharacterAnimationSet.casts).
+const CAST_LOOP = "Spell_Simple_Idle_Loop";
 const DEATH = "Death01";
 // Stun : une fois relevé de la projection, un « non » de la tête, puis il titube jusqu'à la fin du stun.
 const STUN_GETUP = "Idle_No_Loop";
@@ -46,7 +46,8 @@ const REACTION_INTERVAL = 0.5;
 
 export interface AnimationInput {
   alive: boolean;
-  casting: boolean;
+  // Sort en cours d'incantation ("" si aucun).
+  castAbility: string;
   stunned: boolean;
   rooted: boolean;
   // Vitesse dans le repère du personnage (m/s) : vers l'avant et vers la droite.
@@ -138,7 +139,8 @@ export class CharacterAnimator {
     }
     const speed = Math.hypot(input.forward, input.right);
     if (speed < MOVING_SPEED) {
-      this.play(input.casting ? CAST_LOOP : this.set.idle, true, 1);
+      const cast = input.castAbility ? (this.set.casts?.[input.castAbility] ?? CAST_LOOP) : "";
+      this.play(cast || this.set.idle, true, 1);
       return;
     }
     // Angle du déplacement par rapport au regard : 0 devant, ±π derrière, positif vers la droite.

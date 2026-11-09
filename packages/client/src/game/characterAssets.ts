@@ -58,6 +58,8 @@ export interface CharacterAnimationSet {
   attacks: string[];
   // Animation jouée au déclenchement d'une compétence ; "default" pour celles qui ne sont pas listées.
   abilities: Record<string, string>;
+  // Incantation propre à certains sorts (sinon, l'incantation commune Spell_Simple_Idle_Loop).
+  casts?: Record<string, string>;
 }
 
 interface CharacterDef {
@@ -203,8 +205,9 @@ const CHARACTERS: Record<string, CharacterDef> = {
     animations: {
       idle: "Idle_Loop",
       attacks: CASTER_ATTACKS,
-      // Les buffs : bras levé, bâton pointé vers l'allié (animation Mixamo).
+      // Les buffs (animations Mixamo) : incantation Standing Idle 03, puis bras levé, bâton pointé vers l'allié.
       abilities: { buffHp: "Mixamo_Cast_1H", buffStrength: "Mixamo_Cast_1H", default: CAST_RELEASE },
+      casts: { buffHp: "Mixamo_Idle_03", buffStrength: "Mixamo_Idle_03" },
     },
   },
   barde: {

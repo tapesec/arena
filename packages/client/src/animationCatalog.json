@@ -308,11 +308,11 @@
  {
   "name": "Spell_Simple_Idle_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Sort / action",
   "description": "Concentre un sort, main tendue.",
-  "usedFor": ""
+  "usedFor": "Incantation (sorts sauf buffs du Prêtre)"
  },
  {
   "name": "Spell_Simple_Shoot",
@@ -2292,6 +2292,6 @@
   "loop": true,
   "category": "Sort / action",
   "description": "Attente, posture concentrée (Mixamo : Standing Idle 03).",
-  "usedFor": "Incantation (tous les sorts)"
+  "usedFor": "Incantation des buffs du Prêtre"
  }
 ]

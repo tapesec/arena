@@ -251,7 +251,7 @@ export class PlayerVisual {
     const casting = this.state.castAbility !== "";
     this.animator?.update({
       alive: this.isAlive,
-      casting,
+      castAbility: this.isAlive ? this.state.castAbility : "",
       stunned: this.hasEffect("stun"),
       rooted: this.hasEffect("root"),
       forward: this.forwardSpeed,
