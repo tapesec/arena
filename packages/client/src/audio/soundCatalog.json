@@ -66,6 +66,12 @@
   "duration": 0.84
  },
  {
+  "name": "provocation_face_me_coward_1",
+  "pack": "ElevenLabs",
+  "file": "ElevenLabs/provocation_face_me_coward_1.mp3",
+  "duration": 1.88
+ },
+ {
   "name": "fanfare",
   "pack": "Divers",
   "file": "fanfare.ogg",
