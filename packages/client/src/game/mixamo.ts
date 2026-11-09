@@ -19,6 +19,10 @@ export const MIXAMO_ANIMATIONS: Record<string, string> = {
   Mixamo_Guitar_Playing: "mixamo/guitar-playing.fbx",
   Mixamo_Sword_Shield_Attack: "mixamo/sword-shield-attack.fbx",
   Mixamo_Taunt_Chest_Thump: "mixamo/taunt-chest-thump.fbx",
+  Mixamo_Shield_Block_Idle: "mixamo/sword-shield-block-idle.fbx",
+  Mixamo_Shield_Block: "mixamo/sword-shield-block.fbx",
+  Mixamo_Shield_Impact: "mixamo/sword-shield-impact.fbx",
+  Mixamo_Waving: "mixamo/waving.fbx",
 };
 
 // Os de Mixamo -> os de nos personnages (même anatomie, noms différents).

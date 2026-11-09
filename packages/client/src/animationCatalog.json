@@ -2374,5 +2374,41 @@
   "category": "Attente / émote",
   "description": "Provocation : se frappe la poitrine (Mixamo : Standing Taunt Chest Thump).",
   "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Shield_Block_Idle",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": true,
+  "category": "Combat",
+  "description": "En garde derrière le bouclier, en attente (Mixamo : Sword And Shield Block Idle).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Shield_Block",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Bloque un coup avec le bouclier (Mixamo : Sword And Shield Block).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Shield_Impact",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Réaction",
+  "description": "Encaisse un coup en garde épée et bouclier (Mixamo : Sword And Shield Impact).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Waving",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Fait signe de la main (Mixamo : Waving).",
+  "usedFor": ""
  }
 ]
