@@ -11,12 +11,21 @@ export function App() {
   const gameKey = useHudStore((s) => s.gameKey);
   const phase = useHudStore((s) => s.match?.phase);
   useMusic(inGame ? phase : undefined);
-  if (!inGame) return <HomeScreen />;
+  // Le bouton du son reste en bas à droite sur tous les écrans : accueil, attente, choix de classe et partie.
+  if (!inGame) {
+    return (
+      <>
+        <HomeScreen />
+        <SoundControl />
+      </>
+    );
+  }
   return (
     <>
       {/* La clé change à chaque nouvelle partie : le canvas est recréé et le jeu se reconnecte. */}
       <GameCanvas key={gameKey} />
       <Hud />
+      <SoundControl />
     </>
   );
 }
@@ -114,7 +123,6 @@ function Hud() {
       </div>
       <CombatLog />
       <HelpPanel />
-      <SoundControl />
       {phase === "ended" && <EndScreen />}
     </>
   );
