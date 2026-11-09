@@ -2293,5 +2293,86 @@
   "category": "Sort / action",
   "description": "Attente, posture concentrée (Mixamo : Standing Idle 03).",
   "usedFor": "Incantation des buffs du Prêtre"
+ },
+ {
+  "name": "Mixamo_Spell_Casting",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Incante un sort (Mixamo : Spell Casting).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Casting_Spell",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Lance un sort (Mixamo : Casting Spell).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_2H_Area_Attack_02",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Sort de zone à deux mains (Mixamo : Standing 2H Magic Area Attack 02).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_2H_Magic_Attack_04",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Attaque magique à deux mains (Mixamo : Standing 2H Magic Attack 04).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_2H_Cast_01",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Lance un sort à deux mains (Mixamo : Standing 2H Cast Spell 01).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_2H_Magic_Attack_05",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Attaque magique à deux mains (Mixamo : Standing 2H Magic Attack 05).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Guitar_Playing",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": true,
+  "category": "Attente / émote",
+  "description": "Joue de la guitare (Mixamo : Guitar Playing).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Sword_Shield_Attack",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Attaque sautée à l'épée et au bouclier : bondit puis frappe (Mixamo : Sword And Shield Attack).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Taunt_Chest_Thump",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Attente / émote",
+  "description": "Provocation : se frappe la poitrine (Mixamo : Standing Taunt Chest Thump).",
+  "usedFor": ""
  }
 ]

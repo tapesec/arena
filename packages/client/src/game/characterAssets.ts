@@ -229,6 +229,16 @@ const CHARACTERS: Record<string, CharacterDef> = {
   },
 };
 
+// Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations).
+function usedAnimations(): Set<string> {
+  const names = new Set<string>();
+  for (const { animations: set } of Object.values(CHARACTERS)) {
+    names.add(set.idle);
+    for (const name of [...set.attacks, ...Object.values(set.abilities), ...Object.values(set.casts ?? {})]) names.add(name);
+  }
+  return names;
+}
+
 export function hasCharacterModel(classId: string): boolean {
   return classId in CHARACTERS;
 }
@@ -307,7 +317,12 @@ export class CharacterAssets {
       const root = template.rootNodes[0] as TransformNode;
       root.setEnabled(false);
       const groups: AnimationGroup[] = [];
+      // Le jeu ne charge que les animations Mixamo attribuées à une classe ; la page de visualisation, qui charge les
+      // bibliothèques complètes, les prend toutes.
+      const all = this.libraries !== ANIMATION_LIBRARIES;
+      const used = usedAnimations();
       for (const [name, url] of Object.entries(MIXAMO_ANIMATIONS)) {
+        if (!all && !used.has(name)) continue;
         const group = retargetMixamo(name, await this.load(url), root);
         if (group) groups.push(group);
       }

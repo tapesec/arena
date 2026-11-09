@@ -10,6 +10,15 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 export const MIXAMO_ANIMATIONS: Record<string, string> = {
   Mixamo_Cast_1H: "mixamo/cast-spell-1h.fbx",
   Mixamo_Idle_03: "mixamo/standing-idle-03.fbx",
+  Mixamo_Spell_Casting: "mixamo/spell-casting.fbx",
+  Mixamo_Casting_Spell: "mixamo/casting-spell.fbx",
+  Mixamo_2H_Area_Attack_02: "mixamo/2h-magic-area-attack-02.fbx",
+  Mixamo_2H_Magic_Attack_04: "mixamo/2h-magic-attack-04.fbx",
+  Mixamo_2H_Cast_01: "mixamo/2h-cast-spell-01.fbx",
+  Mixamo_2H_Magic_Attack_05: "mixamo/2h-magic-attack-05.fbx",
+  Mixamo_Guitar_Playing: "mixamo/guitar-playing.fbx",
+  Mixamo_Sword_Shield_Attack: "mixamo/sword-shield-attack.fbx",
+  Mixamo_Taunt_Chest_Thump: "mixamo/taunt-chest-thump.fbx",
 };
 
 // Os de Mixamo -> os de nos personnages (même anatomie, noms différents).
