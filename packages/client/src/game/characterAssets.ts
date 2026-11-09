@@ -60,6 +60,8 @@ export interface CharacterAnimationSet {
   abilities: Record<string, string>;
   // Incantation propre à certains sorts (sinon, l'incantation commune Spell_Simple_Idle_Loop).
   casts?: Record<string, string>;
+  // Vitesse de lecture de certaines animations de compétence (1 = normale).
+  abilityRates?: Record<string, number>;
   // Postures tenues tant que dure un état : course de la Charge, garde du Rempart.
   stances?: { charge?: string; rampart?: string };
 }
@@ -131,6 +133,9 @@ function normalize(v: readonly number[]): [number, number, number] {
   return [v[0] / length, v[1] / length, v[2] / length];
 }
 
+// Accélération des gestes longs du Gardien (voir abilityRates).
+const GARDIEN_GESTURE_RATE = 2.33 / 1.5;
+
 // Une classe sans entrée ici reste affichée en capsule.
 const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
@@ -163,6 +168,9 @@ const CHARACTERS: Record<string, CharacterDef> = {
         rampart: "",
         default: "Yes",
       },
+      // Trois gestes trop longs, accélérés d'autant : la Frappe handicapante (2,33 s) passe à 1,5 s, la plus courte ;
+      // la Provocation (2,83 s) à 1,8 s et le Cri de ralliement (3,17 s) à 2 s.
+      abilityRates: { cripplingStrike: GARDIEN_GESTURE_RATE, taunt: GARDIEN_GESTURE_RATE, rallyCry: GARDIEN_GESTURE_RATE },
       stances: { charge: "Sprint_Loop", rampart: "Mixamo_Shield_Block_Idle" },
     },
   },

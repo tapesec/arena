@@ -101,7 +101,7 @@ export class CharacterAnimator {
   }
 
   ability(abilityId: string) {
-    this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability");
+    this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability", this.set.abilityRates?.[abilityId] ?? 1);
   }
 
   // Coup reçu. Le stun passe toujours ; les autres réactions n'interrompent pas un coup ou une compétence
@@ -179,10 +179,10 @@ export class CharacterAnimator {
 
   dispose() {}
 
-  private playAction(name: string | undefined, kind: "attack" | "ability" | "reaction") {
+  private playAction(name: string | undefined, kind: "attack" | "ability" | "reaction", speedRatio = 1) {
     const group = name ? this.animations.get(name) : undefined;
     if (!group) return;
-    this.switchTo(group, `action:${name}`, false, 1);
+    this.switchTo(group, `action:${name}`, false, speedRatio);
     this.action = group;
     this.actionKind = kind;
   }
