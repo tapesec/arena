@@ -458,7 +458,7 @@ export class CombatSystem {
         this.applyControl(caster, target, effect.cc, effect.duration, ability.id);
         break;
       case "snare":
-        this.addEffect(target, "snare", effect.duration, caster.id, effect.slow);
+        this.applySnare(caster, target, effect.slow, effect.duration);
         break;
       case "interrupt":
         this.noteHostileAction(target);
@@ -683,6 +683,14 @@ export class CombatSystem {
   }
 
   // Un effet déjà présent est rafraîchi plutôt que cumulé.
+  // Un seul snare à la fois, et le plus puissant reste jusqu'à la fin de son effet : un snare plus faible est ignoré.
+  // À puissance égale, on garde celui qui dure le plus longtemps.
+  private applySnare(source: PlayerRuntime, target: PlayerRuntime, slow: number, duration: number) {
+    const current = target.getEffect("snare");
+    if (current && (current.value > slow || (current.value === slow && current.remaining >= duration))) return;
+    this.addEffect(target, "snare", duration, source.id, slow);
+  }
+
   private addEffect(player: PlayerRuntime, kind: EffectKind, duration: number, sourceId: string, value = 0) {
     const existing = player.getEffect(kind);
     if (existing) {

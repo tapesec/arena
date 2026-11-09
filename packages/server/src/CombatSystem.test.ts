@@ -420,6 +420,27 @@ describe("Lame", () => {
     assert.ok(enemy.has("snare"));
   });
 
+  it("le snare le plus puissant reste jusqu'à la fin de son effet", () => {
+    const lame = world.spawn("l", "lame", 0, 2, 0, -Math.PI / 2);
+    // Un Barde : il ne bloque pas au bouclier, la technique porte à coup sûr.
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "flankStrike", enemy);
+    const snare = enemy.getEffect("snare")!;
+    // Un snare plus fort est déjà en place (60 %) : celui de l'Attaque de flanc (40 %) ne le remplace pas.
+    snare.value = 0.6;
+    world.run(2);
+    world.cast(lame, "flankStrike", enemy);
+    world.run(DT);
+    assert.equal(enemy.getEffect("snare")?.value, 0.6);
+    assert.ok(enemy.getEffect("snare")!.remaining < 8 - 1.9, "sa durée n'est pas relancée");
+    // Une fois le snare fort terminé, un nouveau snare plus faible s'applique.
+    world.run(6.5);
+    assert.ok(!enemy.has("snare"));
+    world.cast(lame, "flankStrike", enemy);
+    world.run(2.1); // la technique part au prochain coup d'arme
+    assert.equal(enemy.getEffect("snare")?.value, 0.4);
+  });
+
   it("une technique part aussitôt si l'arme est prête, à la place du coup normal", () => {
     const lame = world.spawn("l", "lame", 0, 0, -2, 0);
     const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
