@@ -79,7 +79,14 @@ extract "$ALL" "$OUT/weapons-fbx/rpg-asset-pack" 'Medieval/RPG Asset Pack - May 
 SOUNDS="$SRC/sounds effect"
 [[ -d "$SOUNDS" ]] || { echo "Dossier introuvable : $SOUNDS" >&2; exit 1; }
 mkdir -p "$OUT/sounds"
-rsync -a --exclude .DS_Store "$SOUNDS/" "$OUT/sounds/"
+rsync -a --exclude .DS_Store --exclude '*.zip' "$SOUNDS/" "$OUT/sounds/"
+# Packs restés en archive (ex. « Magic SFX Preview Pack.zip ») : décompressés dans un dossier à leur nom.
+for zip in "$SOUNDS"/*.zip; do
+  [[ -e "$zip" ]] || continue
+  pack="$OUT/sounds/$(basename "$zip" .zip)"
+  mkdir -p "$pack"
+  unzip -oq "$zip" -x '__MACOSX/*' -d "$pack"
+done
 
 # Musiques : « The Last Encounter » (Eric Matyas, soundimage.org) et « Woodland Fantasy » (Matthew Pablo) —
 # crédits obligatoires, voir CREDITS.md.

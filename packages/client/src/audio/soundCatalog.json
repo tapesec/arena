@@ -1,0 +1,2012 @@
+[
+ {
+  "name": "healspell1",
+  "pack": "3 heal spells",
+  "file": "3 heal spells/healspell1.aif",
+  "duration": 3.2
+ },
+ {
+  "name": "healspell2",
+  "pack": "3 heal spells",
+  "file": "3 heal spells/healspell2.aif",
+  "duration": 3.2
+ },
+ {
+  "name": "healspell3",
+  "pack": "3 heal spells",
+  "file": "3 heal spells/healspell3.aif",
+  "duration": 3.2
+ },
+ {
+  "name": "aargh0",
+  "pack": "aargh",
+  "file": "aargh/aargh0.ogg",
+  "duration": 0.84
+ },
+ {
+  "name": "aargh1",
+  "pack": "aargh",
+  "file": "aargh/aargh1.ogg",
+  "duration": 0.63
+ },
+ {
+  "name": "aargh2",
+  "pack": "aargh",
+  "file": "aargh/aargh2.ogg",
+  "duration": 0.7
+ },
+ {
+  "name": "aargh3",
+  "pack": "aargh",
+  "file": "aargh/aargh3.ogg",
+  "duration": 0.84
+ },
+ {
+  "name": "aargh4",
+  "pack": "aargh",
+  "file": "aargh/aargh4.ogg",
+  "duration": 0.91
+ },
+ {
+  "name": "aargh5",
+  "pack": "aargh",
+  "file": "aargh/aargh5.ogg",
+  "duration": 1.05
+ },
+ {
+  "name": "aargh6",
+  "pack": "aargh",
+  "file": "aargh/aargh6.ogg",
+  "duration": 1.33
+ },
+ {
+  "name": "aargh7",
+  "pack": "aargh",
+  "file": "aargh/aargh7.ogg",
+  "duration": 0.84
+ },
+ {
+  "name": "fanfare",
+  "pack": "Divers",
+  "file": "fanfare.ogg",
+  "duration": 2.93
+ },
+ {
+  "name": "Ambience_Cave_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Ambience_Cave_00.wav",
+  "duration": 55.42
+ },
+ {
+  "name": "Dragon_Growl_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Dragon_Growl_00.wav",
+  "duration": 3.29
+ },
+ {
+  "name": "Dragon_Growl_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Dragon_Growl_01.wav",
+  "duration": 4.29
+ },
+ {
+  "name": "Footstep_Dirt_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_00.wav",
+  "duration": 0.23
+ },
+ {
+  "name": "Footstep_Dirt_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_01.wav",
+  "duration": 0.27
+ },
+ {
+  "name": "Footstep_Dirt_02",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_02.wav",
+  "duration": 0.34
+ },
+ {
+  "name": "Footstep_Dirt_03",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_03.wav",
+  "duration": 0.3
+ },
+ {
+  "name": "Footstep_Dirt_04",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_04.wav",
+  "duration": 0.25
+ },
+ {
+  "name": "Footstep_Dirt_05",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_05.wav",
+  "duration": 0.33
+ },
+ {
+  "name": "Footstep_Dirt_06",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_06.wav",
+  "duration": 0.34
+ },
+ {
+  "name": "Footstep_Dirt_07",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_07.wav",
+  "duration": 0.35
+ },
+ {
+  "name": "Footstep_Dirt_08",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_08.wav",
+  "duration": 0.18
+ },
+ {
+  "name": "Footstep_Dirt_09",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Dirt_09.wav",
+  "duration": 0.36
+ },
+ {
+  "name": "Footstep_Water_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_00.wav",
+  "duration": 0.75
+ },
+ {
+  "name": "Footstep_Water_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_01.wav",
+  "duration": 0.71
+ },
+ {
+  "name": "Footstep_Water_02",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_02.wav",
+  "duration": 0.73
+ },
+ {
+  "name": "Footstep_Water_03",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_03.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "Footstep_Water_04",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_04.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "Footstep_Water_05",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_05.wav",
+  "duration": 0.65
+ },
+ {
+  "name": "Footstep_Water_06",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_06.wav",
+  "duration": 0.75
+ },
+ {
+  "name": "Footstep_Water_07",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Footsteps/Footstep_Water_07.wav",
+  "duration": 0.75
+ },
+ {
+  "name": "Goblin_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Goblin_00.wav",
+  "duration": 3.15
+ },
+ {
+  "name": "Goblin_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Goblin_01.wav",
+  "duration": 0.75
+ },
+ {
+  "name": "Goblin_02",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Goblin_02.wav",
+  "duration": 2.52
+ },
+ {
+  "name": "Goblin_03",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Goblin_03.wav",
+  "duration": 1
+ },
+ {
+  "name": "Goblin_04",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Goblin_04.wav",
+  "duration": 1.61
+ },
+ {
+  "name": "Inventory_Open_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Inventory_Open_00.wav",
+  "duration": 0.41
+ },
+ {
+  "name": "Inventory_Open_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Inventory_Open_01.wav",
+  "duration": 1.82
+ },
+ {
+  "name": "Jingle_Achievement_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Jingle_Achievement_00.wav",
+  "duration": 3.56
+ },
+ {
+  "name": "Jingle_Lose_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Jingle_Lose_00.wav",
+  "duration": 6
+ },
+ {
+  "name": "Jingle_Win_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Jingle_Win_00.wav",
+  "duration": 10
+ },
+ {
+  "name": "Menu_Select_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Menu_Select_00.wav",
+  "duration": 0.14
+ },
+ {
+  "name": "Pickup_Gold_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Pickup_Gold_00.wav",
+  "duration": 0.34
+ },
+ {
+  "name": "Pickup_Gold_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Pickup_Gold_01.wav",
+  "duration": 0.26
+ },
+ {
+  "name": "Pickup_Gold_02",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Pickup_Gold_02.wav",
+  "duration": 0.35
+ },
+ {
+  "name": "Pickup_Gold_03",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Pickup_Gold_03.wav",
+  "duration": 0.32
+ },
+ {
+  "name": "Pickup_Gold_04",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Pickup_Gold_04.wav",
+  "duration": 0.26
+ },
+ {
+  "name": "Spell_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Spell_00.wav",
+  "duration": 2.25
+ },
+ {
+  "name": "Spell_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Spell_01.wav",
+  "duration": 1.25
+ },
+ {
+  "name": "Spell_02",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Spell_02.wav",
+  "duration": 3.41
+ },
+ {
+  "name": "Spell_03",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Spell_03.wav",
+  "duration": 5.87
+ },
+ {
+  "name": "Spell_04",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Spell_04.wav",
+  "duration": 3.44
+ },
+ {
+  "name": "Trap_00",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Trap_00.wav",
+  "duration": 0.9
+ },
+ {
+  "name": "Trap_01",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Trap_01.wav",
+  "duration": 1.25
+ },
+ {
+  "name": "Trap_02",
+  "pack": "Fantasy Sound Library",
+  "file": "Fantasy Sound Library/Wav/Trap_02.wav",
+  "duration": 1.08
+ },
+ {
+  "name": "hit01",
+  "pack": "hits",
+  "file": "hits/hit01.mp3.flac",
+  "duration": 1.05
+ },
+ {
+  "name": "hit02",
+  "pack": "hits",
+  "file": "hits/hit02.mp3.flac",
+  "duration": 1.18
+ },
+ {
+  "name": "hit03",
+  "pack": "hits",
+  "file": "hits/hit03.mp3.flac",
+  "duration": 1.07
+ },
+ {
+  "name": "hit04",
+  "pack": "hits",
+  "file": "hits/hit04.mp3.flac",
+  "duration": 1.15
+ },
+ {
+  "name": "hit05",
+  "pack": "hits",
+  "file": "hits/hit05.mp3.flac",
+  "duration": 1.39
+ },
+ {
+  "name": "hit06",
+  "pack": "hits",
+  "file": "hits/hit06.mp3.flac",
+  "duration": 1.15
+ },
+ {
+  "name": "hit07",
+  "pack": "hits",
+  "file": "hits/hit07.mp3.flac",
+  "duration": 1.12
+ },
+ {
+  "name": "hit08",
+  "pack": "hits",
+  "file": "hits/hit08.mp3.flac",
+  "duration": 1.54
+ },
+ {
+  "name": "hit09",
+  "pack": "hits",
+  "file": "hits/hit09.mp3.flac",
+  "duration": 0.6
+ },
+ {
+  "name": "hit10",
+  "pack": "hits",
+  "file": "hits/hit10.mp3.flac",
+  "duration": 1.05
+ },
+ {
+  "name": "hit11",
+  "pack": "hits",
+  "file": "hits/hit11.mp3.flac",
+  "duration": 1.12
+ },
+ {
+  "name": "hit12",
+  "pack": "hits",
+  "file": "hits/hit12.mp3.flac",
+  "duration": 0.78
+ },
+ {
+  "name": "hit13",
+  "pack": "hits",
+  "file": "hits/hit13.mp3.flac",
+  "duration": 0.97
+ },
+ {
+  "name": "hit14",
+  "pack": "hits",
+  "file": "hits/hit14.mp3.flac",
+  "duration": 1.05
+ },
+ {
+  "name": "hit15",
+  "pack": "hits",
+  "file": "hits/hit15.mp3.flac",
+  "duration": 1.05
+ },
+ {
+  "name": "hit16",
+  "pack": "hits",
+  "file": "hits/hit16.mp3.flac",
+  "duration": 1.15
+ },
+ {
+  "name": "hit17",
+  "pack": "hits",
+  "file": "hits/hit17.mp3.flac",
+  "duration": 0.92
+ },
+ {
+  "name": "hit18",
+  "pack": "hits",
+  "file": "hits/hit18.mp3.flac",
+  "duration": 0.89
+ },
+ {
+  "name": "hit19",
+  "pack": "hits",
+  "file": "hits/hit19.mp3.flac",
+  "duration": 1.1
+ },
+ {
+  "name": "hit20",
+  "pack": "hits",
+  "file": "hits/hit20.mp3.flac",
+  "duration": 1.2
+ },
+ {
+  "name": "hit21",
+  "pack": "hits",
+  "file": "hits/hit21.mp3.flac",
+  "duration": 1.2
+ },
+ {
+  "name": "hit22",
+  "pack": "hits",
+  "file": "hits/hit22.mp3.flac",
+  "duration": 0.99
+ },
+ {
+  "name": "hit23",
+  "pack": "hits",
+  "file": "hits/hit23.mp3.flac",
+  "duration": 0.84
+ },
+ {
+  "name": "hit24",
+  "pack": "hits",
+  "file": "hits/hit24.mp3.flac",
+  "duration": 1.18
+ },
+ {
+  "name": "hit25",
+  "pack": "hits",
+  "file": "hits/hit25.mp3.flac",
+  "duration": 0.73
+ },
+ {
+  "name": "hit26",
+  "pack": "hits",
+  "file": "hits/hit26.mp3.flac",
+  "duration": 0.84
+ },
+ {
+  "name": "hit27",
+  "pack": "hits",
+  "file": "hits/hit27.mp3.flac",
+  "duration": 1.18
+ },
+ {
+  "name": "hit28",
+  "pack": "hits",
+  "file": "hits/hit28.mp3.flac",
+  "duration": 0.94
+ },
+ {
+  "name": "hit29",
+  "pack": "hits",
+  "file": "hits/hit29.mp3.flac",
+  "duration": 0.92
+ },
+ {
+  "name": "hit30",
+  "pack": "hits",
+  "file": "hits/hit30.mp3.flac",
+  "duration": 0.94
+ },
+ {
+  "name": "hit31",
+  "pack": "hits",
+  "file": "hits/hit31.mp3.flac",
+  "duration": 0.84
+ },
+ {
+  "name": "hit32",
+  "pack": "hits",
+  "file": "hits/hit32.mp3.flac",
+  "duration": 0.68
+ },
+ {
+  "name": "hit33",
+  "pack": "hits",
+  "file": "hits/hit33.mp3.flac",
+  "duration": 0.92
+ },
+ {
+  "name": "hit34",
+  "pack": "hits",
+  "file": "hits/hit34.mp3.flac",
+  "duration": 1.15
+ },
+ {
+  "name": "hit35",
+  "pack": "hits",
+  "file": "hits/hit35.mp3.flac",
+  "duration": 0.97
+ },
+ {
+  "name": "hit36",
+  "pack": "hits",
+  "file": "hits/hit36.mp3.flac",
+  "duration": 0.86
+ },
+ {
+  "name": "hit37",
+  "pack": "hits",
+  "file": "hits/hit37.mp3.flac",
+  "duration": 0.76
+ },
+ {
+  "name": "coldsnap",
+  "pack": "icespells",
+  "file": "icespells/coldsnap.wav",
+  "duration": 2.65
+ },
+ {
+  "name": "icespells_ice",
+  "pack": "icespells",
+  "file": "icespells/ice.wav",
+  "duration": 1.16
+ },
+ {
+  "name": "footstep_carpet_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_carpet_000.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "footstep_carpet_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_carpet_001.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "footstep_carpet_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_carpet_002.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "footstep_carpet_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_carpet_003.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "footstep_carpet_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_carpet_004.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "footstep_concrete_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_concrete_000.ogg",
+  "duration": 0.11
+ },
+ {
+  "name": "footstep_concrete_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_concrete_001.ogg",
+  "duration": 0.11
+ },
+ {
+  "name": "footstep_concrete_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_concrete_002.ogg",
+  "duration": 0.11
+ },
+ {
+  "name": "footstep_concrete_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_concrete_003.ogg",
+  "duration": 0.11
+ },
+ {
+  "name": "footstep_concrete_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_concrete_004.ogg",
+  "duration": 0.11
+ },
+ {
+  "name": "footstep_grass_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_grass_000.ogg",
+  "duration": 0.78
+ },
+ {
+  "name": "footstep_grass_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_grass_001.ogg",
+  "duration": 0.67
+ },
+ {
+  "name": "footstep_grass_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_grass_002.ogg",
+  "duration": 0.69
+ },
+ {
+  "name": "footstep_grass_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_grass_003.ogg",
+  "duration": 0.67
+ },
+ {
+  "name": "footstep_grass_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_grass_004.ogg",
+  "duration": 0.59
+ },
+ {
+  "name": "footstep_snow_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_snow_000.ogg",
+  "duration": 0.37
+ },
+ {
+  "name": "footstep_snow_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_snow_001.ogg",
+  "duration": 0.37
+ },
+ {
+  "name": "footstep_snow_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_snow_002.ogg",
+  "duration": 0.37
+ },
+ {
+  "name": "footstep_snow_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_snow_003.ogg",
+  "duration": 0.37
+ },
+ {
+  "name": "footstep_snow_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_snow_004.ogg",
+  "duration": 0.37
+ },
+ {
+  "name": "footstep_wood_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_wood_000.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "footstep_wood_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_wood_001.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "footstep_wood_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_wood_002.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "footstep_wood_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_wood_003.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "footstep_wood_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/footstep_wood_004.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "impactBell_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactBell_heavy_000.ogg",
+  "duration": 1.48
+ },
+ {
+  "name": "impactBell_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactBell_heavy_001.ogg",
+  "duration": 1.74
+ },
+ {
+  "name": "impactBell_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactBell_heavy_002.ogg",
+  "duration": 0.7
+ },
+ {
+  "name": "impactBell_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactBell_heavy_003.ogg",
+  "duration": 0.65
+ },
+ {
+  "name": "impactBell_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactBell_heavy_004.ogg",
+  "duration": 0.3
+ },
+ {
+  "name": "impactGeneric_light_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGeneric_light_000.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactGeneric_light_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGeneric_light_001.ogg",
+  "duration": 0.12
+ },
+ {
+  "name": "impactGeneric_light_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGeneric_light_002.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactGeneric_light_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGeneric_light_003.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactGeneric_light_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGeneric_light_004.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactGlass_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_heavy_000.ogg",
+  "duration": 0.24
+ },
+ {
+  "name": "impactGlass_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_heavy_001.ogg",
+  "duration": 0.43
+ },
+ {
+  "name": "impactGlass_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_heavy_002.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "impactGlass_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_heavy_003.ogg",
+  "duration": 0.17
+ },
+ {
+  "name": "impactGlass_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_heavy_004.ogg",
+  "duration": 0.4
+ },
+ {
+  "name": "impactGlass_light_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_light_000.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactGlass_light_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_light_001.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactGlass_light_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_light_002.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactGlass_light_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_light_003.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactGlass_light_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_light_004.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactGlass_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_medium_000.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactGlass_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_medium_001.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactGlass_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_medium_002.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactGlass_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_medium_003.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactGlass_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactGlass_medium_004.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactMetal_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_heavy_000.ogg",
+  "duration": 0.17
+ },
+ {
+  "name": "impactMetal_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_heavy_001.ogg",
+  "duration": 0.36
+ },
+ {
+  "name": "impactMetal_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_heavy_002.ogg",
+  "duration": 0.12
+ },
+ {
+  "name": "impactMetal_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_heavy_003.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactMetal_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_heavy_004.ogg",
+  "duration": 0.13
+ },
+ {
+  "name": "impactMetal_light_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_light_000.ogg",
+  "duration": 0.35
+ },
+ {
+  "name": "impactMetal_light_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_light_001.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "impactMetal_light_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_light_002.ogg",
+  "duration": 0.24
+ },
+ {
+  "name": "impactMetal_light_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_light_003.ogg",
+  "duration": 0.48
+ },
+ {
+  "name": "impactMetal_light_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_light_004.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactMetal_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_medium_000.ogg",
+  "duration": 0.27
+ },
+ {
+  "name": "impactMetal_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_medium_001.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactMetal_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_medium_002.ogg",
+  "duration": 0.12
+ },
+ {
+  "name": "impactMetal_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_medium_003.ogg",
+  "duration": 0.25
+ },
+ {
+  "name": "impactMetal_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMetal_medium_004.ogg",
+  "duration": 0.11
+ },
+ {
+  "name": "impactMining_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMining_000.ogg",
+  "duration": 0.94
+ },
+ {
+  "name": "impactMining_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMining_001.ogg",
+  "duration": 0.87
+ },
+ {
+  "name": "impactMining_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMining_002.ogg",
+  "duration": 0.8
+ },
+ {
+  "name": "impactMining_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMining_003.ogg",
+  "duration": 0.99
+ },
+ {
+  "name": "impactMining_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactMining_004.ogg",
+  "duration": 0.83
+ },
+ {
+  "name": "impactPlank_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlank_medium_000.ogg",
+  "duration": 0.78
+ },
+ {
+  "name": "impactPlank_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlank_medium_001.ogg",
+  "duration": 0.78
+ },
+ {
+  "name": "impactPlank_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlank_medium_002.ogg",
+  "duration": 0.78
+ },
+ {
+  "name": "impactPlank_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlank_medium_003.ogg",
+  "duration": 0.78
+ },
+ {
+  "name": "impactPlank_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlank_medium_004.ogg",
+  "duration": 0.78
+ },
+ {
+  "name": "impactPlate_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_heavy_000.ogg",
+  "duration": 0.49
+ },
+ {
+  "name": "impactPlate_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_heavy_001.ogg",
+  "duration": 0.35
+ },
+ {
+  "name": "impactPlate_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_heavy_002.ogg",
+  "duration": 0.49
+ },
+ {
+  "name": "impactPlate_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_heavy_003.ogg",
+  "duration": 0.35
+ },
+ {
+  "name": "impactPlate_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_heavy_004.ogg",
+  "duration": 0.56
+ },
+ {
+  "name": "impactPlate_light_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_light_000.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactPlate_light_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_light_001.ogg",
+  "duration": 0.65
+ },
+ {
+  "name": "impactPlate_light_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_light_002.ogg",
+  "duration": 0.49
+ },
+ {
+  "name": "impactPlate_light_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_light_003.ogg",
+  "duration": 0.53
+ },
+ {
+  "name": "impactPlate_light_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_light_004.ogg",
+  "duration": 0.66
+ },
+ {
+  "name": "impactPlate_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_medium_000.ogg",
+  "duration": 0.61
+ },
+ {
+  "name": "impactPlate_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_medium_001.ogg",
+  "duration": 0.62
+ },
+ {
+  "name": "impactPlate_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_medium_002.ogg",
+  "duration": 0.52
+ },
+ {
+  "name": "impactPlate_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_medium_003.ogg",
+  "duration": 0.65
+ },
+ {
+  "name": "impactPlate_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPlate_medium_004.ogg",
+  "duration": 0.53
+ },
+ {
+  "name": "impactPunch_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_heavy_000.ogg",
+  "duration": 0.65
+ },
+ {
+  "name": "impactPunch_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_heavy_001.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactPunch_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_heavy_002.ogg",
+  "duration": 0.46
+ },
+ {
+  "name": "impactPunch_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_heavy_003.ogg",
+  "duration": 0.47
+ },
+ {
+  "name": "impactPunch_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_heavy_004.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactPunch_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_medium_000.ogg",
+  "duration": 0.43
+ },
+ {
+  "name": "impactPunch_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_medium_001.ogg",
+  "duration": 0.4
+ },
+ {
+  "name": "impactPunch_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_medium_002.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactPunch_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_medium_003.ogg",
+  "duration": 0.46
+ },
+ {
+  "name": "impactPunch_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactPunch_medium_004.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactSoft_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_heavy_000.ogg",
+  "duration": 0.51
+ },
+ {
+  "name": "impactSoft_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_heavy_001.ogg",
+  "duration": 0.57
+ },
+ {
+  "name": "impactSoft_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_heavy_002.ogg",
+  "duration": 0.57
+ },
+ {
+  "name": "impactSoft_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_heavy_003.ogg",
+  "duration": 0.54
+ },
+ {
+  "name": "impactSoft_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_heavy_004.ogg",
+  "duration": 0.5
+ },
+ {
+  "name": "impactSoft_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_medium_000.ogg",
+  "duration": 0.12
+ },
+ {
+  "name": "impactSoft_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_medium_001.ogg",
+  "duration": 0.18
+ },
+ {
+  "name": "impactSoft_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_medium_002.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactSoft_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_medium_003.ogg",
+  "duration": 0.14
+ },
+ {
+  "name": "impactSoft_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactSoft_medium_004.ogg",
+  "duration": 0.15
+ },
+ {
+  "name": "impactTin_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactTin_medium_000.ogg",
+  "duration": 0.16
+ },
+ {
+  "name": "impactTin_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactTin_medium_001.ogg",
+  "duration": 0.17
+ },
+ {
+  "name": "impactTin_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactTin_medium_002.ogg",
+  "duration": 0.13
+ },
+ {
+  "name": "impactTin_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactTin_medium_003.ogg",
+  "duration": 0.21
+ },
+ {
+  "name": "impactTin_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactTin_medium_004.ogg",
+  "duration": 0.18
+ },
+ {
+  "name": "impactWood_heavy_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_heavy_000.ogg",
+  "duration": 0.31
+ },
+ {
+  "name": "impactWood_heavy_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_heavy_001.ogg",
+  "duration": 0.31
+ },
+ {
+  "name": "impactWood_heavy_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_heavy_002.ogg",
+  "duration": 0.31
+ },
+ {
+  "name": "impactWood_heavy_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_heavy_003.ogg",
+  "duration": 0.31
+ },
+ {
+  "name": "impactWood_heavy_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_heavy_004.ogg",
+  "duration": 0.31
+ },
+ {
+  "name": "impactWood_light_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_light_000.ogg",
+  "duration": 0.27
+ },
+ {
+  "name": "impactWood_light_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_light_001.ogg",
+  "duration": 0.27
+ },
+ {
+  "name": "impactWood_light_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_light_002.ogg",
+  "duration": 0.27
+ },
+ {
+  "name": "impactWood_light_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_light_003.ogg",
+  "duration": 0.27
+ },
+ {
+  "name": "impactWood_light_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_light_004.ogg",
+  "duration": 0.27
+ },
+ {
+  "name": "impactWood_medium_000",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_medium_000.ogg",
+  "duration": 0.33
+ },
+ {
+  "name": "impactWood_medium_001",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_medium_001.ogg",
+  "duration": 0.33
+ },
+ {
+  "name": "impactWood_medium_002",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_medium_002.ogg",
+  "duration": 0.33
+ },
+ {
+  "name": "impactWood_medium_003",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_medium_003.ogg",
+  "duration": 0.33
+ },
+ {
+  "name": "impactWood_medium_004",
+  "pack": "kenney_impact-sounds",
+  "file": "kenney_impact-sounds/Audio/impactWood_medium_004.ogg",
+  "duration": 0.33
+ },
+ {
+  "name": "Fire_impact_1",
+  "pack": "Magic SFX Preview Pack",
+  "file": "Magic SFX Preview Pack/Fire impact 1.wav",
+  "duration": 6.39
+ },
+ {
+  "name": "Healing_Full",
+  "pack": "Magic SFX Preview Pack",
+  "file": "Magic SFX Preview Pack/Healing Full.wav",
+  "duration": 3.93
+ },
+ {
+  "name": "Ice_attack_2",
+  "pack": "Magic SFX Preview Pack",
+  "file": "Magic SFX Preview Pack/Ice attack 2.wav",
+  "duration": 1.85
+ },
+ {
+  "name": "Misc_02",
+  "pack": "Magic SFX Preview Pack",
+  "file": "Magic SFX Preview Pack/Misc 02.wav",
+  "duration": 1.16
+ },
+ {
+  "name": "Wind_effects_5",
+  "pack": "Magic SFX Preview Pack",
+  "file": "Magic SFX Preview Pack/Wind effects 5.wav",
+  "duration": 1.74
+ },
+ {
+  "name": "15",
+  "pack": "male-death-sounds",
+  "file": "male-death-sounds/15.wav",
+  "duration": 2
+ },
+ {
+  "name": "16",
+  "pack": "male-death-sounds",
+  "file": "male-death-sounds/16.wav",
+  "duration": 3.63
+ },
+ {
+  "name": "8",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/8.wav",
+  "duration": 1.57
+ },
+ {
+  "name": "9",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/9.wav",
+  "duration": 0.88
+ },
+ {
+  "name": "10",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/10.wav",
+  "duration": 0.81
+ },
+ {
+  "name": "11",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/11.wav",
+  "duration": 0.71
+ },
+ {
+  "name": "12",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/12.wav",
+  "duration": 1.06
+ },
+ {
+  "name": "13",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/13.wav",
+  "duration": 0.64
+ },
+ {
+  "name": "14",
+  "pack": "male-pain-sounds",
+  "file": "male-pain-sounds/14.wav",
+  "duration": 0.44
+ },
+ {
+  "name": "animal_melee_sound",
+  "pack": "melee sounds",
+  "file": "melee sounds/animal melee sound.wav",
+  "duration": 0.63
+ },
+ {
+  "name": "melee_sound",
+  "pack": "melee sounds",
+  "file": "melee sounds/melee sound.wav",
+  "duration": 0.61
+ },
+ {
+  "name": "sword_sound",
+  "pack": "melee sounds",
+  "file": "melee sounds/sword sound.wav",
+  "duration": 0.54
+ },
+ {
+  "name": "Type_1_aqua",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/aqua.wav",
+  "duration": 0.64
+ },
+ {
+  "name": "Type_1_attack1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/attack1.wav",
+  "duration": 0.37
+ },
+ {
+  "name": "Type_1_attack2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/attack2.wav",
+  "duration": 0.41
+ },
+ {
+  "name": "Type_1_attack3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/attack3.wav",
+  "duration": 0.41
+ },
+ {
+  "name": "Type_1_blizzard",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/blizzard.wav",
+  "duration": 0.78
+ },
+ {
+  "name": "Type_1_bubbles",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/bubbles.wav",
+  "duration": 0.76
+ },
+ {
+  "name": "Type_1_burn",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/burn.wav",
+  "duration": 0.56
+ },
+ {
+  "name": "Type_1_corruption",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/corruption.wav",
+  "duration": 1.16
+ },
+ {
+  "name": "Type_1_cure",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/cure.wav",
+  "duration": 0.57
+ },
+ {
+  "name": "Type_1_curse",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/curse.wav",
+  "duration": 0.53
+ },
+ {
+  "name": "Type_1_cyclone",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/cyclone.wav",
+  "duration": 1.02
+ },
+ {
+  "name": "Type_1_damaged1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/damaged1.wav",
+  "duration": 0.29
+ },
+ {
+  "name": "Type_1_damaged2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/damaged2.wav",
+  "duration": 0.38
+ },
+ {
+  "name": "Type_1_damaged3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/damaged3.wav",
+  "duration": 0.32
+ },
+ {
+  "name": "Type_1_fire",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/fire.wav",
+  "duration": 0.67
+ },
+ {
+  "name": "Type_1_freeze",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/freeze.wav",
+  "duration": 0.61
+ },
+ {
+  "name": "Type_1_heal",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/heal.wav",
+  "duration": 0.6
+ },
+ {
+  "name": "Type_1_healed1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/healed1.wav",
+  "duration": 0.67
+ },
+ {
+  "name": "Type_1_healed2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/healed2.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "Type_1_healed3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/healed3.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "Type_1_hellstorm",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/hellstorm.wav",
+  "duration": 1.04
+ },
+ {
+  "name": "Type_1_hex",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/hex.wav",
+  "duration": 0.59
+ },
+ {
+  "name": "Type_1_ice",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/ice.wav",
+  "duration": 0.59
+ },
+ {
+  "name": "Type_1_jump1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/jump1.wav",
+  "duration": 0.33
+ },
+ {
+  "name": "Type_1_jump2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/jump2.wav",
+  "duration": 0.31
+ },
+ {
+  "name": "Type_1_jump3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/jump3.wav",
+  "duration": 0.31
+ },
+ {
+  "name": "Type_1_tornado",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/tornado.wav",
+  "duration": 1.44
+ },
+ {
+  "name": "Type_1_twister",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/twister.wav",
+  "duration": 0.72
+ },
+ {
+  "name": "Type_1_water",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/water.wav",
+  "duration": 0.61
+ },
+ {
+  "name": "Type_1_wind",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 1/wind.wav",
+  "duration": 0.55
+ },
+ {
+  "name": "Type_2_aqua",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/aqua.wav",
+  "duration": 0.62
+ },
+ {
+  "name": "Type_2_attack1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/attack1.wav",
+  "duration": 0.38
+ },
+ {
+  "name": "Type_2_attack2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/attack2.wav",
+  "duration": 0.39
+ },
+ {
+  "name": "Type_2_attack3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/attack3.wav",
+  "duration": 0.34
+ },
+ {
+  "name": "Type_2_blizzard",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/blizzard.wav",
+  "duration": 0.62
+ },
+ {
+  "name": "Type_2_bubbles",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/bubbles.wav",
+  "duration": 0.62
+ },
+ {
+  "name": "Type_2_burn",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/burn.wav",
+  "duration": 0.53
+ },
+ {
+  "name": "Type_2_corruption",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/corruption.wav",
+  "duration": 0.82
+ },
+ {
+  "name": "Type_2_cure",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/cure.wav",
+  "duration": 0.48
+ },
+ {
+  "name": "Type_2_curse",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/curse.wav",
+  "duration": 0.53
+ },
+ {
+  "name": "Type_2_cyclone",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/cyclone.wav",
+  "duration": 0.77
+ },
+ {
+  "name": "Type_2_damaged1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/damaged1.wav",
+  "duration": 0.51
+ },
+ {
+  "name": "Type_2_damaged2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/damaged2.wav",
+  "duration": 0.33
+ },
+ {
+  "name": "Type_2_damaged3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/damaged3.wav",
+  "duration": 0.38
+ },
+ {
+  "name": "Type_2_fire",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/fire.wav",
+  "duration": 0.64
+ },
+ {
+  "name": "Type_2_freeze",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/freeze.wav",
+  "duration": 0.64
+ },
+ {
+  "name": "Type_2_heal",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/heal.wav",
+  "duration": 0.47
+ },
+ {
+  "name": "Type_2_healed1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/healed1.wav",
+  "duration": 0.47
+ },
+ {
+  "name": "Type_2_healed2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/healed2.wav",
+  "duration": 0.54
+ },
+ {
+  "name": "Type_2_healed3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/healed3.wav",
+  "duration": 1.24
+ },
+ {
+  "name": "Type_2_hellstorm",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/hellstorm.wav",
+  "duration": 0.91
+ },
+ {
+  "name": "Type_2_hex",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/hex.wav",
+  "duration": 0.56
+ },
+ {
+  "name": "Type_2_ice",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/ice.wav",
+  "duration": 0.47
+ },
+ {
+  "name": "Type_2_jump1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/jump1.wav",
+  "duration": 0.23
+ },
+ {
+  "name": "Type_2_jump2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/jump2.wav",
+  "duration": 0.23
+ },
+ {
+  "name": "Type_2_jump3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/jump3.wav",
+  "duration": 0.23
+ },
+ {
+  "name": "Type_2_tornado",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/tornado.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "Type_2_twister",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/twister.wav",
+  "duration": 0.67
+ },
+ {
+  "name": "Type_2_water",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/water.wav",
+  "duration": 0.56
+ },
+ {
+  "name": "Type_2_wind",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 2/wind.wav",
+  "duration": 0.56
+ },
+ {
+  "name": "Type_3_aqua",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/aqua.wav",
+  "duration": 0.63
+ },
+ {
+  "name": "Type_3_attack1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/attack1.wav",
+  "duration": 0.29
+ },
+ {
+  "name": "Type_3_attack2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/attack2.wav",
+  "duration": 0.35
+ },
+ {
+  "name": "Type_3_attack3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/attack3.wav",
+  "duration": 0.4
+ },
+ {
+  "name": "Type_3_blizzard",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/blizzard.wav",
+  "duration": 0.71
+ },
+ {
+  "name": "Type_3_bubbles",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/bubbles.wav",
+  "duration": 0.64
+ },
+ {
+  "name": "Type_3_burn",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/burn.wav",
+  "duration": 0.54
+ },
+ {
+  "name": "Type_3_corruption",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/corruption.wav",
+  "duration": 0.9
+ },
+ {
+  "name": "Type_3_cure",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/cure.wav",
+  "duration": 0.59
+ },
+ {
+  "name": "Type_3_curse",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/curse.wav",
+  "duration": 0.69
+ },
+ {
+  "name": "Type_3_cyclone",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/cyclone.wav",
+  "duration": 1.08
+ },
+ {
+  "name": "Type_3_damaged1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/damaged1.wav",
+  "duration": 0.46
+ },
+ {
+  "name": "Type_3_damaged2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/damaged2.wav",
+  "duration": 0.38
+ },
+ {
+  "name": "Type_3_damaged3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/damaged3.wav",
+  "duration": 0.38
+ },
+ {
+  "name": "Type_3_fire",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/fire.wav",
+  "duration": 0.66
+ },
+ {
+  "name": "Type_3_freeze",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/freeze.wav",
+  "duration": 0.61
+ },
+ {
+  "name": "Type_3_heal",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/heal.wav",
+  "duration": 0.57
+ },
+ {
+  "name": "Type_3_healed1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/healed1.wav",
+  "duration": 0.65
+ },
+ {
+  "name": "Type_3_healed2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/healed2.wav",
+  "duration": 0.72
+ },
+ {
+  "name": "Type_3_healed3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/healed3.wav",
+  "duration": 0.61
+ },
+ {
+  "name": "Type_3_hellstorm",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/hellstorm.wav",
+  "duration": 1.11
+ },
+ {
+  "name": "Type_3_hex",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/hex.wav",
+  "duration": 0.65
+ },
+ {
+  "name": "Type_3_ice",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/ice.wav",
+  "duration": 0.58
+ },
+ {
+  "name": "Type_3_jump1",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/jump1.wav",
+  "duration": 0.3
+ },
+ {
+  "name": "Type_3_jump2",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/jump2.wav",
+  "duration": 0.3
+ },
+ {
+  "name": "Type_3_jump3",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/jump3.wav",
+  "duration": 0.32
+ },
+ {
+  "name": "Type_3_tornado",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/tornado.wav",
+  "duration": 0.92
+ },
+ {
+  "name": "Type_3_twister",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/twister.wav",
+  "duration": 0.71
+ },
+ {
+  "name": "Type_3_water",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/water.wav",
+  "duration": 0.68
+ },
+ {
+  "name": "Type_3_wind",
+  "pack": "RPG Voice Starter Pack female",
+  "file": "RPG Voice Starter Pack female/Type 3/wind.wav",
+  "duration": 0.59
+ },
+ {
+  "name": "Fire",
+  "pack": "spells",
+  "file": "spells/Fire.aif",
+  "duration": 1.37
+ },
+ {
+  "name": "Spell1",
+  "pack": "spells",
+  "file": "spells/Spell1.aif",
+  "duration": 0.7
+ }
+]

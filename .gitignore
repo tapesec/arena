@@ -5,3 +5,6 @@ assets-source
 
 # Bibliothèques d'animations complètes de la page de visualisation : node scripts/build-animation-catalog.mjs
 packages/client/public/dev-models
+
+# Sons complets de la page des sons : node scripts/build-sound-catalog.mjs
+packages/client/public/dev-sounds
