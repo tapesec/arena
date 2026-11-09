@@ -49,6 +49,8 @@ const ANIMATIONS = {
     "Sword_Regular_A",
     "Sword_Regular_B",
     "Sword_Regular_C",
+    "Sword_Heavy_C",
+    "Sword_Heavy_D",
     "Sword_Block",
     "Shield_OneShot",
     "Hit_Knockback",

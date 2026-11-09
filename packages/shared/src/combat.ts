@@ -28,9 +28,18 @@ export const IMMUNITY_DURATION = 30;
 
 // Gardien
 export const GUARD_RANGE = 4;
-export const GUARD_BLOCK_CHANCE = 0.5;
+export const GUARD_BLOCK_CHANCE = 0.75;
 export const SHIELD_BLOCK_CHANCE = 0.3;
 export const INTERCEPT_RANGE = 4;
+// Charge : vitesse de course (+500 %) et durée maximale avant d'abandonner (cible hors d'atteinte, obstacle).
+export const CHARGE_SPEED_MULTIPLIER = 6;
+export const CHARGE_MAX_DURATION = 3;
+// Provocation : dégâts infligés par la cible à tout autre que le Gardien, et arrêt net au moment de la provocation.
+export const TAUNT_DAMAGE_FACTOR = 0.5;
+export const TAUNT_HALT_DURATION = 0.5;
+
+// Ralentissement de tous les snares.
+export const SNARE_SLOW = 0.4;
 
 // Arcaniste : délai de reformation de la bulle.
 
@@ -104,7 +113,8 @@ export type CombatEventKind =
   | "absorbed" // absorbé par la bulle de l'Arcaniste
   | "intercepted" // un Gardien prend le coup à la place de sa cible (detail = id de la cible d'origine)
   | "cc" // contrôle appliqué (detail = type)
-  | "immune" // cible immunisée (detail = type)
+  | "immune" // cible immunisée (detail = type de contrôle, "magic" ou "melee")
+  | "taunt" // provocation d'un Gardien
   | "cleanse"
   | "resurrect"
   | "buff" // detail = type de buff
@@ -122,7 +132,7 @@ export interface CombatEvent {
   detail?: string;
 }
 
-export type InterruptReason = "damage" | "move" | "silence" | "cc";
+export type InterruptReason = "damage" | "move" | "silence" | "cc" | "taunt";
 
 export interface InterruptEvent {
   casterId: string;

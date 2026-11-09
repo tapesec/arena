@@ -60,6 +60,8 @@ export interface CharacterAnimationSet {
   abilities: Record<string, string>;
   // Incantation propre à certains sorts (sinon, l'incantation commune Spell_Simple_Idle_Loop).
   casts?: Record<string, string>;
+  // Postures tenues tant que dure un état : course de la Charge, garde du Rempart.
+  stances?: { charge?: string; rampart?: string };
 }
 
 interface CharacterDef {
@@ -148,7 +150,20 @@ const CHARACTERS: Record<string, CharacterDef> = {
     animations: {
       idle: "Idle_Shield_Loop",
       attacks: ["Sword_Regular_A"],
-      abilities: { shieldBash: "Shield_OneShot", guard: "Sword_Block", default: "Yes" },
+      abilities: {
+        shieldBash: "Shield_OneShot",
+        guard: "Sword_Block",
+        powerStrike: "Sword_Heavy_C",
+        cripplingStrike: "Sword_Heavy_D",
+        taunt: "Mixamo_Taunt_Chest_Thump",
+        rallyCry: "Mixamo_Waving",
+        // La Charge : course (posture), puis l'attaque sautée à l'arrivée.
+        charge: "",
+        chargeImpact: "Mixamo_Sword_Shield_Attack",
+        rampart: "",
+        default: "Yes",
+      },
+      stances: { charge: "Sprint_Loop", rampart: "Mixamo_Shield_Block_Idle" },
     },
   },
   lame: {
@@ -234,7 +249,8 @@ function usedAnimations(): Set<string> {
   const names = new Set<string>();
   for (const { animations: set } of Object.values(CHARACTERS)) {
     names.add(set.idle);
-    for (const name of [...set.attacks, ...Object.values(set.abilities), ...Object.values(set.casts ?? {})]) names.add(name);
+    const lists = [set.attacks, Object.values(set.abilities), Object.values(set.casts ?? {}), Object.values(set.stances ?? {})];
+    for (const name of lists.flat()) if (name) names.add(name);
   }
   return names;
 }

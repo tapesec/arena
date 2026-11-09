@@ -16,7 +16,7 @@ const TEXT_HEIGHT = 3.35;
 const MAX_TEXTS = 60;
 
 export type FloatingTextStyle = "damageDealt" | "damageTaken" | "heal" | "info" | "control";
-export type StatusIndicator = "mez" | "stun";
+export type StatusIndicator = "mez" | "stun" | "taunt";
 
 interface FloatingText {
   element: HTMLDivElement;
@@ -79,7 +79,8 @@ export class WorldOverlay {
     const element = document.createElement("div");
     element.className = `status-indicator status-${kind}`;
     // Chaque lettre ou étoile est un élément à part, pour pouvoir l'animer en décalé.
-    for (const symbol of kind === "mez" ? ["Z", "z", "z"] : ["★", "★", "★"]) {
+    const symbols = { mez: ["Z", "z", "z"], stun: ["★", "★", "★"], taunt: ["!", "!", "!"] }[kind];
+    for (const symbol of symbols) {
       const span = document.createElement("span");
       span.textContent = symbol;
       element.appendChild(span);

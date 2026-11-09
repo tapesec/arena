@@ -48,7 +48,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
   - **Techniques de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc), comme les styles de DAoC : la technique part au prochain coup d'arme, à la place du coup normal (aussitôt si l'arme est prête). Elle est mise en attente et s'allume sur la barre ; une autre technique la remplace ; couper l'attaque l'annule ; la lancer active l'attaque. Ses conditions (portée, position, face à la cible, endurance) sont vérifiées au moment du coup : si elles manquent, le coup reste normal et un message l'indique. Une technique au plus par coup d'arme (toutes les 2 s pour la Lame et le Gardien).
   - **Attaques spéciales de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
-  - **Snare** : ralentissement d'un pourcentage fixe. Un seul snare à la fois : le plus puissant reste jusqu'à la fin de son effet, un snare plus faible reçu entre-temps est ignoré (pas mis en attente) ; à puissance égale, on garde celui qui dure le plus longtemps. Pas d'immunité.
+  - **Snare** : ralentissement de 40 % (tous les snares). Un seul snare à la fois : le plus puissant reste jusqu'à la fin de son effet, un snare plus faible reçu entre-temps est ignoré (pas mis en attente) ; à puissance égale, on garde celui qui dure le plus longtemps. Pas d'immunité.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
 
 ## Classes
@@ -67,9 +67,15 @@ Protège les alliés vulnérables et tient la ligne de front.
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
-| Garde | 50 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m maximum). | Instantané | — | — |
-| Interception | Encaisse à la place d'un allié le prochain coup qui le vise. | Instantané | 15 endurance | 20 s |
-| Coup de bouclier | Stun de 4 s au contact. Technique de mêlée. | Prochain coup | 40 endurance | — |
+| Garde | 75 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m maximum), si l'allié et le Gardien sont immobiles au moment du coup. Portée 10 m. | Instantané | 15 endurance | — |
+| Interception | Encaisse à la place d'un allié (à 4 m) le prochain coup qui le vise, pendant 10 s. Portée 20 m. | Instantané | 25 endurance | 10 s |
+| Coup de bouclier | Stun de 2 s au contact. Technique de mêlée. | Prochain coup | 40 endurance | 10 s |
+| Charge | Fonce sur un ennemi entre 10 et 30 m (vitesse +500 %), s'arrête au contact : 100 dégâts et stun 4 s, impossibles à esquiver ou bloquer, même sur une cible immunisée au stun (l'immunité est quand même donnée). Impossible rooté. | Instantané | 30 endurance | 20 s |
+| Coup puissant | 100 dégâts, toutes positions. Technique de mêlée. | Prochain coup | 20 endurance | — |
+| Provocation | 6 s : la cible inflige 50 % de dégâts en moins (mêlée et sorts) à tout autre que le Gardien. Sur le coup : arrêt net 0,5 s, incantation interrompue, attaque automatique arrêtée, cible tournée vers le Gardien. Pas d'immunité. Portée 30 m. | Instantané | 30 endurance | 20 s |
+| Cri de ralliement | Le Gardien et les alliés à 20 m sont immunisés aux contrôles magiques 6 s ; ceux déjà en place sont retirés. Contrôle magique = venu d'un sort (mana, hors technique de mêlée). | Instantané | 30 endurance | 60 s |
+| Frappe handicapante | 100 dégâts et snare 8 s, dans le dos. Technique de mêlée. | Prochain coup | 15 endurance | — |
+| Rempart (ultime) | 10 s : le Gardien et les alliés à 30 m (y compris ceux qui arrivent) ne subissent aucune attaque de mêlée. Le Gardien ne peut plus rien faire ; l'effet s'arrête s'il meurt ou s'il est mez ou stun. | Instantané | 50 endurance | 3 min |
 | Passif | 30 % de chances de bloquer avec le bouclier. | — | — | — |
 
 ### 2. Arcaniste — mage dégâts

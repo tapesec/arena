@@ -11,6 +11,8 @@ export interface ActiveEffect {
   sourceId: string;
   // Valeur propre à l'effet, par exemple le pourcentage de ralentissement.
   value: number;
+  // Posé par un sort magique (mana) : le Cri de ralliement le retire et en protège.
+  magic: boolean;
   // Copie synchronisée vers les clients.
   view: EffectState;
 }
@@ -34,6 +36,8 @@ export class PlayerRuntime {
   lastMeleeAttackerId: string | null = null;
   // Le stick fait avancer le personnage vers sa cible pendant ce tick.
   stickMoving = false;
+  // Charge en cours : cible, temps écoulé, temps passé bloqué, dégâts et stun à l'arrivée.
+  charge: { targetId: string; elapsed: number; stuck: number; damage: number; stun: number } | null = null;
 
   constructor(
     readonly id: string,
@@ -53,9 +57,9 @@ export class PlayerRuntime {
     return this.effects.some((e) => e.kind === kind);
   }
 
-  // Mez ou stun : ne peut plus agir du tout.
+  // Mez, stun, ou Rempart (le Gardien se fige) : ne peut plus agir du tout.
   get incapacitated(): boolean {
-    return this.has("mez") || this.has("stun");
+    return this.has("mez") || this.has("stun") || this.has("rampart");
   }
 
   // Mez, stun, ou root (qui ne laisse que lentement reprendre de la vitesse).

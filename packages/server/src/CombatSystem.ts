@@ -2,6 +2,8 @@ import {
   AURA_ENDURANCE_REGEN,
   AURA_MANA_REGEN,
   AURA_RANGE,
+  CHARGE_MAX_DURATION,
+  CHARGE_SPEED_MULTIPLIER,
   CRIT_CHANCE,
   CRIT_MULTIPLIER,
   ENDURANCE_REGEN,
@@ -11,6 +13,8 @@ import {
   HP_BUFF_AMOUNT,
   IMMUNITY_DURATION,
   INTERCEPT_RANGE,
+  MOVE_SPEED,
+  RAMPART_RADIUS,
   MANA_REGEN,
   NO_INPUT,
   PERMANENT,
@@ -20,6 +24,8 @@ import {
   SONG_SUPPRESS_DURATION,
   STICK_DISTANCE,
   STRENGTH_BUFF_BONUS,
+  TAUNT_DAMAGE_FACTOR,
+  TAUNT_HALT_DURATION,
   distance,
   facingTowards,
   forwardOf,
@@ -31,6 +37,7 @@ import {
   hasLineOfSight,
   isFacing,
   isInMeleeRange,
+  isMagic,
   isOffensive,
   positionRelativeTo,
   stepMovement,
@@ -61,11 +68,17 @@ export interface CombatOutput {
 const IMMUNITY_EFFECTS: Record<CrowdControl, EffectKind> = { mez: "immuneMez", stun: "immuneStun", root: "immuneRoot" };
 
 // Effets posés par un joueur sur d'autres, qui disparaissent à sa mort ou à son départ.
-const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "guarded", "intercept"];
+const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "guarded", "intercept", "taunted"];
+
+// Distance à laquelle la Charge s'arrête devant sa cible (bien à portée de mêlée).
+const CHARGE_STOP_DISTANCE = 1.5;
+
+// Contrôles que le Cri de ralliement retire quand ils viennent d'un sort.
+const MAGIC_CONTROLS: EffectKind[] = ["mez", "stun", "root", "snare"];
 
 // Toutes les règles de combat. La salle Colyseus ne fait que lui transmettre les commandes.
 // Comment une attaque de mêlée a été évitée (null : elle porte).
-type Avoidance = "evaded" | "absorbed" | "blocked" | null;
+type Avoidance = "evaded" | "absorbed" | "blocked" | "immune" | null;
 
 export class CombatSystem {
   readonly players = new Map<string, PlayerRuntime>();
@@ -214,6 +227,7 @@ export class CombatSystem {
   private updateMovement(player: PlayerRuntime, dt: number) {
     const state = player.state;
     player.stickMoving = false;
+    if (player.charge) return this.updateCharge(player, dt);
     this.updateLock(player);
     if (player.incapacitated) return;
 
@@ -227,7 +241,7 @@ export class CombatSystem {
 
     // Root : arrêt net, puis la vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet.
     const root = player.getEffect("root");
-    const rootFactor = root ? 1 - root.remaining / root.duration : 1;
+    const rootFactor = player.has("halted") ? 0 : root ? 1 - root.remaining / root.duration : 1;
     if (rootFactor <= 0) return;
     const direction = moveDirection(input, state.facing);
     // Stick : on avance vers la cible tant qu'on n'est pas assez près (les pas de côté restent possibles).
@@ -330,6 +344,8 @@ export class CombatSystem {
 
   private checkCanUse(caster: PlayerRuntime, ability: AbilityDef, ignoreMovement = false): string | null {
     if (caster.incapacitated) return "Vous êtes neutralisé";
+    if (caster.charge) return "Charge en cours";
+    if (ability.effects.some((e) => e.type === "charge") && caster.has("root")) return "Impossible en étant enraciné";
     if (caster.state.castAbility) return "Incantation déjà en cours";
     if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "Compétence en recharge";
     if (caster.state[ability.resource] < ability.cost) {
@@ -368,6 +384,7 @@ export class CombatSystem {
 
     if (target !== caster) {
       if (distance(caster.state, target.state) > ability.range) return "Cible hors de portée";
+      if (ability.minRange && distance(caster.state, target.state) < ability.minRange) return "Cible trop proche";
       if (!hasLineOfSight(caster.state, target.state)) return "Cible hors de vue";
     }
     if (isOffensive(ability) && !isFacing(caster.state, target.state)) return "Vous devez faire face à la cible";
@@ -447,6 +464,7 @@ export class CombatSystem {
     effect: AbilityEffect,
     avoidanceDone = false,
   ) {
+    const magic = isMagic(ability);
     switch (effect.type) {
       case "damage":
         this.dealDamage(caster, target, effect.amount, ability.id, !!ability.melee, avoidanceDone);
@@ -455,14 +473,35 @@ export class CombatSystem {
         this.heal(caster, target, effect.amount, ability.id);
         break;
       case "cc":
-        this.applyControl(caster, target, effect.cc, effect.duration, ability.id);
+        this.applyControl(caster, target, effect.cc, effect.duration, ability.id, { magic });
         break;
       case "snare":
-        this.applySnare(caster, target, effect.slow, effect.duration);
+        if (magic && this.resistsMagic(caster, target, ability.id)) break;
+        this.applySnare(caster, target, effect.slow, effect.duration, magic);
         break;
       case "interrupt":
         this.noteHostileAction(target);
+        if (magic && this.resistsMagic(caster, target, ability.id)) break;
         if (target.state.castAbility && !target.castProtected) this.interrupt(target, "silence");
+        break;
+      case "charge":
+        this.startCharge(caster, target, effect.damage, effect.stun);
+        break;
+      case "taunt":
+        this.applyTaunt(caster, target, effect.duration, ability.id);
+        break;
+      case "rallyCry":
+        // Retire les contrôles magiques déjà en place, puis protège des suivants.
+        for (const active of [...target.effects]) {
+          if (active.magic && MAGIC_CONTROLS.includes(active.kind)) this.removeEffect(target, active);
+        }
+        this.addEffect(target, "magicImmune", effect.duration, caster.id);
+        break;
+      case "rampart":
+        this.addEffect(caster, "rampart", effect.duration, caster.id);
+        caster.state.attacking = false;
+        caster.state.queuedAbility = "";
+        caster.state.lock = "";
         break;
       case "cleanse": {
         // La Purification retire le mez, pas le stun.
@@ -536,6 +575,10 @@ export class CombatSystem {
       target = interceptor;
     }
 
+    // Provoqué : la cible d'un Gardien inflige moins de dégâts à tout autre que lui.
+    const taunt = source.getEffect("taunted");
+    if (taunt && taunt.sourceId !== target.id) amount *= TAUNT_DAMAGE_FACTOR;
+
     let crit = false;
     if (melee) {
       target.lastMeleeHitAt = this.time;
@@ -569,6 +612,11 @@ export class CombatSystem {
   // Gardien le protègent toujours.
   private avoidMelee(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): Avoidance {
     const base = { sourceId: source.id, targetId: target.id, abilityId };
+    // Rempart : aucune attaque de mêlée ne porte, effets compris.
+    if (target.has("meleeImmune")) {
+      this.emit({ kind: "immune", ...base, detail: "melee" });
+      return "immune";
+    }
     const free = !target.incapacitated;
     if (free && target.has("evasion") && this.random() < EVASION_CHANCE) {
       this.emit({ kind: "evaded", ...base });
@@ -590,6 +638,9 @@ export class CombatSystem {
     if (
       guardian?.alive &&
       !guardian.incapacitated &&
+      // La Garde ne joue que si l'allié et le Gardien sont immobiles au moment du coup.
+      !guardian.isMoving &&
+      !target.isMoving &&
       distance(guardian.state, target.state) <= GUARD_RANGE &&
       this.random() < GUARD_BLOCK_CHANCE
     ) {
@@ -605,14 +656,28 @@ export class CombatSystem {
     this.emit({ kind: "heal", sourceId: source.id, targetId: target.id, abilityId, amount: healed });
   }
 
-  private applyControl(source: PlayerRuntime, target: PlayerRuntime, cc: CrowdControl, duration: number, abilityId: string) {
+  // magic : contrôle venu d'un sort (le Cri de ralliement en protège). ignoreImmunity : passe outre l'immunité à ce
+  // contrôle (stun de la Charge), tout en la donnant comme d'habitude.
+  private applyControl(
+    source: PlayerRuntime,
+    target: PlayerRuntime,
+    cc: CrowdControl,
+    duration: number,
+    abilityId: string,
+    options: { magic?: boolean; ignoreImmunity?: boolean } = {},
+  ) {
     this.noteHostileAction(target);
+    if (options.magic && this.resistsMagic(source, target, abilityId)) return;
     const immunity = IMMUNITY_EFFECTS[cc];
-    if (target.has(immunity)) {
+    if (target.has(immunity) && !options.ignoreImmunity) {
       this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
       return;
     }
-    this.addEffect(target, cc, duration, source.id);
+    this.addEffect(target, cc, duration, source.id, 0, options.magic);
+    // Un Gardien mez ou stun perd son Rempart.
+    const rampart = cc !== "root" ? target.getEffect("rampart") : undefined;
+    if (rampart) this.removeEffect(target, rampart);
+    if (target.charge) this.stopCharge(target);
     // L'immunité démarre dès l'application : impossible de prolonger le contrôle en le relançant.
     // Elle couvre la durée du contrôle, puis IMMUNITY_DURATION de répit après sa fin normale.
     this.addEffect(target, immunity, duration + IMMUNITY_DURATION, source.id);
@@ -627,6 +692,7 @@ export class CombatSystem {
     state.lock = "";
     player.input = NO_INPUT;
     state.queuedAbility = "";
+    this.stopCharge(player);
     this.endCast(player);
     for (const effect of [...player.effects]) this.removeEffect(player, effect);
     this.removeLinkedEffects(player);
@@ -669,6 +735,12 @@ export class CombatSystem {
         (p) => p.classDef.id === "barde" && p.state.songActive && this.time >= p.songSuppressedUntil && near(p, SONG_RANGE),
       ),
     );
+    // Rempart : le Gardien et ses alliés à RAMPART_RADIUS de lui, y compris ceux qui entrent dans la zone.
+    this.setDerivedEffect(
+      player,
+      "meleeImmune",
+      allies.some((p) => p.has("rampart") && near(p, RAMPART_RADIUS)),
+    );
     this.setDerivedEffect(
       player,
       "regenAura",
@@ -685,19 +757,97 @@ export class CombatSystem {
   // Un effet déjà présent est rafraîchi plutôt que cumulé.
   // Un seul snare à la fois, et le plus puissant reste jusqu'à la fin de son effet : un snare plus faible est ignoré.
   // À puissance égale, on garde celui qui dure le plus longtemps.
-  private applySnare(source: PlayerRuntime, target: PlayerRuntime, slow: number, duration: number) {
+  private applySnare(source: PlayerRuntime, target: PlayerRuntime, slow: number, duration: number, magic = false) {
     const current = target.getEffect("snare");
     if (current && (current.value > slow || (current.value === slow && current.remaining >= duration))) return;
-    this.addEffect(target, "snare", duration, source.id, slow);
+    this.addEffect(target, "snare", duration, source.id, slow, magic);
   }
 
-  private addEffect(player: PlayerRuntime, kind: EffectKind, duration: number, sourceId: string, value = 0) {
+  // Cri de ralliement : un contrôle magique est sans effet. Retourne vrai s'il est résisté.
+  private resistsMagic(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
+    if (!target.has("magicImmune")) return false;
+    this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: "magic" });
+    return true;
+  }
+
+  // --- Gardien : Charge et Provocation ---
+
+  private startCharge(caster: PlayerRuntime, target: PlayerRuntime, damage: number, stun: number) {
+    caster.charge = { targetId: target.id, elapsed: 0, stuck: 0, damage, stun };
+    caster.state.charging = true;
+    caster.state.lock = "";
+  }
+
+  private stopCharge(player: PlayerRuntime) {
+    player.charge = null;
+    player.state.charging = false;
+  }
+
+  // Le Gardien fonce droit sur sa cible. Il s'arrête s'il est contrôlé, si la cible meurt, ou s'il reste bloqué par
+  // un obstacle ; il frappe dès qu'il est à portée de mêlée.
+  private updateCharge(player: PlayerRuntime, dt: number) {
+    const charge = player.charge!;
+    const state = player.state;
+    const target = this.players.get(charge.targetId);
+    if (!target?.alive || player.incapacitated || player.has("root")) return this.stopCharge(player);
+    charge.elapsed += dt;
+    state.facing = facingTowards(state, target.state);
+    const snare = player.getEffect("snare");
+    const direction = { x: target.state.x - state.x, z: target.state.z - state.z };
+    // Le dernier pas s'arrête au contact, sans traverser la cible (à cette vitesse, un pas fait près de 2 m).
+    const room = Math.max(0, Math.hypot(direction.x, direction.z) - CHARGE_STOP_DISTANCE);
+    const speed = Math.min(CHARGE_SPEED_MULTIPLIER * (snare ? 1 - snare.value : 1), room / (MOVE_SPEED * dt));
+    let next = stepMovement(state, direction, dt, speed);
+    if (this.confine) next = this.confine(player, next);
+    const moved = Math.hypot(next.x - state.x, next.z - state.z);
+    state.x = next.x;
+    state.z = next.z;
+
+    if (distance(state, target.state) <= CHARGE_STOP_DISTANCE + 0.05) return this.chargeImpact(player, target, charge);
+    charge.stuck = moved < 1e-3 ? charge.stuck + dt : 0;
+    if (charge.stuck > 0.25 || charge.elapsed > CHARGE_MAX_DURATION) {
+      this.stopCharge(player);
+      this.sendError(player, "Charge interrompue");
+    }
+  }
+
+  // Arrivée de la Charge : dégâts et stun, sans esquive ni blocage, même sur une cible immunisée au stun.
+  // Seul le Rempart protège (aucune attaque de mêlée ne porte).
+  private chargeImpact(player: PlayerRuntime, target: PlayerRuntime, charge: NonNullable<PlayerRuntime["charge"]>) {
+    this.stopCharge(player);
+    const impact: AbilityUsedEvent = { casterId: player.id, abilityId: "chargeImpact", targetId: target.id };
+    this.out.broadcast("ability", impact, [player.id, target.id]);
+    player.state.attacking = true;
+    if (target.has("meleeImmune")) {
+      this.emit({ kind: "immune", sourceId: player.id, targetId: target.id, abilityId: "charge", detail: "melee" });
+      return;
+    }
+    this.dealDamage(player, target, charge.damage, "charge", true, true);
+    if (target.alive) this.applyControl(player, target, "stun", charge.stun, "charge", { ignoreImmunity: true });
+  }
+
+  // Provocation : la cible s'arrête net, son incantation est interrompue, son attaque s'arrête et elle se tourne vers
+  // le Gardien ; pendant la durée, elle inflige moins de dégâts à tout autre que lui (voir dealDamage).
+  private applyTaunt(caster: PlayerRuntime, target: PlayerRuntime, duration: number, abilityId: string) {
+    this.noteHostileAction(target);
+    this.addEffect(target, "taunted", duration, caster.id);
+    this.addEffect(target, "halted", TAUNT_HALT_DURATION, caster.id);
+    if (target.state.castAbility && !target.castProtected) this.interrupt(target, "taunt");
+    target.state.attacking = false;
+    target.state.queuedAbility = "";
+    target.state.lock = "";
+    target.state.facing = facingTowards(target.state, caster.state);
+    this.emit({ kind: "taunt", sourceId: caster.id, targetId: target.id, abilityId });
+  }
+
+  private addEffect(player: PlayerRuntime, kind: EffectKind, duration: number, sourceId: string, value = 0, magic = false) {
     const existing = player.getEffect(kind);
     if (existing) {
       existing.remaining = duration;
       existing.duration = duration;
       existing.sourceId = sourceId;
       existing.value = value;
+      existing.magic = magic;
       existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
       existing.view.source = sourceId;
       return;
@@ -707,7 +857,7 @@ export class CombatSystem {
     view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
     view.source = sourceId;
     player.state.effects.push(view);
-    player.effects.push({ kind, remaining: duration, duration, sourceId, value, view });
+    player.effects.push({ kind, remaining: duration, duration, sourceId, value, magic, view });
 
     if (kind === "buffHp") {
       player.state.maxHp += HP_BUFF_AMOUNT;

@@ -25,7 +25,7 @@ const list: ClassDef[] = [
     maxHp: 1600,
     resource: "endurance",
     autoAttack: { damage: 55, interval: 2 },
-    abilities: ["guard", "intercept", "shieldBash"],
+    abilities: ["guard", "intercept", "shieldBash", "charge", "powerStrike", "taunt", "rallyCry", "cripplingStrike", "rampart"],
     passives: ["shieldBlock"],
   },
   {

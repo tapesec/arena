@@ -83,15 +83,16 @@ beforeEach(() => {
 });
 
 describe("Gardien", () => {
-  it("Coup de bouclier étourdit 4 s, puis immunise contre le stun", () => {
+  it("Coup de bouclier étourdit 2 s, puis immunise contre le stun", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
     const enemy = world.spawn("e", "lame", 1, 0, 2, Math.PI);
     world.cast(gardien, "shieldBash", enemy);
     assert.ok(enemy.has("stun"));
-    world.run(4.1);
+    world.run(2.1);
     assert.ok(!enemy.has("stun"));
     assert.ok(enemy.has("immuneStun"));
-    // Le Coup de bouclier part au prochain coup d'arme.
+    // Après la recharge (10 s), le Coup de bouclier part au prochain coup d'arme.
+    world.run(8);
     world.cast(gardien, "shieldBash", enemy);
     world.run(2);
     assert.equal(world.eventsOf("immune").length, 1);
@@ -154,12 +155,12 @@ describe("Gardien", () => {
 
   it("le stun n'est pas cassé par les dégâts", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
-    const arcaniste = world.spawn("a", "arcaniste", 0, 3, 0, 0);
+    // Une Lame alliée dans le dos de l'ennemi (il regarde vers -z).
+    const lame = world.spawn("l", "lame", 0, 0, 4, Math.PI);
     const enemy = world.spawn("e", "lame", 1, 0, 2, Math.PI);
     world.cast(gardien, "shieldBash", enemy);
-    world.cast(arcaniste, "firebolt", enemy);
-    world.run(2.7);
-    assert.ok(world.eventsOf("damage").some((e) => e.targetId === "e" && e.abilityId === "firebolt"));
+    world.cast(lame, "backstab", enemy);
+    assert.ok(world.eventsOf("damage").some((e) => e.targetId === "e" && e.abilityId === "backstab"));
     assert.ok(enemy.has("stun"));
   });
 
@@ -658,5 +659,144 @@ describe("Contrôles", () => {
     world.run(1.6);
     assert.ok(lame.has("root"));
     assert.equal(lame.state.lock, "");
+  });
+});
+
+describe("Gardien : nouvelles compétences", () => {
+  // Accès aux méthodes internes pour préparer une situation (effet déjà posé).
+  const addEffect = (p: PlayerRuntime, kind: string, duration: number) =>
+    (world.combat as unknown as { addEffect: (...args: unknown[]) => void }).addEffect(p, kind, duration, "test");
+
+  it("la Charge fonce sur la cible, puis frappe et stun à l'arrivée", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 15, Math.PI);
+    world.cast(gardien, "charge", enemy);
+    assert.ok(gardien.state.charging);
+    world.run(1);
+    assert.ok(!gardien.state.charging);
+    const gap = Math.hypot(gardien.state.x - enemy.state.x, gardien.state.z - enemy.state.z);
+    assert.ok(gap <= 3 && gap >= 1.4, `arrêt au contact, sans traverser la cible (${gap.toFixed(2)} m)`);
+    assert.ok(world.eventsOf("damage").some((e) => e.abilityId === "charge" && e.amount === 100));
+    assert.ok(enemy.has("stun"));
+    assert.ok(gardien.state.attacking, "la Charge lance l'attaque");
+  });
+
+  it("la Charge exige 10 m au moins", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 6, Math.PI);
+    world.cast(gardien, "charge", enemy);
+    assert.equal(world.errors.at(-1)?.message, "Cible trop proche");
+    assert.ok(!gardien.state.charging);
+  });
+
+  it("la Charge passe l'esquive et l'immunité au stun, et donne l'immunité", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 15, Math.PI);
+    world.cast(enemy, "evasion");
+    addEffect(enemy, "immuneStun", 30);
+    world.rolls = [0, 0, 0, 0];
+    world.cast(gardien, "charge", enemy);
+    world.run(1);
+    assert.equal(world.eventsOf("evaded").length, 0);
+    assert.ok(enemy.has("stun"));
+    assert.ok(enemy.has("immuneStun"));
+  });
+
+  it("Coup puissant : 100 dégâts quelle que soit la position", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 2, Math.PI); // face au Gardien
+    world.cast(gardien, "powerStrike", enemy);
+    assert.equal(enemy.state.hp, enemy.state.maxHp - 100);
+  });
+
+  it("Frappe handicapante : dans le dos, 100 dégâts et snare de 40 %", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 2, 0); // dos tourné au Gardien
+    world.cast(gardien, "cripplingStrike", enemy);
+    assert.equal(enemy.state.hp, enemy.state.maxHp - 100);
+    assert.equal(enemy.getEffect("snare")?.value, 0.4);
+  });
+
+  it("Provocation : interrompt, arrête, retourne la cible et réduit ses dégâts sur les autres", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 0, 0, 20, Math.PI);
+    const enemy = world.spawn("e", "arcaniste", 1, 0, 10, 0); // regarde le Prêtre, dos au Gardien
+    world.cast(enemy, "firebolt", pretre);
+    world.run(0.5);
+    world.cast(gardien, "taunt", enemy);
+    assert.equal(world.interrupts.at(-1)?.reason, "taunt");
+    assert.ok(enemy.has("taunted") && enemy.has("halted"));
+    assert.ok(Math.abs(Math.abs(enemy.state.facing) - Math.PI) < 0.01, "tournée vers le Gardien");
+    // Pendant la provocation, un Trait de feu sur le Prêtre fait moitié moins de dégâts.
+    enemy.state.facing = 0;
+    world.run(0.6);
+    world.cast(enemy, "firebolt", pretre);
+    world.run(2.6);
+    assert.equal(pretre.state.hp, pretre.state.maxHp - 125);
+  });
+
+  it("Cri de ralliement : retire les contrôles magiques et en protège, pas des physiques", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 3, 0, 0);
+    const barde = world.spawn("b", "barde", 1, 3, 15, Math.PI);
+    const ennemi = world.spawn("e", "gardien", 1, 3, 2, Math.PI);
+    world.cast(barde, "mez", lame);
+    world.run(2.1);
+    assert.ok(lame.has("mez"));
+    world.cast(gardien, "rallyCry");
+    assert.ok(!lame.has("mez"));
+    assert.ok(lame.has("magicImmune") && gardien.has("magicImmune"));
+    // Un nouveau mez est résisté ; le Coup de bouclier (physique) passe.
+    lame.effects = lame.effects.filter((e) => e.kind !== "immuneMez");
+    world.cast(barde, "mez", lame);
+    world.run(2.1);
+    assert.ok(!lame.has("mez"));
+    assert.ok(world.eventsOf("immune").some((e) => e.detail === "magic"));
+    world.cast(ennemi, "shieldBash", lame);
+    assert.ok(lame.has("stun"));
+  });
+
+  it("Rempart : le groupe proche ne subit aucune attaque de mêlée, le Gardien se fige", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 0, 0, 10, 0);
+    const lointain = world.spawn("x", "pretre", 0, 0, 45, 0);
+    const lame = world.spawn("l", "lame", 1, 0, 8, 0); // dans le dos du Prêtre
+    world.cast(gardien, "rampart");
+    world.run(0.1);
+    assert.ok(pretre.has("meleeImmune") && gardien.has("meleeImmune"));
+    assert.ok(!lointain.has("meleeImmune"));
+    world.cast(lame, "backstab", pretre);
+    assert.equal(pretre.state.hp, pretre.state.maxHp);
+    assert.ok(world.eventsOf("immune").some((e) => e.detail === "melee"));
+    world.cast(gardien, "taunt", lame);
+    assert.equal(world.errors.at(-1)?.message, "Vous êtes neutralisé");
+    // Un allié qui entre dans la zone est protégé aussi.
+    lointain.state.z = 20;
+    world.run(0.1);
+    assert.ok(lointain.has("meleeImmune"));
+  });
+
+  it("Rempart : s'arrête si le Gardien est mez", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const barde = world.spawn("b", "barde", 1, 0, 15, Math.PI);
+    world.cast(gardien, "rampart");
+    world.cast(barde, "mez", gardien);
+    world.run(2.1);
+    assert.ok(gardien.has("mez"));
+    assert.ok(!gardien.has("rampart"));
+    world.run(0.1);
+    assert.ok(!gardien.has("meleeImmune"));
+  });
+
+  it("la Garde ne bloque pas quand le Gardien bouge", () => {
+    const gardien = world.spawn("g", "gardien", 0, 1, 0);
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 1, 0, -2, 0); // dans le dos du Prêtre
+    world.cast(gardien, "guard", pretre);
+    gardien.input = { ...NO_INPUT, left: true, steer: true };
+    world.rolls = [0.99, 0.1]; // le blocage aurait réussi
+    world.cast(lame, "backstab", pretre);
+    assert.equal(world.eventsOf("blocked").length, 0);
+    assert.equal(pretre.state.hp, pretre.state.maxHp - 270);
   });
 });

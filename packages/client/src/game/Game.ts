@@ -70,7 +70,12 @@ const INFO_LABELS: Partial<Record<CombatEvent["kind"], string>> = {
   absorbed: "Absorbé",
   intercepted: "Interception",
   immune: "Immunisé",
+  taunt: "Provoqué",
 };
+
+// Provocation : durée de l'effet, et durée d'affichage des points d'exclamation au-dessus de la cible.
+const TAUNT_DURATION = getAbility("taunt")?.effects.find((e) => e.type === "taunt")?.duration ?? 6;
+const TAUNT_MARK_DURATION = 2.5;
 
 // Vitesse à laquelle l'affichage rattrape la position serveur (plus haut = plus réactif).
 const SMOOTHING = 15;
@@ -469,8 +474,10 @@ export class Game {
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
     for (const player of this.players.values()) {
       player.update(smoothing);
-      // Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez garde ses « Zzz ».
-      const control = player.isAlive && player.hasEffect("mez") ? "mez" : null;
+      // Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez garde ses « Zzz » ; une
+      // cible provoquée porte des points d'exclamation rouges pendant les premières secondes.
+      const taunted = player.effectRemaining("taunted") > TAUNT_DURATION - TAUNT_MARK_DURATION;
+      const control = !player.isAlive ? null : player.hasEffect("mez") ? "mez" : taunted ? "taunt" : null;
       this.overlay.setIndicator(player.sessionId, player.root, control);
       const classId = player.state.classId as ClassId | "";
       const enemy = !!this.self && player.state.team !== this.self.state.team;
@@ -533,6 +540,7 @@ export class Game {
           lock: self.state.lock,
           songActive: self.state.songActive,
           queuedAbility: self.state.queuedAbility,
+          charging: self.state.charging,
         }
       : null;
     const targetFrame: TargetFrame | null =

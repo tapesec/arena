@@ -1,4 +1,4 @@
-import { MELEE_RANGE, SPELL_RANGE, type ResourceType } from "./combat";
+import { MELEE_RANGE, SNARE_SLOW, SPELL_RANGE, type ResourceType } from "./combat";
 
 // À qui s'applique la compétence :
 // - enemy : la cible actuelle, qui doit être un ennemi vivant
@@ -24,7 +24,13 @@ export type AbilityEffect =
   | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble"; duration: number }
   | { type: "guard" }
   | { type: "intercept"; duration: number }
-  | { type: "toggleSong" };
+  | { type: "toggleSong" }
+  // Le lanceur fonce sur la cible ; à l'arrivée, dégâts et stun, sans esquive ni blocage possibles.
+  | { type: "charge"; damage: number; stun: number }
+  | { type: "taunt"; duration: number }
+  // Immunité aux contrôles magiques (et retrait de ceux déjà en place).
+  | { type: "rallyCry"; duration: number }
+  | { type: "rampart"; duration: number };
 
 export interface AbilityDef {
   id: string;
@@ -36,6 +42,8 @@ export interface AbilityDef {
   resource: ResourceType;
   cost: number;
   range: number;
+  // Distance minimale à la cible (Charge).
+  minRange?: number;
   // Temps de recharge en secondes ; 0 = aucun.
   cooldown: number;
   target: AbilityTarget;
@@ -56,11 +64,12 @@ const list: AbilityDef[] = [
   {
     id: "guard",
     name: "Garde",
-    description: "50 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m au plus). Relancer sur le même allié retire la protection.",
+    description:
+      "75 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m au plus), quand l'allié et le Gardien sont immobiles. Relancer sur le même allié retire la protection.",
     castTime: 0,
     resource: "endurance",
-    cost: 0,
-    range: SPELL_RANGE,
+    cost: 15,
+    range: 10,
     cooldown: 0,
     target: "otherAlly",
     effects: [{ type: "guard" }],
@@ -71,24 +80,107 @@ const list: AbilityDef[] = [
     description: "Encaisse à la place d'un allié le prochain coup qui le vise (10 s, à 4 m au plus).",
     castTime: 0,
     resource: "endurance",
-    cost: 15,
-    range: SPELL_RANGE,
-    cooldown: 20,
+    cost: 25,
+    range: 20,
+    cooldown: 10,
     target: "otherAlly",
     effects: [{ type: "intercept", duration: 10 }],
   },
   {
     id: "shieldBash",
     name: "Coup de bouclier",
-    description: "Étourdit la cible 4 s. Technique de mêlée : part au prochain coup d'arme.",
+    description: "Stun 2 s. Technique de mêlée : part au prochain coup d'arme.",
     castTime: 0,
     resource: "endurance",
     cost: 40,
     range: MELEE_RANGE,
+    cooldown: 10,
+    target: "enemy",
+    melee: true,
+    effects: [{ type: "cc", cc: "stun", duration: 2 }],
+  },
+  {
+    id: "charge",
+    name: "Charge",
+    description:
+      "Fonce sur un ennemi entre 10 et 30 m. À l'arrivée : 100 dégâts et stun 4 s, impossibles à esquiver ou bloquer, même sur une cible immunisée au stun.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 30,
+    range: SPELL_RANGE,
+    minRange: 10,
+    cooldown: 20,
+    target: "enemy",
+    effects: [{ type: "charge", damage: 100, stun: 4 }],
+  },
+  {
+    id: "powerStrike",
+    name: "Coup puissant",
+    description: "100 dégâts, à la place du coup normal, quelle que soit la position. Technique de mêlée : part au prochain coup d'arme.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 20,
+    range: MELEE_RANGE,
     cooldown: 0,
     target: "enemy",
     melee: true,
-    effects: [{ type: "cc", cc: "stun", duration: 4 }],
+    effects: [{ type: "damage", amount: 100 }],
+  },
+  {
+    id: "taunt",
+    name: "Provocation",
+    description:
+      "Pendant 6 s, la cible inflige 50 % de dégâts en moins à tout autre que le Gardien. Sur le coup, elle s'arrête net, son incantation est interrompue, son attaque s'arrête et elle se tourne vers le Gardien.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 30,
+    range: SPELL_RANGE,
+    cooldown: 20,
+    target: "enemy",
+    effects: [{ type: "taunt", duration: 6 }],
+  },
+  {
+    id: "rallyCry",
+    name: "Cri de ralliement",
+    description: "Le Gardien et les alliés à 20 m sont immunisés aux contrôles magiques pendant 6 s ; ceux déjà en place sont retirés.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 30,
+    range: 0,
+    cooldown: 60,
+    target: "self",
+    radius: 20,
+    effects: [{ type: "rallyCry", duration: 6 }],
+  },
+  {
+    id: "cripplingStrike",
+    name: "Frappe handicapante",
+    description: "100 dégâts, à la place du coup normal, et snare pendant 8 s. Dans le dos de la cible. Technique de mêlée : part au prochain coup d'arme.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 15,
+    range: MELEE_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    melee: true,
+    position: "back",
+    effects: [
+      { type: "damage", amount: 100 },
+      { type: "snare", slow: SNARE_SLOW, duration: 8 },
+    ],
+  },
+  {
+    id: "rampart",
+    name: "Rempart",
+    description:
+      "Pendant 10 s, le Gardien et les alliés à 30 m de lui ne subissent aucune attaque de mêlée. Le Gardien ne peut plus rien faire ; l'effet s'arrête s'il meurt ou s'il est mez ou stun.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 50,
+    range: 0,
+    cooldown: 180,
+    target: "self",
+    effects: [{ type: "rampart", duration: 10 }],
   },
   // --- Arcaniste ---
   {
@@ -332,7 +424,7 @@ const list: AbilityDef[] = [
     position: "side",
     effects: [
       { type: "damage", amount: 190 },
-      { type: "snare", slow: 0.4, duration: 8 },
+      { type: "snare", slow: SNARE_SLOW, duration: 8 },
     ],
   },
   {
@@ -366,6 +458,15 @@ export const ABILITIES: Record<string, AbilityDef> = Object.fromEntries(list.map
 export function getAbility(id: string): AbilityDef | undefined {
   return Object.hasOwn(ABILITIES, id) ? ABILITIES[id] : undefined;
 }
+
+// Sort magique (lancé avec du mana, hors technique de mêlée) : ses contrôles sont « magiques » et le Cri de
+// ralliement en protège. Les techniques et compétences d'endurance sont physiques.
+export function isMagic(ability: AbilityDef): boolean {
+  return !ability.melee && ability.resource === "mana";
+}
+
+// Rayon autour du Gardien protégé par le Rempart.
+export const RAMPART_RADIUS = 30;
 
 // Compétence dirigée contre un ennemi : soumise au cône de vision, interrompt le chant du Barde.
 export function isOffensive(ability: AbilityDef): boolean {

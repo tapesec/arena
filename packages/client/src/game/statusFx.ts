@@ -11,7 +11,18 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { Scene } from "@babylonjs/core/scene";
-import { frostMist, mezHalo, notesAura, rageFlames, speedDust, type ParticleFactory, type Recipe } from "./particles";
+import {
+  chargeStreak,
+  frostMist,
+  mezHalo,
+  notesAura,
+  rageFlames,
+  rallyHalo,
+  rampartFlames,
+  speedDust,
+  type ParticleFactory,
+  type Recipe,
+} from "./particles";
 import type { PlayerVisual } from "./PlayerVisual";
 
 // Hauteur de la tête des personnages (agrandis à 2,2 m), et du milieu du corps.
@@ -63,6 +74,10 @@ const AURAS: Record<string, Aura> = {
   rage: { recipe: rageFlames, at: "feet", active: (p) => p.hasEffect("rage") },
   dust: { recipe: speedDust, at: "feet", active: (p, speed) => p.hasEffect("speed") && speed > DUST_SPEED },
   notes: { recipe: notesAura, at: "head", active: (p) => p.state.songActive },
+  // Gardien : flammes du Rempart, traînée de la Charge, couronne dorée des alliés du Cri de ralliement.
+  rampart: { recipe: rampartFlames, at: "feet", active: (p) => p.hasEffect("rampart") },
+  charge: { recipe: chargeStreak, at: "body", active: (p) => p.state.charging },
+  rally: { recipe: rallyHalo, at: "head", active: (p) => p.hasEffect("magicImmune") },
 };
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
@@ -96,7 +111,7 @@ export class StatusFx {
       const stun = alive && player.hasEffect("stun");
       const root = alive ? remaining(player, "root") : 0;
       const bubble = alive && player.hasEffect("bubble");
-      const aura = alive && (player.hasEffect("rage") || player.hasEffect("speed") || player.state.songActive);
+      const aura = alive && Object.values(AURAS).some((a) => a.active(player, Infinity));
       let status = this.statuses.get(player);
       if (!status && !mez && !stun && !root && !bubble && !aura) continue;
       status ??= this.track(player);

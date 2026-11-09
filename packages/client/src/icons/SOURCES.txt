@@ -24,3 +24,9 @@ backstab ← lorc/backstab
 flankStrike ← lorc/quick-slash
 evasion ← felbrigg/dodge
 rage ← delapouite/enrage
+charge ← delapouite/charging-bull
+powerStrike ← lorc/sword-wound
+taunt ← lorc/shouting
+rallyCry ← lorc/horn-internal
+cripplingStrike ← lorc/back-pain
+rampart ← lorc/stone-tower

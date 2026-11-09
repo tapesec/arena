@@ -38,9 +38,15 @@ const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
   shieldBash: { impact: [{ sound: "hitWoodHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
   evasion: { cast: [{ sound: "evade" }] },
   rage: { cast: [{ sound: "crit" }] },
+  // Gardien. Pas de cor, de cri de guerre ni de galop dans les sons du jeu : sons d'impact et de sort en attendant.
+  charge: { cast: [{ sound: "swingHeavy", rate: 0.8 }] },
+  chargeImpact: { impact: [{ sound: "hitPlateHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
+  taunt: { cast: [{ sound: "hitPunchHeavy" }, { sound: "hitPunchHeavy", rate: 0.9, volume: 0.8 }] },
+  rallyCry: { cast: [{ sound: "spellFantasy0", rate: 0.7 }] },
+  rampart: { cast: [{ sound: "hitPlateHeavy", rate: 0.8 }, { sound: "spellFire", rate: 0.6, volume: 0.7 }] },
 };
 // Attaques au corps à corps : le geste de l'arme chez l'attaquant, puis le coup qui porte chez la cible.
-const MELEE_ABILITIES = new Set(["backstab", "flankStrike"]);
+const MELEE_ABILITIES = new Set(["backstab", "flankStrike", "powerStrike", "cripplingStrike"]);
 // Le coup porte juste après le geste.
 const HIT_DELAY = 0.15;
 // Un critique (et une attaque dans le dos) sonne plus grave et plus fort.

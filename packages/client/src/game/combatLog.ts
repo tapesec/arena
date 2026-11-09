@@ -7,7 +7,10 @@ const INTERRUPT_CAUSES: Record<InterruptEvent["reason"], string> = {
   move: "mouvement",
   silence: "silence",
   cc: "contrôle",
+  taunt: "provocation",
 };
+// Ce contre quoi une cible est immunisée (detail de l'événement "immune").
+const IMMUNITY_NAMES: Record<string, string> = { ...CONTROL_NAMES, magic: "magie", melee: "Rempart" };
 
 function abilityName(id: string): string {
   return id === "auto" ? "attaque" : (getAbility(id)?.name ?? id);
@@ -45,7 +48,9 @@ export function formatCombatEvent(event: CombatEvent, nameOf: (id: string) => st
     case "cc":
       return [`${target} : ${CONTROL_NAMES[event.detail ?? ""] ?? event.detail} (${ability})`];
     case "immune":
-      return [`${target} ${targetIsSelf ? "êtes immunisé" : "est immunisé"} (${CONTROL_NAMES[event.detail ?? ""] ?? event.detail})`];
+      return [`${target} ${targetIsSelf ? "êtes immunisé" : "est immunisé"} (${IMMUNITY_NAMES[event.detail ?? ""] ?? event.detail})`];
+    case "taunt":
+      return [`${source} ${sourceIsSelf ? "provoquez" : "provoque"} ${target}`];
     case "cleanse":
       return [`${source} ${sourceIsSelf ? "purifiez" : "purifie"} ${target}`];
     case "resurrect":

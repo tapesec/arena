@@ -27,6 +27,13 @@ export const ABILITY_FX: Record<string, AbilityFx> = {
   guard: { color: PHYSICAL, shape: "pulse" },
   intercept: { color: PHYSICAL, shape: "pulse" },
   shieldBash: { color: HOLY, shape: "melee" },
+  charge: { color: PHYSICAL, shape: "pulse" },
+  chargeImpact: { color: HOLY, shape: "melee" },
+  powerStrike: { color: PHYSICAL, shape: "melee" },
+  taunt: { color: RAGE, shape: "pulse" },
+  rallyCry: { color: HOLY, shape: "pulse", area: true },
+  cripplingStrike: { color: PHYSICAL, shape: "melee" },
+  rampart: { color: RAGE, shape: "pulse" },
   // Arcaniste
   firebolt: { color: FIRE, shape: "projectile" },
   blast: { color: FIRE, shape: "pulse", area: true },

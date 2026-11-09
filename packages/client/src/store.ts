@@ -37,6 +37,8 @@ export interface SelfFrame extends UnitFrame {
   songActive: boolean;
   // Technique de mêlée en attente du prochain coup d'arme ("" si aucune).
   queuedAbility: string;
+  // Le Gardien fonce sur sa cible (Charge).
+  charging: boolean;
 }
 
 export interface TargetFrame extends UnitFrame {

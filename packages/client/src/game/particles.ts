@@ -726,7 +726,76 @@ export const rageFlames: Recipe = (fx, at) => {
   return s;
 };
 
+// ——— Gardien ———
+
+// Rempart : grandes flammes rouges qui montent tout autour du Gardien, tant que dure l'effet.
+export const rampartFlames: Recipe = (fx, at) => {
+  const s = fx.create("rampartFlames", 260, at, "glow");
+  if (!s) return null;
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 0.55 + Math.random() * 0.3;
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * distance, Math.random() * 0.6, Math.sin(angle) * distance, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set((Math.random() - 0.5) * 0.15, 1, (Math.random() - 0.5) * 0.15);
+  s.emitRate = 260;
+  s.minLifeTime = 0.45;
+  s.maxLifeTime = 0.8;
+  s.minSize = 0.3;
+  s.maxSize = 0.6;
+  s.minEmitPower = 3;
+  s.maxEmitPower = 4.5;
+  gradient(s, [0, rgba("#ffb070", 0.85)], [0.35, rgba("#ff2a10", 0.75)], [1, rgba("#500000", 0)]);
+  s.start();
+  return s;
+};
+
+// Charge : traînée lumineuse laissée derrière le Gardien qui fonce (les particules restent sur place).
+export const chargeStreak: Recipe = (fx, at) => {
+  const s = fx.create("chargeStreak", 220, at, "glow");
+  if (!s) return null;
+  sphereBurst(s, 0.35);
+  s.emitRate = 320;
+  s.minLifeTime = 0.25;
+  s.maxLifeTime = 0.4;
+  s.minSize = 0.3;
+  s.maxSize = 0.55;
+  s.minEmitPower = s.maxEmitPower = 0;
+  gradient(s, [0, rgba("#ffffff", 0.7)], [0.4, rgba("#a8d8ff", 0.5)], [1, rgba("#3060c0", 0)]);
+  s.start();
+  return s;
+};
+
+// Cri de ralliement : onde dorée qui part du Gardien jusqu'au bord de la zone.
+export const rallyWave: Recipe = (fx, at, radius = 6) =>
+  wave(fx, "rallyWave", at, radius, [[0, rgba("#fff4c0", 0.9)], [0.5, rgba("#ffc840", 0.7)], [1, rgba("#a07000", 0)]], "glow");
+
+// Immunisé aux contrôles magiques : couronne d'étincelles dorées qui tourne au-dessus de la tête.
+export const rallyHalo: Recipe = (fx, at) => {
+  const s = fx.create("rallyHalo", 60, at, "glow", true);
+  if (!s) return null;
+  const start = performance.now();
+  s.startPositionFunction = (worldMatrix, position: Vector3) => {
+    const angle = ((performance.now() - start) / 1000) * 6 + Math.floor(Math.random() * 3) * ((Math.PI * 2) / 3);
+    Vector3.TransformCoordinatesFromFloatsToRef(Math.cos(angle) * 0.4, 0.35, Math.sin(angle) * 0.4, worldMatrix, position);
+  };
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3) => direction.set(0, 1, 0);
+  s.emitRate = 60;
+  s.minLifeTime = 0.4;
+  s.maxLifeTime = 0.6;
+  s.minSize = 0.12;
+  s.maxSize = 0.22;
+  s.minEmitPower = s.maxEmitPower = 0.1;
+  gradient(s, [0, rgba("#fff0b0", 0.9)], [0.5, rgba("#ffcc40", 0.7)], [1, rgba("#a07000", 0)]);
+  s.start();
+  return s;
+};
+
 export const RECIPES: Recipe[] = [
+  rampartFlames,
+  chargeStreak,
+  rallyWave,
+  rallyHalo,
   bubbleShards,
   burning,
   burningSmoke,

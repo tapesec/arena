@@ -36,7 +36,13 @@ const READY: AbilityStatus = { state: "ready", reason: null };
 
 export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: TargetFrame | null): AbilityStatus {
   if (self.hp <= 0) return { state: "disabled", reason: "Vous êtes mort" };
-  if (self.effects.some((e) => e.kind === "mez" || e.kind === "stun")) return { state: "disabled", reason: "Vous êtes neutralisé" };
+  if (self.effects.some((e) => e.kind === "mez" || e.kind === "stun" || e.kind === "rampart")) {
+    return { state: "disabled", reason: "Vous êtes neutralisé" };
+  }
+  if (self.charging) return { state: "disabled", reason: "Charge en cours" };
+  if (ability.effects.some((e) => e.type === "charge") && self.effects.some((e) => e.kind === "root")) {
+    return { state: "disabled", reason: "Impossible en étant enraciné" };
+  }
   if (self[ability.resource] < ability.cost) {
     return { state: "unaffordable", reason: ability.resource === "mana" ? "Pas assez de mana" : "Pas assez d'endurance" };
   }
@@ -70,6 +76,7 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
 
 function reach(ability: AbilityDef, target: TargetFrame): AbilityStatus {
   if (ability.melee ? !target.inMeleeRange : target.distance > ability.range) return { state: "range", reason: "Cible hors de portée" };
+  if (ability.minRange && target.distance < ability.minRange) return { state: "range", reason: "Cible trop proche" };
   if (!target.inLineOfSight) return { state: "range", reason: "Cible hors de vue" };
   return READY;
 }
@@ -81,6 +88,7 @@ export function abilityDetails(ability: AbilityDef): string[] {
   details.push(ability.melee ? "Prochain coup d'arme" : ability.castTime > 0 ? `Incantation ${format(ability.castTime)} s` : "Instantané");
   if (ability.target === "self") details.push("Sur soi");
   else if (ability.target === "enemiesAround") details.push(`Autour de soi (${ability.radius} m)`);
+  else if (ability.minRange) details.push(`Portée ${ability.minRange} à ${ability.range} m`);
   else details.push(ability.melee ? "Au contact" : `Portée ${ability.range} m`);
   if (ability.cooldown > 0) details.push(`Recharge ${ability.cooldown >= 60 ? `${ability.cooldown / 60} min` : `${format(ability.cooldown)} s`}`);
   return details;

@@ -35,8 +35,9 @@ const ACTION_BINDINGS: Record<string, KeyAction> = {
   F1: "targetSelf",
   // F2 à F8 : membres du groupe, dans l'ordre de la fenêtre de groupe.
   ...Object.fromEntries([2, 3, 4, 5, 6, 7, 8].map((n) => [`F${n}`, `group${n - 1}` as KeyAction])),
-  // Rangée des chiffres (touches &, é, "… sur un clavier AZERTY) : barre de compétences.
-  ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [`Digit${n}`, `slot${n}` as KeyAction])),
+  // Rangée des chiffres (touches &, é, "… sur un clavier AZERTY) : barre de compétences, 0 pour la dixième.
+  ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [`Digit${n}`, `slot${n}` as KeyAction])),
+  Digit0: "slot10",
 };
 
 // Suit l'état des touches de déplacement et prévient uniquement quand il change,

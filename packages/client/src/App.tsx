@@ -325,6 +325,11 @@ const SHORT_EFFECT_LABELS: Record<string, string> = {
   speed: "Vit",
   regenAura: "Aura",
   bubble: "Bul",
+  taunted: "Prov",
+  halted: "Arrêt",
+  magicImmune: "iMag",
+  rampart: "Remp",
+  meleeImmune: "iCaC",
 };
 
 // Fenêtre de groupe : ses coéquipiers, cliquables pour les cibler (F2 à F8 au clavier).
@@ -472,7 +477,7 @@ function Hotbar() {
             onMouseLeave={() => setHovered((h) => (h === abilityId ? null : h))}
           >
             <span className="slot-icon" dangerouslySetInnerHTML={{ __html: abilityIcon(abilityId) ?? "" }} />
-            <span className="slot-key">{index + 1}</span>
+            <span className="slot-key">{(index + 1) % 10}</span>
             {ability.cost > 0 && <span className="slot-cost">{ability.cost}</span>}
             {ability.position && <PositionBadge position={ability.position} wrong={status.state === "position"} />}
             {remaining > 0 && (
@@ -627,7 +632,7 @@ function HelpPanel() {
       <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même · Échap : annuler</div>
       <div>F : faire face à la cible · C : la suivre (stick)</div>
       <div>R : activer/couper l'attaque · molette : zoom · V : recentrer</div>
-      <div>1 à 7 : compétences</div>
+      <div>1 à 9, 0 : compétences</div>
     </div>
   );
 }

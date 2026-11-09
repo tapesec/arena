@@ -37,6 +37,7 @@ export interface PlayerView {
   lock: string;
   songActive: boolean;
   queuedAbility: string;
+  charging: boolean;
   castAbility: string;
   castElapsed: number;
   castDuration: number;
@@ -148,6 +149,12 @@ export class PlayerVisual {
     return false;
   }
 
+  // Temps restant d'un effet, en secondes (0 s'il est absent).
+  effectRemaining(kind: EffectKind): number {
+    for (const effect of this.state.effects) if (effect.kind === kind) return effect.remaining;
+    return 0;
+  }
+
   // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame.
   update(smoothing: number) {
     this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
@@ -253,6 +260,8 @@ export class PlayerVisual {
       alive: this.isAlive,
       castAbility: this.isAlive ? this.state.castAbility : "",
       stunned: this.hasEffect("stun"),
+      charging: this.state.charging,
+      rampart: this.hasEffect("rampart"),
       rooted: this.hasEffect("root"),
       forward: this.forwardSpeed,
       right: this.rightSpeed,

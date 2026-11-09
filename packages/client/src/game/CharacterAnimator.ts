@@ -25,6 +25,8 @@ const LOCOMOTION = {
 
 // Incantation par défaut ; une classe peut en donner une autre pour certains sorts (CharacterAnimationSet.casts).
 const CAST_LOOP = "Spell_Simple_Idle_Loop";
+// Vitesse de lecture de la course de Charge (le personnage va six fois plus vite qu'en courant).
+const CHARGE_RUN_RATE = 1.6;
 const DEATH = "Death01";
 // Stun : une fois relevé de la projection, un « non » de la tête, puis il titube jusqu'à la fin du stun.
 const STUN_GETUP = "Idle_No_Loop";
@@ -50,6 +52,10 @@ export interface AnimationInput {
   castAbility: string;
   stunned: boolean;
   rooted: boolean;
+  // Charge du Gardien : course rapide.
+  charging: boolean;
+  // Rempart du Gardien : en garde derrière le bouclier pendant tout l'effet.
+  rampart: boolean;
   // Vitesse dans le repère du personnage (m/s) : vers l'avant et vers la droite.
   forward: number;
   right: number;
@@ -135,6 +141,15 @@ export class CharacterAnimator {
         this.stunStage = "dazed";
         this.play(STUN_LOOP, true, 1);
       }
+      return;
+    }
+    const stances = this.set.stances;
+    if (input.rampart && stances?.rampart) {
+      this.play(stances.rampart, true, 1);
+      return;
+    }
+    if (input.charging && stances?.charge) {
+      this.play(stances.charge, true, CHARGE_RUN_RATE);
       return;
     }
     const speed = Math.hypot(input.forward, input.right);

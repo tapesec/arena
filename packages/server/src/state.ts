@@ -40,6 +40,8 @@ export const PlayerState = schema(
     attacking: t.boolean().default(false),
     // Technique de mêlée en attente du prochain coup d'arme ("" si aucune).
     queuedAbility: t.string().default(""),
+    // Le Gardien fonce sur sa cible (Charge).
+    charging: t.boolean().default(false),
     // Chant de vitesse du Barde activé.
     songActive: t.boolean().default(false),
     // Incantation en cours ("" si aucune), visible de tous pour pouvoir l'interrompre.
