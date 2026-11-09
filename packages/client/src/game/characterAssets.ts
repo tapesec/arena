@@ -10,6 +10,7 @@ import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
+import { MIXAMO_ANIMATIONS, retargetMixamo } from "./mixamo";
 import type { Shadows } from "./shadows";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 
@@ -199,7 +200,12 @@ const CHARACTERS: Record<string, CharacterDef> = {
         glow: ["Gem"],
       },
     ],
-    animations: { idle: "Idle_Loop", attacks: CASTER_ATTACKS, abilities: { default: CAST_RELEASE } },
+    animations: {
+      idle: "Idle_Loop",
+      attacks: CASTER_ATTACKS,
+      // Les buffs : bras levé, bâton pointé vers l'allié (animation Mixamo).
+      abilities: { buffHp: "Mixamo_Cast_1H", buffStrength: "Mixamo_Cast_1H", default: CAST_RELEASE },
+    },
   },
   barde: {
     model: "characters/barde.glb",
@@ -248,6 +254,8 @@ export class CharacterAssets {
   private outfits = new Map<string, PBRMaterial>();
   // Matériaux d'arme peints, par matériau d'origine et par équipe.
   private paints = new Map<string, PBRMaterial>();
+  // Animations Mixamo, reciblées une fois sur un personnage modèle invisible (voir mixamo.ts).
+  private mixamo: Promise<AnimationGroup[]> | null = null;
 
   // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
   constructor(
@@ -260,6 +268,7 @@ export class CharacterAssets {
   // Lance le téléchargement de tout ce qui est connu, pour qu'il soit prêt à l'apparition des joueurs.
   preload() {
     for (const url of this.libraries) void this.load(url);
+    void this.loadMixamo();
     for (const def of Object.values(CHARACTERS)) {
       void this.load(def.model);
       for (const weapon of def.weapons) void this.load(weapon.model);
@@ -286,13 +295,32 @@ export class CharacterAssets {
 
   // only : si fourni, seules ces animations sont rebranchées sur le personnage (la page de visualisation en
   // affiche une par personnage ; les rebrancher toutes coûterait cher en mémoire).
+  // Charge et recible les animations Mixamo, une seule fois. Le personnage modèle (n'importe lequel : tous partagent
+  // le même squelette) reste caché ; les animations obtenues se clonent ensuite sur chaque personnage, par nom d'os.
+  private loadMixamo(): Promise<AnimationGroup[]> {
+    this.mixamo ??= (async () => {
+      const model = await this.load(CHARACTERS.pretre.model);
+      const template = model.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const root = template.rootNodes[0] as TransformNode;
+      root.setEnabled(false);
+      const groups: AnimationGroup[] = [];
+      for (const [name, url] of Object.entries(MIXAMO_ANIMATIONS)) {
+        const group = retargetMixamo(name, await this.load(url), root);
+        if (group) groups.push(group);
+      }
+      return groups;
+    })();
+    return this.mixamo;
+  }
+
   async create(classId: string, parent: TransformNode, only?: ReadonlySet<string>): Promise<CharacterInstance | null> {
     const def = CHARACTERS[classId];
     if (!def) return null;
-    const [character, libraries, weaponContainers] = await Promise.all([
+    const [character, libraries, weaponContainers, mixamo] = await Promise.all([
       this.load(def.model),
       Promise.all(this.libraries.map((url) => this.load(url))),
       Promise.all(def.weapons.map((w) => this.load(w.model))),
+      this.loadMixamo(),
     ]);
 
     // Les noms d'origine sont gardés : c'est par eux qu'on retrouve les os pour les animations.
@@ -314,6 +342,12 @@ export class CharacterAssets {
         clone.stop();
         animations.set(group.name, clone);
       }
+    }
+    for (const group of mixamo) {
+      if (only && !only.has(group.name)) continue;
+      const clone = group.clone(group.name, (target: { name: string }) => bones.get(target.name) ?? null);
+      clone.stop();
+      animations.set(group.name, clone);
     }
 
     // Les armes sont accrochées aux os de la main ou de l'avant-bras et suivent leurs mouvements.

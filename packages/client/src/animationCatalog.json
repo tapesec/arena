@@ -2275,5 +2275,14 @@
   "category": "Déplacement",
   "description": "Quart de tour à droite.",
   "usedFor": ""
+ },
+ {
+  "name": "Mixamo_Cast_1H",
+  "pack": "Mixamo",
+  "inGame": true,
+  "loop": false,
+  "category": "Sort / action",
+  "description": "Lève un bras puis lance un sort d'une main, vers l'avant (Mixamo : Standing 1H Cast Spell 01).",
+  "usedFor": "Buff de vie, Buff de force (Prêtre)"
  }
 ]
