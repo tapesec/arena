@@ -52,15 +52,16 @@ const baseName = (file) => {
 const packOf = (file) => {
   const parts = file.split(path.sep);
   if (parts.length === 1) return "Divers";
-  return isBundle(file) && parts.length > 2 ? `${parts[0]} · ${parts[1].replace(/^344 Audio - /, "")}` : parts[0];
+  return isBundle(file) && parts.length > 2 ? `${parts[0]} · ${parts[1].replace(/^.+? - /, "")}` : parts[0];
 };
 const candidates = (file) => {
   const parts = file.split(path.sep);
   parts.pop();
   const base = baseName(file);
-  const names = [base];
+  // Doublon dans un bundle (ex. "EffectiveTrailer_Booms_Vol2_011") : le nom complet du fichier d'abord.
+  const names = isBundle(file) ? [base, clean(path.basename(file).replace(/(\.[a-z0-9]+)+$/i, ""))] : [base];
   for (let i = parts.length - 1; i >= 0; i--) names.push(`${clean(parts.slice(i).join("_"))}_${base}`);
-  return names;
+  return [...new Set(names)];
 };
 const taken = new Map();
 for (const file of files) for (const name of candidates(file)) taken.set(name, (taken.get(name) ?? 0) + 1);

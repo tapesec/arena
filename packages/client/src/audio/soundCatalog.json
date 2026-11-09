@@ -2490,6 +2490,522 @@
   "duration": 12.96
  },
  {
+  "name": "ice_block_of_ice_crushed_heavy_015",
+  "pack": "Sonniss GDC 2026 · 100 kHz Designed Ice",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - 100 kHz Designed Ice/ice, block of ice crushed, heavy-015.wav",
+  "duration": 2.84
+ },
+ {
+  "name": "ice_crack_ice_block_snapping_001",
+  "pack": "Sonniss GDC 2026 · 100 kHz Designed Ice",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - 100 kHz Designed Ice/ice, crack, ice block snapping-001.wav",
+  "duration": 5.94
+ },
+ {
+  "name": "ice_movement_ice_drift_ice_field_cracking_up_initial_wide_001",
+  "pack": "Sonniss GDC 2026 · 100 kHz Designed Ice",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - 100 kHz Designed Ice/ice, movement, ice drift, ice field cracking up, initial, wide-001.wav",
+  "duration": 83.27
+ },
+ {
+  "name": "ice_surface_cracking_fissure_fast_hard_003",
+  "pack": "Sonniss GDC 2026 · 100 kHz Designed Ice",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - 100 kHz Designed Ice/ice, surface cracking, fissure, fast, hard-003.wav",
+  "duration": 5.03
+ },
+ {
+  "name": "magic_action_gesture_evil_presence_onslaught_004",
+  "pack": "Sonniss GDC 2026 · Emotion and Magic",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - Emotion and Magic/magic, action gesture, evil presence, onslaught-004.wav",
+  "duration": 38.21
+ },
+ {
+  "name": "magic_drone_tension_spellbound_evanescence_002",
+  "pack": "Sonniss GDC 2026 · Emotion and Magic",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - Emotion and Magic/magic, drone, tension, spellbound, evanescence-002.wav",
+  "duration": 63.98
+ },
+ {
+  "name": "magic_energy_flow_astonishment_001",
+  "pack": "Sonniss GDC 2026 · Emotion and Magic",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - Emotion and Magic/magic, energy flow, astonishment-001.wav",
+  "duration": 19.14
+ },
+ {
+  "name": "magic_energy_flow_astral_travel_015",
+  "pack": "Sonniss GDC 2026 · Emotion and Magic",
+  "file": "Sonniss GDC 2026/Alexander Kopeikin - Emotion and Magic/magic, energy flow, astral travel-015.wav",
+  "duration": 61.03
+ },
+ {
+  "name": "GAMEMisc_Magic_Creation_23",
+  "pack": "Sonniss GDC 2026 · Applicable Sounds - Organic UI and Building Games SFX",
+  "file": "Sonniss GDC 2026/CB_Sounddesign - Applicable Sounds - Organic UI and Building Games SFX/GAMEMisc_Magic Creation 23_CB Sounddesign_APPlicable Sounds.wav",
+  "duration": 3.19
+ },
+ {
+  "name": "UIMisc_Kalimba_3_Up",
+  "pack": "Sonniss GDC 2026 · Applicable Sounds - Organic UI and Building Games SFX",
+  "file": "Sonniss GDC 2026/CB_Sounddesign - Applicable Sounds - Organic UI and Building Games SFX/UIMisc_Kalimba 3 Up_CB Sounddesign_APPlicable Sounds.wav",
+  "duration": 0.55
+ },
+ {
+  "name": "UIMisc_Xylophone_Ringtone_2",
+  "pack": "Sonniss GDC 2026 · Applicable Sounds - Organic UI and Building Games SFX",
+  "file": "Sonniss GDC 2026/CB_Sounddesign - Applicable Sounds - Organic UI and Building Games SFX/UIMisc_Xylophone Ringtone 2_CB Sounddesign_APPlicable Sounds.wav",
+  "duration": 4.11
+ },
+ {
+  "name": "Impact_Cut_Sweep",
+  "pack": "Sonniss GDC 2026 · Colossal Impacts",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Colossal Impacts/Impact Cut Sweep.wav",
+  "duration": 2.79
+ },
+ {
+  "name": "Transition_Frantic_Shaker_Snap",
+  "pack": "Sonniss GDC 2026 · Colossal Impacts",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Colossal Impacts/Transition Frantic Shaker Snap.wav",
+  "duration": 1.46
+ },
+ {
+  "name": "Woosh_Debris",
+  "pack": "Sonniss GDC 2026 · Colossal Impacts",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Colossal Impacts/Woosh Debris.wav",
+  "duration": 2.38
+ },
+ {
+  "name": "Cofetti_Whoosh_Pluck_Spill",
+  "pack": "Sonniss GDC 2026 · Hybrid Game & UI Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Hybrid Game & UI Elements/Cofetti Whoosh Pluck Spill.wav",
+  "duration": 2.54
+ },
+ {
+  "name": "Foley_Coin_Flip_Single_Fast",
+  "pack": "Sonniss GDC 2026 · Hybrid Game & UI Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Hybrid Game & UI Elements/Foley Coin Flip Single Fast.wav",
+  "duration": 0.94
+ },
+ {
+  "name": "Game_Entry_Happy_Short",
+  "pack": "Sonniss GDC 2026 · Hybrid Game & UI Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Hybrid Game & UI Elements/Game Entry Happy Short.wav",
+  "duration": 0.88
+ },
+ {
+  "name": "Interface_Accept_Glassy_Snap",
+  "pack": "Sonniss GDC 2026 · Interface & Infographics",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Interface & Infographics/Interface Accept Glassy Snap.wav",
+  "duration": 0.44
+ },
+ {
+  "name": "Interface_Percussion_Snap",
+  "pack": "Sonniss GDC 2026 · Interface & Infographics",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Interface & Infographics/Interface Percussion Snap.wav",
+  "duration": 0.66
+ },
+ {
+  "name": "Interface_Pop_High_Short",
+  "pack": "Sonniss GDC 2026 · Interface & Infographics",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Interface & Infographics/Interface Pop High Short.wav",
+  "duration": 0.65
+ },
+ {
+  "name": "Interface_Arp_Reveal_Down_Long",
+  "pack": "Sonniss GDC 2026 · System & UI Feedback Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - System & UI Feedback Elements/Interface Arp Reveal Down Long.wav",
+  "duration": 1.17
+ },
+ {
+  "name": "Interface_Deny_Low_Fat_Dark",
+  "pack": "Sonniss GDC 2026 · System & UI Feedback Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - System & UI Feedback Elements/Interface Deny Low Fat Dark.wav",
+  "duration": 0.74
+ },
+ {
+  "name": "Interface_Sci_Fi_Ping_Down",
+  "pack": "Sonniss GDC 2026 · System & UI Feedback Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - System & UI Feedback Elements/Interface Sci-Fi Ping Down.wav",
+  "duration": 0.75
+ },
+ {
+  "name": "Accept_Boing_Crunch",
+  "pack": "Sonniss GDC 2026 · UI Interaction Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - UI Interaction Elements/Accept Boing Crunch.wav",
+  "duration": 0.97
+ },
+ {
+  "name": "Deny_Muted",
+  "pack": "Sonniss GDC 2026 · UI Interaction Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - UI Interaction Elements/Deny Muted.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "Ting_Coins",
+  "pack": "Sonniss GDC 2026 · UI Interaction Elements",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - UI Interaction Elements/Ting Coins.wav",
+  "duration": 1.1
+ },
+ {
+  "name": "Impact_Hit_Rapid_Chord_Reverb",
+  "pack": "Sonniss GDC 2026 · Ultra Transitions & Impacts",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Ultra Transitions & Impacts/Impact Hit Rapid Chord Reverb.wav",
+  "duration": 3.21
+ },
+ {
+  "name": "Transition_Braam_Slow_Dark_Creepy",
+  "pack": "Sonniss GDC 2026 · Ultra Transitions & Impacts",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Ultra Transitions & Impacts/Transition Braam Slow Dark Creepy.wav",
+  "duration": 4.5
+ },
+ {
+  "name": "Woosh_Sweep_Slide_Infographics_Basic",
+  "pack": "Sonniss GDC 2026 · Ultra Transitions & Impacts",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - Ultra Transitions & Impacts/Woosh Sweep Slide Infographics Basic.wav",
+  "duration": 0.5
+ },
+ {
+  "name": "Button_Arp_Twinkle",
+  "pack": "Sonniss GDC 2026 · User Interface",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - User Interface/Button Arp Twinkle.wav",
+  "duration": 1.81
+ },
+ {
+  "name": "Interface_Plucks_Happy",
+  "pack": "Sonniss GDC 2026 · User Interface",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - User Interface/Interface Plucks Happy.wav",
+  "duration": 0.85
+ },
+ {
+  "name": "Readout_Thin_Long",
+  "pack": "Sonniss GDC 2026 · User Interface",
+  "file": "Sonniss GDC 2026/Cinematic Sound Design - User Interface/Readout Thin Long.wav",
+  "duration": 4.38
+ },
+ {
+  "name": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14",
+  "pack": "Sonniss GDC 2026 · Melee Weapons Sound Effects Pack 2",
+  "file": "Sonniss GDC 2026/David Dumais Audio - Melee Weapons Sound Effects Pack 2/METLFric_SWING SCRAPE Swift Melee Weapon Swing With A Long Blade 14_DDUMAIS_MWP2.wav",
+  "duration": 2.35
+ },
+ {
+  "name": "METLImpt_METAL_SWING_HIT_Weapon_Swing_To_Metallic_Body_Impact_And_Resonant_Tail_01",
+  "pack": "Sonniss GDC 2026 · Melee Weapons Sound Effects Pack 2",
+  "file": "Sonniss GDC 2026/David Dumais Audio - Melee Weapons Sound Effects Pack 2/METLImpt_METAL SWING HIT Weapon Swing To Metallic Body Impact And Resonant Tail 01_DDUMAIS_MWP2.wav",
+  "duration": 2.93
+ },
+ {
+  "name": "SWSH_SWING_IMPACTS_Quick_Heavy_Weapon_Swing_To_Thud_Impact_Var_01",
+  "pack": "Sonniss GDC 2026 · Melee Weapons Sound Effects Pack 2",
+  "file": "Sonniss GDC 2026/David Dumais Audio - Melee Weapons Sound Effects Pack 2/SWSH_SWING IMPACTS Quick Heavy Weapon Swing To Thud Impact Var 01_DDUMAIS_MWP2.wav",
+  "duration": 61.82
+ },
+ {
+  "name": "WEAPWhip_WHIP_Snap_Crack_05",
+  "pack": "Sonniss GDC 2026 · Melee Weapons Sound Effects Pack 2",
+  "file": "Sonniss GDC 2026/David Dumais Audio - Melee Weapons Sound Effects Pack 2/WEAPWhip_WHIP Snap Crack 05_DDUMAIS_MWP2.wav",
+  "duration": 1.47
+ },
+ {
+  "name": "HMNBrth_British_Detective_Breathing_Vocal_Female_Idle_Annoyed_Breath_Grunt",
+  "pack": "Sonniss GDC 2026 · AAA Game Character British Female Detective",
+  "file": "Sonniss GDC 2026/Epic Stock Media - AAA Game Character British Female Detective/HMNBrth_British Detective Breathing Vocal Female Idle Annoyed Breath Grunt_ESM_AAAGCBFD.wav",
+  "duration": 1.04
+ },
+ {
+  "name": "VOXCry_British_Detective_Crying_Vocal_Female_Low_Energy_Weep",
+  "pack": "Sonniss GDC 2026 · AAA Game Character British Female Detective",
+  "file": "Sonniss GDC 2026/Epic Stock Media - AAA Game Character British Female Detective/VOXCry_British Detective Crying Vocal Female Low Energy Weep_ESM_AAAGCBFD.wav",
+  "duration": 2.65
+ },
+ {
+  "name": "VOXReac_British_Detective_Pain_Vocal_Female_Dying_High_Grunt_Breath",
+  "pack": "Sonniss GDC 2026 · AAA Game Character British Female Detective",
+  "file": "Sonniss GDC 2026/Epic Stock Media - AAA Game Character British Female Detective/VOXReac_British Detective Pain Vocal Female Dying High Grunt Breath_ESM_AAAGCBFD.wav",
+  "duration": 2.08
+ },
+ {
+  "name": "DSGNMisc_Misc_Monster_Tentacle_Modulated_Creature_Shadow_Abstract_Swept_Wobble_Lfo_02",
+  "pack": "Sonniss GDC 2026 · Anime Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Anime Game/DSGNMisc_Misc Monster Tentacle Modulated Creature Shadow Abstract Swept Wobble Lfo 02_ESM_AG.wav",
+  "duration": 2.04
+ },
+ {
+  "name": "DSGNStngr_Power_Up_Bright_Positive_Successful_Light_Saturation_Crash_Shimmer_05",
+  "pack": "Sonniss GDC 2026 · Anime Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Anime Game/DSGNStngr_Power Up Bright Positive Successful Light Saturation Crash Shimmer 05_ESM_AG.wav",
+  "duration": 1.52
+ },
+ {
+  "name": "EXPLDsgn_Explosion_Small_Blast_Enemy_Death_Crunchy_Boom_Cartoon_Noisy_Crash_Impact_Delay_03",
+  "pack": "Sonniss GDC 2026 · Anime Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Anime Game/EXPLDsgn_Explosion Small Blast Enemy Death Crunchy Boom Cartoon Noisy Crash Impact Delay 03_ESM_AG.wav",
+  "duration": 1.48
+ },
+ {
+  "name": "FGHTImpt_Combat_Punch_Impact_Light_Hit_Delay_Crunchy_Vintage_Quick_Smack_05",
+  "pack": "Sonniss GDC 2026 · Anime Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Anime Game/FGHTImpt_Combat Punch Impact Light Hit Delay Crunchy Vintage Quick Smack 05_ESM_AG.wav",
+  "duration": 1.06
+ },
+ {
+  "name": "UIClick_UI_Button_Analog_Vintage_Double_Click_Neutral_Dry_Press_11",
+  "pack": "Sonniss GDC 2026 · Board Game - Sound Set Kit for Tabletop and Digital Games",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Board Game - Sound Set Kit for Tabletop and Digital Games/UIClick_UI Button Analog Vintage Double Click Neutral Dry Press 11_ESM_BG.wav",
+  "duration": 0.17
+ },
+ {
+  "name": "ELECMisc_Impact_Electric_Tonal_Deep_Movement_Motion_Hiss_Glitch_01",
+  "pack": "Sonniss GDC 2026 · Elemental Mutation Whooshes and Impacts",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts/ELECMisc_Impact Electric Tonal Deep Movement Motion Hiss Glitch 01_ESM_EMWI.wav",
+  "duration": 3.69
+ },
+ {
+  "name": "FIREWhsh_Whoosh_Fire_Deep_Growl_Monster_Saturated_Crisp_03",
+  "pack": "Sonniss GDC 2026 · Elemental Mutation Whooshes and Impacts",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts/FIREWhsh_Whoosh Fire Deep Growl Monster Saturated Crisp 03_ESM_EMWI.wav",
+  "duration": 2.48
+ },
+ {
+  "name": "GLASMvmt_Whoosh_Glass_Crystal_Fragments_Sharp_Shards_Dry_05",
+  "pack": "Sonniss GDC 2026 · Elemental Mutation Whooshes and Impacts",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts/GLASMvmt_Whoosh Glass Crystal Fragments Sharp Shards Dry 05_ESM_EMWI.wav",
+  "duration": 2.63
+ },
+ {
+  "name": "WATRImpt_Impact_Water_Deep_Submerge_Bubble_Drown_Ship_Hit_05",
+  "pack": "Sonniss GDC 2026 · Elemental Mutation Whooshes and Impacts",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts/WATRImpt_Impact Water Deep Submerge Bubble Drown Ship Hit 05_ESM_EMWI.wav",
+  "duration": 2.17
+ },
+ {
+  "name": "CLOTHFlp_Action_Inventory_Open_Flip_Cloth_Canvas_Bag_Slide_Light_02",
+  "pack": "Sonniss GDC 2026 · Fantasy Game 2 - Sound Kit for Enchanted Realms",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/CLOTHFlp_Action Inventory Open Flip Cloth Canvas Bag Slide Light 02_ESM_FG2.wav",
+  "duration": 0.69
+ },
+ {
+  "name": "GAMEMisc_Source_Card_Tarot_Deck_Generic_Neutral_Dry_Heavy_Shuffle_01",
+  "pack": "Sonniss GDC 2026 · Fantasy Game 2 - Sound Kit for Enchanted Realms",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/GAMEMisc_Source Card Tarot Deck Generic Neutral Dry Heavy Shuffle 01_ESM_FG2.wav",
+  "duration": 4.91
+ },
+ {
+  "name": "MAGAngl_Magic_Light_Spell_Enchantment_Potion_Effect_Tonal_Bright_03",
+  "pack": "Sonniss GDC 2026 · Fantasy Game 2 - Sound Kit for Enchanted Realms",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/MAGAngl_Magic Light Spell Enchantment Potion Effect Tonal Bright 03_ESM_FG2.wav",
+  "duration": 5.2
+ },
+ {
+  "name": "UIAlert_Collect_Scifi_Futuristic_Electronic_Bass_Burst_Sweep_Heavy_04",
+  "pack": "Sonniss GDC 2026 · Fantasy Game 2 - Sound Kit for Enchanted Realms",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/UIAlert_Collect Scifi Futuristic Electronic Bass Burst Sweep Heavy 04_ESM_FG2.wav",
+  "duration": 0.31
+ },
+ {
+  "name": "CREABeast_Creature_Werewolf_Growl_Menacing_Monstrous_06",
+  "pack": "Sonniss GDC 2026 · Halloween Game - Haunted House and Horror Audio Scare Kit",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Halloween Game - Haunted House and Horror Audio Scare Kit/CREABeast_Creature Werewolf Growl Menacing Monstrous 06_ESM_HALG.wav",
+  "duration": 5.97
+ },
+ {
+  "name": "DSGNEthr_Jumpscare_Vocal_Aggressive_Whisper_Harsh_Distortion_02",
+  "pack": "Sonniss GDC 2026 · Halloween Game - Haunted House and Horror Audio Scare Kit",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Halloween Game - Haunted House and Horror Audio Scare Kit/DSGNEthr_Jumpscare Vocal Aggressive Whisper Harsh Distortion 02_ESM_HALG.wav",
+  "duration": 3.01
+ },
+ {
+  "name": "GORESplt_Gore_Designed_Transient_Heavy_Impact_Smash_01",
+  "pack": "Sonniss GDC 2026 · Halloween Game - Haunted House and Horror Audio Scare Kit",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Halloween Game - Haunted House and Horror Audio Scare Kit/GORESplt_Gore Designed Transient Heavy Impact Smash 01_ESM_HALG.wav",
+  "duration": 1.8
+ },
+ {
+  "name": "UIAlert_Alert_Designed_Transition_Swell_Creature_Strange_Alien_Layered_01",
+  "pack": "Sonniss GDC 2026 · Halloween Game - Haunted House and Horror Audio Scare Kit",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Halloween Game - Haunted House and Horror Audio Scare Kit/UIAlert_Alert Designed Transition Swell Creature Strange Alien Layered 01_ESM_HALG.wav",
+  "duration": 6.14
+ },
+ {
+  "name": "CREAHmn_Designed_Orc_Male_Attack_Long_Heavy_Hit_Charged_Up_03",
+  "pack": "Sonniss GDC 2026 · Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets/CREAHmn_Designed Orc Male Attack Long Heavy Hit Charged Up 03_ESM_HC4.wav",
+  "duration": 2.57
+ },
+ {
+  "name": "CREAMnstr_Designed_Sea_Beast_Creature_Pain_Intense_Yell_Long_04",
+  "pack": "Sonniss GDC 2026 · Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets/CREAMnstr_Designed Sea Beast Creature Pain Intense Yell Long 04_ESM_HC4.wav",
+  "duration": 4.94
+ },
+ {
+  "name": "HMNBrth_Construction_Kit_Male_Screeching_Breath_Inhale_Weak_Squeal_05",
+  "pack": "Sonniss GDC 2026 · Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets/HMNBrth_Construction Kit Male Screeching Breath Inhale Weak Squeal 05_ESM_HC4.wav",
+  "duration": 0.98
+ },
+ {
+  "name": "VOXReac_Construction_Kit_Male_Flutter_Death_Vocal_Stuttered_Long_05",
+  "pack": "Sonniss GDC 2026 · Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets/VOXReac_Construction Kit Male Flutter Death Vocal Stuttered Long 05_ESM_HC4.wav",
+  "duration": 4.95
+ },
+ {
+  "name": "AMBPark_Berlin_City_Humboldthain_Park_Strong_Wind_On_Trees_Foliage_Traffic_Wash_03",
+  "pack": "Sonniss GDC 2026 · Public Spaces - Storms Lakes Parks and Rural Nature Exteriors",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Public Spaces - Storms Lakes Parks and Rural Nature Exteriors/AMBPark_Berlin City Humboldthain Park Strong Wind On Trees Foliage Traffic Wash 03_ESM_CPS.wav",
+  "duration": 149.96
+ },
+ {
+  "name": "STORM_Texas_Rain_Thunder_Initial_Crash_Boom_Storm_01_Clap_Lightning",
+  "pack": "Sonniss GDC 2026 · Public Spaces - Storms Lakes Parks and Rural Nature Exteriors",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Public Spaces - Storms Lakes Parks and Rural Nature Exteriors/STORM_Texas Rain Thunder Initial Crash Boom Storm 01 Clap Lightning_ESM_CPS.wav",
+  "duration": 132.01
+ },
+ {
+  "name": "DSGNSynth_Dark_Loop_Mystic_Forest_Tonal_Steady_Synth",
+  "pack": "Sonniss GDC 2026 · Strange Game Ambient Loops 3",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Strange Game Ambient Loops 3/DSGNSynth_Dark Loop Mystic Forest Tonal Steady Synth_ESM_SGA3.wav",
+  "duration": 59.66
+ },
+ {
+  "name": "MAGShim_Shimmer_Loop_Small_Bell_Metal_Taps",
+  "pack": "Sonniss GDC 2026 · Strange Game Ambient Loops 3",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Strange Game Ambient Loops 3/MAGShim_Shimmer Loop Small Bell Metal Taps_ESM_SGA3.wav",
+  "duration": 44.5
+ },
+ {
+  "name": "FIREBurn_Loop_Elements_Fire_Crackling_Crunchy_Flame_Burn_03",
+  "pack": "Sonniss GDC 2026 · Synthesized Nature Loops and Sounds",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Synthesized Nature Loops and Sounds/FIREBurn_Loop Elements Fire Crackling Crunchy Flame Burn 03_ESM_SNLS.wav",
+  "duration": 12.35
+ },
+ {
+  "name": "WINDInt_Loop_Weather_Wind_Whipping_Constricted_Flow_Turbulent_01",
+  "pack": "Sonniss GDC 2026 · Synthesized Nature Loops and Sounds",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Synthesized Nature Loops and Sounds/WINDInt_Loop Weather Wind Whipping Constricted Flow Turbulent 01_ESM_SNLS.wav",
+  "duration": 7.52
+ },
+ {
+  "name": "DSGNStngr_Action_Deploy_Units_Sword_Slice_Special_Move_Layered_Swish_04",
+  "pack": "Sonniss GDC 2026 · Tower Defense Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Tower Defense Game/DSGNStngr_Action Deploy Units Sword Slice Special Move Layered Swish 04_ESM_TDG.wav",
+  "duration": 2.45
+ },
+ {
+  "name": "ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03",
+  "pack": "Sonniss GDC 2026 · Tower Defense Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Tower Defense Game/ICEBrk_Skill Freeze Whoosh Break Impact Layered Movement Shatter 03_ESM_TDG.wav",
+  "duration": 2.51
+ },
+ {
+  "name": "WOODImpt_Hit_Blood_Spill_Splat_Wood_Impact_Light_Hit_Squelch_Small_Thump_03",
+  "pack": "Sonniss GDC 2026 · Tower Defense Game",
+  "file": "Sonniss GDC 2026/Epic Stock Media - Tower Defense Game/WOODImpt_Hit Blood Spill Splat Wood Impact Light Hit Squelch Small Thump 03_ESM_TDG.wav",
+  "duration": 0.33
+ },
+ {
+  "name": "EffectiveTrailer_Booms_Vol2_011",
+  "pack": "Sonniss GDC 2026 · Effective Trailer Booms Vol. 2",
+  "file": "Sonniss GDC 2026/Federico Soler - Effective Trailer Booms Vol. 2/EffectiveTrailer_Booms_Vol2_011.wav",
+  "duration": 17.27
+ },
+ {
+  "name": "EffectiveTrailer_Booms_Vol2_075",
+  "pack": "Sonniss GDC 2026 · Effective Trailer Booms Vol. 2",
+  "file": "Sonniss GDC 2026/Federico Soler - Effective Trailer Booms Vol. 2/EffectiveTrailer_Booms_Vol2_075.wav",
+  "duration": 15.46
+ },
+ {
+  "name": "EffectiveTrailer_Booms_Vol2_214",
+  "pack": "Sonniss GDC 2026 · Effective Trailer Booms Vol. 2",
+  "file": "Sonniss GDC 2026/Federico Soler - Effective Trailer Booms Vol. 2/EffectiveTrailer_Booms_Vol2_214.wav",
+  "duration": 16.27
+ },
+ {
+  "name": "ELECArc_ArcDesign15",
+  "pack": "Sonniss GDC 2026 · Arc",
+  "file": "Sonniss GDC 2026/InMotionAudio - Arc/ELECArc_ArcDesign15_InMotionAudio_Arc.wav",
+  "duration": 1.04
+ },
+ {
+  "name": "ELECArc_ArcPowerUpDesign04",
+  "pack": "Sonniss GDC 2026 · Arc",
+  "file": "Sonniss GDC 2026/InMotionAudio - Arc/ELECArc_ArcPowerUpDesign04_InMotionAudio_Arc.wav",
+  "duration": 7.48
+ },
+ {
+  "name": "ELECBuzz_Buzz27",
+  "pack": "Sonniss GDC 2026 · Arc",
+  "file": "Sonniss GDC 2026/InMotionAudio - Arc/ELECBuzz_Buzz27_InMotionAudio_Arc.wav",
+  "duration": 9.8
+ },
+ {
+  "name": "CREAEthr_Aztec_Death_Whistle_Distortion",
+  "pack": "Sonniss GDC 2026 · The Death Whistle",
+  "file": "Sonniss GDC 2026/InMotionAudio - The Death Whistle/CREAEthr_Aztec Death Whistle Distortion_02_IMA_Death Whistle Samples.wav",
+  "duration": 1.72
+ },
+ {
+  "name": "CREAEthr_Aztec_Death_Whistle_Drone",
+  "pack": "Sonniss GDC 2026 · The Death Whistle",
+  "file": "Sonniss GDC 2026/InMotionAudio - The Death Whistle/CREAEthr_Aztec Death Whistle Drone_05_IMA_Death Whistle Samples.wav",
+  "duration": 19.33
+ },
+ {
+  "name": "CREAEthr_Aztec_Death_Whistle_DryPitch12",
+  "pack": "Sonniss GDC 2026 · The Death Whistle",
+  "file": "Sonniss GDC 2026/InMotionAudio - The Death Whistle/CREAEthr_Aztec Death Whistle DryPitch12_IMA_Death Whistle Samples.wav",
+  "duration": 1.61
+ },
+ {
+  "name": "24_Campfire_Dropping_Fresh_Pine_Branches_in_Fire_Crackling_Sizzling_Strong_Close_02",
+  "pack": "Sonniss GDC 2026 · Campfire - Bonfire FX",
+  "file": "Sonniss GDC 2026/Ivo Vicic - Campfire - Bonfire FX/24 Campfire, Dropping Fresh Pine Branches in Fire, Crackling, Sizzling Strong, Close 02.wav",
+  "duration": 120.58
+ },
+ {
+  "name": "42_Campfire_Putting_Out_Fire_Water_from_Bottle_Variation_Close",
+  "pack": "Sonniss GDC 2026 · Campfire - Bonfire FX",
+  "file": "Sonniss GDC 2026/Ivo Vicic - Campfire - Bonfire FX/42 Campfire, Putting Out Fire, Water from Bottle, Variation, Close.wav",
+  "duration": 30.89
+ },
+ {
+  "name": "04_Church_Bells_Near_Distance_In_Church_Tower_3_Different_Bell_02",
+  "pack": "Sonniss GDC 2026 · Church Bells",
+  "file": "Sonniss GDC 2026/Ivo Vicic - Church Bells/04 Church Bells, Near Distance, In Church Tower-3 Different Bell 02.wav",
+  "duration": 70.15
+ },
+ {
+  "name": "25_Church_Bells_Far_Distance_Rural_Soundscape_Distant_Hills_Ridge_Spring_02",
+  "pack": "Sonniss GDC 2026 · Church Bells",
+  "file": "Sonniss GDC 2026/Ivo Vicic - Church Bells/25 Church Bells, Far Distance, Rural Soundscape Distant, Hills Ridge, Spring 02.wav",
+  "duration": 90.58
+ },
+ {
+  "name": "DSGNBram_Cinematic_Horn_Braam_Epic_Cinematic_Dark_Instrument_Huge_32",
+  "pack": "Sonniss GDC 2026 · Cinematic Horn Braams",
+  "file": "Sonniss GDC 2026/Jake Fielding - Cinematic Horn Braams/DSGNBram____Cinematic Horn Braam, Epic, Cinematic, Dark, Instrument, Huge-32.wav",
+  "duration": 16.5
+ },
+ {
+  "name": "DSGNBram_Cinematic_Horn_Braam_Epic_Cinematic_Dark_Instrument_Huge_67",
+  "pack": "Sonniss GDC 2026 · Cinematic Horn Braams",
+  "file": "Sonniss GDC 2026/Jake Fielding - Cinematic Horn Braams/DSGNBram____Cinematic Horn Braam, Epic, Cinematic, Dark, Instrument, Huge-67.wav",
+  "duration": 13.69
+ },
+ {
+  "name": "AMBSwmp_Meadow_Pipits_calling_many_Insects_humming_Wind_blowing_through_Grass",
+  "pack": "Sonniss GDC 2026 · Highlands of Norway",
+  "file": "Sonniss GDC 2026/Just Sound Effects - Highlands of Norway/AMBSwmp_Meadow Pipits calling many Insects humming Wind blowing through Grass_JSE_HoN_Stereo.wav",
+  "duration": 86.5
+ },
+ {
+  "name": "WATRLap_Small_Waves_sloshing_onto_Rock_Slabs_at_huge_Glacial_Lake",
+  "pack": "Sonniss GDC 2026 · Highlands of Norway",
+  "file": "Sonniss GDC 2026/Just Sound Effects - Highlands of Norway/WATRLap_Small Waves sloshing onto Rock Slabs at huge Glacial Lake _JSE_HoN_Quad.wav",
+  "duration": 91.96
+ },
+ {
   "name": "Fire",
   "pack": "spells",
   "file": "spells/Fire.aif",

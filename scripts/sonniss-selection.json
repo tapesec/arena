@@ -1,0 +1,37 @@
+{
+  "_comment": "Sons retenus des bundles gratuits Sonniss #GameAudioGDC 2026 (dossiers décompressés dans Téléchargements). Par partie : bibliothèque → expression régulière des fichiers gardés (null = tous). Le reste (voitures, foules, radio…) est ignoré. Utilisé par scripts/import-sonniss.mjs.",
+  "1": "*",
+  "2": {
+    "Alexander Kopeikin - 100 kHz Designed Ice": null,
+    "Alexander Kopeikin - Emotion and Magic": null,
+    "CB_Sounddesign - Applicable Sounds - Organic UI and Building Games SFX": "^(GAMEMisc|UIMisc)",
+    "Cinematic Sound Design - Colossal Impacts": null,
+    "Cinematic Sound Design - Hybrid Game & UI Elements": null,
+    "Cinematic Sound Design - Interface & Infographics": null,
+    "Cinematic Sound Design - System & UI Feedback Elements": null,
+    "Cinematic Sound Design - UI Interaction Elements": null,
+    "Cinematic Sound Design - Ultra Transitions & Impacts": null,
+    "Cinematic Sound Design - User Interface": null,
+    "David Dumais Audio - Melee Weapons Sound Effects Pack 2": null,
+    "Epic Stock Media - AAA Game Character British Female Detective": "^(HMNBrth|VOXReac|VOXCry)",
+    "Epic Stock Media - Anime Game": null,
+    "Epic Stock Media - Board Game - Sound Set Kit for Tabletop and Digital Games": "^UIClick",
+    "Epic Stock Media - Elemental Mutation Whooshes and Impacts": null,
+    "Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms": null,
+    "Epic Stock Media - Halloween Game - Haunted House and Horror Audio Scare Kit": null,
+    "Epic Stock Media - Humanoid Creatures Vol 4 - Monstrous and Undead Creature Vocalization Sound Sets": null,
+    "Epic Stock Media - Public Spaces - Storms Lakes Parks and Rural Nature Exteriors": "^(STORM|AMBPark)",
+    "Epic Stock Media - Strange Game Ambient Loops 3": "(Mystic Forest|MAGShim)",
+    "Epic Stock Media - Synthesized Nature Loops and Sounds": "^(FIREBurn|WINDInt)",
+    "Epic Stock Media - Tower Defense Game": "^(DSGNStngr|ICEBrk|WOODImpt)",
+    "Federico Soler - Effective Trailer Booms Vol. 2": null
+  },
+  "3": {
+    "InMotionAudio - Arc": null,
+    "InMotionAudio - The Death Whistle": null,
+    "Ivo Vicic - Campfire - Bonfire FX": null,
+    "Ivo Vicic - Church Bells": null,
+    "Jake Fielding - Cinematic Horn Braams": null,
+    "Just Sound Effects - Highlands of Norway": null
+  }
+}
