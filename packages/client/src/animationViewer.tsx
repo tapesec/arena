@@ -12,7 +12,7 @@ import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { CLASS_LIST } from "@arena/shared";
-import { CharacterAssets, type CharacterInstance } from "./game/characterAssets";
+import { CharacterAssets, hasCharacterModel, type CharacterInstance } from "./game/characterAssets";
 import catalog from "./animationCatalog.json";
 import "./styles.css";
 
@@ -41,6 +41,9 @@ const CELL_WIDTH = 3.2;
 const CELL_HEIGHT = 3.4;
 // Les noms s'affichent sous les pieds.
 const LABEL_OFFSET = 0.25;
+// Valeur du choix de classe qui mélange les modèles.
+const RANDOM = "random";
+const CLASS_IDS = CLASS_LIST.map((c) => c.id as string).filter(hasCharacterModel);
 const VIEWS = { Face: 0, "Trois-quarts": Math.PI / 4, Profil: Math.PI / 2, Dos: Math.PI } as const;
 type View = keyof typeof VIEWS;
 const SPEEDS = [0.25, 0.5, 1, 2];
@@ -125,7 +128,9 @@ class Stage {
     this.fit();
     try {
       for (const cell of this.cells) {
-        const instance = await this.assets.create(classId, cell.holder, new Set([cell.entry.name]));
+        // « Toutes » : une classe tirée au hasard pour chaque case, pour voir l'animation sur des silhouettes variées.
+        const cellClass = classId === RANDOM ? CLASS_IDS[Math.floor(Math.random() * CLASS_IDS.length)] : classId;
+        const instance = await this.assets.create(cellClass, cell.holder, new Set([cell.entry.name]));
         if (build !== this.build) {
           instance?.dispose();
           return null;
@@ -197,7 +202,7 @@ function AnimationViewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Stage | null>(null);
-  const [classId, setClassId] = useState("gardien");
+  const [classId, setClassId] = useState(RANDOM);
   const [category, setCategory] = useState("Combat");
   const [inGame, setInGame] = useState<"all" | "yes" | "no">("all");
   const [search, setSearch] = useState("");
@@ -263,6 +268,7 @@ function AnimationViewer() {
         <label>
           Classe
           <select value={classId} onChange={(e) => setClassId(e.target.value)}>
+            <option value={RANDOM}>Toutes (au hasard)</option>
             {CLASS_LIST.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
