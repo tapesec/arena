@@ -995,3 +995,30 @@ body,
   height: 100%;
   fill: currentColor;
 }
+
+/* Pictogramme de la position qu'exige une technique (dos, flanc), coin haut droit de la case. */
+.slot-position-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000);
+}
+
+.slot-position-front {
+  fill: #ffffff;
+}
+
+.slot-position-wrong {
+  stroke: #ff4a4a;
+}
+
+.slot-position-wrong .slot-position-front {
+  fill: #ff4a4a;
+}

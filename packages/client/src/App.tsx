@@ -474,6 +474,7 @@ function Hotbar() {
             <span className="slot-icon" dangerouslySetInnerHTML={{ __html: abilityIcon(abilityId) ?? "" }} />
             <span className="slot-key">{index + 1}</span>
             {ability.cost > 0 && <span className="slot-cost">{ability.cost}</span>}
+            {ability.position && <PositionBadge position={ability.position} wrong={status.state === "position"} />}
             {remaining > 0 && (
               <span className="slot-cooldown" style={{ background: `conic-gradient(transparent ${elapsed}deg, rgba(0, 0, 0, 0.72) 0)` }}>
                 {formatCooldown(remaining)}
@@ -536,6 +537,21 @@ function SwingBar() {
 }
 
 const LATE_MARGIN_MS = 250;
+
+// Position qu'exige une technique, vue de dessus : la cible (cercle dont la moitié avant, en haut, est pleine)
+// et une flèche qui l'atteint par l'arrière (dos) ou par le côté (flanc). Rouge quand on est mal placé.
+function PositionBadge({ position, wrong }: { position: "back" | "side"; wrong: boolean }) {
+  const back = position === "back";
+  const [cx, cy] = back ? [8, 5] : [5, 6.5];
+  const r = 3.4;
+  return (
+    <svg className={`slot-position-badge ${wrong ? "slot-position-wrong" : ""}`} viewBox="0 0 16 16">
+      <circle cx={cx} cy={cy} r={r} />
+      <path className="slot-position-front" d={`M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z`} />
+      {back ? <path d="M8 15.5 V10.6 M6 12.6 L8 10.6 L10 12.6" /> : <path d="M15.5 6.5 H10.6 M12.6 4.5 L10.6 6.5 L12.6 8.5" />}
+    </svg>
+  );
+}
 
 function formatCooldown(seconds: number): string {
   if (seconds >= 60) return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
