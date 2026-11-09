@@ -9,6 +9,7 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 // Licence Mixamo : utilisables dans le jeu, y compris commercialement, mais pas redistribuables comme fichiers à part.
 export const MIXAMO_ANIMATIONS: Record<string, string> = {
   Mixamo_Cast_1H: "mixamo/cast-spell-1h.fbx",
+  Mixamo_Idle_03: "mixamo/standing-idle-03.fbx",
 };
 
 // Os de Mixamo -> os de nos personnages (même anatomie, noms différents).

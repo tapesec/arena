@@ -23,7 +23,8 @@ const LOCOMOTION = {
   right: "Walk_R_Loop",
 } as const;
 
-const CAST_LOOP = "Spell_Simple_Idle_Loop";
+// Incantation : animation Mixamo « Standing Idle 03 » (à la place de Spell_Simple_Idle_Loop).
+const CAST_LOOP = "Mixamo_Idle_03";
 const DEATH = "Death01";
 // Stun : une fois relevé de la projection, un « non » de la tête, puis il titube jusqu'à la fin du stun.
 const STUN_GETUP = "Idle_No_Loop";
