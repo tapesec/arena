@@ -219,7 +219,48 @@ export const fireBurst: Recipe = (fx, at) => {
   return s;
 };
 
+// Trait en formation entre les mains de l'Arcaniste qui incante : des particules convergent vers un petit cœur
+// lumineux qui palpite. Un cinquième d'entre elles naissent au centre et forment ce cœur.
+function charge(fx: ParticleFactory, name: string, at: Vector3, colors: [number, Color4][], texture: ParticleTexture) {
+  const s = fx.create(name, 160, at, texture);
+  if (!s) return null;
+  const radius = 0.45;
+  s.startPositionFunction = (_worldMatrix, position: Vector3) => {
+    if (Math.random() < 0.2) {
+      position.copyFrom(at);
+      return;
+    }
+    const u = Math.random() * Math.PI * 2;
+    const v = Math.acos(2 * Math.random() - 1);
+    const r = radius * (0.6 + 0.4 * Math.random());
+    position.set(at.x + r * Math.sin(v) * Math.cos(u), at.y + r * Math.cos(v), at.z + r * Math.sin(v) * Math.sin(u));
+  };
+  // Vers le centre (la position vient d'être tirée) ; le cœur reste presque immobile.
+  s.startDirectionFunction = (_worldMatrix, direction: Vector3, particle) => {
+    at.subtractToRef(particle.position, direction);
+    const length = direction.length();
+    if (length < 1e-3) direction.set((Math.random() - 0.5) * 0.1, 0.05, (Math.random() - 0.5) * 0.1);
+    else direction.scaleInPlace(1 / length);
+  };
+  s.emitRate = 180;
+  s.minLifeTime = 0.22;
+  s.maxLifeTime = 0.3;
+  s.minSize = 0.08;
+  s.maxSize = 0.26;
+  s.minEmitPower = 1.3;
+  s.maxEmitPower = 1.7;
+  gradient(s, ...colors);
+  s.start();
+  return s;
+}
+
+export const fireCharge: Recipe = (fx, at) =>
+  charge(fx, "fireCharge", at, [[0, rgba("#ff5a10", 0)], [0.35, rgba("#ff9a30", 0.55)], [1, rgba("#fff0b0", 0.9)]], "glow");
+
 // ——— Givre ———
+
+export const frostCharge: Recipe = (fx, at) =>
+  charge(fx, "frostCharge", at, [[0, rgba("#2060e0", 0)], [0.35, rgba("#60b8ff", 0.65)], [1, rgba("#e0f6ff", 0.9)]], "glow");
 
 export const frostTrail: Recipe = (fx, at) => {
   const s = fx.create("frostTrail", 600, at, "glow");
@@ -861,6 +902,8 @@ export const arcaneSparks: Recipe = (fx, at) => {
 };
 
 export const RECIPES: Recipe[] = [
+  fireCharge,
+  frostCharge,
   frostCoat,
   arcaneColumn,
   arcaneSparks,

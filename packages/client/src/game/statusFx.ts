@@ -21,6 +21,8 @@ import {
   burning,
   burningSmoke,
   chargeStreak,
+  fireCharge,
+  frostCharge,
   frostMist,
   mezHalo,
   notesAura,
@@ -73,6 +75,8 @@ interface PlayerStatus {
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
   body: Vector3;
+  // Entre les mains (où se forme un trait en incantation) ; à défaut, au milieu du corps.
+  hands: Vector3;
   lastX: number;
   lastZ: number;
 }
@@ -80,7 +84,7 @@ interface PlayerStatus {
 // Auras continues : recette, point d'attache (pieds, corps, tête) et condition d'affichage.
 interface Aura {
   recipe: Recipe;
-  at: "feet" | "body" | "head";
+  at: "feet" | "body" | "head" | "hands";
   active: (player: PlayerVisual, speed: number) => boolean;
 }
 // En dessous de cette vitesse (m/s), un personnage accéléré ne soulève pas de poussière.
@@ -98,6 +102,9 @@ const AURAS: Record<string, Aura> = {
   burnSmoke: { recipe: burningSmoke, at: "feet", active: (p) => p.hasEffect("burning") },
   arcaneColumn: { recipe: arcaneColumn, at: "feet", active: (p) => p.hasEffect("arcanePower") },
   arcaneSparks: { recipe: arcaneSparks, at: "feet", active: (p) => p.hasEffect("arcanePower") },
+  // Trait de feu et Trait de givre en incantation : le trait se forme entre les mains.
+  fireCharge: { recipe: fireCharge, at: "hands", active: (p) => p.state.castAbility === "firebolt" },
+  frostCharge: { recipe: frostCharge, at: "hands", active: (p) => p.state.castAbility === "frostbolt" },
 };
 
 // Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
@@ -166,6 +173,7 @@ export class StatusFx {
       status.feet.copyFrom(player.root.position);
       status.head.copyFrom(player.root.position).y += HEAD;
       status.body.copyFrom(player.root.position).y += BODY;
+      if (!player.handsPosition(status.hands)) status.hands.copyFrom(status.body);
       this.updateAuras(status, alive, player, speed);
       this.updateMez(status, mez);
       this.updateStars(status, stun, player);
@@ -217,6 +225,7 @@ export class StatusFx {
 
       auras: new Map(),
       body: new Vector3(),
+      hands: new Vector3(),
       lastX: player.root.position.x,
       lastZ: player.root.position.z,
     };

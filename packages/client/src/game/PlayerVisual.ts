@@ -3,6 +3,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
+import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
@@ -200,6 +201,21 @@ export class PlayerVisual {
     this.animator?.ability(abilityId);
   }
 
+  // Incantation interrompue : le geste du sort s'arrête.
+  interruptCast() {
+    this.animator?.interruptCast();
+  }
+
+  // Point entre les deux mains (où se forme un trait en incantation) ; faux si le personnage n'a pas de mains.
+  handsPosition(out: Vector3): boolean {
+    const hands = this.model?.hands;
+    if (!hands?.length) return false;
+    out.setAll(0);
+    for (const hand of hands) out.addInPlace(hand.getAbsolutePosition());
+    out.scaleInPlace(1 / hands.length);
+    return true;
+  }
+
   playReaction(reaction: Reaction) {
     if (this.isAlive) this.animator?.react(reaction);
   }
@@ -259,6 +275,8 @@ export class PlayerVisual {
     this.animator?.update({
       alive: this.isAlive,
       castAbility: this.isAlive ? this.state.castAbility : "",
+      castElapsed: this.state.castElapsed,
+      castDuration: this.state.castDuration,
       stunned: this.hasEffect("stun"),
       charging: this.state.charging,
       rampart: this.hasEffect("rampart"),

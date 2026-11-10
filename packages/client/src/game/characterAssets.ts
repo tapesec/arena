@@ -62,10 +62,20 @@ export interface CharacterAnimationSet {
   abilities: Record<string, string>;
   // Incantation propre à certains sorts (sinon, l'incantation commune Spell_Simple_Idle_Loop).
   casts?: Record<string, string>;
+  // Sorts dont un seul geste couvre l'incantation et le lancement (au lieu de l'incantation commune puis d'un
+  // geste) : voir CastGesture.
+  castGestures?: Record<string, CastGesture>;
   // Vitesse de lecture de certaines animations de compétence (1 = normale).
   abilityRates?: Record<string, number>;
   // Postures tenues tant que dure un état : course de la Charge, garde du Rempart.
   stances?: { charge?: string; rampart?: string };
+}
+
+// Geste joué dès le début de l'incantation, calé pour que son moment fort (release, en secondes dans l'animation)
+// tombe au départ du sort ; il s'arrête peu après (voir CharacterAnimator).
+export interface CastGesture {
+  animation: string;
+  release: number;
 }
 
 interface CharacterDef {
@@ -213,16 +223,18 @@ const CHARACTERS: Record<string, CharacterDef> = {
     animations: {
       idle: "Idle_Loop",
       attacks: CASTER_ATTACKS,
-      // Gestes à la fin de l'incantation (le bâton est rangé dans le dos pendant le sort, voir PlayerVisual).
-      abilities: {
-        firebolt: "Mixamo_Casting_Spell",
-        frostbolt: "Mixamo_Casting_Spell",
-        blast: "Mixamo_2H_Area_Attack_02",
-        frostNova: "Mixamo_2H_Area_Attack_02",
-        nearSight: "Mixamo_2H_Magic_Attack_05",
-        burn: "Mixamo_2H_Magic_Attack_04",
-        bubble: "Mixamo_2H_Cast_01",
-        default: CAST_RELEASE,
+      // Sorts instantanés (Concentration, Puissance arcanique) : geste commun au lancement.
+      abilities: { default: CAST_RELEASE },
+      // Sorts incantés : un seul geste, de l'incantation au lancement (le bâton est rangé dans le dos pendant le sort,
+      // voir PlayerVisual). release : moment où les mains partent en avant ou frappent, mesuré dans chaque animation.
+      castGestures: {
+        firebolt: { animation: "Mixamo_Casting_Spell", release: 1.0 },
+        frostbolt: { animation: "Mixamo_Casting_Spell", release: 1.0 },
+        blast: { animation: "Mixamo_2H_Area_Attack_02", release: 1.8 },
+        frostNova: { animation: "Mixamo_2H_Area_Attack_02", release: 1.8 },
+        nearSight: { animation: "Mixamo_2H_Magic_Attack_05", release: 2.0 },
+        burn: { animation: "Mixamo_2H_Magic_Attack_04", release: 1.0 },
+        bubble: { animation: "Mixamo_2H_Cast_01", release: 1.3 },
       },
     },
   },
@@ -273,7 +285,13 @@ function usedAnimations(): Set<string> {
   const names = new Set<string>();
   for (const { animations: set } of Object.values(CHARACTERS)) {
     names.add(set.idle);
-    const lists = [set.attacks, Object.values(set.abilities), Object.values(set.casts ?? {}), Object.values(set.stances ?? {})];
+    const lists = [
+      set.attacks,
+      Object.values(set.abilities),
+      Object.values(set.casts ?? {}),
+      Object.values(set.castGestures ?? {}).map((gesture) => gesture.animation),
+      Object.values(set.stances ?? {}),
+    ];
     for (const name of lists.flat()) if (name) names.add(name);
   }
   return names;
@@ -291,6 +309,8 @@ export interface CharacterInstance {
   animations: Map<string, AnimationGroup>;
   // Points d'attache des armes, exposés pour les régler en développement.
   weapons: TransformNode[];
+  // Os des mains (droite, gauche) : les effets d'incantation se forment entre elles.
+  hands: TransformNode[];
   // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
   setTeam(team: number): void;
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
@@ -460,6 +480,7 @@ export class CharacterAssets {
       meshes,
       animations,
       weapons,
+      hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
       setTeam: (team) => {
         if (baseOutfit) {
           const material = this.outfitMaterial(classId, team, baseOutfit);

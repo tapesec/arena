@@ -309,6 +309,7 @@ export class Game {
       this.gameAudio.onInterrupt(event);
       const caster = this.players.get(event.casterId);
       if (caster) this.overlay.addText(caster.root, "Interrompu", "info");
+      caster?.interruptCast();
     });
     this.room.onMessage("ability", (event: AbilityUsedEvent) => {
       this.players.get(event.casterId)?.playAbility(event.abilityId);
