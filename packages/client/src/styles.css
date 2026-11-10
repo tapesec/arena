@@ -1253,3 +1253,252 @@ body,
   background: rgba(120, 20, 20, 0.85);
   border-radius: 4px;
 }
+
+/* Page de réglage des animations (animation-lab.html) */
+.lab-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.lab-abilities {
+  width: 220px;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(10, 12, 16, 0.6);
+}
+
+.lab-ability {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 7px 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.lab-ability small {
+  color: #9a9484;
+}
+
+.lab-ability:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lab-ability-selected {
+  background: rgba(255, 215, 106, 0.14);
+  box-shadow: inset 3px 0 #ffd76a;
+}
+
+.lab-ability-stance {
+  opacity: 0.5;
+}
+
+.lab-hint {
+  color: #9a9484;
+}
+
+.lab-message {
+  color: #9be37f;
+}
+
+.anim-toolbar button.lab-save {
+  background: #3d6b2c;
+  border-color: #9be37f;
+}
+
+.lab-loading {
+  position: absolute;
+  top: 45%;
+  width: 100%;
+  text-align: center;
+  color: #9a9484;
+}
+
+.lab-castbar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  width: 260px;
+  height: 18px;
+  transform: translateX(-50%);
+  background: rgba(10, 12, 16, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lab-castbar div {
+  height: 100%;
+  background: linear-gradient(#e0b04a, #a8741c);
+}
+
+.lab-castbar span {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.lab-panel {
+  padding: 10px 14px 14px;
+  background: rgba(10, 12, 16, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.lab-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.lab-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lab-controls select,
+.lab-controls input[type="search"],
+.lab-controls button {
+  font: inherit;
+  color: inherit;
+  background: #232833;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 3px 6px;
+}
+
+.lab-controls button:disabled {
+  opacity: 0.4;
+}
+
+.lab-controls button.lab-play {
+  min-width: 170px;
+  background: #2c4a6b;
+  border-color: #7fb4e3;
+}
+
+.lab-rate input {
+  width: 200px;
+}
+
+.lab-timeline {
+  margin-top: 14px;
+  padding-bottom: 16px;
+}
+
+.lab-track {
+  position: relative;
+  height: 54px;
+  background: #1f232c;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+}
+
+.lab-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.lab-tick-major {
+  border-left-color: rgba(255, 255, 255, 0.18);
+}
+
+.lab-tick span {
+  position: absolute;
+  top: 100%;
+  margin-top: 2px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #9a9484;
+  white-space: nowrap;
+}
+
+.lab-range {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  border-radius: 3px;
+}
+
+.lab-range span {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.lab-range-cast {
+  background: rgba(224, 176, 74, 0.45);
+  border: 1px solid #ffd76a;
+  cursor: grab;
+}
+
+.lab-range-after {
+  background: rgba(127, 180, 227, 0.25);
+  border: 1px dashed #7fb4e3;
+  border-left: none;
+}
+
+.lab-handle {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 10px;
+  background: #ffd76a;
+  border-radius: 2px;
+  cursor: ew-resize;
+  /* Au-dessus de la zone voisine, qui commence là où finit celle de la poignée. */
+  z-index: 2;
+}
+
+.lab-handle-left {
+  left: -5px;
+}
+
+.lab-handle-right {
+  right: -5px;
+}
+
+.lab-range-after .lab-handle {
+  background: #7fb4e3;
+}
+
+.lab-playhead {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: #ff5a52;
+  pointer-events: none;
+}
+
+.lab-summary {
+  margin-top: 4px;
+  color: #c9c2ae;
+}
+
+.lab-note {
+  margin: 4px 0;
+  color: #9a9484;
+}

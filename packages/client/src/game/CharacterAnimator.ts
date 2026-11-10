@@ -1,4 +1,5 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { castTimeOf, legacyCastGesture, releaseTime, type AbilityAnimation, type ClassAnimationTuning } from "./abilityAnimations";
 import type { CharacterAnimationSet } from "./characterAssets";
 
 // Vitesse (m/s) à laquelle chaque animation de déplacement a été enregistrée : on accélère ou ralentit
@@ -28,12 +29,8 @@ const CAST_LOOP = "Spell_Simple_Idle_Loop";
 // Vitesse de lecture de la course de Charge (le personnage va six fois plus vite qu'en courant).
 const CHARGE_RUN_RATE = 1.6;
 const DEATH = "Death01";
-// Geste d'incantation (CastGesture) : vitesse de lecture permise pour caler son moment fort sur le départ du sort
-// (en dessous, le geste attend au début de l'incantation), durée jouée après ce moment, et délai au-delà duquel une
-// incantation finie sans départ du sort est tenue pour interrompue.
-const GESTURE_MIN_RATE = 0.6;
-const GESTURE_MAX_RATE = 1.6;
-const GESTURE_FOLLOW_THROUGH = 0.5;
+// Geste d'incantation (voir AbilityAnimation) : délai au-delà duquel une incantation finie sans départ du sort est
+// tenue pour interrompue.
 const GESTURE_RELEASE_GRACE = 0.35;
 // Écart toléré (secondes d'animation) entre le geste et la progression de l'incantation reçue du serveur.
 const GESTURE_MAX_DRIFT = 0.15;
@@ -86,25 +83,27 @@ export class CharacterAnimator {
   private stunStage: "none" | "getup" | "dazed" = "none";
   private stunned = false;
   private attackIndex = 0;
-  // Geste d'incantation en cours : sort, animation, moment fort, vitesse et attente avant de démarrer ; released
-  // une fois le sort parti, avec l'image où s'arrêter ; endedAt : fin de l'incantation vue sans départ du sort.
+  // Geste d'incantation en cours : sort, animation et calage, vitesse pendant l'incantation (le calage est fait pour
+  // le temps d'incantation normal, celui reçu du serveur peut différer) ; released une fois le sort parti ;
+  // endedAt : fin de l'incantation vue sans départ du sort.
   private gesture: {
     abilityId: string;
     group: AnimationGroup;
+    entry: AbilityAnimation;
     release: number;
-    rate: number;
-    delay: number;
+    castRate: number;
     started: boolean;
     released: boolean;
-    stopFrame: number;
     endedAt: number | null;
   } | null = null;
   // Incantation vue à la mise à jour précédente, pour reconnaître une nouvelle incantation du même sort.
   private lastCast = { abilityId: "", elapsed: 0 };
 
+  // tuning : calage des animations de compétence de la classe (animationTuning.json), prioritaire sur le code.
   constructor(
     private animations: Map<string, AnimationGroup>,
     private set: CharacterAnimationSet,
+    private tuning: ClassAnimationTuning = {},
   ) {
     for (const group of animations.values()) {
       group.enableBlending = true;
@@ -127,12 +126,24 @@ export class CharacterAnimator {
   }
 
   ability(abilityId: string) {
-    const definition = this.set.castGestures?.[abilityId];
-    if (definition) {
-      this.releaseGesture(abilityId, definition.animation, definition.release);
+    const gesture = this.castGesture(abilityId);
+    if (gesture) {
+      this.releaseGesture(abilityId, gesture);
+      return;
+    }
+    const tuned = this.tuning[abilityId];
+    if (tuned) {
+      this.playAction(tuned.animation, "ability", tuned.rate, tuned.start, tuned.end);
       return;
     }
     this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability", this.set.abilityRates?.[abilityId] ?? 1);
+  }
+
+  // Geste qui couvre l'incantation et le lancement d'un sort : réglé sur la page de réglage, sinon déclaré dans le
+  // code (castGestures). Les sorts sans geste gardent l'incantation commune puis le geste du lancement.
+  private castGesture(abilityId: string): AbilityAnimation | null {
+    if (!abilityId || castTimeOf(abilityId) <= 0) return null;
+    return this.tuning[abilityId] ?? legacyCastGesture(this.set, abilityId);
   }
 
   // Coup reçu. Le stun passe toujours ; les autres réactions n'interrompent pas un coup ou une compétence
@@ -192,7 +203,7 @@ export class CharacterAnimator {
     const speed = Math.hypot(input.forward, input.right);
     if (speed < MOVING_SPEED) {
       // Un sort à geste d'incantation attend son geste dans la pose normale, sans l'incantation commune.
-      const gestured = !!this.set.castGestures?.[input.castAbility];
+      const gestured = !!this.castGesture(input.castAbility);
       const cast = input.castAbility && !gestured ? (this.set.casts?.[input.castAbility] ?? CAST_LOOP) : "";
       this.play(cast || this.set.idle, true, 1);
       return;
@@ -218,24 +229,22 @@ export class CharacterAnimator {
 
   dispose() {}
 
-  // Geste d'incantation : démarre avec l'incantation, suit sa progression, puis s'arrête peu après le départ du
-  // sort, ou aussitôt si l'incantation se termine sans que le sort parte.
+  // Geste d'incantation : démarre avec l'incantation, suit sa progression, puis va jusqu'à sa fin après le départ
+  // du sort, ou s'arrête aussitôt si l'incantation se termine sans que le sort parte.
   private updateGesture(input: AnimationInput) {
     const now = performance.now() / 1000;
     const casting = input.alive ? input.castAbility : "";
-    const definition = casting ? this.set.castGestures?.[casting] : undefined;
+    const entry = casting ? this.castGesture(casting) : null;
     // Nouvelle incantation : un autre sort, ou le même relancé (son temps écoulé repart de zéro).
     const fresh = casting !== this.lastCast.abilityId || input.castElapsed + 0.05 < this.lastCast.elapsed;
     this.lastCast = { abilityId: casting, elapsed: input.castElapsed };
-    if (definition && fresh) this.startGesture(casting, definition.animation, definition.release, input.castDuration);
+    if (entry && fresh) this.startGesture(casting, entry, input.castDuration);
 
     const gesture = this.gesture;
     if (!gesture) return;
     if (!input.alive) return this.stopGesture();
-    const fps = gesture.group.targetedAnimations[0]?.animation.framePerSecond ?? 30;
     if (gesture.released) {
-      const frame = gesture.group.animatables[0]?.masterFrame ?? gesture.stopFrame;
-      if (!gesture.group.isPlaying || frame >= gesture.stopFrame) this.stopGesture();
+      if (!gesture.group.isPlaying) this.stopGesture();
       return;
     }
     if (casting !== gesture.abilityId) {
@@ -245,66 +254,67 @@ export class CharacterAnimator {
       return;
     }
     // Position voulue dans l'animation d'après la progression de l'incantation.
-    const target = Math.max(0, input.castElapsed - gesture.delay) * gesture.rate;
-    if (input.castElapsed < gesture.delay) return;
+    const target = Math.min(gesture.release, gesture.entry.start + input.castElapsed * gesture.castRate);
+    const fps = framesPerSecond(gesture.group);
     const targetFrame = gesture.group.from + target * fps;
     if (!gesture.started) {
       gesture.started = true;
-      this.switchTo(gesture.group, `gesture:${gesture.abilityId}`, false, gesture.rate, targetFrame);
+      this.switchTo(gesture.group, `gesture:${gesture.abilityId}`, false, gesture.castRate, targetFrame, this.frame(gesture.group, gesture.entry.end));
       this.action = gesture.group;
       this.actionKind = "ability";
       return;
     }
-    // Recalé sur l'incantation ; passé le moment fort, on ne revient plus en arrière (le message de départ du sort
-    // peut arriver un peu après la fin de l'incantation).
+    // Recalé sur l'incantation ; arrivé au départ du sort, le geste y attend le message de départ.
     const frame = gesture.group.animatables[0]?.masterFrame ?? targetFrame;
     const drift = frame - targetFrame;
-    const pastRelease = target >= gesture.release;
-    if (drift < -GESTURE_MAX_DRIFT * fps || (!pastRelease && drift > GESTURE_MAX_DRIFT * fps)) gesture.group.goToFrame(targetFrame);
+    if (Math.abs(drift) > GESTURE_MAX_DRIFT * fps) gesture.group.goToFrame(targetFrame);
+    gesture.group.speedRatio = target >= gesture.release ? 0 : gesture.castRate;
   }
 
-  private startGesture(abilityId: string, animation: string, release: number, castDuration: number) {
-    const group = this.animations.get(animation);
+  private startGesture(abilityId: string, entry: AbilityAnimation, castDuration: number) {
+    const group = this.animations.get(entry.animation);
     if (!group) return;
     this.stopGesture();
-    const duration = Math.max(castDuration, 0.1);
-    const rate = Math.min(GESTURE_MAX_RATE, Math.max(GESTURE_MIN_RATE, release / duration));
+    const release = releaseTime(entry, castTimeOf(abilityId));
     this.gesture = {
       abilityId,
       group,
+      entry,
       release,
-      rate,
-      delay: Math.max(0, duration - release / rate),
+      castRate: (release - entry.start) / Math.max(castDuration, 0.1),
       started: false,
       released: false,
-      stopFrame: 0,
       endedAt: null,
     };
   }
 
-  // Le sort part : le geste reprend sa vitesse normale à partir de son moment fort, puis s'arrête peu après.
-  // Sans geste en cours (incantation commencée avant que le personnage soit visible), on n'en joue que la fin.
-  private releaseGesture(abilityId: string, animation: string, release: number) {
+  // Le sort part : le geste reprend sa vitesse réglée à partir du départ du sort, jusqu'à sa fin. Sans geste en
+  // cours (incantation commencée avant que le personnage soit visible), on n'en joue que la fin.
+  private releaseGesture(abilityId: string, entry: AbilityAnimation) {
     let gesture = this.gesture;
     if (!gesture || gesture.abilityId !== abilityId || gesture.released) {
-      this.startGesture(abilityId, animation, release, release);
+      this.startGesture(abilityId, entry, castTimeOf(abilityId));
       gesture = this.gesture;
       if (!gesture) return;
     }
-    const fps = gesture.group.targetedAnimations[0]?.animation.framePerSecond ?? 30;
     gesture.released = true;
-    gesture.stopFrame = gesture.group.from + (release + GESTURE_FOLLOW_THROUGH) * fps;
-    const releaseFrame = gesture.group.from + release * fps;
+    const releaseFrame = this.frame(gesture.group, gesture.release);
     if (!gesture.started) {
       gesture.started = true;
-      this.switchTo(gesture.group, `gesture:${abilityId}`, false, 1, releaseFrame);
+      this.switchTo(gesture.group, `gesture:${abilityId}`, false, entry.rate, releaseFrame, this.frame(gesture.group, entry.end));
       this.action = gesture.group;
       this.actionKind = "ability";
     } else {
-      gesture.group.speedRatio = 1;
+      gesture.group.speedRatio = gesture.entry.rate;
+      const fps = framesPerSecond(gesture.group);
       const frame = gesture.group.animatables[0]?.masterFrame ?? releaseFrame;
       if (frame < releaseFrame - GESTURE_MAX_DRIFT * fps) gesture.group.goToFrame(releaseFrame);
     }
+  }
+
+  // Image d'une animation à un temps donné (secondes depuis son début).
+  private frame(group: AnimationGroup, time: number): number {
+    return group.from + time * framesPerSecond(group);
   }
 
   // Rend la main aux animations courantes (fondu vers l'attente ou le déplacement).
@@ -315,10 +325,13 @@ export class CharacterAnimator {
     if (this.action === gesture.group) this.action = null;
   }
 
-  private playAction(name: string | undefined, kind: "attack" | "ability" | "reaction", speedRatio = 1) {
+  // start, end : portion jouée (secondes dans l'animation), par défaut l'animation entière.
+  private playAction(name: string | undefined, kind: "attack" | "ability" | "reaction", speedRatio = 1, start?: number, end?: number) {
     const group = name ? this.animations.get(name) : undefined;
     if (!group) return;
-    this.switchTo(group, `action:${name}`, false, speedRatio);
+    const from = start === undefined ? undefined : this.frame(group, start);
+    const to = end === undefined ? undefined : this.frame(group, end);
+    this.switchTo(group, `action:${name}`, false, speedRatio, from, to);
     this.action = group;
     this.actionKind = kind;
   }
@@ -334,17 +347,18 @@ export class CharacterAnimator {
     this.switchTo(group, key, loop, speedRatio);
   }
 
-  // startFrame : image de départ (par défaut, la première).
-  private switchTo(group: AnimationGroup, key: string, loop: boolean, speedRatio: number, startFrame?: number) {
+  // startFrame : image de départ (par défaut, la première) ; endFrame : image où s'arrêter (par défaut, la dernière).
+  private switchTo(group: AnimationGroup, key: string, loop: boolean, speedRatio: number, startFrame?: number, endFrame?: number) {
     if (this.current && this.current !== group) this.current.stop();
     this.current = group;
     this.currentKey = key;
     group.stop();
     // Lue à l'envers, l'animation part de sa dernière image.
     if (speedRatio < 0) group.start(loop, speedRatio, group.to, group.from);
-    else {
-      group.start(loop, speedRatio, group.from, group.to);
-      if (startFrame !== undefined && startFrame > group.from) group.goToFrame(startFrame);
-    }
+    else group.start(loop, speedRatio, startFrame ?? group.from, endFrame ?? group.to);
   }
+}
+
+export function framesPerSecond(group: AnimationGroup): number {
+  return group.targetedAnimations[0]?.animation.framePerSecond ?? 30;
 }

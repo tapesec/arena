@@ -8,6 +8,8 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { terrainHeight, type EffectKind } from "@arena/shared";
+import type { AnimationTuning } from "./abilityAnimations";
+import animationTuning from "./animationTuning.json";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
 import { ABILITY_FX } from "./spellFx";
@@ -244,7 +246,8 @@ export class PlayerVisual {
         mesh.metadata = { sessionId: this.sessionId };
         mesh.isPickable = true;
       }
-      this.animator = new CharacterAnimator(model.animations, model.set);
+      // Calage des animations de compétence réglé sur la page animation-lab.html.
+      this.animator = new CharacterAnimator(model.animations, model.set, (animationTuning as AnimationTuning)[this.modelClass]);
       this.showCapsule(false);
     });
   }
