@@ -21,13 +21,32 @@ export interface AbilityAnimation {
 export type EffectAnchor = "hands" | "hand_r" | "hand_l" | "weapon" | "head" | "chest" | "feet";
 
 // Effet joué de start à end (secondes dans l'animation, dans la portion jouée), accroché à anchor, décalé de
-// offset (droite, haut, avant, en mètres, dans le repère du personnage).
+// offset (droite, haut, avant, en mètres, dans le repère du personnage). Avec des points clés (keys, triés par
+// temps), sa position va de l'un à l'autre à vitesse constante, chacun avec son accroche et son décalage ; avant le
+// premier et après le dernier, elle reste sur celui-ci.
 export interface AnimationEffect {
   recipe: string;
   start: number;
   end: number;
   anchor: EffectAnchor;
   offset: [number, number, number];
+  keys?: EffectKey[];
+}
+
+export interface EffectKey {
+  time: number;
+  anchor: EffectAnchor;
+  offset: [number, number, number];
+}
+
+// Effet décalé dans le temps, avec ses points clés.
+export function shiftEffect(effect: AnimationEffect, shift: number): AnimationEffect {
+  return {
+    ...effect,
+    start: effect.start + shift,
+    end: effect.end + shift,
+    keys: effect.keys?.map((key) => ({ ...key, time: key.time + shift })),
+  };
 }
 
 export type ClassAnimationTuning = Record<string, AbilityAnimation>;
@@ -113,7 +132,11 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
   if (entry.effects) {
     clamped.effects = entry.effects.map((effect) => {
       const effectStart = Math.min(Math.max(effect.start, start), end - MIN_EFFECT);
-      return { ...effect, start: effectStart, end: Math.min(end, Math.max(effect.end, effectStart + MIN_EFFECT)) };
+      const effectEnd = Math.min(end, Math.max(effect.end, effectStart + MIN_EFFECT));
+      const clampedEffect: AnimationEffect = { ...effect, start: effectStart, end: effectEnd };
+      // Les points clés restent dans l'effet.
+      if (effect.keys) clampedEffect.keys = effect.keys.map((key) => ({ ...key, time: Math.min(effectEnd, Math.max(effectStart, key.time)) }));
+      return clampedEffect;
     });
   }
   return clamped;

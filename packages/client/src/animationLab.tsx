@@ -18,12 +18,14 @@ import {
   castTimeOf,
   clampAbilityAnimation,
   effectsOf,
+  shiftEffect,
   releaseTime,
   suggestedAbilityAnimation,
   type AbilityAnimation,
   type AnimationEffect,
   type AnimationTuning,
   type EffectAnchor,
+  type EffectKey,
   type ClassAnimationTuning,
 } from "./game/abilityAnimations";
 import { CharacterAnimator, framesPerSecond } from "./game/CharacterAnimator";
@@ -283,6 +285,9 @@ function roundEntry(entry: AbilityAnimation): AbilityAnimation {
       end: round(effect.end),
       anchor: effect.anchor,
       offset: effect.offset.map(round) as [number, number, number],
+      ...(effect.keys && {
+        keys: effect.keys.map((key) => ({ time: round(key.time), anchor: key.anchor, offset: key.offset.map(round) as [number, number, number] })),
+      }),
     }));
   }
   return rounded;
@@ -337,6 +342,8 @@ function AnimationLab() {
   const [playing, setPlaying] = useState(false);
   const [filter, setFilter] = useState("");
   const [selectedEffect, setSelectedEffect] = useState(0);
+  // Instant montré en pose figée (secondes dans l'animation) : là où se pose un nouveau point clé.
+  const [cursor, setCursor] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -447,11 +454,12 @@ function AnimationLab() {
     const end = castTime > 0 ? Math.min(clip, castTime * rate + 0.5) : clip;
     // Les effets gardent leur place par rapport au début du geste.
     const shift = -(entry?.start ?? 0);
-    const effects = entry?.effects?.map((effect) => ({ ...effect, start: effect.start + shift, end: effect.end + shift }));
+    const effects = entry?.effects?.map((effect) => shiftEffect(effect, shift));
     update({ animation: name, start: 0, rate, end, effects });
   };
 
   const scrub = (time: number) => {
+    setCursor(Math.max(0, Math.min(length, time)));
     stageRef.current?.scrub(Math.max(0, Math.min(length, time)));
     setPlaying(false);
   };
@@ -612,6 +620,8 @@ function AnimationLab() {
               entry={entry}
               selected={selectedEffect}
               onSelect={setSelectedEffect}
+              cursor={cursor}
+              playing={playing}
               onChange={(effects) => update({ ...entry, effects })}
               onScrub={scrub}
             />
@@ -679,7 +689,7 @@ function Timeline(props: {
           ...e0,
           start: e0.start + shift,
           end: e0.end + shift,
-          effects: e0.effects?.map((effect) => ({ ...effect, start: effect.start + shift, end: effect.end + shift })),
+          effects: e0.effects?.map((effect) => shiftEffect(effect, shift)),
         };
       } else if (kind === "start" && casting) {
         // Le départ du sort reste en place : la fenêtre s'étire, la vitesse change.
@@ -694,11 +704,14 @@ function Timeline(props: {
         next = { ...e0, end: Math.max(casting ? r0 : e0.start + SNAP, Math.min(length, e0.end + d)) };
       }
       onChange(next);
-      // La pose montrée suit le bord déplacé.
-      const shown = kind === "end" ? next.end : kind === "release" ? releaseTime(next, castTime) : next.start;
+      // La pose montrée suit le bord déplacé, ou le pointeur quand on glisse toute la fenêtre.
+      const pointer = snap(((clientX - left) / width) * length);
+      const shown = kind === "end" ? next.end : kind === "release" ? releaseTime(next, castTime) : kind === "move" ? pointer : next.start;
       onScrub(Math.min(length, shown));
     };
     if (kind === "scrub") apply(event.clientX);
+    // Un clic sur la fenêtre montre la pose à cet endroit.
+    if (kind === "move") onScrub(snap(((event.clientX - left) / width) * length));
     const move = (e: PointerEvent) => apply(e.clientX);
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -790,30 +803,59 @@ function EffectsPanel(props: {
   entry: AbilityAnimation;
   selected: number;
   onSelect: (index: number) => void;
+  cursor: number;
+  playing: boolean;
   onChange: (effects: AnimationEffect[]) => void;
   onScrub: (time: number) => void;
 }) {
-  const { length, castTime, entry, selected, onSelect, onChange, onScrub } = props;
+  const { length, castTime, entry, selected, onSelect, cursor, playing, onChange, onScrub } = props;
   const effects = entry.effects ?? [];
   const tracks = useRef<(HTMLDivElement | null)[]>([]);
+  const [selectedKey, setSelectedKey] = useState(0);
   const percent = (time: number) => `${(time / Math.max(length, 1e-3)) * 100}%`;
   const current = effects[Math.min(selected, effects.length - 1)];
   const index = effects.indexOf(current);
+  const keys = current?.keys ?? [];
+  const keyIndex = Math.min(selectedKey, keys.length - 1);
+  const key = keys[keyIndex];
+  // Ce que règlent l'accroche et les curseurs : le point clé sélectionné, ou l'effet entier s'il n'en a pas.
+  const place: { anchor: EffectAnchor; offset: [number, number, number] } | undefined = key ?? current;
 
   const replace = (i: number, effect: AnimationEffect) => onChange(effects.map((e, j) => (j === i ? effect : e)));
+
+  const setPlace = (anchor: EffectAnchor, offset: [number, number, number]) => {
+    if (!current) return;
+    if (key) replace(index, { ...current, keys: keys.map((k, j) => (j === keyIndex ? { ...k, anchor, offset } : k)) });
+    else replace(index, { ...current, anchor, offset });
+  };
 
   const begin = (i: number, kind: "move" | "start" | "end", event: ReactPointerEvent) => {
     onSelect(i);
     const e0 = effects[i];
-    dragOnTrack(event, tracks.current[i], length, (d) => {
+    dragOnTrack(event, tracks.current[i], length, (d, at) => {
       let next = e0;
-      if (kind === "move") {
-        const shift = Math.max(entry.start - e0.start, Math.min(d, entry.end - e0.end));
-        next = { ...e0, start: e0.start + shift, end: e0.end + shift };
-      } else if (kind === "start") next = { ...e0, start: Math.min(e0.end - SNAP, e0.start + d) };
-      else next = { ...e0, end: Math.max(e0.start + SNAP, e0.end + d) };
-      replace(i, next);
-      onScrub(kind === "end" ? next.end : next.start);
+      if (kind === "move") next = shiftEffect(e0, Math.max(entry.start - e0.start, Math.min(d, entry.end - e0.end)));
+      else if (kind === "start") next = { ...e0, start: Math.min(e0.keys?.[0]?.time ?? e0.end - SNAP, e0.end - SNAP, e0.start + d) };
+      else next = { ...e0, end: Math.max(e0.keys?.at(-1)?.time ?? e0.start + SNAP, e0.start + SNAP, e0.end + d) };
+      if (next !== e0 || kind !== "move") replace(i, next);
+      // Un clic (ou un glissement) sur la barre montre la pose sous le pointeur.
+      onScrub(kind === "end" ? next.end : kind === "start" ? next.start : at);
+    });
+  };
+
+  // Point clé déplacé dans le temps, sans dépasser ses voisins ni sortir de l'effet.
+  const beginKey = (i: number, k: number, event: ReactPointerEvent) => {
+    onSelect(i);
+    setSelectedKey(k);
+    const e0 = effects[i];
+    const list = e0.keys ?? [];
+    const k0 = list[k];
+    const min = k > 0 ? list[k - 1].time + SNAP : e0.start;
+    const max = k < list.length - 1 ? list[k + 1].time - SNAP : e0.end;
+    dragOnTrack(event, tracks.current[i], length, (d) => {
+      const time = Math.min(max, Math.max(min, k0.time + d));
+      replace(i, { ...e0, keys: list.map((kk, j) => (j === k ? { ...kk, time } : kk)) });
+      onScrub(time);
     });
   };
 
@@ -821,6 +863,37 @@ function EffectsPanel(props: {
     const end = castTime > 0 ? releaseTime(entry, castTime) : entry.end;
     onChange([...effects, { recipe: "fireCharge", start: entry.start, end, anchor: "hands", offset: [0, 0, 0] }]);
     onSelect(effects.length);
+    setSelectedKey(0);
+  };
+
+  // Nouveau point clé à l'instant montré, avec l'accroche et le décalage du point clé le plus proche (ou de l'effet).
+  const addKey = () => {
+    if (!current) return;
+    const time = Math.min(current.end, Math.max(current.start, cursor));
+    const existing = keys.findIndex((k) => Math.abs(k.time - time) < SNAP / 2);
+    if (existing >= 0) {
+      setSelectedKey(existing);
+      return;
+    }
+    const nearest = keys.reduce<EffectKey | null>((best, k) => (!best || Math.abs(k.time - time) < Math.abs(best.time - time) ? k : best), null);
+    const source = nearest ?? current;
+    const created: EffectKey = { time, anchor: source.anchor, offset: [...source.offset] };
+    const list = [...keys, created].sort((a, b) => a.time - b.time);
+    replace(index, { ...current, keys: list });
+    setSelectedKey(list.indexOf(created));
+  };
+
+  // Sans son dernier point clé, l'effet garde la position de celui-ci.
+  const removeKey = () => {
+    if (!current || !key) return;
+    const list = keys.filter((_, j) => j !== keyIndex);
+    if (list.length) replace(index, { ...current, keys: list });
+    else {
+      const rest = { ...current, anchor: key.anchor, offset: key.offset };
+      delete rest.keys;
+      replace(index, rest);
+    }
+    setSelectedKey(Math.max(0, keyIndex - 1));
   };
 
   return (
@@ -848,9 +921,18 @@ function EffectsPanel(props: {
             <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin(i, "start", e)} title="Début de l'effet" />
             <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin(i, "end", e)} title="Fin de l'effet" />
           </div>
+          {(effect.keys ?? []).map((k, j) => (
+            <div
+              key={j}
+              className={`lab-key ${i === index && j === keyIndex ? "lab-key-selected" : ""}`}
+              style={{ left: percent(k.time) }}
+              onPointerDown={(e) => beginKey(i, j, e)}
+              title={`Point clé à ${seconds(k.time)} : ${EFFECT_ANCHORS[k.anchor]}`}
+            />
+          ))}
         </div>
       ))}
-      {current && (
+      {current && place && (
         <div className="lab-controls lab-effect-controls">
           <label>
             Effet
@@ -862,9 +944,15 @@ function EffectsPanel(props: {
               ))}
             </select>
           </label>
+          <button onClick={addKey} disabled={playing} title="Ajoute un point clé à l'instant montré (mettre la lecture en pause)">
+            + Point clé ici
+          </button>
+          <span className="lab-key-label">
+            {key ? `Point clé ${keyIndex + 1}/${keys.length} à ${seconds(key.time)}` : "Position de tout l'effet"}
+          </span>
           <label>
             Accroché
-            <select value={current.anchor} onChange={(e) => replace(index, { ...current, anchor: e.target.value as EffectAnchor })}>
+            <select value={place.anchor} onChange={(e) => setPlace(e.target.value as EffectAnchor, place.offset)}>
               {Object.entries(EFFECT_ANCHORS).map(([id, label]) => (
                 <option key={id} value={id}>
                   {label}
@@ -874,22 +962,22 @@ function EffectsPanel(props: {
           </label>
           {OFFSETS.map(({ label, min, max }, axis) => (
             <label key={axis} className="lab-offset" title="Double-clic : remettre à zéro">
-              {label} {current.offset[axis].toFixed(2).replace(".", ",")} m
+              {label} {place.offset[axis].toFixed(2).replace(".", ",")} m
               <input
                 type="range"
                 min={min}
                 max={max}
                 step={0.01}
-                value={current.offset[axis]}
+                value={place.offset[axis]}
                 onChange={(e) => {
-                  const offset = [...current.offset] as [number, number, number];
+                  const offset = [...place.offset] as [number, number, number];
                   offset[axis] = Number(e.target.value);
-                  replace(index, { ...current, offset });
+                  setPlace(place.anchor, offset);
                 }}
                 onDoubleClick={() => {
-                  const offset = [...current.offset] as [number, number, number];
+                  const offset = [...place.offset] as [number, number, number];
                   offset[axis] = 0;
-                  replace(index, { ...current, offset });
+                  setPlace(place.anchor, offset);
                 }}
               />
             </label>
@@ -897,6 +985,7 @@ function EffectsPanel(props: {
           <span className="lab-hint">
             {seconds(current.start)} → {seconds(current.end)}
           </span>
+          {key && <button onClick={removeKey}>Supprimer le point clé</button>}
           <button onClick={() => onChange(effects.filter((_, j) => j !== index))}>Supprimer l'effet</button>
         </div>
       )}

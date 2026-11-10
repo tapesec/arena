@@ -89,10 +89,29 @@ function weaponTip(attach: TransformNode): Vector3 {
   return tip;
 }
 
+// Position d'un effet à un instant du geste (secondes dans l'animation) : entre ses deux points clés qui
+// encadrent cet instant, à vitesse constante ; sans point clé, son accroche et son décalage.
+const between = new Vector3();
+export function effectPosition(character: CharacterInstance, effect: AnimationEffect, time: number, out: Vector3): Vector3 {
+  const keys = effect.keys;
+  if (!keys?.length) return anchorPosition(character, effect.anchor, effect.offset, out);
+  let next = keys.findIndex((key) => key.time > time);
+  if (next === -1) next = keys.length;
+  if (next === 0 || next === keys.length) {
+    const key = keys[Math.min(next, keys.length - 1)];
+    return anchorPosition(character, key.anchor, key.offset, out);
+  }
+  const a = keys[next - 1];
+  const b = keys[next];
+  anchorPosition(character, a.anchor, a.offset, out);
+  anchorPosition(character, b.anchor, b.offset, between);
+  const f = b.time > a.time ? (time - a.time) / (b.time - a.time) : 1;
+  return Vector3.LerpToRef(out, between, f, out);
+}
+
 // Position du point d'accroche, puis le décalage (droite, haut, avant, en mètres, dans le repère du personnage).
-export function effectPosition(character: CharacterInstance, effect: AnimationEffect, out: Vector3): Vector3 {
+function anchorPosition(character: CharacterInstance, anchor: EffectAnchor, offset: readonly number[], out: Vector3): Vector3 {
   const frame = (character.root.parent as TransformNode | null) ?? character.root;
-  const anchor = effect.anchor;
   if (anchor === "hands") {
     out.setAll(0);
     for (const hand of character.hands) out.addInPlace(hand.getAbsolutePosition());
@@ -104,7 +123,7 @@ export function effectPosition(character: CharacterInstance, effect: AnimationEf
     const bone = BONES[anchor] && character.bones.get(BONES[anchor]);
     out.copyFrom(bone ? bone.getAbsolutePosition() : frame.getAbsolutePosition());
   }
-  const [right, up, forward] = effect.offset;
+  const [right, up, forward] = offset;
   if (right || up || forward) {
     // Rotation du personnage autour de la verticale seulement (le décalage ne suit pas les inclinaisons du corps).
     const yaw = frame.absoluteRotationQuaternion.toEulerAngles().y;
@@ -133,12 +152,12 @@ export class AbilityEffectPlayer {
         let run = this.running.get(key);
         if (!run) {
           run = { effect, at: new Vector3(), system: null };
-          effectPosition(character, effect, run.at);
+          effectPosition(character, effect, playing.time, run.at);
           run.system = EFFECT_RECIPES[effect.recipe]?.recipe(this.particles, run.at) ?? null;
           this.running.set(key, run);
         }
         run.effect = effect;
-        effectPosition(character, effect, run.at);
+        effectPosition(character, effect, playing.time, run.at);
       });
     }
     for (const [key, run] of this.running) if (!active.has(key)) this.stop(key, run);

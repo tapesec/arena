@@ -1570,3 +1570,27 @@ body,
 .lab-offset input {
   width: 120px;
 }
+
+/* Point clé de position d'un effet : un losange sur sa barre. */
+.lab-key {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: #f4e6ff;
+  border: 1px solid #5a2d7a;
+  transform: rotate(45deg);
+  cursor: ew-resize;
+  z-index: 3;
+}
+
+.lab-key-selected {
+  background: #ffd76a;
+  border-color: #7a5a10;
+  box-shadow: 0 0 0 2px rgba(255, 215, 106, 0.4);
+}
+
+.lab-key-label {
+  color: #e6c8ff;
+}
