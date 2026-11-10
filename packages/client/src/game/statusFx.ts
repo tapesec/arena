@@ -67,6 +67,8 @@ interface PlayerStatus {
   // Zone du Rempart au sol (en coordonnées du monde, pas rattachée à l'ancre) et temps écoulé depuis son apparition.
   rampartZone: Mesh | null;
   rampartAge: number;
+  // Angle courant des créneaux (radians).
+  rampartAngle: number;
 
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
@@ -105,7 +107,11 @@ const NOVA_RING_PERIOD = 1.2;
 // (radians par seconde), hauteur au-dessus du sol (mètres).
 const RAMPART_APPEAR = 0.5;
 const RAMPART_FADE = 0.8;
-const RAMPART_SPIN = 0.06;
+const RAMPART_SPIN = 0.15;
+// À l'apparition, les créneaux tournent beaucoup plus vite (vitesse en plus, en radians par seconde) puis ralentissent
+// jusqu'à leur vitesse normale en RAMPART_SPIN_UP secondes, comme un rempart qui se dresse.
+const RAMPART_SPIN_BOOST = 2.5;
+const RAMPART_SPIN_UP = 0.8;
 const RAMPART_LIFT = 0.12;
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
@@ -118,7 +124,6 @@ export class StatusFx {
   private bubbleMaterial: StandardMaterial;
   private rimMaterial: StandardMaterial;
   private novaMaterial: StandardMaterial;
-  private rampartMaterial: StandardMaterial;
   private novaRadius = getAbility("frostNova")?.radius ?? 15;
   private time = 0;
 
@@ -131,7 +136,6 @@ export class StatusFx {
     this.bubbleMaterial = bubbleMaterial(scene);
     this.rimMaterial = rimMaterial(scene);
     this.novaMaterial = novaMaterial(scene);
-    this.rampartMaterial = rampartZoneMaterial(scene);
   }
 
   update(dt: number, players: Iterable<PlayerVisual>) {
@@ -172,7 +176,7 @@ export class StatusFx {
       this.updateMez(status, false);
       this.updateAuras(status, false, player, 0);
       status.mist?.stop();
-      status.rampartZone?.dispose();
+      status.rampartZone?.dispose(false, true);
       // Détruit les effets du joueur, sans leurs matériaux partagés.
       status.anchor.dispose(false, false);
       this.statuses.delete(player);
@@ -205,6 +209,7 @@ export class StatusFx {
       nova: null,
       rampartZone: null,
       rampartAge: 0,
+      rampartAngle: 0,
 
       auras: new Map(),
       body: new Vector3(),
@@ -334,17 +339,20 @@ export class StatusFx {
   private updateRampartZone(status: PlayerStatus, left: number, dt: number) {
     if (left > 0 && !status.rampartZone) {
       status.rampartZone = terrainDisc(this.scene, status.feet.x, status.feet.z, RAMPART_RADIUS);
-      status.rampartZone.material = this.rampartMaterial;
+      // Un matériau par zone (texture comprise) : chaque Rempart tourne à son rythme, depuis son apparition.
+      status.rampartZone.material = rampartZoneMaterial(this.scene);
       status.rampartAge = 0;
+      status.rampartAngle = Math.random() * Math.PI * 2;
     }
     if (left <= 0 && status.rampartZone) {
-      status.rampartZone.dispose();
+      status.rampartZone.dispose(false, true);
       status.rampartZone = null;
     }
     if (!status.rampartZone) return;
     status.rampartAge += dt;
-    // Matériau partagé : toutes les zones de Rempart tournent ensemble.
-    (this.rampartMaterial.diffuseTexture as DynamicTexture).wAng = this.time * RAMPART_SPIN;
+    const boost = Math.max(0, 1 - status.rampartAge / RAMPART_SPIN_UP) ** 2;
+    status.rampartAngle += dt * (RAMPART_SPIN + RAMPART_SPIN_BOOST * boost);
+    ((status.rampartZone.material as StandardMaterial).diffuseTexture as DynamicTexture).wAng = status.rampartAngle;
     const appear = Math.min(1, status.rampartAge / RAMPART_APPEAR);
     status.rampartZone.visibility = Math.min(appear, left / RAMPART_FADE, 1) * (0.85 + Math.sin(this.time * 2.5) * 0.15);
   }
