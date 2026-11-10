@@ -249,60 +249,124 @@ export function EffectEditor(props: {
           <select value={def.shape} onChange={(e) => set("shape", e.target.value as ParticleEffectDef["shape"])}>
             <option value="sphere">Dans une boule</option>
             <option value="cylinder">Dans un cylindre vertical (anneau, colonne)</option>
+            <option value="fingers">Doigts qui se referment (main)</option>
           </select>
         </label>
-        <Slider
-          label="Rayon"
-          value={def.radius}
-          min={0}
-          max={3}
-          step={0.01}
-          unit=" m"
-          onChange={(v) => onChange({ ...def, radius: v, innerRadius: Math.min(def.innerRadius, v) })}
-        />
-        <Slider
-          label="Rayon intérieur (vide au centre)"
-          value={def.innerRadius}
-          min={0}
-          max={def.radius}
-          step={0.01}
-          unit=" m"
-          onChange={(v) => set("innerRadius", v)}
-        />
-        <Slider label="Hauteur de départ" value={def.y} min={-1} max={6} step={0.05} unit=" m" onChange={(v) => set("y", v)} />
-        {cylinder && (
+        {def.shape === "fingers" && (
           <>
+            <Slider label="Nombre de doigts" value={def.arms || 5} min={1} max={8} step={1} onChange={(v) => set("arms", v)} />
             <Slider
-              label="Hauteur du cylindre"
+              label="Rayon (pied des doigts)"
+              value={def.radius}
+              min={0.1}
+              max={3}
+              step={0.01}
+              unit=" m"
+              onChange={(v) => set("radius", v)}
+            />
+            <Slider
+              label="Longueur des doigts"
               value={def.height}
-              min={0}
-              max={4}
+              min={0.2}
+              max={6}
               step={0.05}
               unit=" m"
               onChange={(v) => set("height", v)}
             />
+            <Slider label="Hauteur de départ" value={def.y} min={-1} max={6} step={0.05} unit=" m" onChange={(v) => set("y", v)} />
             <Slider
-              label="Points tournants (0 : tout le tour)"
-              value={def.arms}
-              min={0}
-              max={8}
-              step={1}
-              onChange={(v) => set("arms", v)}
+              label="Durée de fermeture"
+              value={def.closeTime}
+              min={0.05}
+              max={4}
+              step={0.05}
+              unit=" s"
+              onChange={(v) => set("closeTime", v)}
             />
-            {def.arms > 0 && (
-              <Slider
-                label="Vitesse de rotation"
-                value={def.spin}
-                min={-20}
-                max={20}
-                step={0.5}
-                unit=" rad/s"
-                onChange={(v) => set("spin", v)}
-              />
-            )}
+            <Slider
+              label="Fermeture finale (1 : les bouts se rejoignent)"
+              value={def.closeAmount}
+              min={0}
+              max={1.3}
+              step={0.05}
+              onChange={(v) => set("closeAmount", v)}
+            />
+            <Slider
+              label="Épaisseur des doigts"
+              value={def.fingerWidth}
+              min={0}
+              max={0.5}
+              step={0.01}
+              unit=" m"
+              onChange={(v) => set("fingerWidth", v)}
+            />
+            <Slider
+              label="Rotation de la main"
+              value={def.spin}
+              min={-6}
+              max={6}
+              step={0.1}
+              unit=" rad/s"
+              onChange={(v) => set("spin", v)}
+            />
           </>
         )}
-        <Slider label="Part au centre (cœur)" value={def.core} min={0} max={1} step={0.05} onChange={(v) => set("core", v)} />
+        {def.shape !== "fingers" && (
+          <>
+            <Slider
+              label="Rayon"
+              value={def.radius}
+              min={0}
+              max={3}
+              step={0.01}
+              unit=" m"
+              onChange={(v) => onChange({ ...def, radius: v, innerRadius: Math.min(def.innerRadius, v) })}
+            />
+            <Slider
+              label="Rayon intérieur (vide au centre)"
+              value={def.innerRadius}
+              min={0}
+              max={def.radius}
+              step={0.01}
+              unit=" m"
+              onChange={(v) => set("innerRadius", v)}
+            />
+            <Slider label="Hauteur de départ" value={def.y} min={-1} max={6} step={0.05} unit=" m" onChange={(v) => set("y", v)} />
+            {cylinder && (
+              <>
+                <Slider
+                  label="Hauteur du cylindre"
+                  value={def.height}
+                  min={0}
+                  max={4}
+                  step={0.05}
+                  unit=" m"
+                  onChange={(v) => set("height", v)}
+                />
+                <Slider
+                  label="Points tournants (0 : tout le tour)"
+                  value={def.arms}
+                  min={0}
+                  max={8}
+                  step={1}
+                  onChange={(v) => set("arms", v)}
+                />
+                {def.arms > 0 && (
+                  <Slider
+                    label="Vitesse de rotation"
+                    value={def.spin}
+                    min={-20}
+                    max={20}
+                    step={0.5}
+                    unit=" rad/s"
+                    onChange={(v) => set("spin", v)}
+                  />
+                )}
+              </>
+            )}
+            <Slider label="Part au centre (cœur)" value={def.core} min={0} max={1} step={0.05} onChange={(v) => set("core", v)} />
+          </>
+        )}
       </div>
 
       <div className="fx-group">

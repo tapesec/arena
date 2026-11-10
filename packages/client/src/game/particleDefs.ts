@@ -22,7 +22,13 @@ export interface ParticleEffectDef {
   // Lieu de naissance, autour du point d'accroche (mètres) : une boule (rayon intérieur à extérieur) ou un cylindre
   // vertical (anneau de rayon intérieur à extérieur, de y à y + height). Avec arms > 0, les particules naissent sur
   // arms points du cercle extérieur qui tournent à spin radians par seconde (spirale, couronne).
-  shape: "sphere" | "cylinder";
+  // « fingers » : doigts de lumière qui sortent du sol tout autour (arms doigts, sur un cercle de rayon radius,
+  // longs de height) et se referment au-dessus du personnage en closeTime secondes, jusqu'à closeAmount (1 : les
+  // bouts se rejoignent au centre) ; fingerWidth : épaisseur d'un doigt.
+  shape: "sphere" | "cylinder" | "fingers";
+  closeTime: number;
+  closeAmount: number;
+  fingerWidth: number;
   radius: number;
   innerRadius: number;
   y: number;
@@ -65,6 +71,9 @@ export const DEFAULT_DEF: ParticleEffectDef = {
   height: 0,
   arms: 0,
   spin: 0,
+  closeTime: 0.8,
+  closeAmount: 1,
+  fingerWidth: 0.06,
   core: 0,
   direction: "random",
   spread: 0,
@@ -458,7 +467,10 @@ export function particleEffectLabel(id: string): string {
 const scratch = new Vector3();
 
 // Crée et démarre un système de particules d'après ses réglages, au point at (partagé : le déplacer déplace l'effet).
-export function createFromDef(fx: ParticleFactory, at: Vector3, d: ParticleEffectDef, name = "effect"): ParticleSystem | null {
+export function createFromDef(fx: ParticleFactory, at: Vector3, saved: ParticleEffectDef, name = "effect"): ParticleSystem | null {
+  // Les réglages enregistrés avant l'ajout d'un réglage le prennent à sa valeur par défaut.
+  const d: ParticleEffectDef = { ...DEFAULT_DEF, ...saved };
+  const bend = d.shape === "fingers" ? fingerBend(d.radius, d.height) : 0;
   const burst = d.emission === "burst";
   const capacity = Math.max(10, Math.ceil(burst ? d.count * 1.2 : d.rate * d.life[1] * 1.3 + 10));
   const s = fx.create(name, capacity, at, d.texture, d.optional);
@@ -468,6 +480,11 @@ export function createFromDef(fx: ParticleFactory, at: Vector3, d: ParticleEffec
   s.startPositionFunction = (_worldMatrix, position: Vector3) => {
     if (d.core > 0 && Math.random() < d.core) {
       position.copyFrom(at);
+      return;
+    }
+    if (d.shape === "fingers") {
+      fingerPoint(d, bend, (performance.now() - start) / 1000, position);
+      position.addInPlace(at);
       return;
     }
     if (d.shape === "sphere") {
@@ -496,7 +513,7 @@ export function createFromDef(fx: ParticleFactory, at: Vector3, d: ParticleEffec
       case "inward": {
         // Depuis (ou vers) le centre de la forme ; une particule née au centre part au hasard.
         particle.position.subtractToRef(at, scratch);
-        if (d.shape === "cylinder") scratch.y = 0;
+        if (d.shape !== "sphere") scratch.y = 0;
         if (scratch.lengthSquared() < 1e-6) scratch.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
         scratch.normalize();
         if (d.direction === "inward") scratch.scaleInPlace(-1);
@@ -542,4 +559,45 @@ export function createFromDef(fx: ParticleFactory, at: Vector3, d: ParticleEffec
   if (burst) s.targetStopDuration = 0.05;
   else if (d.duration > 0) s.targetStopDuration = d.duration;
   return s;
+}
+
+// Courbure totale (radians) qui amène le bout d'un doigt de longueur length, parti à distance radius du centre, au
+// centre : un doigt est un arc de cercle qui se courbe vers l'intérieur. Au-delà de ce qu'un arc permet (doigts
+// trop courts pour le rayon), il se courbe au maximum sans atteindre le centre.
+function fingerBend(radius: number, length: number): number {
+  const target = radius / Math.max(length, 1e-3);
+  const reach = (bend: number) => (1 - Math.cos(bend)) / bend;
+  const max = 2.33;
+  if (target >= reach(max)) return max;
+  let low = 1e-4;
+  let high = max;
+  for (let i = 0; i < 30; i++) {
+    const middle = (low + high) / 2;
+    if (reach(middle) < target) low = middle;
+    else high = middle;
+  }
+  return (low + high) / 2;
+}
+
+// Point au hasard sur l'un des doigts, time secondes après l'apparition de l'effet (relatif au point d'accroche).
+function fingerPoint(d: ParticleEffectDef, bend: number, time: number, out: Vector3) {
+  const fingers = Math.max(1, d.arms || 5);
+  const linear = Math.min(1, time / Math.max(0.01, d.closeTime));
+  // Fermeture qui accélère puis ralentit, jusqu'à closeAmount.
+  const progress = linear * linear * (3 - 2 * linear) * d.closeAmount;
+  const angle = Math.floor(Math.random() * fingers) * ((Math.PI * 2) / fingers) + d.spin * time;
+  const length = d.height;
+  const along = length * Math.random();
+  const curvature = (progress * bend) / Math.max(length, 1e-3);
+  const distance = curvature < 1e-5 ? d.radius : d.radius - (1 - Math.cos(curvature * along)) / curvature;
+  const height = curvature < 1e-5 ? along : Math.sin(curvature * along) / curvature;
+  // Épaisseur du doigt : un petit écart au hasard autour de sa ligne.
+  const u = Math.random() * Math.PI * 2;
+  const v = Math.acos(2 * Math.random() - 1);
+  const r = d.fingerWidth * Math.cbrt(Math.random());
+  out.set(
+    Math.cos(angle) * distance + r * Math.sin(v) * Math.cos(u),
+    d.y + height + r * Math.cos(v),
+    Math.sin(angle) * distance + r * Math.sin(v) * Math.sin(u),
+  );
 }

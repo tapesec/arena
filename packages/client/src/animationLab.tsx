@@ -34,6 +34,7 @@ import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition } from "./game/abil
 import {
   BUILTIN_DEFS,
   CODE_RECIPES,
+  DEFAULT_DEF,
   createFromDef,
   particleEffectChoices,
   particleEffectLabel,
@@ -214,7 +215,15 @@ class Stage {
   private tickFx(instance: CharacterInstance) {
     const preview = this.fxPreview!;
     const def = preview.def;
-    const period = def.emission === "burst" ? def.life[1] + 1 : def.duration > 0 ? def.duration + def.life[1] + 1 : Infinity;
+    // Une main qui se referme est rejouée pour revoir la fermeture.
+    const period =
+      def.emission === "burst"
+        ? def.life[1] + 1
+        : def.duration > 0
+          ? def.duration + def.life[1] + 1
+          : def.shape === "fingers"
+            ? def.closeTime + def.life[1] + 1.5
+            : Infinity;
     for (const run of this.fxRuns) {
       // En comparaison, les deux versions de part et d'autre du personnage, un peu devant lui.
       const side = preview.compare ? (run.compare ? 0.8 : -0.8) : 0;
@@ -580,7 +589,9 @@ function AnimationLab() {
     const created = Object.keys({ ...fxSaved, ...fxDraft }).filter((id) => !(id in BUILTIN_DEFS));
     return [...Object.keys(BUILTIN_DEFS), ...created.sort()];
   }, [fxSaved, fxDraft]);
-  const fxDef = fxDraft[fxId] ?? BUILTIN_DEFS[fxId] ?? null;
+  // Réglages complétés des valeurs par défaut (effets enregistrés avant l'ajout d'un réglage).
+  const fxBase = fxDraft[fxId] ?? BUILTIN_DEFS[fxId] ?? null;
+  const fxDef = useMemo(() => (fxBase ? { ...DEFAULT_DEF, ...fxBase } : null), [fxBase]);
   const fxStatus = (id: string): EffectStatus => {
     const d = fxDraft[id];
     const s = fxSaved?.[id];
@@ -589,8 +600,9 @@ function AnimationLab() {
   };
   const fxUnsaved = fxSaved !== null && JSON.stringify(fxDraft) !== JSON.stringify(fxSaved);
   useEffect(() => {
-    if (!fxIds.includes(fxId)) setFxId(fxIds[0]);
-  }, [fxIds, fxId]);
+    // Attendre la lecture des effets enregistrés : l'effet choisi peut en faire partie.
+    if (fxSaved && !fxIds.includes(fxId)) setFxId(fxIds[0]);
+  }, [fxSaved, fxIds, fxId]);
   const compareRecipe = fxCompare && fxId in BUILTIN_DEFS ? (CODE_RECIPES[fxId] ?? null) : null;
   useEffect(() => {
     stageRef.current?.previewEffect(tab === "effets" ? fxDef : null, fxAnchor, compareRecipe);
