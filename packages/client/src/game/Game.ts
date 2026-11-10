@@ -499,7 +499,7 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
-    this.spellEffects.statuses.update(dt, this.players.values());
+    this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);

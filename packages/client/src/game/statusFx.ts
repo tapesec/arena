@@ -12,7 +12,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { Scene } from "@babylonjs/core/scene";
-import { getAbility } from "@arena/shared";
+import { RAMPART_RADIUS, getAbility } from "@arena/shared";
 import {
   arcaneColumn,
   arcaneSparks,
@@ -62,6 +62,9 @@ interface PlayerStatus {
   bubble: Mesh | null;
   // Cercles de la Nova de givre en cours d'incantation.
   nova: TransformNode | null;
+  // Dôme du Rempart, vu seulement par l'équipe du Gardien.
+  dome: Mesh | null;
+  domeAge: number;
 
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
@@ -96,6 +99,11 @@ const AURAS: Record<string, Aura> = {
 // Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
 const NOVA_RINGS = 3;
 const NOVA_RING_PERIOD = 1.2;
+// Dôme du Rempart : durée du déploiement et du fondu final (secondes).
+const DOME_APPEAR = 0.5;
+const DOME_FADE = 0.8;
+// Hauteur du dôme au sommet (mètres) : assez bas pour que la caméra le voie de dessus.
+const DOME_HEIGHT = 7.5;
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
 export class StatusFx {
@@ -107,6 +115,8 @@ export class StatusFx {
   private bubbleMaterial: StandardMaterial;
   private rimMaterial: StandardMaterial;
   private novaMaterial: StandardMaterial;
+  private domeMaterial: StandardMaterial;
+  private domeRimMaterial: StandardMaterial;
   private novaRadius = getAbility("frostNova")?.radius ?? 15;
   private time = 0;
 
@@ -119,9 +129,12 @@ export class StatusFx {
     this.bubbleMaterial = bubbleMaterial(scene);
     this.rimMaterial = rimMaterial(scene);
     this.novaMaterial = novaMaterial(scene);
+    this.domeMaterial = domeMaterial(scene);
+    this.domeRimMaterial = domeRimMaterial(scene);
   }
 
-  update(dt: number, players: Iterable<PlayerVisual>) {
+  // localTeam : équipe du joueur local (le dôme du Rempart n'est montré qu'à l'équipe du Gardien).
+  update(dt: number, players: Iterable<PlayerVisual>, localTeam: number | null) {
     this.time += dt;
     const seen = new Set<PlayerVisual>();
     for (const player of players) {
@@ -133,8 +146,9 @@ export class StatusFx {
       const bubble = alive && player.hasEffect("bubble");
       const aura = alive && Object.values(AURAS).some((a) => a.active(player, Infinity));
       const nova = alive && player.state.castAbility === "frostNova";
+      const dome = alive ? (player.state.team === localTeam ? remaining(player, "rampart") : 0) : 0;
       let status = this.statuses.get(player);
-      if (!status && !mez && !stun && !root && !bubble && !aura && !nova) continue;
+      if (!status && !mez && !stun && !root && !bubble && !aura && !nova && !dome) continue;
       status ??= this.track(player);
       const speed = Math.hypot(player.root.position.x - status.lastX, player.root.position.z - status.lastZ) / Math.max(dt, 1e-3);
       status.lastX = player.root.position.x;
@@ -150,6 +164,7 @@ export class StatusFx {
       this.updateRoot(status, root, player);
       this.updateBubble(status, bubble, this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);
+      this.updateDome(status, dome, dt);
     }
     // Joueurs disparus (déconnectés, sortis du champ de vision).
     for (const [player, status] of this.statuses) {
@@ -187,6 +202,8 @@ export class StatusFx {
       rootDuration: 0,
       bubble: null,
       nova: null,
+      dome: null,
+      domeAge: 0,
 
       auras: new Map(),
       body: new Vector3(),
@@ -310,6 +327,41 @@ export class StatusFx {
     });
   }
 
+  // Rempart : dôme rouge très transparent sur toute la zone protégée (30 m de rayon). Il est aplati (DOME_HEIGHT) :
+  // à pleine hauteur, la caméra serait dedans et n'en verrait presque rien. Liseré au sol et quelques lignes
+  // horizontales pour en lire la forme. left : temps restant du Rempart (0 quand il n'y en a pas).
+  private updateDome(status: PlayerStatus, left: number, dt: number) {
+    if (left > 0 && !status.dome) {
+      status.dome = CreateSphere("rampartDome", { diameter: RAMPART_RADIUS * 2, segments: 48, slice: 0.5 }, this.scene);
+      status.dome.material = this.domeMaterial;
+      status.dome.isPickable = false;
+      status.dome.parent = status.anchor;
+      // Liseré au sol, puis lignes sur la surface (latitudes en degrés, sur la demi-sphère avant aplatissement).
+      for (const latitude of [0, 25, 50, 72]) {
+        const angle = (latitude * Math.PI) / 180;
+        const ring = CreateTorus("rampartLine", { diameter: RAMPART_RADIUS * 2 * Math.cos(angle), thickness: latitude ? 0.12 : 0.2, tessellation: 128 }, this.scene);
+        ring.material = this.domeRimMaterial;
+        ring.isPickable = false;
+        ring.position.y = latitude ? RAMPART_RADIUS * Math.sin(angle) : 0.08;
+        ring.parent = status.dome;
+      }
+      status.domeAge = 0;
+    }
+    if (left <= 0 && status.dome) {
+      status.dome.dispose();
+      status.dome = null;
+    }
+    if (!status.dome) return;
+    status.domeAge += dt;
+    // Le dôme se déploie depuis le Gardien, puis s'estompe juste avant la fin du Rempart.
+    const appear = Math.min(1, status.domeAge / DOME_APPEAR);
+    const grow = Math.max(1 - (1 - appear) ** 3, 0.02);
+    status.dome.scaling.set(grow, grow * (DOME_HEIGHT / RAMPART_RADIUS), grow);
+    const visibility = Math.min(appear, left / DOME_FADE, 1) * (0.85 + Math.sin(this.time * 2.5) * 0.15);
+    status.dome.visibility = visibility;
+    for (const child of status.dome.getChildMeshes()) child.visibility = visibility;
+  }
+
   // Bulle irisée : un volume à peine teinté et un anneau lumineux sur son contour, toujours tourné vers la caméra.
   // Elle n'apparaît que 2 s après son lancement (voir bubbleWasApplied), pas quand un adversaire entre dans le
   // champ de vision avec sa bulle déjà posée. age : temps écoulé depuis le lancement.
@@ -422,6 +474,33 @@ function novaMaterial(scene: Scene): StandardMaterial {
   material.alphaMode = Constants.ALPHA_ADD;
   material.backFaceCulling = false;
   material.alpha = 0.6;
+  return material;
+}
+
+// Dôme du Rempart : voile rouge additif, à peine visible ; il n'écrit pas dans le tampon de profondeur, pour ne
+// cacher ni les personnages ni les effets qui sont dessous.
+function domeMaterial(scene: Scene): StandardMaterial {
+  const material = new StandardMaterial("rampartDome", scene);
+  material.diffuseColor = Color3.Black();
+  material.specularColor = Color3.Black();
+  material.emissiveColor = new Color3(1, 0.25, 0.12);
+  material.disableLighting = true;
+  material.backFaceCulling = false;
+  material.disableDepthWrite = true;
+  material.alphaMode = Constants.ALPHA_ADD;
+  material.alpha = 0.06;
+  return material;
+}
+
+// Liseré au sol et lignes du dôme du Rempart.
+function domeRimMaterial(scene: Scene): StandardMaterial {
+  const material = new StandardMaterial("rampartRim", scene);
+  material.diffuseColor = Color3.Black();
+  material.specularColor = Color3.Black();
+  material.emissiveColor = new Color3(1, 0.3, 0.15);
+  material.disableLighting = true;
+  material.alphaMode = Constants.ALPHA_ADD;
+  material.alpha = 0.5;
   return material;
 }
 
