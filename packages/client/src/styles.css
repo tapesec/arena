@@ -1594,3 +1594,174 @@ body,
 .lab-key-label {
   color: #e6c8ff;
 }
+
+/* Onglets de la page de réglage */
+.lab-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.anim-toolbar .lab-tabs button {
+  border-radius: 3px 3px 0 0;
+}
+
+.anim-toolbar .lab-tabs button.lab-tab-active {
+  background: #3a3f4c;
+  border-color: #ffd76a;
+  color: #ffd76a;
+}
+
+.lab-new {
+  color: #9be37f;
+}
+
+/* Réglages d'un effet à particules (colonne de droite) */
+.fx-side {
+  width: 360px;
+  overflow-y: auto;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(10, 12, 16, 0.85);
+  padding: 8px 12px 16px;
+}
+
+.fx-side h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffd76a;
+}
+
+.fx-group {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fx-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: flex-end;
+}
+
+.fx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.fx-field b {
+  color: #ffd76a;
+  font-weight: normal;
+}
+
+.fx-field input[type="range"] {
+  width: 100%;
+}
+
+.fx-side select,
+.fx-side input[type="text"],
+.fx-side textarea,
+.fx-side button {
+  font: inherit;
+  color: inherit;
+  background: #232833;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 3px 6px;
+}
+
+.fx-side button:disabled {
+  opacity: 0.4;
+}
+
+.fx-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.fx-colors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+/* Dégradé sur un damier, pour voir la transparence */
+.fx-gradient {
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #555;
+}
+
+.fx-stop {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.fx-stop label {
+  display: flex;
+  flex-direction: column;
+}
+
+.fx-stop input[type="range"] {
+  width: 100%;
+}
+
+.fx-stop input[type="color"] {
+  width: 32px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.fx-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0;
+}
+
+.fx-requests {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.fx-requests textarea {
+  resize: vertical;
+}
+
+.fx-requests ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+
+.fx-requests li {
+  margin-bottom: 4px;
+}
+
+.fx-request-done {
+  color: #9be37f;
+}
+
+.lab-fx-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 1px 6px;
+  font-size: 12px;
+  background: rgba(10, 12, 16, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  white-space: nowrap;
+}

@@ -15,6 +15,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import { getAbility, type AbilityDef } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
+import { recipeById } from "./particleDefs";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
 import { StatusFx } from "./statusFx";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
@@ -46,27 +47,27 @@ const VISUALS: Record<string, Visual> = {
   aoeMez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], area: [P.arcaneMist], core: 0.25 },
   aoeRoot: { trail: [P.frostTrail], impact: [P.frostBurst], area: [P.frostWave, P.frostField], core: 0.25 },
   blast: { area: [P.fireWave, P.fireField] },
-  heal: { ground: [P.healColumn] },
-  instantHeal: { impact: [P.healFlash] },
+  heal: { ground: [recipeById("healColumn")] },
+  instantHeal: { impact: [recipeById("healFlash")] },
   groupHeal: { area: [P.healField] },
   backstab: { slash: true },
   powerStrike: { slash: true },
   cripplingStrike: { slash: true },
-  chargeImpact: { slash: true, impact: [P.critSparks] },
+  chargeImpact: { slash: true, impact: [recipeById("critSparks")] },
   rallyCry: { area: [P.rallyWave] },
   flankStrike: { slash: true },
-  buffHp: { ground: [P.buffSpiral] },
-  buffStrength: { ground: [P.buffSpiral] },
-  resurrect: { ground: [P.resurrectRain], beam: true },
-  speedSong: { impact: [P.noteBurst] },
+  buffHp: { ground: [recipeById("buffSpiral")] },
+  buffStrength: { ground: [recipeById("buffSpiral")] },
+  resurrect: { ground: [recipeById("resurrectRain")], beam: true },
+  speedSong: { impact: [recipeById("noteBurst")] },
 };
 // Effet sur la cible touchée par un sort de dégâts, selon son type (AbilityDef.school) : elle brûle un instant, ou
 // se couvre de givre le temps du ralentissement du Trait de givre. La Brûlure (un dot) a son effet à part, qui
 // dure autant qu'elle (voir StatusFx).
 type School = NonNullable<AbilityDef["school"]>;
 const AFFLICTIONS: Record<School, { recipes: Recipe[]; duration: number }> = {
-  fire: { recipes: [P.burning, P.burningSmoke], duration: 1.2 },
-  frost: { recipes: [P.frostCoat], duration: 4 },
+  fire: { recipes: [recipeById("burning"), recipeById("burningSmoke")], duration: 1.2 },
+  frost: { recipes: [recipeById("frostCoat")], duration: 4 },
 };
 const OWN_AFFLICTION = new Set(["burn"]);
 
@@ -156,7 +157,7 @@ export class SpellEffects {
   // La bulle absorbe un coup et éclate : un anneau lumineux qui s'élargit, et des éclats irisés.
   bubblePop(anchor: TransformNode) {
     const center = anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
-    P.bubbleShards(this.particles, center.clone());
+    recipeById("bubbleShards")(this.particles, center.clone());
     const ring = CreateTorus("bubblePop", { diameter: 2.4, thickness: 0.1, tessellation: 48 }, this.scene);
     ring.rotation.x = Math.PI / 2;
     ring.bakeCurrentTransformIntoVertices();
@@ -179,7 +180,7 @@ export class SpellEffects {
 
   // Coup critique : gerbe d'étincelles dorées sur la cible.
   critHit(anchor: TransformNode) {
-    P.critSparks(this.particles, anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0)));
+    recipeById("critSparks")(this.particles, anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0)));
   }
 
   // Particules d'impact sur un personnage : à hauteur du corps, ou aux pieds.
@@ -190,7 +191,7 @@ export class SpellEffects {
     for (const recipe of visual.ground ?? []) recipe(this.particles, feet.clone());
     if (visual.slash) {
       this.spawnSlash(body);
-      P.critSparks(this.particles, body.clone(), 0.6);
+      recipeById("critSparks")(this.particles, body.clone(), 0.6);
     }
     if (visual.beam) this.spawnBeam(feet);
   }

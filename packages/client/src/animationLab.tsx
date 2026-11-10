@@ -6,7 +6,7 @@ import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
@@ -30,8 +30,19 @@ import {
 } from "./game/abilityAnimations";
 import { CharacterAnimator, framesPerSecond } from "./game/CharacterAnimator";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
-import { AbilityEffectPlayer, EFFECT_ANCHORS, EFFECT_RECIPES } from "./game/abilityEffects";
-import { ParticleFactory } from "./game/particles";
+import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition } from "./game/abilityEffects";
+import {
+  BUILTIN_DEFS,
+  CODE_RECIPES,
+  createFromDef,
+  particleEffectChoices,
+  particleEffectLabel,
+  setParticleEffectDefs,
+  type ParticleEffectDef,
+} from "./game/particleDefs";
+import { EffectEditor, EffectList, RequestsPanel, newEffectDef, type EffectStatus, type ParticleRequest } from "./particleLab";
+import { ParticleFactory, type Recipe } from "./game/particles";
+import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import catalog from "./animationCatalog.json";
 import "./styles.css";
 
@@ -43,6 +54,8 @@ import "./styles.css";
 const LIBRARIES = ["/dev-models/animations/UAL1.glb", "/dev-models/animations/UAL2.glb"];
 const DRAFT_KEY = "arena.animationLab.draft";
 const SELECTION_KEY = "arena.animationLab.selection";
+const FX_DRAFT_KEY = "arena.animationLab.fxDraft";
+type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
 // Pas de la timeline : une image d'animation à 60 images/s.
@@ -55,6 +68,8 @@ interface FrameInfo {
   playhead: number | null;
   // Progression de l'incantation simulée (0 à 1), null hors incantation.
   cast: number | null;
+  // Onglet des effets, en comparaison : position à l'écran (pixels CSS) des étiquettes des deux versions.
+  labels?: { x: number; y: number; text: string }[];
 }
 
 class Stage {
@@ -76,6 +91,12 @@ class Stage {
   // Animation figée pour la pose montrée (sans fondu), tant qu'on ne relance pas la lecture.
   private frozen: AnimationGroup | null = null;
   private effects: AbilityEffectPlayer;
+  // Onglet des effets à particules : effet réglé (et version du code à comparer, à droite du personnage), joué en
+  // boucle sur le personnage au repos.
+  private fxPreview: { def: ParticleEffectDef; anchor: EffectAnchor; compare: Recipe | null; key: string } | null = null;
+  private fxRuns: { system: ParticleSystem | null; at: Vector3; created: number; compare: boolean }[] = [];
+  private clock = 0;
+  private camera: ArcRotateCamera;
   onFrame: ((info: FrameInfo) => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -87,6 +108,7 @@ class Stage {
     sun.intensity = 1.6;
     // Trois-quarts face (le personnage regarde vers +z) ; la souris tourne autour, la molette rapproche.
     const camera = new ArcRotateCamera("camera", Math.PI / 3, 1.25, 5.5, new Vector3(0, 1.1, 0), this.scene);
+    this.camera = camera;
     camera.lowerRadiusLimit = 2;
     camera.upperRadiusLimit = 12;
     camera.wheelPrecision = 40;
@@ -111,6 +133,8 @@ class Stage {
   async load(classId: string): Promise<CharacterInstance | null> {
     const build = ++this.build;
     this.effects.stopAll();
+    this.stopFx();
+    this.resetRuns();
     this.animator = null;
     this.frozen = null;
     this.instance?.dispose();
@@ -160,6 +184,67 @@ class Stage {
     return this.mode === "play";
   }
 
+  previewEffect(def: ParticleEffectDef | null, anchor: EffectAnchor, compare: Recipe | null) {
+    const key = def ? `${JSON.stringify(def)}|${anchor}|${compare ? 1 : 0}` : "";
+    if (key === (this.fxPreview?.key ?? "")) return;
+    const switched = !!def !== !!this.fxPreview;
+    this.stopFx();
+    this.fxPreview = def ? { def, anchor, compare, key } : null;
+    this.resetRuns();
+    // Changement d'onglet : pose normale animée, ou retour à la pose figée de l'animation.
+    if (switched) this.restart();
+  }
+
+  private resetRuns() {
+    if (!this.fxPreview) return;
+    this.fxRuns = [{ system: null, at: new Vector3(), created: -Infinity, compare: false }];
+    if (this.fxPreview.compare) this.fxRuns.push({ system: null, at: new Vector3(), created: -Infinity, compare: true });
+  }
+
+  private stopFx() {
+    for (const run of this.fxRuns) {
+      if (!run.system) continue;
+      run.system.emitter = run.at.clone();
+      run.system.stop();
+    }
+    this.fxRuns = [];
+  }
+
+  // Effet du réglage : rejoué après sa fin s'il est bref (gerbe, durée limitée), entretenu sinon.
+  private tickFx(instance: CharacterInstance) {
+    const preview = this.fxPreview!;
+    const def = preview.def;
+    const period = def.emission === "burst" ? def.life[1] + 1 : def.duration > 0 ? def.duration + def.life[1] + 1 : Infinity;
+    for (const run of this.fxRuns) {
+      // En comparaison, les deux versions de part et d'autre du personnage, un peu devant lui.
+      const side = preview.compare ? (run.compare ? 0.8 : -0.8) : 0;
+      const offset: [number, number, number] = [side, 0, preview.compare ? 0.4 : 0];
+      effectPosition(instance, { recipe: "", start: 0, end: 0, anchor: preview.anchor, offset }, 0, run.at);
+      if (this.clock - run.created < period) continue;
+      if (run.system) {
+        run.system.emitter = run.at.clone();
+        run.system.stop();
+      }
+      run.system = run.compare ? preview.compare!(this.fx, run.at) : createFromDef(this.fx, run.at, def, "preview");
+      run.created = this.clock;
+    }
+  }
+
+  // Étiquettes « Réglages » et « Code » au-dessus des deux versions comparées.
+  private fxLabels(): FrameInfo["labels"] {
+    if (!this.fxPreview?.compare) return [];
+    const width = this.engine.getRenderWidth();
+    const height = this.engine.getRenderHeight();
+    const canvas = this.engine.getRenderingCanvas();
+    const ratio = (canvas?.clientWidth ?? width) / Math.max(1, width);
+    const viewport = this.camera.viewport.toGlobal(width, height);
+    return this.fxRuns.map((run) => {
+      const above = run.at.add(new Vector3(0, 0.7, 0));
+      const projected = Vector3.Project(above, Matrix.Identity(), this.scene.getTransformMatrix(), viewport);
+      return { x: projected.x * ratio, y: projected.y * ratio, text: run.compare ? "Code" : "Réglages" };
+    });
+  }
+
   private restart() {
     const instance = this.instance;
     if (!instance) return;
@@ -169,13 +254,13 @@ class Stage {
     // Nouvel animateur : il remet les fondus que la pose figée retire.
     this.animator = new CharacterAnimator(instance.animations, instance.set, this.tuning);
     this.cycle = { phase: "idle", time: IDLE_PAUSE - 0.3 };
-    if (this.mode === "scrub") this.showFrame();
+    if (this.mode === "scrub" && !this.fxPreview) this.showFrame();
   }
 
   private showFrame() {
     const instance = this.instance;
     const group = this.entry && instance?.animations.get(this.entry.animation);
-    if (!instance || !group) return;
+    if (!instance || !group || this.fxPreview) return;
     if (this.frozen !== group) {
       for (const other of instance.animations.values()) other.stop();
       group.enableBlending = false;
@@ -190,9 +275,29 @@ class Stage {
 
   private tick(dt: number) {
     this.fx.update();
+    this.clock += dt;
     const instance = this.instance;
     const animator = this.animator;
     const entry = this.entry;
+    if (this.fxPreview) {
+      if (!instance || !animator) return;
+      animator.update({
+        alive: true,
+        castAbility: "",
+        castElapsed: 0,
+        castDuration: 0,
+        stunned: false,
+        rooted: false,
+        charging: false,
+        rampart: false,
+        forward: 0,
+        right: 0,
+      });
+      instance.setStowed(false);
+      this.tickFx(instance);
+      this.onFrame?.({ playhead: null, cast: null, labels: this.fxLabels() });
+      return;
+    }
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
     if (this.mode === "scrub" && instance && entry && this.frozen) {
       this.effects.update(instance, { abilityId: this.abilityId, entry, time: this.scrubTime });
@@ -277,7 +382,12 @@ function round(value: number): number {
 }
 
 function roundEntry(entry: AbilityAnimation): AbilityAnimation {
-  const rounded: AbilityAnimation = { animation: entry.animation, start: round(entry.start), rate: round(entry.rate), end: round(entry.end) };
+  const rounded: AbilityAnimation = {
+    animation: entry.animation,
+    start: round(entry.start),
+    rate: round(entry.rate),
+    end: round(entry.end),
+  };
   if (entry.effects) {
     rounded.effects = entry.effects.map((effect) => ({
       recipe: effect.recipe,
@@ -286,7 +396,11 @@ function roundEntry(entry: AbilityAnimation): AbilityAnimation {
       anchor: effect.anchor,
       offset: effect.offset.map(round) as [number, number, number],
       ...(effect.keys && {
-        keys: effect.keys.map((key) => ({ time: round(key.time), anchor: key.anchor, offset: key.offset.map(round) as [number, number, number] })),
+        keys: effect.keys.map((key) => ({
+          time: round(key.time),
+          anchor: key.anchor,
+          offset: key.offset.map(round) as [number, number, number],
+        })),
       }),
     }));
   }
@@ -333,7 +447,21 @@ function AnimationLab() {
   const stageRef = useRef<Stage | null>(null);
   const playheadRef = useRef<HTMLDivElement>(null);
   const castBarRef = useRef<HTMLDivElement>(null);
-  const initial = readStorage<{ classId: ClassId; abilityId: string }>(SELECTION_KEY);
+  const labelsRef = useRef<HTMLDivElement>(null);
+  const initial = readStorage<{
+    classId: ClassId;
+    abilityId: string;
+    tab?: "animations" | "effets";
+    fxId?: string;
+    fxAnchor?: EffectAnchor;
+  }>(SELECTION_KEY);
+  const [tab, setTab] = useState<"animations" | "effets">(initial?.tab ?? "animations");
+  const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
+  const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
+  const [fxId, setFxId] = useState(initial?.fxId ?? "fireCharge");
+  const [fxAnchor, setFxAnchor] = useState<EffectAnchor>(initial?.fxAnchor ?? "hands");
+  const [fxCompare, setFxCompare] = useState(false);
+  const [requests, setRequests] = useState<ParticleRequest[]>([]);
   const [classId, setClassId] = useState<ClassId>(initial?.classId ?? "arcaniste");
   const [abilityId, setAbilityId] = useState(initial?.abilityId ?? "firebolt");
   const [instance, setInstance] = useState<CharacterInstance | null>(null);
@@ -356,7 +484,17 @@ function AnimationLab() {
     const created = new Stage(canvasRef.current!);
     stageRef.current = created;
     Object.assign(window, { lab: created });
-    created.onFrame = ({ playhead, cast }) => {
+    created.onFrame = ({ playhead, cast, labels }) => {
+      const tags = labelsRef.current;
+      if (tags) {
+        [...tags.children].forEach((tag, i) => {
+          const label = labels?.[i];
+          (tag as HTMLElement).style.display = label ? "block" : "none";
+          if (!label) return;
+          tag.textContent = label.text;
+          (tag as HTMLElement).style.transform = `translate(${label.x}px, ${label.y}px) translate(-50%, -100%)`;
+        });
+      }
       const head = playheadRef.current;
       if (head) {
         head.style.display = playhead === null ? "none" : "block";
@@ -373,14 +511,61 @@ function AnimationLab() {
 
   // Réglages enregistrés, et brouillon du navigateur s'il y en a un.
   useEffect(() => {
-    void fetch("/__animation-tuning")
-      .then((response) => (response.ok ? (response.json() as Promise<AnimationTuning>) : Promise.reject(new Error(String(response.status)))))
+    void fetch("/__dev-file/animationTuning")
+      .then((response) =>
+        response.ok ? (response.json() as Promise<AnimationTuning>) : Promise.reject(new Error(String(response.status))),
+      )
       .then((tuning) => {
         setSaved(tuning);
         setDraft(readStorage<AnimationTuning>(DRAFT_KEY) ?? tuning);
       })
       .catch(() => setError("Impossible de lire les réglages : la page doit être servie par le serveur de développement (npm run dev)."));
+    void fetch("/__dev-file/particleEffects")
+      .then((response) => response.json() as Promise<ParticleDefs | null>)
+      .then((defs) => {
+        setFxSaved(defs ?? {});
+        setFxDraft(readStorage<ParticleDefs>(FX_DRAFT_KEY) ?? defs ?? {});
+      });
+    void fetch("/__dev-file/particleRequests")
+      .then((response) => response.json() as Promise<ParticleRequest[] | null>)
+      .then((list) => setRequests(list ?? []));
   }, []);
+
+  // Effets en cours de réglage : utilisés aussi par l'onglet des animations.
+  useEffect(() => setParticleEffectDefs(fxDraft), [fxDraft]);
+
+  useEffect(() => {
+    if (!fxSaved) return;
+    writeStorage(FX_DRAFT_KEY, JSON.stringify(fxDraft) !== JSON.stringify(fxSaved) ? fxDraft : null);
+  }, [fxDraft, fxSaved]);
+
+  // Onglet des effets : suit les demandes traitées par Claude et les effets qu'il ajoute (sans écraser un effet en
+  // cours de modification ici).
+  useEffect(() => {
+    if (tab !== "effets") return;
+    const timer = setInterval(() => {
+      void fetch("/__dev-file/particleRequests")
+        .then((response) => response.json() as Promise<ParticleRequest[] | null>)
+        .then((list) => setRequests(list ?? []));
+      void fetch("/__dev-file/particleEffects")
+        .then((response) => response.json() as Promise<ParticleDefs | null>)
+        .then((file) => {
+          if (!file) return;
+          setFxSaved((previous) => {
+            if (!previous) return previous;
+            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
+            if (!changed.length) return previous;
+            setFxDraft((draft) => {
+              const next = { ...draft };
+              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
+              return next;
+            });
+            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
+          });
+        });
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [tab]);
 
   useEffect(() => {
     if (!saved) return;
@@ -388,7 +573,58 @@ function AnimationLab() {
     writeStorage(DRAFT_KEY, dirty ? draft : null);
   }, [draft, saved]);
 
-  useEffect(() => writeStorage(SELECTION_KEY, { classId, abilityId }), [classId, abilityId]);
+  useEffect(() => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor }), [classId, abilityId, tab, fxId, fxAnchor]);
+
+  // Effets à particules : ceux du jeu convertis en réglages, puis ceux créés ici.
+  const fxIds = useMemo(() => {
+    const created = Object.keys({ ...fxSaved, ...fxDraft }).filter((id) => !(id in BUILTIN_DEFS));
+    return [...Object.keys(BUILTIN_DEFS), ...created.sort()];
+  }, [fxSaved, fxDraft]);
+  const fxDef = fxDraft[fxId] ?? BUILTIN_DEFS[fxId] ?? null;
+  const fxStatus = (id: string): EffectStatus => {
+    const d = fxDraft[id];
+    const s = fxSaved?.[id];
+    if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_DEFS) ? "new" : "draft";
+    return s ? "saved" : "code";
+  };
+  const fxUnsaved = fxSaved !== null && JSON.stringify(fxDraft) !== JSON.stringify(fxSaved);
+  useEffect(() => {
+    if (!fxIds.includes(fxId)) setFxId(fxIds[0]);
+  }, [fxIds, fxId]);
+  const compareRecipe = fxCompare && fxId in BUILTIN_DEFS ? (CODE_RECIPES[fxId] ?? null) : null;
+  useEffect(() => {
+    stageRef.current?.previewEffect(tab === "effets" ? fxDef : null, fxAnchor, compareRecipe);
+  }, [tab, fxDef, fxAnchor, compareRecipe, instance]);
+
+  const setFx = (id: string, def: ParticleEffectDef | null) =>
+    setFxDraft((d) => {
+      const next = { ...d };
+      if (def) next[id] = def;
+      else delete next[id];
+      return next;
+    });
+  const uniqueFxId = (base: string) => {
+    let n = 1;
+    while (`${base}${n}` in fxDraft || `${base}${n}` in BUILTIN_DEFS || `${base}${n}` in (fxSaved ?? {})) n++;
+    return `${base}${n}`;
+  };
+  const sendRequest = async (prompt: string) => {
+    if (!fxDef) return;
+    const request: ParticleRequest = {
+      id: Date.now().toString(36),
+      date: new Date().toISOString(),
+      prompt,
+      effect: fxId,
+      def: fxDef,
+      anchor: fxAnchor,
+      status: "en attente",
+    };
+    const list = [...requests, request];
+    const response = await fetch("/__dev-file/particleRequests", { method: "POST", body: JSON.stringify(list) });
+    if (response.ok) setRequests(list);
+    setMessage(response.ok ? "Demande envoyée : dites à Claude « regarde les demandes de l'atelier »." : "Échec de l'envoi de la demande.");
+    setTimeout(() => setMessage(null), 5000);
+  };
 
   useEffect(() => {
     setInstance(null);
@@ -396,7 +632,10 @@ function AnimationLab() {
     void stage?.load(classId).then(
       (loaded) => loaded && setInstance(loaded),
       // Un chargement abandonné (scène fermée, classe changée) n'est pas une erreur.
-      () => stageRef.current === stage && !stage?.disposed && setError("Bibliothèques complètes introuvables : lancez « node scripts/build-animation-catalog.mjs » à la racine du projet."),
+      () =>
+        stageRef.current === stage &&
+        !stage?.disposed &&
+        setError("Bibliothèques complètes introuvables : lancez « node scripts/build-animation-catalog.mjs » à la racine du projet."),
     );
   }, [classId]);
 
@@ -474,7 +713,7 @@ function AnimationLab() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.code !== "Space" || (event.target as HTMLElement).closest("input, select, textarea")) return;
+      if (tab !== "animations" || event.code !== "Space" || (event.target as HTMLElement).closest("input, select, textarea")) return;
       event.preventDefault();
       togglePlay();
     };
@@ -482,16 +721,27 @@ function AnimationLab() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  // Enregistre ce qui a changé : le calage des animations et les effets à particules.
   const save = async () => {
-    const tuning = normalized(draft);
-    const response = await fetch("/__animation-tuning", { method: "POST", body: JSON.stringify(tuning) });
-    if (!response.ok) {
-      setMessage(`Échec de l'enregistrement : ${await response.text()}`);
-      return;
+    if (unsaved) {
+      const tuning = normalized(draft);
+      const response = await fetch("/__dev-file/animationTuning", { method: "POST", body: JSON.stringify(tuning) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement : ${await response.text()}`);
+        return;
+      }
+      setSaved(tuning);
+      setDraft(tuning);
     }
-    setSaved(tuning);
-    setDraft(tuning);
-    setMessage("Enregistré dans src/game/animationTuning.json : le jeu l'utilise au prochain chargement.");
+    if (fxUnsaved) {
+      const response = await fetch("/__dev-file/particleEffects", { method: "POST", body: JSON.stringify(fxDraft) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement des effets : ${await response.text()}`);
+        return;
+      }
+      setFxSaved(fxDraft);
+    }
+    setMessage("Enregistré (src/game/animationTuning.json, src/game/particleEffects.json) : le jeu l'utilise au prochain chargement.");
     setTimeout(() => setMessage(null), 4000);
   };
 
@@ -509,7 +759,15 @@ function AnimationLab() {
   return (
     <div className="anim-viewer">
       <div className="anim-toolbar">
-        <strong>Réglage des animations</strong>
+        <strong>Réglage</strong>
+        <span className="lab-tabs">
+          <button className={tab === "animations" ? "lab-tab-active" : ""} onClick={() => setTab("animations")}>
+            Animations des compétences
+          </button>
+          <button className={tab === "effets" ? "lab-tab-active" : ""} onClick={() => setTab("effets")}>
+            Effets à particules
+          </button>
+        </span>
         <label>
           Classe
           <select value={classId} onChange={(e) => setClassId(e.target.value as ClassId)}>
@@ -523,34 +781,54 @@ function AnimationLab() {
         <span className="lab-hint">Souris : tourner autour · molette : zoom · espace : lecture</span>
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
-          <button disabled={!unsaved} onClick={() => void save()} className={unsaved ? "lab-save" : ""}>
-            {unsaved ? "Enregistrer" : "Tout est enregistré"}
+          <button disabled={!unsaved && !fxUnsaved} onClick={() => void save()} className={unsaved || fxUnsaved ? "lab-save" : ""}>
+            {unsaved || fxUnsaved ? "Enregistrer" : "Tout est enregistré"}
           </button>
         </span>
       </div>
       <div className="lab-body">
-        <div className="lab-abilities">
-          {ids.map((id) => {
-            const state = status(classId, id);
-            const cast = castTimeOf(id);
-            return (
-              <button
-                key={id}
-                className={`lab-ability ${id === abilityId ? "lab-ability-selected" : ""} ${isStance(set, id) ? "lab-ability-stance" : ""}`}
-                onClick={() => setAbilityId(id)}
-              >
-                <span>{abilityName(id)}</span>
-                <small>
-                  {cast > 0 ? `incantation ${seconds(cast)}` : "instantané"}
-                  {state === "saved" && " · réglé"}
-                  {state === "draft" && " · modifié"}
-                </small>
-              </button>
-            );
-          })}
-        </div>
+        {tab === "effets" && (
+          <EffectList
+            ids={fxIds}
+            defs={fxDraft}
+            selected={fxId}
+            status={fxStatus}
+            onSelect={setFxId}
+            onNew={() => {
+              const id = uniqueFxId("effet");
+              setFx(id, newEffectDef());
+              setFxId(id);
+            }}
+          />
+        )}
+        {tab === "animations" && (
+          <div className="lab-abilities">
+            {ids.map((id) => {
+              const state = status(classId, id);
+              const cast = castTimeOf(id);
+              return (
+                <button
+                  key={id}
+                  className={`lab-ability ${id === abilityId ? "lab-ability-selected" : ""} ${isStance(set, id) ? "lab-ability-stance" : ""}`}
+                  onClick={() => setAbilityId(id)}
+                >
+                  <span>{abilityName(id)}</span>
+                  <small>
+                    {cast > 0 ? `incantation ${seconds(cast)}` : "instantané"}
+                    {state === "saved" && " · réglé"}
+                    {state === "draft" && " · modifié"}
+                  </small>
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="anim-stage">
           <canvas ref={canvasRef} className="anim-canvas" />
+          <div ref={labelsRef} className="anim-labels">
+            <span className="lab-fx-tag" style={{ display: "none" }} />
+            <span className="lab-fx-tag" style={{ display: "none" }} />
+          </div>
           <div ref={castBarRef} className="lab-castbar" style={{ visibility: "hidden" }}>
             <div />
             <span>{abilityName(abilityId)}</span>
@@ -558,91 +836,112 @@ function AnimationLab() {
           {!instance && !error && <div className="lab-loading">Chargement des animations…</div>}
           {error && <div className="anim-error">{error}</div>}
         </div>
-      </div>
-      <div className="lab-panel">
-        {stance ? (
-          <p className="lab-note">
-            {abilityName(abilityId)} est jouée par une posture tenue pendant tout l'effet (voir stances dans characterAssets.ts) :
-            elle ne se règle pas ici.
-          </p>
-        ) : entry ? (
-          <>
-            <div className="lab-controls">
-              <button className="lab-play" onClick={togglePlay}>
-                {playing ? "⏸ Pause" : "▶ Jouer comme en jeu"}
-              </button>
-              <label>
-                Animation
-                <select value={entry.animation} onChange={(e) => chooseAnimation(e.target.value)}>
-                  {animations.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                      {IN_GAME.has(name) ? " ✓" : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <input type="search" placeholder="Filtrer les animations" value={filter} onChange={(e) => setFilter(e.target.value)} />
-              <label className="lab-rate">
-                Vitesse ×{entry.rate.toFixed(2).replace(".", ",")}
-                <input
-                  type="range"
-                  min={MIN_RATE}
-                  max={MAX_RATE}
-                  step={0.01}
-                  value={entry.rate}
-                  onChange={(e) => {
-                    const rate = Number(e.target.value);
-                    // Sort incanté : le début reste en place, la suite du geste garde sa longueur.
-                    const shift = castTime > 0 ? castTime * (rate - entry.rate) : 0;
-                    update({ ...entry, rate, end: entry.end + shift });
-                  }}
-                />
-              </label>
-              <button disabled={sameEntry(tuned, savedEntry)} onClick={revert} title="Revenir au réglage enregistré">
-                Annuler les modifications
-              </button>
-              <button disabled={!tuned} onClick={removeEntry} title="Supprimer le réglage : le jeu reprend le calage prévu dans le code">
-                Revenir au calage du code
-              </button>
-            </div>
-            <Timeline
-              length={length}
-              castTime={castTime}
-              entry={entry}
-              playheadRef={playheadRef}
-              onChange={update}
-              onScrub={scrub}
+        {tab === "effets" && fxDef && (
+          <div className="fx-side">
+            <EffectEditor
+              id={fxId}
+              def={fxDef}
+              onChange={(def) => setFx(fxId, def)}
+              anchor={fxAnchor}
+              onAnchor={setFxAnchor}
+              compare={fxCompare}
+              onCompare={setFxCompare}
+              canCompare={fxId in BUILTIN_DEFS}
+              canRevert={fxStatus(fxId) === "draft" || fxStatus(fxId) === "new"}
+              onRevert={() => setFx(fxId, fxSaved?.[fxId] ?? null)}
+              canBackToCode={fxId in BUILTIN_DEFS && fxId in fxDraft}
+              onBackToCode={() => setFx(fxId, null)}
+              onDuplicate={() => {
+                const id = uniqueFxId(fxId.replace(/\d+$/, ""));
+                setFx(id, { ...fxDef, label: `${fxDef.label} (copie)` });
+                setFxId(id);
+              }}
+              canDelete={!(fxId in BUILTIN_DEFS)}
+              onDelete={() => setFx(fxId, null)}
             />
-            <EffectsPanel
-              length={length}
-              castTime={castTime}
-              entry={entry}
-              selected={selectedEffect}
-              onSelect={setSelectedEffect}
-              cursor={cursor}
-              playing={playing}
-              onChange={(effects) => update({ ...entry, effects })}
-              onScrub={scrub}
-            />
-            <div className="lab-summary">
-              {castTime > 0 ? (
-                <>
-                  Début {seconds(entry.start)} · départ du sort {seconds(release)} · fin {seconds(entry.end)} — à l'écran :
-                  incantation {seconds(castTime)}, puis {seconds(screenAfter)} après le départ du sort
-                </>
-              ) : (
-                <>
-                  Début {seconds(entry.start)} · fin {seconds(entry.end)} — à l'écran : {seconds(screenAfter)}
-                </>
-              )}
-              {!tuned && " · calage actuel du code (pas encore réglé)"}
-            </div>
-          </>
-        ) : (
-          <p className="lab-note">Chargement…</p>
+            <RequestsPanel requests={requests} onSend={(prompt) => void sendRequest(prompt)} />
+          </div>
         )}
       </div>
+      {tab === "animations" && (
+        <div className="lab-panel">
+          {stance ? (
+            <p className="lab-note">
+              {abilityName(abilityId)} est jouée par une posture tenue pendant tout l'effet (voir stances dans characterAssets.ts) : elle ne
+              se règle pas ici.
+            </p>
+          ) : entry ? (
+            <>
+              <div className="lab-controls">
+                <button className="lab-play" onClick={togglePlay}>
+                  {playing ? "⏸ Pause" : "▶ Jouer comme en jeu"}
+                </button>
+                <label>
+                  Animation
+                  <select value={entry.animation} onChange={(e) => chooseAnimation(e.target.value)}>
+                    {animations.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                        {IN_GAME.has(name) ? " ✓" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <input type="search" placeholder="Filtrer les animations" value={filter} onChange={(e) => setFilter(e.target.value)} />
+                <label className="lab-rate">
+                  Vitesse ×{entry.rate.toFixed(2).replace(".", ",")}
+                  <input
+                    type="range"
+                    min={MIN_RATE}
+                    max={MAX_RATE}
+                    step={0.01}
+                    value={entry.rate}
+                    onChange={(e) => {
+                      const rate = Number(e.target.value);
+                      // Sort incanté : le début reste en place, la suite du geste garde sa longueur.
+                      const shift = castTime > 0 ? castTime * (rate - entry.rate) : 0;
+                      update({ ...entry, rate, end: entry.end + shift });
+                    }}
+                  />
+                </label>
+                <button disabled={sameEntry(tuned, savedEntry)} onClick={revert} title="Revenir au réglage enregistré">
+                  Annuler les modifications
+                </button>
+                <button disabled={!tuned} onClick={removeEntry} title="Supprimer le réglage : le jeu reprend le calage prévu dans le code">
+                  Revenir au calage du code
+                </button>
+              </div>
+              <Timeline length={length} castTime={castTime} entry={entry} playheadRef={playheadRef} onChange={update} onScrub={scrub} />
+              <EffectsPanel
+                length={length}
+                castTime={castTime}
+                entry={entry}
+                selected={selectedEffect}
+                onSelect={setSelectedEffect}
+                cursor={cursor}
+                playing={playing}
+                onChange={(effects) => update({ ...entry, effects })}
+                onScrub={scrub}
+              />
+              <div className="lab-summary">
+                {castTime > 0 ? (
+                  <>
+                    Début {seconds(entry.start)} · départ du sort {seconds(release)} · fin {seconds(entry.end)} — à l'écran : incantation{" "}
+                    {seconds(castTime)}, puis {seconds(screenAfter)} après le départ du sort
+                  </>
+                ) : (
+                  <>
+                    Début {seconds(entry.start)} · fin {seconds(entry.end)} — à l'écran : {seconds(screenAfter)}
+                  </>
+                )}
+                {!tuned && " · calage actuel du code (pas encore réglé)"}
+              </div>
+            </>
+          ) : (
+            <p className="lab-note">Chargement…</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -744,8 +1043,16 @@ function Timeline(props: {
               title="Incantation : glisser pour déplacer la portion jouée"
             >
               <span>Incantation {seconds(castTime)}</span>
-              <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin("start", e)} title="Début (étire la fenêtre : change la vitesse)" />
-              <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin("release", e)} title="Départ du sort (change la vitesse)" />
+              <div
+                className="lab-handle lab-handle-left"
+                onPointerDown={(e) => begin("start", e)}
+                title="Début (étire la fenêtre : change la vitesse)"
+              />
+              <div
+                className="lab-handle lab-handle-right"
+                onPointerDown={(e) => begin("release", e)}
+                title="Départ du sort (change la vitesse)"
+              />
             </div>
             <div className="lab-range lab-range-after" style={{ left: percent(release), width: percent(entry.end - release) }}>
               <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin("end", e)} title="Fin du geste" />
@@ -875,7 +1182,10 @@ function EffectsPanel(props: {
       setSelectedKey(existing);
       return;
     }
-    const nearest = keys.reduce<EffectKey | null>((best, k) => (!best || Math.abs(k.time - time) < Math.abs(best.time - time) ? k : best), null);
+    const nearest = keys.reduce<EffectKey | null>(
+      (best, k) => (!best || Math.abs(k.time - time) < Math.abs(best.time - time) ? k : best),
+      null,
+    );
     const source = nearest ?? current;
     const created: EffectKey = { time, anchor: source.anchor, offset: [...source.offset] };
     const list = [...keys, created].sort((a, b) => a.time - b.time);
@@ -917,7 +1227,7 @@ function EffectsPanel(props: {
             style={{ left: percent(effect.start), width: percent(effect.end - effect.start) }}
             onPointerDown={(e) => begin(i, "move", e)}
           >
-            <span>{EFFECT_RECIPES[effect.recipe]?.label ?? effect.recipe}</span>
+            <span>{particleEffectLabel(effect.recipe)}</span>
             <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin(i, "start", e)} title="Début de l'effet" />
             <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin(i, "end", e)} title="Fin de l'effet" />
           </div>
@@ -937,7 +1247,7 @@ function EffectsPanel(props: {
           <label>
             Effet
             <select value={current.recipe} onChange={(e) => replace(index, { ...current, recipe: e.target.value })}>
-              {Object.entries(EFFECT_RECIPES).map(([id, { label }]) => (
+              {particleEffectChoices().map(({ id, label }) => (
                 <option key={id} value={id}>
                   {label}
                 </option>

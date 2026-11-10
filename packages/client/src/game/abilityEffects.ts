@@ -3,45 +3,11 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { AbilityAnimation, AnimationEffect, EffectAnchor } from "./abilityAnimations";
 import type { CharacterInstance } from "./characterAssets";
-import * as P from "./particles";
-import type { ParticleFactory, Recipe } from "./particles";
+import { particleRecipe } from "./particleDefs";
+import type { ParticleFactory } from "./particles";
 
 // Effets à particules portés par le personnage pendant le geste d'une compétence (réglés sur animation-lab.html) :
 // chacun démarre et s'arrête à un instant du geste, accroché à une partie du corps, avec un décalage.
-
-// Effets proposés, avec leur nom sur la page de réglage.
-export const EFFECT_RECIPES: Record<string, { label: string; recipe: Recipe }> = {
-  fireCharge: { label: "Formation de feu", recipe: P.fireCharge },
-  frostCharge: { label: "Formation de givre", recipe: P.frostCharge },
-  fireTrail: { label: "Traînée de feu", recipe: P.fireTrail },
-  frostTrail: { label: "Traînée de givre", recipe: P.frostTrail },
-  arcaneTrail: { label: "Traînée arcanique", recipe: P.arcaneTrail },
-  silenceTrail: { label: "Traînée de silence", recipe: P.silenceTrail },
-  smokeTrail: { label: "Fumée", recipe: P.smokeTrail },
-  fireBurst: { label: "Explosion de feu", recipe: P.fireBurst },
-  frostBurst: { label: "Éclat de givre", recipe: P.frostBurst },
-  arcaneBurst: { label: "Éclat arcanique", recipe: P.arcaneBurst },
-  silencePuff: { label: "Bouffée de silence", recipe: P.silencePuff },
-  critSparks: { label: "Étincelles", recipe: P.critSparks },
-  healFlash: { label: "Éclair de soin", recipe: P.healFlash },
-  healColumn: { label: "Colonne de soin", recipe: P.healColumn },
-  buffSpiral: { label: "Spirale de buff", recipe: P.buffSpiral },
-  resurrectRain: { label: "Pluie de résurrection", recipe: P.resurrectRain },
-  noteBurst: { label: "Gerbe de notes", recipe: P.noteBurst },
-  notesAura: { label: "Notes de musique", recipe: P.notesAura },
-  mezHalo: { label: "Volutes de mez", recipe: P.mezHalo },
-  frostMist: { label: "Brume de givre", recipe: P.frostMist },
-  frostCoat: { label: "Givre sur le corps", recipe: P.frostCoat },
-  bubbleShards: { label: "Éclats de bulle", recipe: P.bubbleShards },
-  burning: { label: "Flammes", recipe: P.burning },
-  rageFlames: { label: "Flammes de rage", recipe: P.rageFlames },
-  rampartFlames: { label: "Flammes du Rempart", recipe: P.rampartFlames },
-  rallyHalo: { label: "Couronne dorée", recipe: P.rallyHalo },
-  arcaneColumn: { label: "Colonne arcanique", recipe: P.arcaneColumn },
-  arcaneSparks: { label: "Éclairs arcaniques", recipe: P.arcaneSparks },
-  chargeStreak: { label: "Traînée de charge", recipe: P.chargeStreak },
-  speedDust: { label: "Poussière", recipe: P.speedDust },
-};
 
 export const EFFECT_ANCHORS: Record<EffectAnchor, string> = {
   hands: "Entre les mains",
@@ -153,7 +119,7 @@ export class AbilityEffectPlayer {
         if (!run) {
           run = { effect, at: new Vector3(), system: null };
           effectPosition(character, effect, playing.time, run.at);
-          run.system = EFFECT_RECIPES[effect.recipe]?.recipe(this.particles, run.at) ?? null;
+          run.system = particleRecipe(effect.recipe)?.(this.particles, run.at) ?? null;
           this.running.set(key, run);
         }
         run.effect = effect;

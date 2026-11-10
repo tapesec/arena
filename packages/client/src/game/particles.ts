@@ -11,7 +11,7 @@ import type { Scene } from "@babylonjs/core/scene";
 // Au-delà de ce nombre de systèmes actifs, les nouveaux effets secondaires (fumée…) sont ignorés.
 const MAX_ACTIVE = 40;
 
-export type ParticleTexture = "glow" | "spark" | "note";
+export type ParticleTexture = "glow" | "spark" | "note" | "smoke" | "star" | "flake" | "ring" | "feather";
 
 // Une recette : à partir d'un point (déplaçable, pour suivre un projectile ou un personnage), crée et démarre
 // un système de particules. Un système "continu" émet tant qu'on ne l'arrête pas ; une "gerbe" émet tout d'un
@@ -25,7 +25,16 @@ export class ParticleFactory {
   private stopping = new Set<ParticleSystem>();
 
   constructor(private scene: Scene) {
-    this.textures = { glow: glowTexture(scene), spark: sparkTexture(scene), note: noteTexture(scene) };
+    this.textures = {
+      glow: glowTexture(scene),
+      spark: sparkTexture(scene),
+      note: noteTexture(scene),
+      smoke: smokeTexture(scene),
+      star: starTexture(scene),
+      flake: flakeTexture(scene),
+      ring: ringTexture(scene),
+      feather: featherTexture(scene),
+    };
   }
 
   // Crée un système à l'emplacement "at" (le vecteur est partagé : le déplacer déplace l'émetteur).
@@ -123,6 +132,134 @@ function noteTexture(scene: Scene): DynamicTexture {
   texture.hasAlpha = true;
   texture.update();
   return texture;
+}
+
+// Images dessinées pour la page de réglage des effets (fumée, étoile, flocon, anneau, plume), en blanc : la couleur
+// vient du dégradé de chaque effet.
+function drawnTexture(scene: Scene, name: string, draw: (ctx: CanvasRenderingContext2D, size: number) => void): DynamicTexture {
+  const size = 64;
+  const texture = new DynamicTexture(`fx-${name}`, size, scene, true);
+  const ctx = texture.getContext() as CanvasRenderingContext2D;
+  ctx.clearRect(0, 0, size, size);
+  draw(ctx, size);
+  texture.hasAlpha = true;
+  texture.update();
+  return texture;
+}
+
+// Fumée : plusieurs boules floues qui se chevauchent, plus irrégulière que la lueur.
+function smokeTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "smoke", (ctx, size) => {
+    const puffs: [number, number, number, number][] = [
+      [0.5, 0.5, 0.42, 0.55],
+      [0.36, 0.42, 0.24, 0.5],
+      [0.64, 0.4, 0.22, 0.45],
+      [0.42, 0.64, 0.22, 0.45],
+      [0.66, 0.62, 0.2, 0.4],
+    ];
+    for (const [x, y, r, a] of puffs) {
+      const g = ctx.createRadialGradient(x * size, y * size, 0, x * size, y * size, r * size);
+      g.addColorStop(0, `rgba(255,255,255,${a})`);
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+    }
+  });
+}
+
+// Étoile à cinq branches, au centre lumineux.
+function starTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "star", (ctx, size) => {
+    const c = size / 2;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? size * 0.46 : size * 0.19;
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      ctx.lineTo(c + r * Math.cos(a), c + r * Math.sin(a));
+    }
+    ctx.closePath();
+    const g = ctx.createRadialGradient(c, c, 0, c, c, size / 2);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(1, "rgba(255,255,255,0.7)");
+    ctx.fillStyle = g;
+    ctx.fill();
+  });
+}
+
+// Flocon : six branches avec leurs petites ramifications.
+function flakeTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "flake", (ctx, size) => {
+    const c = size / 2;
+    ctx.strokeStyle = "rgba(255,255,255,1)";
+    ctx.lineCap = "round";
+    ctx.lineWidth = size * 0.06;
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3;
+      const dx = Math.cos(a);
+      const dy = Math.sin(a);
+      ctx.beginPath();
+      ctx.moveTo(c, c);
+      ctx.lineTo(c + dx * size * 0.44, c + dy * size * 0.44);
+      for (const [along, branch] of [
+        [0.22, 0.11],
+        [0.33, 0.08],
+      ]) {
+        const bx = c + dx * size * along;
+        const by = c + dy * size * along;
+        for (const side of [-1, 1]) {
+          const b = a + side * (Math.PI / 4);
+          ctx.moveTo(bx, by);
+          ctx.lineTo(bx + Math.cos(b) * size * branch, by + Math.sin(b) * size * branch);
+        }
+      }
+      ctx.stroke();
+    }
+  });
+}
+
+// Anneau lumineux, creux au centre.
+function ringTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "ring", (ctx, size) => {
+    const c = size / 2;
+    const g = ctx.createRadialGradient(c, c, size * 0.24, c, c, size * 0.48);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.45, "rgba(255,255,255,1)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+  });
+}
+
+// Plume : une tige courbe et ses barbes, en diagonale.
+function featherTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "feather", (ctx, size) => {
+    ctx.translate(size / 2, size / 2);
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.44);
+    ctx.bezierCurveTo(size * 0.2, size * 0.1, size * 0.16, -size * 0.3, 0, -size * 0.46);
+    ctx.bezierCurveTo(-size * 0.16, -size * 0.3, -size * 0.2, size * 0.1, 0, size * 0.44);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineWidth = 1.5;
+    for (let y = -size * 0.34; y < size * 0.3; y += size * 0.07) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size * 0.2, y - size * 0.08);
+      ctx.moveTo(0, y);
+      ctx.lineTo(-size * 0.2, y - size * 0.08);
+      ctx.stroke();
+    }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = "rgba(255,255,255,1)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.47);
+    ctx.lineTo(0, -size * 0.4);
+    ctx.stroke();
+  });
 }
 
 const rgba = (hex: string, alpha = 1) => {

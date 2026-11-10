@@ -15,30 +15,17 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { Scene } from "@babylonjs/core/scene";
 import { RAMPART_RADIUS, getAbility, terrainHeight } from "@arena/shared";
-import {
-  arcaneColumn,
-  arcaneSparks,
-  burning,
-  burningSmoke,
-  chargeStreak,
-  fireCharge,
-  frostCharge,
-  frostMist,
-  mezHalo,
-  notesAura,
-  rageFlames,
-  rallyHalo,
-  rampartFlames,
-  speedDust,
-  type ParticleFactory,
-  type Recipe,
-} from "./particles";
+import type { ParticleFactory, Recipe } from "./particles";
+import { recipeById, setParticleEffectDefs, type ParticleEffectDef } from "./particleDefs";
+import particleEffects from "./particleEffects.json";
 import type { PlayerVisual } from "./PlayerVisual";
 import { hasTunedEffects, type AnimationTuning } from "./abilityAnimations";
 import { AbilityEffectPlayer } from "./abilityEffects";
 import animationTuning from "./animationTuning.json";
 
-const TUNING = animationTuning as AnimationTuning;
+const TUNING = animationTuning as unknown as AnimationTuning;
+// Effets à particules réglés sur la page de réglage (ils remplacent ceux du code de même nom).
+setParticleEffectDefs(particleEffects as unknown as Record<string, ParticleEffectDef>);
 // Effet d'incantation prévu dans le code, sauf si le sort a ses effets réglés sur la page de réglage.
 const codeCharge = (p: PlayerVisual, abilityId: string) =>
   p.state.castAbility === abilityId && !hasTunedEffects(TUNING, p.state.classId, abilityId);
@@ -100,21 +87,21 @@ interface Aura {
 // En dessous de cette vitesse (m/s), un personnage accéléré ne soulève pas de poussière.
 const DUST_SPEED = 3;
 const AURAS: Record<string, Aura> = {
-  rage: { recipe: rageFlames, at: "feet", active: (p) => p.hasEffect("rage") },
-  dust: { recipe: speedDust, at: "feet", active: (p, speed) => p.hasEffect("speed") && speed > DUST_SPEED },
-  notes: { recipe: notesAura, at: "head", active: (p) => p.state.songActive },
+  rage: { recipe: recipeById("rageFlames"), at: "feet", active: (p) => p.hasEffect("rage") },
+  dust: { recipe: recipeById("speedDust"), at: "feet", active: (p, speed) => p.hasEffect("speed") && speed > DUST_SPEED },
+  notes: { recipe: recipeById("notesAura"), at: "head", active: (p) => p.state.songActive },
   // Gardien : flammes du Rempart, traînée de la Charge, couronne dorée des alliés du Cri de ralliement.
-  rampart: { recipe: rampartFlames, at: "feet", active: (p) => p.hasEffect("rampart") },
-  charge: { recipe: chargeStreak, at: "body", active: (p) => p.state.charging },
-  rally: { recipe: rallyHalo, at: "head", active: (p) => p.hasEffect("magicImmune") },
+  rampart: { recipe: recipeById("rampartFlames"), at: "feet", active: (p) => p.hasEffect("rampart") },
+  charge: { recipe: recipeById("chargeStreak"), at: "body", active: (p) => p.state.charging },
+  rally: { recipe: recipeById("rallyHalo"), at: "head", active: (p) => p.hasEffect("magicImmune") },
   // Arcaniste : la cible de la Brûlure brûle tant que dure le dot ; colonne et éclairs de la Puissance arcanique.
-  burn: { recipe: burning, at: "feet", active: (p) => p.hasEffect("burning") },
-  burnSmoke: { recipe: burningSmoke, at: "feet", active: (p) => p.hasEffect("burning") },
-  arcaneColumn: { recipe: arcaneColumn, at: "feet", active: (p) => p.hasEffect("arcanePower") },
-  arcaneSparks: { recipe: arcaneSparks, at: "feet", active: (p) => p.hasEffect("arcanePower") },
+  burn: { recipe: recipeById("burning"), at: "feet", active: (p) => p.hasEffect("burning") },
+  burnSmoke: { recipe: recipeById("burningSmoke"), at: "feet", active: (p) => p.hasEffect("burning") },
+  arcaneColumn: { recipe: recipeById("arcaneColumn"), at: "feet", active: (p) => p.hasEffect("arcanePower") },
+  arcaneSparks: { recipe: recipeById("arcaneSparks"), at: "feet", active: (p) => p.hasEffect("arcanePower") },
   // Trait de feu et Trait de givre en incantation : le trait se forme entre les mains.
-  fireCharge: { recipe: fireCharge, at: "hands", active: (p) => codeCharge(p, "firebolt") },
-  frostCharge: { recipe: frostCharge, at: "hands", active: (p) => codeCharge(p, "frostbolt") },
+  fireCharge: { recipe: recipeById("fireCharge"), at: "hands", active: (p) => codeCharge(p, "firebolt") },
+  frostCharge: { recipe: recipeById("frostCharge"), at: "hands", active: (p) => codeCharge(p, "frostbolt") },
 };
 
 // Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
@@ -265,7 +252,7 @@ export class StatusFx {
 
   // Volutes violettes autour de la tête, tant que dure le mez (les « Zzz » sont affichés à part).
   private updateMez(status: PlayerStatus, active: boolean) {
-    if (active && !status.mez) status.mez = mezHalo(this.particles, status.head);
+    if (active && !status.mez) status.mez = recipeById("mezHalo")(this.particles, status.head);
     if (!active && status.mez) {
       status.mez.emitter = status.head.clone();
       status.mez.stop();
@@ -305,7 +292,7 @@ export class StatusFx {
     if (left > 0 && !status.crystals) {
       status.crystals = crystalCrown(this.scene, this.iceMaterial);
       status.crystals.parent = status.anchor;
-      status.mist = frostMist(this.particles, status.feet);
+      status.mist = recipeById("frostMist")(this.particles, status.feet);
       status.rootDuration = left;
     }
     if (left <= 0 && status.crystals) {

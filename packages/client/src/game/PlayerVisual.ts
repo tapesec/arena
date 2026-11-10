@@ -258,7 +258,7 @@ export class PlayerVisual {
         mesh.isPickable = true;
       }
       // Calage des animations de compétence réglé sur la page animation-lab.html.
-      this.animator = new CharacterAnimator(model.animations, model.set, (animationTuning as AnimationTuning)[this.modelClass]);
+      this.animator = new CharacterAnimator(model.animations, model.set, (animationTuning as unknown as AnimationTuning)[this.modelClass]);
       this.showCapsule(false);
     });
   }
