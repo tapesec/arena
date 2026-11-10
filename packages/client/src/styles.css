@@ -1502,3 +1502,71 @@ body,
   margin: 4px 0;
   color: #9a9484;
 }
+
+.lab-effects {
+  margin-top: 10px;
+}
+
+.lab-effects-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.lab-effects-head button {
+  font: inherit;
+  color: inherit;
+  background: #232833;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+
+.lab-effect-track {
+  position: relative;
+  height: 30px;
+  margin-bottom: 4px;
+  background: #1a1d24;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  cursor: crosshair;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Portion jouée de l'animation : un effet reste dedans. */
+.lab-effect-portion {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.lab-range-effect {
+  top: 5px;
+  bottom: 5px;
+  background: rgba(180, 110, 230, 0.35);
+  border: 1px solid #b46ee6;
+  cursor: grab;
+}
+
+.lab-range-effect .lab-handle {
+  top: -4px;
+  bottom: -4px;
+  background: #b46ee6;
+}
+
+.lab-range-effect-selected {
+  background: rgba(180, 110, 230, 0.6);
+  box-shadow: 0 0 0 1px #e6c8ff;
+}
+
+.lab-effect-controls {
+  margin-top: 6px;
+}
+
+.lab-offset input {
+  width: 120px;
+}

@@ -7,11 +7,27 @@ import type { CharacterAnimationSet } from "./characterAssets";
 //   au moment release = start + temps d'incantation × rate. Le geste continue ensuite jusqu'à end, à la même
 //   vitesse, puis le personnage revient en fondu à sa pose normale.
 // - Compétence instantanée : la portion de start à end est jouée à la vitesse rate.
+// - effects : effets à particules portés par le personnage pendant le geste (voir abilityEffects.ts). Absents, le
+//   sort garde ses effets d'incantation prévus dans le code (formation du Trait de feu et du Trait de givre).
 export interface AbilityAnimation {
   animation: string;
   start: number;
   rate: number;
   end: number;
+  effects?: AnimationEffect[];
+}
+
+// Point du personnage où s'accroche un effet.
+export type EffectAnchor = "hands" | "hand_r" | "hand_l" | "weapon" | "head" | "chest" | "feet";
+
+// Effet joué de start à end (secondes dans l'animation, dans la portion jouée), accroché à anchor, décalé de
+// offset (droite, haut, avant, en mètres, dans le repère du personnage).
+export interface AnimationEffect {
+  recipe: string;
+  start: number;
+  end: number;
+  anchor: EffectAnchor;
+  offset: [number, number, number];
 }
 
 export type ClassAnimationTuning = Record<string, AbilityAnimation>;
@@ -26,6 +42,22 @@ export const MAX_RATE = 3;
 const LEGACY_MIN_RATE = 0.6;
 const LEGACY_MAX_RATE = 1.6;
 const LEGACY_FOLLOW_THROUGH = 0.5;
+
+// Effets d'incantation prévus dans le code : le trait se forme entre les mains pendant toute l'incantation.
+const LEGACY_CHARGES: Record<string, string> = { firebolt: "fireCharge", frostbolt: "frostCharge" };
+
+// Le sort a des effets réglés sur la page de réglage (ils remplacent alors ceux prévus dans le code).
+export function hasTunedEffects(tuning: AnimationTuning, classId: string, abilityId: string): boolean {
+  return tuning[classId]?.[abilityId]?.effects !== undefined;
+}
+
+// Effets d'un réglage : les siens, sinon ceux prévus dans le code.
+export function effectsOf(entry: AbilityAnimation, abilityId: string): AnimationEffect[] {
+  if (entry.effects) return entry.effects;
+  const recipe = LEGACY_CHARGES[abilityId];
+  if (!recipe) return [];
+  return [{ recipe, start: entry.start, end: releaseTime(entry, castTimeOf(abilityId)), anchor: "hands", offset: [0, 0, 0] }];
+}
 
 export function castTimeOf(abilityId: string): number {
   return getAbility(abilityId)?.castTime ?? 0;
@@ -58,7 +90,7 @@ export function suggestedAbilityAnimation(
   clipLength: (animation: string) => number,
 ): AbilityAnimation | null {
   const legacy = legacyCastGesture(set, abilityId);
-  if (legacy) return legacy;
+  if (legacy) return { ...legacy, effects: effectsOf(legacy, abilityId) };
   const animation = set.abilities[abilityId] ?? set.abilities.default;
   if (!animation) return null;
   const length = clipLength(animation);
@@ -76,5 +108,16 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
   const start = Math.min(Math.max(0, entry.start), Math.max(0, length - castTime * rate));
   const release = start + castTime * rate;
   const end = Math.min(length, Math.max(entry.end, release + (castTime > 0 ? 0 : 0.05)));
-  return { animation: entry.animation, start, rate, end };
+  const clamped: AbilityAnimation = { animation: entry.animation, start, rate, end };
+  // Les effets restent dans la portion jouée.
+  if (entry.effects) {
+    clamped.effects = entry.effects.map((effect) => {
+      const effectStart = Math.min(Math.max(effect.start, start), end - MIN_EFFECT);
+      return { ...effect, start: effectStart, end: Math.min(end, Math.max(effect.end, effectStart + MIN_EFFECT)) };
+    });
+  }
+  return clamped;
 }
+
+// Durée minimale d'un effet (secondes dans l'animation).
+const MIN_EFFECT = 0.02;

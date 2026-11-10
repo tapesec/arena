@@ -1,5 +1,6 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { castTimeOf, legacyCastGesture, releaseTime, type AbilityAnimation, type ClassAnimationTuning } from "./abilityAnimations";
+import type { PlayingAbility } from "./abilityEffects";
 import type { CharacterAnimationSet } from "./characterAssets";
 
 // Vitesse (m/s) à laquelle chaque animation de déplacement a été enregistrée : on accélère ou ralentit
@@ -96,6 +97,8 @@ export class CharacterAnimator {
     released: boolean;
     endedAt: number | null;
   } | null = null;
+  // Geste de compétence en cours (incantation ou compétence réglée), pour ses effets.
+  private abilityClip: { abilityId: string; entry: AbilityAnimation; group: AnimationGroup } | null = null;
   // Incantation vue à la mise à jour précédente, pour reconnaître une nouvelle incantation du même sort.
   private lastCast = { abilityId: "", elapsed: 0 };
 
@@ -120,6 +123,15 @@ export class CharacterAnimator {
     this.playAction(name, "attack");
   }
 
+  // Compétence réglée dont le geste est en cours, et où il en est dans l'animation (pour ses effets).
+  playingAbility(): PlayingAbility | null {
+    const clip = this.abilityClip;
+    if (!clip || this.action !== clip.group || !clip.group.isPlaying) return null;
+    const frame = clip.group.animatables[0]?.masterFrame;
+    if (frame === undefined) return null;
+    return { abilityId: clip.abilityId, entry: clip.entry, time: (frame - clip.group.from) / framesPerSecond(clip.group) };
+  }
+
   // Le geste d'une compétence est en cours (le lanceur range alors son bâton dans le dos).
   get performingAbility(): boolean {
     return this.actionKind === "ability" && this.action?.isPlaying === true;
@@ -134,6 +146,8 @@ export class CharacterAnimator {
     const tuned = this.tuning[abilityId];
     if (tuned) {
       this.playAction(tuned.animation, "ability", tuned.rate, tuned.start, tuned.end);
+      const group = this.animations.get(tuned.animation);
+      if (group) this.abilityClip = { abilityId, entry: tuned, group };
       return;
     }
     this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability", this.set.abilityRates?.[abilityId] ?? 1);
@@ -262,6 +276,7 @@ export class CharacterAnimator {
       this.switchTo(gesture.group, `gesture:${gesture.abilityId}`, false, gesture.castRate, targetFrame, this.frame(gesture.group, gesture.entry.end));
       this.action = gesture.group;
       this.actionKind = "ability";
+      this.abilityClip = { abilityId: gesture.abilityId, entry: gesture.entry, group: gesture.group };
       return;
     }
     // Recalé sur l'incantation ; arrivé au départ du sort, le geste y attend le message de départ.
@@ -304,6 +319,7 @@ export class CharacterAnimator {
       this.switchTo(gesture.group, `gesture:${abilityId}`, false, entry.rate, releaseFrame, this.frame(gesture.group, entry.end));
       this.action = gesture.group;
       this.actionKind = "ability";
+      this.abilityClip = { abilityId, entry: gesture.entry, group: gesture.group };
     } else {
       gesture.group.speedRatio = gesture.entry.rate;
       const fps = framesPerSecond(gesture.group);

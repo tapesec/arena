@@ -10,7 +10,6 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
-import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import { Scene } from "@babylonjs/core/scene";
 import { CLASS_LIST, CLASSES, getAbility, type ClassId } from "@arena/shared";
 import {
@@ -18,15 +17,19 @@ import {
   MIN_RATE,
   castTimeOf,
   clampAbilityAnimation,
+  effectsOf,
   releaseTime,
   suggestedAbilityAnimation,
   type AbilityAnimation,
+  type AnimationEffect,
   type AnimationTuning,
+  type EffectAnchor,
   type ClassAnimationTuning,
 } from "./game/abilityAnimations";
 import { CharacterAnimator, framesPerSecond } from "./game/CharacterAnimator";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
-import { ParticleFactory, fireCharge, frostCharge, type Recipe } from "./game/particles";
+import { AbilityEffectPlayer, EFFECT_ANCHORS, EFFECT_RECIPES } from "./game/abilityEffects";
+import { ParticleFactory } from "./game/particles";
 import catalog from "./animationCatalog.json";
 import "./styles.css";
 
@@ -40,8 +43,6 @@ const DRAFT_KEY = "arena.animationLab.draft";
 const SELECTION_KEY = "arena.animationLab.selection";
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
-// Particules d'incantation montrées pendant la lecture (comme en jeu, voir statusFx).
-const CHARGES: Record<string, Recipe> = { firebolt: fireCharge, frostbolt: frostCharge };
 // Pas de la timeline : une image d'animation à 60 images/s.
 const SNAP = 1 / 60;
 
@@ -70,10 +71,9 @@ class Stage {
   private mode: "play" | "scrub" = "scrub";
   private scrubTime = 0;
   private cycle: { phase: "idle" | "cast" | "after"; time: number } = { phase: "idle", time: 0 };
-  private charge: ParticleSystem | null = null;
   // Animation figée pour la pose montrée (sans fondu), tant qu'on ne relance pas la lecture.
   private frozen: AnimationGroup | null = null;
-  private hands = new Vector3();
+  private effects: AbilityEffectPlayer;
   onFrame: ((info: FrameInfo) => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -98,6 +98,7 @@ class Stage {
     this.holder = new TransformNode("holder", this.scene);
     this.assets = new CharacterAssets(this.scene, LIBRARIES);
     this.fx = new ParticleFactory(this.scene);
+    this.effects = new AbilityEffectPlayer(this.fx);
     this.scene.onBeforeRenderObservable.add(() => this.tick(Math.min(this.engine.getDeltaTime() / 1000, 0.1)));
     this.engine.runRenderLoop(() => this.scene.render());
     window.addEventListener("resize", this.resize);
@@ -107,7 +108,7 @@ class Stage {
 
   async load(classId: string): Promise<CharacterInstance | null> {
     const build = ++this.build;
-    this.stopCharge();
+    this.effects.stopAll();
     this.animator = null;
     this.frozen = null;
     this.instance?.dispose();
@@ -160,7 +161,7 @@ class Stage {
   private restart() {
     const instance = this.instance;
     if (!instance) return;
-    this.stopCharge();
+    this.effects.stopAll();
     for (const group of instance.animations.values()) group.stop();
     this.frozen = null;
     // Nouvel animateur : il remet les fondus que la pose figée retire.
@@ -173,7 +174,6 @@ class Stage {
     const instance = this.instance;
     const group = this.entry && instance?.animations.get(this.entry.animation);
     if (!instance || !group) return;
-    this.stopCharge();
     if (this.frozen !== group) {
       for (const other of instance.animations.values()) other.stop();
       group.enableBlending = false;
@@ -191,6 +191,10 @@ class Stage {
     const instance = this.instance;
     const animator = this.animator;
     const entry = this.entry;
+    // Pose figée : les effets actifs à cet instant sont montrés à leur place.
+    if (this.mode === "scrub" && instance && entry && this.frozen) {
+      this.effects.update(instance, { abilityId: this.abilityId, entry, time: this.scrubTime });
+    }
     if (this.mode !== "play" || !instance || !animator || !entry) return;
     const castTime = castTimeOf(this.abilityId);
     const cycle = this.cycle;
@@ -224,28 +228,13 @@ class Stage {
       right: 0,
     });
     instance.setStowed(casting || animator.performingAbility);
-    this.updateCharge(casting, instance);
+    this.effects.update(instance, animator.playingAbility());
     const group = instance.animations.get(entry.animation);
     const frame = group?.isPlaying ? group.animatables[0]?.masterFrame : undefined;
     this.onFrame?.({
       playhead: group && frame !== undefined ? (frame - group.from) / framesPerSecond(group) : null,
       cast: casting ? Math.min(1, cycle.time / castTime) : null,
     });
-  }
-
-  private updateCharge(casting: boolean, instance: CharacterInstance) {
-    const recipe = CHARGES[this.abilityId];
-    if (casting && recipe && instance.hands.length) {
-      this.hands.setAll(0);
-      for (const hand of instance.hands) this.hands.addInPlace(hand.getAbsolutePosition());
-      this.hands.scaleInPlace(1 / instance.hands.length);
-      this.charge ??= recipe(this.fx, this.hands);
-    } else this.stopCharge();
-  }
-
-  private stopCharge() {
-    this.charge?.stop();
-    this.charge = null;
   }
 
   disposed = false;
@@ -286,7 +275,17 @@ function round(value: number): number {
 }
 
 function roundEntry(entry: AbilityAnimation): AbilityAnimation {
-  return { animation: entry.animation, start: round(entry.start), rate: round(entry.rate), end: round(entry.end) };
+  const rounded: AbilityAnimation = { animation: entry.animation, start: round(entry.start), rate: round(entry.rate), end: round(entry.end) };
+  if (entry.effects) {
+    rounded.effects = entry.effects.map((effect) => ({
+      recipe: effect.recipe,
+      start: round(effect.start),
+      end: round(effect.end),
+      anchor: effect.anchor,
+      offset: effect.offset.map(round) as [number, number, number],
+    }));
+  }
+  return rounded;
 }
 
 // Réglages sans classe vide, dans un ordre stable (pour comparer et enregistrer).
@@ -337,6 +336,7 @@ function AnimationLab() {
   const [draft, setDraft] = useState<AnimationTuning>({});
   const [playing, setPlaying] = useState(false);
   const [filter, setFilter] = useState("");
+  const [selectedEffect, setSelectedEffect] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -405,7 +405,10 @@ function AnimationLab() {
   const entry = useMemo(() => {
     if (!instance || stance) return null;
     const base = tuned ?? suggestedAbilityAnimation(instance.set, abilityId, (name) => stageRef.current?.clipLength(name) ?? 0);
-    return base && clampAbilityAnimation(base, castTime, stageRef.current?.clipLength(base.animation) ?? 0);
+    if (!base) return null;
+    // Effets montrés tels que le jeu les jouera : ceux du réglage, sinon ceux prévus dans le code.
+    const withEffects = { ...base, effects: effectsOf(base, abilityId) };
+    return clampAbilityAnimation(withEffects, castTime, stageRef.current?.clipLength(base.animation) ?? 0);
   }, [instance, stance, tuned, abilityId, castTime]);
   const length = entry ? clipLength(entry.animation) : 0;
 
@@ -441,7 +444,11 @@ function AnimationLab() {
   const chooseAnimation = (name: string) => {
     const clip = clipLength(name);
     const rate = castTime > 0 ? Math.min(1, clip / castTime) : 1;
-    update({ animation: name, start: 0, rate, end: castTime > 0 ? Math.min(clip, castTime * rate + 0.5) : clip });
+    const end = castTime > 0 ? Math.min(clip, castTime * rate + 0.5) : clip;
+    // Les effets gardent leur place par rapport au début du geste.
+    const shift = -(entry?.start ?? 0);
+    const effects = entry?.effects?.map((effect) => ({ ...effect, start: effect.start + shift, end: effect.end + shift }));
+    update({ animation: name, start: 0, rate, end, effects });
   };
 
   const scrub = (time: number) => {
@@ -599,6 +606,15 @@ function AnimationLab() {
               onChange={update}
               onScrub={scrub}
             />
+            <EffectsPanel
+              length={length}
+              castTime={castTime}
+              entry={entry}
+              selected={selectedEffect}
+              onSelect={setSelectedEffect}
+              onChange={(effects) => update({ ...entry, effects })}
+              onScrub={scrub}
+            />
             <div className="lab-summary">
               {castTime > 0 ? (
                 <>
@@ -659,7 +675,12 @@ function Timeline(props: {
       let next = e0;
       if (kind === "move") {
         const shift = Math.max(-e0.start, Math.min(d, length - Math.max(r0, e0.end)));
-        next = { ...e0, start: e0.start + shift, end: e0.end + shift };
+        next = {
+          ...e0,
+          start: e0.start + shift,
+          end: e0.end + shift,
+          effects: e0.effects?.map((effect) => ({ ...effect, start: effect.start + shift, end: effect.end + shift })),
+        };
       } else if (kind === "start" && casting) {
         // Le départ du sort reste en place : la fenêtre s'étire, la vitesse change.
         const start = Math.min(r0 - castTime * MIN_RATE, Math.max(r0 - castTime * MAX_RATE, 0, e0.start + d));
@@ -731,6 +752,154 @@ function Timeline(props: {
         )}
         <div ref={playheadRef} className="lab-playhead" data-length={length} />
       </div>
+    </div>
+  );
+}
+
+// Déplacement à la souris sur une piste : delta et position du pointeur, en secondes d'animation.
+function dragOnTrack(event: ReactPointerEvent, track: HTMLElement | null, length: number, onMove: (delta: number, at: number) => void) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!track) return;
+  const { left, width } = track.getBoundingClientRect();
+  const x0 = event.clientX;
+  const snap = (time: number) => Math.round(time / SNAP) * SNAP;
+  const move = (e: PointerEvent) => onMove(snap(((e.clientX - x0) / width) * length), snap(((e.clientX - left) / width) * length));
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+  // Un simple clic agit déjà (pose montrée à l'endroit cliqué ou au début de l'effet).
+  onMove(0, snap(((event.clientX - left) / width) * length));
+}
+
+// Réglage du décalage d'un effet (mètres) : un double-clic remet à zéro.
+const OFFSETS: { label: string; min: number; max: number }[] = [
+  { label: "Gauche ← → droite", min: -1.5, max: 1.5 },
+  { label: "Bas ↓ ↑ haut", min: -1.5, max: 2.5 },
+  { label: "Arrière ← → avant", min: -1.5, max: 1.5 },
+];
+
+// Piste des effets à particules (une ligne par effet, à glisser comme la fenêtre d'incantation) et réglages de
+// l'effet sélectionné.
+function EffectsPanel(props: {
+  length: number;
+  castTime: number;
+  entry: AbilityAnimation;
+  selected: number;
+  onSelect: (index: number) => void;
+  onChange: (effects: AnimationEffect[]) => void;
+  onScrub: (time: number) => void;
+}) {
+  const { length, castTime, entry, selected, onSelect, onChange, onScrub } = props;
+  const effects = entry.effects ?? [];
+  const tracks = useRef<(HTMLDivElement | null)[]>([]);
+  const percent = (time: number) => `${(time / Math.max(length, 1e-3)) * 100}%`;
+  const current = effects[Math.min(selected, effects.length - 1)];
+  const index = effects.indexOf(current);
+
+  const replace = (i: number, effect: AnimationEffect) => onChange(effects.map((e, j) => (j === i ? effect : e)));
+
+  const begin = (i: number, kind: "move" | "start" | "end", event: ReactPointerEvent) => {
+    onSelect(i);
+    const e0 = effects[i];
+    dragOnTrack(event, tracks.current[i], length, (d) => {
+      let next = e0;
+      if (kind === "move") {
+        const shift = Math.max(entry.start - e0.start, Math.min(d, entry.end - e0.end));
+        next = { ...e0, start: e0.start + shift, end: e0.end + shift };
+      } else if (kind === "start") next = { ...e0, start: Math.min(e0.end - SNAP, e0.start + d) };
+      else next = { ...e0, end: Math.max(e0.start + SNAP, e0.end + d) };
+      replace(i, next);
+      onScrub(kind === "end" ? next.end : next.start);
+    });
+  };
+
+  const add = () => {
+    const end = castTime > 0 ? releaseTime(entry, castTime) : entry.end;
+    onChange([...effects, { recipe: "fireCharge", start: entry.start, end, anchor: "hands", offset: [0, 0, 0] }]);
+    onSelect(effects.length);
+  };
+
+  return (
+    <div className="lab-effects">
+      <div className="lab-effects-head">
+        <strong>Effets</strong>
+        <button onClick={add}>+ Ajouter un effet</button>
+      </div>
+      {effects.map((effect, i) => (
+        <div
+          key={i}
+          ref={(el) => {
+            tracks.current[i] = el;
+          }}
+          className="lab-effect-track"
+          onPointerDown={(e) => dragOnTrack(e, tracks.current[i], length, (_d, at) => onScrub(at))}
+        >
+          <div className="lab-effect-portion" style={{ left: percent(entry.start), width: percent(entry.end - entry.start) }} />
+          <div
+            className={`lab-range lab-range-effect ${i === index ? "lab-range-effect-selected" : ""}`}
+            style={{ left: percent(effect.start), width: percent(effect.end - effect.start) }}
+            onPointerDown={(e) => begin(i, "move", e)}
+          >
+            <span>{EFFECT_RECIPES[effect.recipe]?.label ?? effect.recipe}</span>
+            <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin(i, "start", e)} title="Début de l'effet" />
+            <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin(i, "end", e)} title="Fin de l'effet" />
+          </div>
+        </div>
+      ))}
+      {current && (
+        <div className="lab-controls lab-effect-controls">
+          <label>
+            Effet
+            <select value={current.recipe} onChange={(e) => replace(index, { ...current, recipe: e.target.value })}>
+              {Object.entries(EFFECT_RECIPES).map(([id, { label }]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Accroché
+            <select value={current.anchor} onChange={(e) => replace(index, { ...current, anchor: e.target.value as EffectAnchor })}>
+              {Object.entries(EFFECT_ANCHORS).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {OFFSETS.map(({ label, min, max }, axis) => (
+            <label key={axis} className="lab-offset" title="Double-clic : remettre à zéro">
+              {label} {current.offset[axis].toFixed(2).replace(".", ",")} m
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step={0.01}
+                value={current.offset[axis]}
+                onChange={(e) => {
+                  const offset = [...current.offset] as [number, number, number];
+                  offset[axis] = Number(e.target.value);
+                  replace(index, { ...current, offset });
+                }}
+                onDoubleClick={() => {
+                  const offset = [...current.offset] as [number, number, number];
+                  offset[axis] = 0;
+                  replace(index, { ...current, offset });
+                }}
+              />
+            </label>
+          ))}
+          <span className="lab-hint">
+            {seconds(current.start)} → {seconds(current.end)}
+          </span>
+          <button onClick={() => onChange(effects.filter((_, j) => j !== index))}>Supprimer l'effet</button>
+        </div>
+      )}
     </div>
   );
 }

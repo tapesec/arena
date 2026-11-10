@@ -9,6 +9,7 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { terrainHeight, type EffectKind } from "@arena/shared";
 import type { AnimationTuning } from "./abilityAnimations";
+import type { PlayingAbility } from "./abilityEffects";
 import animationTuning from "./animationTuning.json";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
@@ -201,6 +202,16 @@ export class PlayerVisual {
 
   playAbility(abilityId: string) {
     this.animator?.ability(abilityId);
+  }
+
+  // Personnage animé (null tant qu'il n'est pas chargé ou si la classe n'en a pas).
+  get character(): CharacterInstance | null {
+    return this.model;
+  }
+
+  // Compétence réglée dont le geste est en cours (pour ses effets à particules).
+  playingAbility(): PlayingAbility | null {
+    return this.isAlive ? (this.animator?.playingAbility() ?? null) : null;
   }
 
   // Incantation interrompue : le geste du sort s'arrête.

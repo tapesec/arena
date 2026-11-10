@@ -311,6 +311,8 @@ export interface CharacterInstance {
   weapons: TransformNode[];
   // Os des mains (droite, gauche) : les effets d'incantation se forment entre elles.
   hands: TransformNode[];
+  // Os du squelette par nom (points d'accroche des effets).
+  bones: Map<string, TransformNode>;
   // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
   setTeam(team: number): void;
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
@@ -481,6 +483,7 @@ export class CharacterAssets {
       animations,
       weapons,
       hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
+      bones,
       setTeam: (team) => {
         if (baseOutfit) {
           const material = this.outfitMaterial(classId, team, baseOutfit);

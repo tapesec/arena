@@ -34,6 +34,14 @@ import {
   type Recipe,
 } from "./particles";
 import type { PlayerVisual } from "./PlayerVisual";
+import { hasTunedEffects, type AnimationTuning } from "./abilityAnimations";
+import { AbilityEffectPlayer } from "./abilityEffects";
+import animationTuning from "./animationTuning.json";
+
+const TUNING = animationTuning as AnimationTuning;
+// Effet d'incantation prévu dans le code, sauf si le sort a ses effets réglés sur la page de réglage.
+const codeCharge = (p: PlayerVisual, abilityId: string) =>
+  p.state.castAbility === abilityId && !hasTunedEffects(TUNING, p.state.classId, abilityId);
 
 // Hauteur de la tête des personnages (agrandis à 2,2 m), et du milieu du corps.
 const HEAD = 2.35;
@@ -74,6 +82,8 @@ interface PlayerStatus {
 
   // Effets continus qui suivent le personnage (Rage, poussière du chant, notes du Barde), par nom.
   auras: Map<string, ParticleSystem>;
+  // Effets du geste de compétence en cours (réglés sur animation-lab.html).
+  abilityFx: AbilityEffectPlayer;
   body: Vector3;
   // Entre les mains (où se forme un trait en incantation) ; à défaut, au milieu du corps.
   hands: Vector3;
@@ -103,8 +113,8 @@ const AURAS: Record<string, Aura> = {
   arcaneColumn: { recipe: arcaneColumn, at: "feet", active: (p) => p.hasEffect("arcanePower") },
   arcaneSparks: { recipe: arcaneSparks, at: "feet", active: (p) => p.hasEffect("arcanePower") },
   // Trait de feu et Trait de givre en incantation : le trait se forme entre les mains.
-  fireCharge: { recipe: fireCharge, at: "hands", active: (p) => p.state.castAbility === "firebolt" },
-  frostCharge: { recipe: frostCharge, at: "hands", active: (p) => p.state.castAbility === "frostbolt" },
+  fireCharge: { recipe: fireCharge, at: "hands", active: (p) => codeCharge(p, "firebolt") },
+  frostCharge: { recipe: frostCharge, at: "hands", active: (p) => codeCharge(p, "frostbolt") },
 };
 
 // Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
@@ -162,8 +172,9 @@ export class StatusFx {
       const aura = alive && Object.values(AURAS).some((a) => a.active(player, Infinity));
       const nova = alive && player.state.castAbility === "frostNova";
       const rampart = alive ? remaining(player, "rampart") : 0;
+      const playing = player.playingAbility();
       let status = this.statuses.get(player);
-      if (!status && !mez && !stun && !root && !bubble && !aura && !nova && !rampart) continue;
+      if (!status && !mez && !stun && !root && !bubble && !aura && !nova && !rampart && !playing) continue;
       status ??= this.track(player);
       const speed = Math.hypot(player.root.position.x - status.lastX, player.root.position.z - status.lastZ) / Math.max(dt, 1e-3);
       status.lastX = player.root.position.x;
@@ -175,6 +186,7 @@ export class StatusFx {
       status.body.copyFrom(player.root.position).y += BODY;
       if (!player.handsPosition(status.hands)) status.hands.copyFrom(status.body);
       this.updateAuras(status, alive, player, speed);
+      status.abilityFx.update(player.character, playing);
       this.updateMez(status, mez);
       this.updateStars(status, stun, player);
       this.updateRoot(status, root, player);
@@ -187,6 +199,7 @@ export class StatusFx {
       if (seen.has(player) && !player.root.isDisposed()) continue;
       this.updateMez(status, false);
       this.updateAuras(status, false, player, 0);
+      status.abilityFx.stopAll();
       status.mist?.stop();
       status.rampartZone?.dispose(false, true);
       // Détruit les effets du joueur, sans leurs matériaux partagés.
@@ -224,6 +237,7 @@ export class StatusFx {
       rampartAngle: 0,
 
       auras: new Map(),
+      abilityFx: new AbilityEffectPlayer(this.particles),
       body: new Vector3(),
       hands: new Vector3(),
       lastX: player.root.position.x,
