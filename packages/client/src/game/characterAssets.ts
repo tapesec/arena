@@ -19,6 +19,8 @@ const MODELS_URL = "/models/";
 
 // Agrandissement des personnages (le modèle d'origine mesure 1,84 m).
 const CHARACTER_SCALE = 1.2;
+// Pièces de tenue sans ombre portée (voir plus bas, à l'appel des ombres).
+const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_Beard)|_Acc_|Belt|Bracer/;
 
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
@@ -448,7 +450,9 @@ export class CharacterAssets {
     const outfitMeshes = meshes.filter((mesh) => mesh.material?.name === def.outfit);
     const baseOutfit = outfitMeshes[0]?.material as PBRMaterial | undefined;
     for (const attach of weapons) meshes.push(...attach.getChildMeshes(false));
-    this.shadows?.cast(meshes);
+    // Les petites pièces posées sur le corps (yeux, accessoires, ceintures…) ne projettent pas d'ombre : vue du soleil,
+    // elles restent dans la silhouette du corps, et chacune coûterait un appel de dessin de plus à chaque image.
+    this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
 
     return {
       root,
