@@ -11,7 +11,7 @@ import type { Scene } from "@babylonjs/core/scene";
 // Au-delà de ce nombre de systèmes actifs, les nouveaux effets secondaires (fumée…) sont ignorés.
 const MAX_ACTIVE = 40;
 
-export type ParticleTexture = "glow" | "spark" | "note" | "smoke" | "star" | "flake" | "ring" | "feather";
+export type ParticleTexture = "glow" | "spark" | "note" | "smoke" | "star" | "flake" | "ring" | "feather" | "heart" | "moon";
 
 // Une recette : à partir d'un point (déplaçable, pour suivre un projectile ou un personnage), crée et démarre
 // un système de particules. Un système "continu" émet tant qu'on ne l'arrête pas ; une "gerbe" émet tout d'un
@@ -34,6 +34,8 @@ export class ParticleFactory {
       flake: flakeTexture(scene),
       ring: ringTexture(scene),
       feather: featherTexture(scene),
+      heart: heartTexture(scene),
+      moon: moonTexture(scene),
     };
   }
 
@@ -259,6 +261,44 @@ function featherTexture(scene: Scene): DynamicTexture {
     ctx.moveTo(0, size * 0.47);
     ctx.lineTo(0, -size * 0.4);
     ctx.stroke();
+  });
+}
+
+// Cœur plein, plus lumineux au centre.
+function heartTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "heart", (ctx, size) => {
+    const s = size;
+    ctx.beginPath();
+    ctx.moveTo(s * 0.5, s * 0.86);
+    ctx.bezierCurveTo(s * 0.12, s * 0.6, s * 0.02, s * 0.36, s * 0.18, s * 0.2);
+    ctx.bezierCurveTo(s * 0.32, s * 0.06, s * 0.48, s * 0.14, s * 0.5, s * 0.3);
+    ctx.bezierCurveTo(s * 0.52, s * 0.14, s * 0.68, s * 0.06, s * 0.82, s * 0.2);
+    ctx.bezierCurveTo(s * 0.98, s * 0.36, s * 0.88, s * 0.6, s * 0.5, s * 0.86);
+    ctx.closePath();
+    const g = ctx.createRadialGradient(s * 0.5, s * 0.45, 0, s * 0.5, s * 0.45, s * 0.5);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(1, "rgba(255,255,255,0.75)");
+    ctx.fillStyle = g;
+    ctx.fill();
+  });
+}
+
+// Croissant de lune : un disque dont on retire un disque décalé.
+function moonTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "moon", (ctx, size) => {
+    const c = size / 2;
+    const g = ctx.createRadialGradient(c, c, 0, c, c, size * 0.44);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(1, "rgba(255,255,255,0.8)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(c, c, size * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(c + size * 0.2, c - size * 0.1, size * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
   });
 }
 

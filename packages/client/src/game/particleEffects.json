@@ -54,18 +54,21 @@
     "texture": "star",
     "blend": "add",
     "emission": "continuous",
-    "rate": 36,
+    "rate": 27,
     "count": 40,
     "duration": 0,
     "shape": "cylinder",
-    "radius": 0.3,
+    "radius": 0.43,
     "innerRadius": 0.05,
     "y": -1,
     "height": 2.8,
     "arms": 3,
     "spin": 9,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
     "core": 0.45,
-    "direction": "up",
+    "direction": "random",
     "spread": 0,
     "speed": [
       0.3,
@@ -73,7 +76,7 @@
     ],
     "gravity": 0,
     "life": [
-      1.22,
+      0.92,
       1.22
     ],
     "size": [
@@ -93,7 +96,7 @@
       },
       {
         "at": 1,
-        "color": "#ff00a2",
+        "color": "#ffd500",
         "alpha": 0.32
       }
     ],

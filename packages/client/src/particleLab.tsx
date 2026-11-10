@@ -30,6 +30,8 @@ const TEXTURES: Record<ParticleTexture, string> = {
   flake: "Flocon",
   ring: "Anneau",
   feather: "Plume",
+  heart: "Cœur",
+  moon: "Lune",
 };
 
 const DIRECTIONS: Record<ParticleEffectDef["direction"], string> = {

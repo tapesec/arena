@@ -58,5 +58,68 @@
     "status": "fait",
     "result": "lightHand",
     "note": "« Main de lumière » : nouvelle forme « Doigts qui se referment » (5 doigts dorés qui sortent du sol et se rejoignent au-dessus de la tête en 0,9 s, effet de 1,6 s). À regarder accroché aux pieds ; tout se règle dans l'onglet."
+  },
+  {
+    "id": "mwb3t7x3",
+    "date": "2026-11-10T19:49:34.935Z",
+    "prompt": "ajoute les images coeur et lune dans les propositions de rendu",
+    "effect": "effet3",
+    "def": {
+      "label": "colonne coeur",
+      "texture": "star",
+      "blend": "add",
+      "emission": "continuous",
+      "rate": 27,
+      "count": 40,
+      "duration": 0,
+      "shape": "cylinder",
+      "radius": 0.43,
+      "innerRadius": 0.05,
+      "y": -1,
+      "height": 2.8,
+      "arms": 3,
+      "spin": 9,
+      "closeTime": 0.8,
+      "closeAmount": 1,
+      "fingerWidth": 0.06,
+      "core": 0.45,
+      "direction": "random",
+      "spread": 0,
+      "speed": [
+        0.3,
+        0.8
+      ],
+      "gravity": 0,
+      "life": [
+        0.92,
+        1.22
+      ],
+      "size": [
+        0.25,
+        0.28
+      ],
+      "growth": 1,
+      "rotation": [
+        0,
+        0
+      ],
+      "colors": [
+        {
+          "at": 0.16,
+          "color": "#ffffff",
+          "alpha": 0.27
+        },
+        {
+          "at": 1,
+          "color": "#ffd500",
+          "alpha": 0.32
+        }
+      ],
+      "optional": false
+    },
+    "anchor": "hands",
+    "status": "fait",
+    "result": "images « Cœur » et « Lune »",
+    "note": "Ajoutées au choix « Image » du rendu. Au passage : l'accroche « Tête » est corrigée (elle tombait aux pieds), et la « Main de lumière », effacée par erreur par un ancien brouillon du navigateur, est restaurée."
   }
 ]

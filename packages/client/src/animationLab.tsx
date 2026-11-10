@@ -53,9 +53,9 @@ import "./styles.css";
 // que le jeu lit (voir AbilityAnimation pour leur sens).
 
 const LIBRARIES = ["/dev-models/animations/UAL1.glb", "/dev-models/animations/UAL2.glb"];
-const DRAFT_KEY = "arena.animationLab.draft";
+const DRAFT_KEY = "arena.animationLab.draft2";
 const SELECTION_KEY = "arena.animationLab.selection";
-const FX_DRAFT_KEY = "arena.animationLab.fxDraft";
+const FX_DRAFT_KEY = "arena.animationLab.fxDraft2";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -431,6 +431,43 @@ function sameEntry(a: AbilityAnimation | undefined, b: AbilityAnimation | undefi
   return JSON.stringify(a && roundEntry(a)) === JSON.stringify(b && roundEntry(b));
 }
 
+// Brouillon gardé dans le navigateur, avec la version enregistrée sur laquelle il a été fait (base).
+interface StoredDraft<T> {
+  base: Record<string, T>;
+  draft: Record<string, T>;
+}
+
+// Reprend un brouillon en y ajoutant ce qui a changé dans le fichier depuis (effet créé par Claude, réglage
+// enregistré depuis un autre onglet) : seuls les éléments modifiés dans le brouillon gardent leur version.
+function rebaseDraft<T>(stored: StoredDraft<T> | null, file: Record<string, T>): Record<string, T> {
+  if (!stored?.base || !stored.draft) return file;
+  const result = { ...stored.draft };
+  const same = (a: T | undefined, b: T | undefined) => JSON.stringify(a) === JSON.stringify(b);
+  for (const id of new Set([...Object.keys(file), ...Object.keys(stored.base)])) {
+    if (same(file[id], stored.base[id]) || !same(stored.draft[id], stored.base[id])) continue;
+    if (file[id] === undefined) delete result[id];
+    else result[id] = file[id];
+  }
+  return result;
+}
+
+// Calage des animations à plat (« classe/compétence ») pour reprendre un brouillon compétence par compétence.
+function flatTuning(tuning: AnimationTuning): Record<string, AbilityAnimation> {
+  const flat: Record<string, AbilityAnimation> = {};
+  for (const [classId, entries] of Object.entries(tuning))
+    for (const [id, entry] of Object.entries(entries)) flat[`${classId}/${id}`] = entry;
+  return flat;
+}
+
+function nestedTuning(flat: Record<string, AbilityAnimation>): AnimationTuning {
+  const tuning: AnimationTuning = {};
+  for (const [key, entry] of Object.entries(flat)) {
+    const [classId, id] = key.split("/");
+    (tuning[classId] ??= {})[id] = entry;
+  }
+  return tuning;
+}
+
 function readStorage<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
@@ -526,14 +563,14 @@ function AnimationLab() {
       )
       .then((tuning) => {
         setSaved(tuning);
-        setDraft(readStorage<AnimationTuning>(DRAFT_KEY) ?? tuning);
+        setDraft(nestedTuning(rebaseDraft(readStorage<StoredDraft<AbilityAnimation>>(DRAFT_KEY), flatTuning(tuning))));
       })
       .catch(() => setError("Impossible de lire les réglages : la page doit être servie par le serveur de développement (npm run dev)."));
     void fetch("/__dev-file/particleEffects")
       .then((response) => response.json() as Promise<ParticleDefs | null>)
       .then((defs) => {
         setFxSaved(defs ?? {});
-        setFxDraft(readStorage<ParticleDefs>(FX_DRAFT_KEY) ?? defs ?? {});
+        setFxDraft(rebaseDraft(readStorage<StoredDraft<ParticleEffectDef>>(FX_DRAFT_KEY), defs ?? {}));
       });
     void fetch("/__dev-file/particleRequests")
       .then((response) => response.json() as Promise<ParticleRequest[] | null>)
@@ -545,7 +582,7 @@ function AnimationLab() {
 
   useEffect(() => {
     if (!fxSaved) return;
-    writeStorage(FX_DRAFT_KEY, JSON.stringify(fxDraft) !== JSON.stringify(fxSaved) ? fxDraft : null);
+    writeStorage(FX_DRAFT_KEY, JSON.stringify(fxDraft) !== JSON.stringify(fxSaved) ? { base: fxSaved, draft: fxDraft } : null);
   }, [fxDraft, fxSaved]);
 
   // Onglet des effets : suit les demandes traitées par Claude et les effets qu'il ajoute (sans écraser un effet en
@@ -579,7 +616,7 @@ function AnimationLab() {
   useEffect(() => {
     if (!saved) return;
     const dirty = JSON.stringify(normalized(draft)) !== JSON.stringify(normalized(saved));
-    writeStorage(DRAFT_KEY, dirty ? draft : null);
+    writeStorage(DRAFT_KEY, dirty ? { base: flatTuning(saved), draft: flatTuning(draft) } : null);
   }, [draft, saved]);
 
   useEffect(() => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor }), [classId, abilityId, tab, fxId, fxAnchor]);
@@ -734,9 +771,12 @@ function AnimationLab() {
   });
 
   // Enregistre ce qui a changé : le calage des animations et les effets à particules.
+  // Le fichier a pu changer depuis la lecture (effet ajouté par Claude, autre onglet) : on n'y écrit que ses propres
+  // modifications, par-dessus sa version actuelle.
   const save = async () => {
     if (unsaved) {
-      const tuning = normalized(draft);
+      const file = ((await fetch("/__dev-file/animationTuning").then((r) => r.json())) ?? {}) as AnimationTuning;
+      const tuning = normalized(nestedTuning(rebaseDraft({ base: flatTuning(saved ?? {}), draft: flatTuning(draft) }, flatTuning(file))));
       const response = await fetch("/__dev-file/animationTuning", { method: "POST", body: JSON.stringify(tuning) });
       if (!response.ok) {
         setMessage(`Échec de l'enregistrement : ${await response.text()}`);
@@ -746,12 +786,15 @@ function AnimationLab() {
       setDraft(tuning);
     }
     if (fxUnsaved) {
-      const response = await fetch("/__dev-file/particleEffects", { method: "POST", body: JSON.stringify(fxDraft) });
+      const file = ((await fetch("/__dev-file/particleEffects").then((r) => r.json())) ?? {}) as ParticleDefs;
+      const defs = rebaseDraft({ base: fxSaved ?? {}, draft: fxDraft }, file);
+      const response = await fetch("/__dev-file/particleEffects", { method: "POST", body: JSON.stringify(defs) });
       if (!response.ok) {
         setMessage(`Échec de l'enregistrement des effets : ${await response.text()}`);
         return;
       }
-      setFxSaved(fxDraft);
+      setFxSaved(defs);
+      setFxDraft(defs);
     }
     setMessage("Enregistré (src/game/animationTuning.json, src/game/particleEffects.json) : le jeu l'utilise au prochain chargement.");
     setTimeout(() => setMessage(null), 4000);

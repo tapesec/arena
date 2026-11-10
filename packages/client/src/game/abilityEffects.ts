@@ -26,7 +26,7 @@ export interface PlayingAbility {
   time: number;
 }
 
-const BONES: Partial<Record<EffectAnchor, string>> = { hand_r: "hand_r", hand_l: "hand_l", head: "head", chest: "spine_03" };
+const BONES: Partial<Record<EffectAnchor, string>> = { hand_r: "hand_r", hand_l: "hand_l", head: "Head", chest: "spine_03" };
 
 // Bout de chaque arme dans son propre repère (les modèles ont la lame ou le bâton vers +y), calculé une fois.
 const weaponTips = new WeakMap<TransformNode, Vector3>();
