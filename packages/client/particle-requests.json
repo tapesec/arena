@@ -57,7 +57,7 @@
     "anchor": "weapon",
     "status": "fait",
     "result": "lightHand",
-    "note": "« Main de lumière » : nouvelle forme « Doigts qui se referment » (5 doigts dorés qui sortent du sol et se rejoignent au-dessus de la tête en 0,9 s, effet de 1,6 s). À regarder accroché aux pieds ; tout se règle dans l'onglet."
+    "note": "« Main de lumière » : nouvelle forme « Doigts qui se referment » (5 doigts dorés qui sortent du sol et se rejoignent au-dessus de la tête en 0,9 s, effet de 1,6 s). À regarder accroché aux pieds ; tout se règle dans l'onglet. (Effet supprimé ensuite par l'utilisateur ; la forme « Doigts qui se referment » reste disponible.)"
   },
   {
     "id": "mwb3t7x3",
@@ -120,6 +120,6 @@
     "anchor": "hands",
     "status": "fait",
     "result": "images « Cœur » et « Lune »",
-    "note": "Ajoutées au choix « Image » du rendu. Au passage : l'accroche « Tête » est corrigée (elle tombait aux pieds), et la « Main de lumière », effacée par erreur par un ancien brouillon du navigateur, est restaurée."
+    "note": "Ajoutées au choix « Image » du rendu. Au passage : l'accroche « Tête » est corrigée (elle tombait aux pieds)."
   }
 ]
