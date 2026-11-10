@@ -1,1 +1,102 @@
-{}
+{
+  "effet1": {
+    "label": "Nouvel effet",
+    "texture": "glow",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 60,
+    "count": 40,
+    "duration": 0,
+    "shape": "sphere",
+    "radius": 0.3,
+    "innerRadius": 0,
+    "y": 0,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "core": 0,
+    "direction": "random",
+    "spread": 0,
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "gravity": 0,
+    "life": [
+      0.5,
+      1
+    ],
+    "size": [
+      0.15,
+      0.3
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#ffffff",
+        "alpha": 0.8
+      },
+      {
+        "at": 1,
+        "color": "#80c0ff",
+        "alpha": 0
+      }
+    ],
+    "optional": false
+  },
+  "effet2": {
+    "label": "colonne etoile",
+    "texture": "star",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 36,
+    "count": 40,
+    "duration": 0,
+    "shape": "cylinder",
+    "radius": 0.3,
+    "innerRadius": 0.05,
+    "y": -1,
+    "height": 2.8,
+    "arms": 3,
+    "spin": 9,
+    "core": 0.45,
+    "direction": "up",
+    "spread": 0,
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "gravity": 0,
+    "life": [
+      1.22,
+      1.22
+    ],
+    "size": [
+      0.25,
+      0.28
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0.16,
+        "color": "#ffffff",
+        "alpha": 0.27
+      },
+      {
+        "at": 1,
+        "color": "#ff00a2",
+        "alpha": 0.32
+      }
+    ],
+    "optional": false
+  }
+}

@@ -1,1 +1,180 @@
-{}
+{
+  "arcaniste": {
+    "blast": {
+      "animation": "Mixamo_2H_Area_Attack_02",
+      "start": 0,
+      "rate": 0.9,
+      "end": 2.25,
+      "effects": [
+        {
+          "recipe": "fireTrail",
+          "start": 0.95,
+          "end": 1.8,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "recipe": "fireBurst",
+          "start": 1.8,
+          "end": 1.934,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "burn": {
+      "animation": "Mixamo_2H_Magic_Attack_04",
+      "start": 0,
+      "rate": 0.6,
+      "end": 1.5,
+      "effects": [
+        {
+          "recipe": "burning",
+          "start": 1.017,
+          "end": 1.333,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "recipe": "fireCharge",
+          "start": 0,
+          "end": 1.2,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "concentration": {
+      "animation": "Spell_Simple_Shoot",
+      "start": 0,
+      "rate": 1,
+      "end": 0.5,
+      "effects": [
+        {
+          "recipe": "chargeStreak",
+          "start": 0.017,
+          "end": 0.5,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0.38,
+            1.33
+          ]
+        }
+      ]
+    },
+    "firebolt": {
+      "animation": "Mixamo_Casting_Spell",
+      "start": 3.166,
+      "rate": 1.34,
+      "end": 6.146,
+      "effects": [
+        {
+          "recipe": "fireCharge",
+          "start": 3.249,
+          "end": 5.696,
+          "anchor": "hands",
+          "offset": [
+            0.7,
+            -0.09,
+            0.13
+          ],
+          "keys": [
+            {
+              "time": 5.301,
+              "anchor": "hands",
+              "offset": [
+                0.7,
+                -0.09,
+                0.12
+              ]
+            },
+            {
+              "time": 5.683,
+              "anchor": "hands",
+              "offset": [
+                0.7,
+                -0.09,
+                1.07
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "frostbolt": {
+      "animation": "Mixamo_Casting_Spell",
+      "start": 3.5,
+      "rate": 1.09,
+      "end": 5.68,
+      "effects": [
+        {
+          "recipe": "frostCharge",
+          "start": 3.816,
+          "end": 5.583,
+          "anchor": "hands",
+          "offset": [
+            0.28,
+            0,
+            0
+          ],
+          "keys": [
+            {
+              "time": 4.9,
+              "anchor": "hands",
+              "offset": [
+                0.28,
+                0,
+                0
+              ]
+            },
+            {
+              "time": 5.583,
+              "anchor": "hands",
+              "offset": [
+                0.28,
+                0,
+                1.5
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "nearSight": {
+      "animation": "Mixamo_2H_Magic_Attack_05",
+      "start": 0,
+      "rate": 1.333,
+      "end": 2.5,
+      "effects": [
+        {
+          "recipe": "silencePuff",
+          "start": 1.983,
+          "end": 2.117,
+          "anchor": "hands",
+          "offset": [
+            0.5,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  }
+}
