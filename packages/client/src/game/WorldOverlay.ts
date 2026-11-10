@@ -17,7 +17,8 @@ const TEXT_HEIGHT = 3.35;
 const MAX_TEXTS = 60;
 
 export type FloatingTextStyle = "damageDealt" | "damageTaken" | "heal" | "info" | "control";
-export type StatusIndicator = "mez" | "stun" | "taunt" | "nearSight" | "rampart";
+// Rempart : icône bleue sur un joueur de son camp, rouge sur un adversaire.
+export type StatusIndicator = "mez" | "stun" | "taunt" | "nearSight" | "rampartAlly" | "rampartEnemy";
 
 // Near sight : deux yeux fermés (paupière et cils), dessinés en SVG.
 const CLOSED_EYE =
@@ -83,9 +84,9 @@ export class WorldOverlay {
     if (!kind) return;
 
     const element = document.createElement("div");
-    element.className = `status-indicator status-${kind}`;
+    element.className = `status-indicator status-${kind}${kind.startsWith("rampart") ? " status-rampart" : ""}`;
     // Chaque lettre ou étoile est un élément à part, pour pouvoir l'animer en décalé.
-    if (kind === "rampart") {
+    if (kind === "rampartAlly" || kind === "rampartEnemy") {
       // Protégé par le Rempart : l'icône du sort (une tour crénelée).
       const span = document.createElement("span");
       span.innerHTML = RAMPART_ICON;

@@ -478,7 +478,9 @@ export class Game {
       // Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez garde ses « Zzz » ; une
       // cible provoquée porte des points d'exclamation rouges pendant les premières secondes.
       const taunted = player.effectRemaining("taunted") > TAUNT_DURATION - TAUNT_MARK_DURATION;
-      // Near sight : deux yeux fermés tant que dure l'effet. Rempart : une tour au-dessus des joueurs protégés.
+      // Near sight : deux yeux fermés tant que dure l'effet. Rempart : une tour au-dessus des joueurs protégés, bleue
+      // dans son camp, rouge chez l'adversaire.
+      const enemy = !!this.self && player.state.team !== this.self.state.team;
       const control = !player.isAlive
         ? null
         : player.hasEffect("mez")
@@ -488,11 +490,12 @@ export class Game {
             : player.hasEffect("nearSight")
               ? "nearSight"
               : player.hasEffect("meleeImmune")
-                ? "rampart"
+                ? enemy
+                  ? "rampartEnemy"
+                  : "rampartAlly"
                 : null;
       this.overlay.setIndicator(player.sessionId, player.root, control);
       const classId = player.state.classId as ClassId | "";
-      const enemy = !!this.self && player.state.team !== this.self.state.team;
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (getClass(classId)?.name ?? "") : player.state.name;
       this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
@@ -501,7 +504,7 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
-    this.spellEffects.statuses.update(dt, this.players.values());
+    this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);

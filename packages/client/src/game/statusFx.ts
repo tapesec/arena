@@ -113,6 +113,9 @@ const RAMPART_SPIN = 0.15;
 const RAMPART_SPIN_BOOST = 2.5;
 const RAMPART_SPIN_UP = 0.8;
 const RAMPART_LIFT = 0.12;
+// Couleur de la zone (r,g,b) : bleue pour le camp du joueur, rouge pour l'adversaire (comme les tenues).
+const RAMPART_ALLY = "40,120,255";
+const RAMPART_ENEMY = "235,45,20";
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
 export class StatusFx {
@@ -138,7 +141,8 @@ export class StatusFx {
     this.novaMaterial = novaMaterial(scene);
   }
 
-  update(dt: number, players: Iterable<PlayerVisual>) {
+  // localTeam : équipe du joueur local (zone du Rempart bleue pour son camp, rouge pour l'adversaire).
+  update(dt: number, players: Iterable<PlayerVisual>, localTeam: number | null) {
     this.time += dt;
     const seen = new Set<PlayerVisual>();
     for (const player of players) {
@@ -168,7 +172,7 @@ export class StatusFx {
       this.updateRoot(status, root, player);
       this.updateBubble(status, bubble, this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);
-      this.updateRampartZone(status, rampart, dt);
+      this.updateRampartZone(status, rampart, dt, player.state.team === localTeam);
     }
     // Joueurs disparus (déconnectés, sortis du champ de vision).
     for (const [player, status] of this.statuses) {
@@ -333,14 +337,14 @@ export class StatusFx {
     });
   }
 
-  // Rempart : la zone protégée (30 m) est marquée au sol, pour tous les joueurs : bord crénelé rouge qui tourne
-  // lentement et voile rouge léger vers l'intérieur. Le Gardien est figé pendant tout l'effet : la zone épouse le
+  // Rempart : la zone protégée (30 m) est marquée au sol, pour tous les joueurs : bord crénelé qui tourne et léger
+  // voile vers l'intérieur, bleus pour un Rempart de son camp, rouges pour celui de l'adversaire (ally). Le Gardien est figé pendant tout l'effet : la zone épouse le
   // relief une fois pour toutes. left : temps restant du Rempart (0 quand il n'y en a pas).
-  private updateRampartZone(status: PlayerStatus, left: number, dt: number) {
+  private updateRampartZone(status: PlayerStatus, left: number, dt: number, ally: boolean) {
     if (left > 0 && !status.rampartZone) {
       status.rampartZone = terrainDisc(this.scene, status.feet.x, status.feet.z, RAMPART_RADIUS);
       // Un matériau par zone (texture comprise) : chaque Rempart tourne à son rythme, depuis son apparition.
-      status.rampartZone.material = rampartZoneMaterial(this.scene);
+      status.rampartZone.material = rampartZoneMaterial(this.scene, ally ? RAMPART_ALLY : RAMPART_ENEMY);
       status.rampartAge = 0;
       status.rampartAngle = Math.random() * Math.PI * 2;
     }
@@ -489,7 +493,7 @@ function terrainDisc(scene: Scene, x: number, z: number, radius: number): Mesh {
 
 // Zone du Rempart : texture transparente dessinée par le jeu. Bord crénelé comme le sommet d'une tour vue de
 // dessus, voile rouge qui s'efface vers le centre.
-function rampartZoneMaterial(scene: Scene): StandardMaterial {
+function rampartZoneMaterial(scene: Scene, rgb: string): StandardMaterial {
   const size = 1024;
   const texture = new DynamicTexture("rampartZone", size, scene, true);
   const ctx = texture.getContext() as CanvasRenderingContext2D;
@@ -498,14 +502,14 @@ function rampartZoneMaterial(scene: Scene): StandardMaterial {
   ctx.clearRect(0, 0, size, size);
   // Voile intérieur.
   const veil = ctx.createRadialGradient(c, c, r * 0.5, c, c, r * 0.94);
-  veil.addColorStop(0, "rgba(220,40,20,0)");
-  veil.addColorStop(1, "rgba(220,40,20,0.22)");
+  veil.addColorStop(0, `rgba(${rgb},0)`);
+  veil.addColorStop(1, `rgba(${rgb},0.22)`);
   ctx.fillStyle = veil;
   ctx.beginPath();
   ctx.arc(c, c, r * 0.94, 0, Math.PI * 2);
   ctx.fill();
   // Anneau du rempart, puis créneaux (merlons) sur son bord extérieur.
-  ctx.fillStyle = "rgba(235,45,20,0.85)";
+  ctx.fillStyle = `rgba(${rgb},0.85)`;
   ctx.beginPath();
   ctx.arc(c, c, r * 0.965, 0, Math.PI * 2);
   ctx.arc(c, c, r * 0.94, 0, Math.PI * 2, true);

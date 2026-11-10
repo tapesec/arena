@@ -679,11 +679,20 @@ body,
   }
 }
 
-/* Rempart : l'icône du sort (tour crénelée) rouge et dorée, qui palpite doucement. */
+/* Rempart : l'icône du sort (tour crénelée), bleue sur un joueur de son camp, rouge sur un adversaire ; elle
+   palpite doucement. */
 .status-rampart {
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+.status-rampartAlly {
+  color: #4f9bff;
+  filter: drop-shadow(0 0 3px #9cc8ff) drop-shadow(0 0 1px #000);
+}
+
+.status-rampartEnemy {
   color: #ff5a36;
   filter: drop-shadow(0 0 3px #ffb070) drop-shadow(0 0 1px #000);
-  animation: blink 1.8s ease-in-out infinite;
 }
 
 .status-rampart svg {
