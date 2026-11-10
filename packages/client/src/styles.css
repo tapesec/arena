@@ -679,6 +679,18 @@ body,
   }
 }
 
+/* Rempart : l'icône du sort (tour crénelée) rouge et dorée, qui palpite doucement. */
+.status-rampart {
+  color: #ff5a36;
+  filter: drop-shadow(0 0 3px #ffb070) drop-shadow(0 0 1px #000);
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+.status-rampart svg {
+  width: 22px;
+  height: 22px;
+}
+
 /* Stun : des étoiles qui tournent. */
 .status-stun {
   animation: spin 1.2s linear infinite;
