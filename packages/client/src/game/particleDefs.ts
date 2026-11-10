@@ -454,6 +454,16 @@ export function recipeById(id: string): Recipe {
   return (fx, at, radius) => particleRecipe(id)?.(fx, at, radius) ?? null;
 }
 
+// Durée d'émission d'un effet lancé une seule fois (impact, soin, buff) quand ses réglages le font émettre sans fin
+// (émission continue sans arrêt) : sinon il ne s'éteindrait jamais.
+export const ONE_SHOT_DURATION = 1;
+
+// Effet lancé une seule fois, sans être arrêté ensuite : on lui impose une fin s'il n'en a pas.
+export function oneShot(system: ParticleSystem | null): ParticleSystem | null {
+  if (system && !system.targetStopDuration && system.manualEmitCount < 0) system.targetStopDuration = ONE_SHOT_DURATION;
+  return system;
+}
+
 // Effets proposés pour les compétences : ceux du code et ceux créés sur la page de réglage.
 export function particleEffectChoices(): { id: string; label: string }[] {
   const ids = new Set([...Object.keys(CODE_RECIPES), ...Object.keys(savedDefs)]);

@@ -238,6 +238,12 @@ export function EffectEditor(props: {
               unit=" s"
               onChange={(v) => set("duration", v)}
             />
+            {def.duration === 0 && (
+              <small className="lab-hint">
+                Sur une compétence, l'effet s'arrête à la fin de sa barre. Lancé une seule fois par le jeu (impact, soin, buff), il s'arrête
+                après 1 s.
+              </small>
+            )}
           </>
         ) : (
           <Slider label="Nombre de particules" value={def.count} min={1} max={300} step={1} onChange={(v) => set("count", v)} />

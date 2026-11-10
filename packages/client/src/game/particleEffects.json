@@ -1,56 +1,6 @@
 {
-  "effet1": {
-    "label": "Nouvel effet",
-    "texture": "glow",
-    "blend": "add",
-    "emission": "continuous",
-    "rate": 60,
-    "count": 40,
-    "duration": 0,
-    "shape": "sphere",
-    "radius": 0.3,
-    "innerRadius": 0,
-    "y": 0,
-    "height": 0,
-    "arms": 0,
-    "spin": 0,
-    "core": 0,
-    "direction": "random",
-    "spread": 0,
-    "speed": [
-      0.3,
-      0.8
-    ],
-    "gravity": 0,
-    "life": [
-      0.5,
-      1
-    ],
-    "size": [
-      0.15,
-      0.3
-    ],
-    "growth": 1,
-    "rotation": [
-      0,
-      0
-    ],
-    "colors": [
-      {
-        "at": 0,
-        "color": "#ffffff",
-        "alpha": 0.8
-      },
-      {
-        "at": 1,
-        "color": "#80c0ff",
-        "alpha": 0
-      }
-    ],
-    "optional": false
-  },
   "effet2": {
-    "label": "colonne etoile",
+    "label": "colonne etoiles jaunes",
     "texture": "star",
     "blend": "add",
     "emission": "continuous",
@@ -98,6 +48,276 @@
         "at": 1,
         "color": "#ffd500",
         "alpha": 0.32
+      }
+    ],
+    "optional": false
+  },
+  "effet3": {
+    "label": "colonne coeurs verts",
+    "texture": "heart",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 27,
+    "count": 40,
+    "duration": 0,
+    "shape": "cylinder",
+    "radius": 0.43,
+    "innerRadius": 0.05,
+    "y": -1,
+    "height": 2.8,
+    "arms": 3,
+    "spin": 9,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0.45,
+    "direction": "random",
+    "spread": 0,
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "gravity": 0,
+    "life": [
+      0.92,
+      1.22
+    ],
+    "size": [
+      0.25,
+      0.28
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0.16,
+        "color": "#ffffff",
+        "alpha": 0.27
+      },
+      {
+        "at": 1,
+        "color": "#44ff00",
+        "alpha": 0.32
+      }
+    ],
+    "optional": false
+  },
+  "healColumn": {
+    "label": "Colonne de soin",
+    "texture": "glow",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 43,
+    "count": 47,
+    "duration": 0,
+    "shape": "cylinder",
+    "radius": 0.68,
+    "innerRadius": 0.3,
+    "y": -0.6,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "up",
+    "spread": 0,
+    "speed": [
+      0.7,
+      0.75
+    ],
+    "gravity": 0,
+    "life": [
+      1.05,
+      1.05
+    ],
+    "size": [
+      0.23,
+      0.23
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#a0ffb0",
+        "alpha": 0.5
+      },
+      {
+        "at": 0.3,
+        "color": "#50e070",
+        "alpha": 0.5
+      },
+      {
+        "at": 1,
+        "color": "#108030",
+        "alpha": 0
+      }
+    ],
+    "optional": false
+  },
+  "effet4": {
+    "label": "Torche",
+    "texture": "spark",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 16,
+    "count": 40,
+    "duration": 0,
+    "shape": "sphere",
+    "radius": 0.07,
+    "innerRadius": 0,
+    "y": 0,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "up",
+    "spread": 0,
+    "speed": [
+      0.15,
+      1.7
+    ],
+    "gravity": -0.1,
+    "life": [
+      0.5,
+      1
+    ],
+    "size": [
+      0.66,
+      0.67
+    ],
+    "growth": 0.1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#ff5900",
+        "alpha": 0.72
+      },
+      {
+        "at": 1,
+        "color": "#fff79e",
+        "alpha": 0.4
+      }
+    ],
+    "optional": false
+  },
+  "effet5": {
+    "label": "fumee de glace",
+    "texture": "spark",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 39,
+    "count": 30,
+    "duration": 0,
+    "shape": "cylinder",
+    "radius": 0.85,
+    "innerRadius": 0.23,
+    "y": -1,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "random",
+    "spread": 0,
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "gravity": 3.4,
+    "life": [
+      0.5,
+      1
+    ],
+    "size": [
+      0.41,
+      0.41
+    ],
+    "growth": 4,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#ffffff",
+        "alpha": 0.8
+      },
+      {
+        "at": 1,
+        "color": "#80c0ff",
+        "alpha": 0
+      }
+    ],
+    "optional": false
+  },
+  "effet6": {
+    "label": " ",
+    "texture": "glow",
+    "blend": "add",
+    "emission": "continuous",
+    "rate": 60,
+    "count": 40,
+    "duration": 0,
+    "shape": "sphere",
+    "radius": 0.3,
+    "innerRadius": 0,
+    "y": 0,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "random",
+    "spread": 0,
+    "speed": [
+      0.3,
+      0.8
+    ],
+    "gravity": 0,
+    "life": [
+      0.5,
+      1
+    ],
+    "size": [
+      0.15,
+      0.3
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#ffffff",
+        "alpha": 0.8
+      },
+      {
+        "at": 1,
+        "color": "#80c0ff",
+        "alpha": 0
       }
     ],
     "optional": false

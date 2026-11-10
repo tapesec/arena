@@ -15,7 +15,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import { getAbility, type AbilityDef } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
-import { recipeById } from "./particleDefs";
+import { oneShot, recipeById } from "./particleDefs";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
 import { StatusFx } from "./statusFx";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
@@ -157,7 +157,7 @@ export class SpellEffects {
   // La bulle absorbe un coup et éclate : un anneau lumineux qui s'élargit, et des éclats irisés.
   bubblePop(anchor: TransformNode) {
     const center = anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
-    recipeById("bubbleShards")(this.particles, center.clone());
+    oneShot(recipeById("bubbleShards")(this.particles, center.clone()));
     const ring = CreateTorus("bubblePop", { diameter: 2.4, thickness: 0.1, tessellation: 48 }, this.scene);
     ring.rotation.x = Math.PI / 2;
     ring.bakeCurrentTransformIntoVertices();
@@ -180,18 +180,18 @@ export class SpellEffects {
 
   // Coup critique : gerbe d'étincelles dorées sur la cible.
   critHit(anchor: TransformNode) {
-    recipeById("critSparks")(this.particles, anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0)));
+    oneShot(recipeById("critSparks")(this.particles, anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0))));
   }
 
   // Particules d'impact sur un personnage : à hauteur du corps, ou aux pieds.
   private burst(visual: Visual, anchor: TransformNode) {
     const feet = anchor.getAbsolutePosition();
     const body = feet.add(new Vector3(0, BODY_CENTER, 0));
-    for (const recipe of visual.impact ?? []) recipe(this.particles, body.clone());
-    for (const recipe of visual.ground ?? []) recipe(this.particles, feet.clone());
+    for (const recipe of visual.impact ?? []) oneShot(recipe(this.particles, body.clone()));
+    for (const recipe of visual.ground ?? []) oneShot(recipe(this.particles, feet.clone()));
     if (visual.slash) {
       this.spawnSlash(body);
-      recipeById("critSparks")(this.particles, body.clone(), 0.6);
+      oneShot(recipeById("critSparks")(this.particles, body.clone(), 0.6));
     }
     if (visual.beam) this.spawnBeam(feet);
   }
