@@ -53,6 +53,8 @@ export const ABILITY_FX: Record<string, AbilityFx> = {
   buffHp: { color: HOLY, shape: "pulse" },
   buffStrength: { color: HOLY, shape: "pulse" },
   resurrect: { color: HOLY, shape: "pulse" },
+  renew: { color: NATURE, shape: "pulse" },
+  divineIntervention: { color: HOLY, shape: "pulse", area: true },
   // Barde
   aoeMez: { color: ARCANE, shape: "projectile", area: true },
   mez: { color: ARCANE, shape: "projectile" },

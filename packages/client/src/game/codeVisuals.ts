@@ -51,6 +51,8 @@ export const VISUALS: Record<string, CodeVisual> = {
   buffHp: { ground: ["buffSpiral"] },
   buffStrength: { ground: ["buffSpiral"] },
   resurrect: { ground: ["resurrectRain"], beam: true },
+  renew: { impact: ["healFlash"] },
+  divineIntervention: { area: ["healField"], ground: ["resurrectRain"], beam: true },
   speedSong: { impact: ["noteBurst"] },
 };
 

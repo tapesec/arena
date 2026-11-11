@@ -176,24 +176,27 @@ class PretreBot extends CasterBot {
     const critical = byHealth.find((a) => this.hpRatio(a) < 0.35);
     if (critical && this.tryUse("instantHeal", critical)) return;
 
-    // 2. Libérer un allié mezzé (la Purification ne retire pas le stun).
-    const controlled = allies.find((a) => a !== self && a.has("mez"));
-    if (controlled && this.tryUse("purify", controlled)) return;
+    // 2. Plusieurs alliés morts autour, sans ennemi trop près : Intervention divine.
+    const safe = !this.enemies().some((e) => this.distanceTo(e) < CASTER_MIN_DISTANCE);
+    const deadNearby = this.deadAllies().filter((a) => this.distanceTo(a) <= 30);
+    if (safe && deadNearby.length >= 2 && this.tryUse("divineIntervention")) return;
 
     // 3. Plusieurs blessés autour : soin de groupe.
-    const hurtNearby = allies.filter((a) => this.hpRatio(a) < 0.75 && this.distanceTo(a) <= 20);
+    const hurtNearby = allies.filter((a) => this.hpRatio(a) < 0.75 && this.distanceTo(a) <= 30);
     if (hurtNearby.length >= 3 && this.tryUse("groupHeal")) return;
 
     // 4. Soigner le plus blessé, en s'approchant si besoin.
     const hurt = byHealth.find((a) => this.hpRatio(a) < 0.8);
     if (hurt) {
       if (this.distanceTo(hurt) > 28) return this.moveTo(hurt.state, 24);
+      // Un blessé léger sans Renouveau de ce Prêtre : un soin sur la durée.
+      const renewed = hurt.effects.some((e) => e.kind === "renew" && e.sourceId === self.id);
+      if (this.hpRatio(hurt) > 0.6 && !renewed && this.tryUse("renew", hurt)) return;
       if (this.tryUse("heal", hurt)) return;
     }
 
     // 5. Relever un allié mort si aucun ennemi n'est trop près.
     const dead = this.nearest(this.deadAllies());
-    const safe = !this.enemies().some((e) => this.distanceTo(e) < CASTER_MIN_DISTANCE);
     if (dead && safe) {
       if (this.distanceTo(dead) > 28) return this.moveTo(dead.state, 24);
       if (this.tryUse("resurrect", dead)) return;
@@ -208,15 +211,13 @@ class PretreBot extends CasterBot {
     this.advance();
   }
 
-  // Buff de vie pour tous, buff de force pour les combattants de mêlée. Retourne vrai si un buff est lancé.
+  // Buff de vie pour tous, buff de puissance pour tous les combattants (il augmente aussi les sorts et les soins). Retourne vrai si un buff est lancé.
   private buffAllies(): boolean {
     for (const ally of this.allies()) {
       if (this.needsBuff(ally, "buffHp") && this.tryUse("buffHp", ally)) return true;
     }
     for (const ally of this.allies()) {
-      if (MELEE_CLASSES.includes(ally.classDef.id) && this.needsBuff(ally, "buffStrength") && this.tryUse("buffStrength", ally)) {
-        return true;
-      }
+      if (this.needsBuff(ally, "buffStrength") && this.tryUse("buffStrength", ally)) return true;
     }
     return false;
   }

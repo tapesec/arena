@@ -103,18 +103,18 @@ Gros dégâts à distance, à condition d'être protégé.
 
 ### 3. Prêtre — healer
 
-Garde le groupe en vie, le libère des contrôles et le renforce.
+Garde le groupe en vie, relève les morts et le renforce. La Purification et l'Aura de régénération passent au Barde (à programmer à l'étape suivante : en attendant, aucune classe ne les a).
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
 | Soin | Rend 300 points de vie à un allié. | 2 s | 80 mana | — |
-| Soin de groupe | Rend 200 points de vie aux membres du groupe à 20 m. | 3 s | 200 mana | — |
 | Soin instantané | Rend 200 points de vie à un allié. | Instantané | 60 mana | 3 min |
-| Purification | Retire le mez d'un allié (pas le stun). | Instantané | 30 mana | 5 s |
-| Buff de vie | +200 points de vie maximum. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 100 mana | — |
-| Buff de force | +15 % de dégâts de mêlée. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 100 mana | — |
-| Aura de régénération | Les alliés à 30 m régénèrent +5 mana/s et +2 endurance/s. | Permanent | — | — |
-| Résurrection | Relève un allié mort à 50 % de vie, sans aucun buff. Utilisable en combat. | 4 s | 400 mana | — |
+| Résurrection | Relève un allié mort à 50 % de vie, sans aucun buff. Utilisable en combat. | 4 s | 300 mana | — |
+| Soin de groupe | Rend 900 points de vie répartis entre les membres du groupe à 30 m, Prêtre compris, au prorata des points de vie qui manquent à chacun ; personne n'est soigné au-delà de son maximum, le surplus est perdu. | 3 s | 300 mana | — |
+| Buff de vie | +200 points de vie maximum. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 50 mana | — |
+| Buff de puissance | +15 % de dégâts (mêlée et sorts, tics compris) et de soins. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 50 mana | — |
+| Renouveau | Soin sur la durée : 500 points de vie en 10 s, un tic de 50 par seconde. Relancé, il repart de zéro ; ceux de plusieurs Prêtres se cumulent. | 2 s | 100 mana | — |
+| Intervention divine (ultime) | Relève tous les alliés morts à 30 m du Prêtre (même derrière un obstacle), à 50 % de vie, sans aucun buff. Impossible sans allié mort à portée. | 5 s | 500 mana | 3 min |
 
 ### 4. Barde — contrôle de foule
 

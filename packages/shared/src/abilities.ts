@@ -17,6 +17,11 @@ export type AbilityEffect =
   // Dégâts sur la durée (dot) : amount au total, en tics d'une seconde pendant duration.
   | { type: "dot"; amount: number; duration: number }
   | { type: "heal"; amount: number }
+  // Soin réparti entre les personnes touchées au prorata des points de vie qui leur manquent (le surplus est perdu).
+  | { type: "splitHeal"; amount: number }
+  // Soin sur la durée : amount au total, en tics d'une seconde pendant duration. Relancé par le même lanceur, il
+  // repart de zéro ; ceux de lanceurs différents se cumulent.
+  | { type: "hot"; amount: number; duration: number }
   | { type: "cc"; cc: CrowdControl; duration: number }
   | { type: "snare"; slow: number; duration: number }
   | { type: "interrupt" }
@@ -58,7 +63,8 @@ export interface AbilityDef {
   position?: "back" | "side";
   // Type des dégâts magiques (feu, givre) : pour l'affichage seulement, il n'y a pas encore de résistances.
   school?: "fire" | "frost";
-  // Zone d'effet : autour de la cible pour une compétence visant un ennemi, autour du lanceur sinon.
+  // Zone d'effet : autour de la cible pour une compétence visant un ennemi, autour du lanceur sinon. Une compétence
+  // qui ressuscite touche les alliés morts de la zone.
   radius?: number;
   effects: AbilityEffect[];
 }
@@ -336,19 +342,6 @@ const list: AbilityDef[] = [
     effects: [{ type: "heal", amount: 300 }],
   },
   {
-    id: "groupHeal",
-    name: "Soin de groupe",
-    description: "Rend 200 points de vie aux alliés à 20 m.",
-    castTime: 3,
-    resource: "mana",
-    cost: 200,
-    range: 0,
-    cooldown: 0,
-    target: "self",
-    radius: 20,
-    effects: [{ type: "heal", amount: 200 }],
-  },
-  {
     id: "instantHeal",
     name: "Soin instantané",
     description: "Rend aussitôt 200 points de vie à un allié.",
@@ -373,12 +366,26 @@ const list: AbilityDef[] = [
     effects: [{ type: "cleanse" }],
   },
   {
+    id: "groupHeal",
+    name: "Soin de groupe",
+    description:
+      "Rend 900 points de vie répartis entre les alliés à 30 m (Prêtre compris), selon les points de vie qui manquent à chacun. Le surplus est perdu.",
+    castTime: 3,
+    resource: "mana",
+    cost: 300,
+    range: 0,
+    cooldown: 0,
+    target: "self",
+    radius: 30,
+    effects: [{ type: "splitHeal", amount: 900 }],
+  },
+  {
     id: "buffHp",
     name: "Buff de vie",
     description: "+200 points de vie maximum, jusqu'à la mort du Prêtre ou de la cible.",
     castTime: 2,
     resource: "mana",
-    cost: 100,
+    cost: 50,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "ally",
@@ -386,11 +393,11 @@ const list: AbilityDef[] = [
   },
   {
     id: "buffStrength",
-    name: "Buff de force",
-    description: "+15 % de dégâts de mêlée, jusqu'à la mort du Prêtre ou de la cible.",
+    name: "Buff de puissance",
+    description: "+15 % de dégâts (mêlée et sorts) et de soins, jusqu'à la mort du Prêtre ou de la cible.",
     castTime: 2,
     resource: "mana",
-    cost: 100,
+    cost: 50,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "ally",
@@ -402,10 +409,36 @@ const list: AbilityDef[] = [
     description: "Relève un allié mort à 50 % de vie, sans aucun buff.",
     castTime: 4,
     resource: "mana",
-    cost: 400,
+    cost: 300,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "deadAlly",
+    effects: [{ type: "resurrect", hpRatio: 0.5 }],
+  },
+  {
+    id: "renew",
+    name: "Renouveau",
+    description:
+      "Rend 500 points de vie en 10 s à un allié, un tic par seconde. Relancé, il repart de zéro ; ceux de plusieurs Prêtres se cumulent.",
+    castTime: 2,
+    resource: "mana",
+    cost: 100,
+    range: SPELL_RANGE,
+    cooldown: 0,
+    target: "ally",
+    effects: [{ type: "hot", amount: 500, duration: 10 }],
+  },
+  {
+    id: "divineIntervention",
+    name: "Intervention divine",
+    description: "Relève tous les alliés morts à 30 m à 50 % de vie, sans aucun buff.",
+    castTime: 5,
+    resource: "mana",
+    cost: 500,
+    range: 0,
+    cooldown: 180,
+    target: "self",
+    radius: 30,
     effects: [{ type: "resurrect", hpRatio: 0.5 }],
   },
   // --- Barde ---

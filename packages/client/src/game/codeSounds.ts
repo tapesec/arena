@@ -35,6 +35,8 @@ export const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = 
   buffStrength: { impact: [{ sound: "spellFantasy0" }] },
   purify: { impact: [{ sound: "spellFantasy4" }] },
   resurrect: { impact: [{ sound: "spellFantasy3" }] },
+  renew: { impact: [{ sound: "spellHeal", volume: 0.7 }] },
+  divineIntervention: { cast: [{ sound: "spellHeal" }], impact: [{ sound: "spellFantasy3" }] },
   speedSong: { cast: [{ sound: "song" }] },
   guard: { impact: [{ sound: "hitWood" }] },
   intercept: { impact: [{ sound: "hitWood" }] },

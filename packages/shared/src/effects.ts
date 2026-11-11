@@ -29,7 +29,9 @@ export type EffectKind =
   // Arcaniste : portée des sorts réduite, dot de feu, sorts critiques.
   | "nearSight"
   | "burning"
-  | "arcanePower";
+  | "arcanePower"
+  // Prêtre : soin sur la durée (un par Prêtre).
+  | "renew";
 
 export type EffectCategory = "control" | "debuff" | "immunity" | "buff";
 
@@ -47,7 +49,7 @@ export const EFFECTS: Record<EffectKind, { label: string; category: EffectCatego
   guarded: { label: "Gardé", category: "buff" },
   intercept: { label: "Interception", category: "buff" },
   buffHp: { label: "Buff vie", category: "buff" },
-  buffStrength: { label: "Buff force", category: "buff" },
+  buffStrength: { label: "Buff puissance", category: "buff" },
   speed: { label: "Vitesse", category: "buff" },
   regenAura: { label: "Aura régén.", category: "buff" },
   bubble: { label: "Bulle", category: "buff" },
@@ -59,6 +61,7 @@ export const EFFECTS: Record<EffectKind, { label: string; category: EffectCatego
   nearSight: { label: "Vision réduite", category: "debuff" },
   burning: { label: "Brûlure", category: "debuff" },
   arcanePower: { label: "Puissance arcanique", category: "buff" },
+  renew: { label: "Renouveau", category: "buff" },
 };
 
 // Durée restante envoyée pour un effet sans limite de temps.

@@ -48,8 +48,8 @@ const list: ClassDef[] = [
     maxHp: 1100,
     resource: "mana",
     autoAttack: { damage: 30, interval: 2.5 },
-    abilities: ["heal", "groupHeal", "instantHeal", "purify", "buffHp", "buffStrength", "resurrect"],
-    passives: ["regenAura"],
+    abilities: ["heal", "instantHeal", "resurrect", "groupHeal", "buffHp", "buffStrength", "renew", "divineIntervention"],
+    passives: [],
   },
   {
     id: "barde",

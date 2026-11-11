@@ -342,7 +342,8 @@ const SHORT_EFFECT_LABELS: Record<string, string> = {
   guarded: "Gard",
   intercept: "Int",
   buffHp: "PV",
-  buffStrength: "For",
+  buffStrength: "Pui",
+  renew: "Ren",
   speed: "Vit",
   regenAura: "Aura",
   bubble: "Bul",
@@ -398,9 +399,10 @@ function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; h
       {member.maxEndurance > 0 && <MiniBar value={member.endurance} max={member.maxEndurance} kind="endurance" />}
       {!dead && member.effects.length > 0 && (
         <div className="group-effects">
-          {member.effects.map((effect) => (
+          {member.effects.map((effect, index) => (
             <span
-              key={effect.kind}
+              // Deux effets du même type peuvent coexister (Renouveau de deux Prêtres).
+              key={`${effect.kind}:${index}`}
               className={`group-effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}
               title={`${EFFECTS[effect.kind]?.label ?? effect.kind}${effect.remaining !== null ? ` (${effect.remaining}s)` : ""}`}
             >
@@ -427,8 +429,8 @@ function EffectList({ effects }: { effects: EffectFrame[] }) {
   if (effects.length === 0) return null;
   return (
     <div className="effect-list">
-      {effects.map((effect) => (
-        <span key={effect.kind} className={`effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}>
+      {effects.map((effect, index) => (
+        <span key={`${effect.kind}:${index}`} className={`effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}>
           {EFFECTS[effect.kind]?.label ?? effect.kind}
           {effect.remaining !== null && ` ${effect.remaining}s`}
         </span>

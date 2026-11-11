@@ -11,6 +11,7 @@ import {
   EVASION_CHANCE,
   GUARD_BLOCK_CHANCE,
   GUARD_RANGE,
+  HOT_INTERVAL,
   HP_BUFF_AMOUNT,
   IMMUNITY_DURATION,
   INTERCEPT_RANGE,
@@ -372,6 +373,10 @@ export class CombatSystem {
   private validateTarget(caster: PlayerRuntime, ability: AbilityDef, targetId: string): string | null {
     const target = this.players.get(targetId);
     if (!target) return "Cible introuvable";
+    // Intervention divine : il faut au moins un allié mort dans la zone.
+    if (ability.radius && ability.effects.some((effect) => effect.type === "resurrect") && this.affectedBy(caster, ability, targetId).length === 0) {
+      return "Aucun allié mort à portée";
+    }
     if (ability.target === "self" || ability.target === "enemiesAround") return null;
 
     const enemy = this.areEnemies(caster, target);
@@ -411,7 +416,9 @@ export class CombatSystem {
     if (isOffensive(ability)) this.noteHostileAction(caster);
 
     const center = this.areaCenter(caster, ability, targetId);
-    for (const target of this.affectedBy(caster, ability, targetId)) {
+    const affected = this.affectedBy(caster, ability, targetId);
+    const shares = this.splitHealShares(caster, ability, affected);
+    for (const target of affected) {
       // Attaque spéciale de mêlée : l'évitement est tranché une fois, avant ses effets. Esquivée, bloquée au
       // bouclier ou absorbée par une bulle, elle s'arrête en entier (dégâts, stun, ralentissement).
       const avoidance = ability.melee ? this.meleeAvoidance(caster, target, ability.id) : null;
@@ -420,9 +427,32 @@ export class CombatSystem {
         // Les effets suivants ne s'appliquent pas à une cible tuée par le premier.
         if (!target.alive && effect.type !== "resurrect") break;
         const avoidanceDone = !!ability.melee && avoidance !== undefined;
-        this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target), avoidanceDone);
+        if (effect.type === "splitHeal") this.heal(caster, target, shares.get(target.id) ?? 0, ability.id, false);
+        else this.applyEffect(caster, ability, target, withFalloff(effect, ability, center, target), avoidanceDone);
       }
     }
+  }
+
+  // Soin réparti (Soin de groupe) : le total, augmenté par le buff de puissance, est partagé au prorata des points de
+  // vie qui manquent à chacun ; personne n'en reçoit plus qu'il ne lui en manque, le surplus est perdu.
+  private splitHealShares(caster: PlayerRuntime, ability: AbilityDef, targets: PlayerRuntime[]): Map<string, number> {
+    const shares = new Map<string, number>();
+    const split = ability.effects.find((effect) => effect.type === "splitHeal");
+    if (!split) return shares;
+    const total = split.amount * this.healBonus(caster);
+    const missing = targets.map((p) => Math.max(0, p.state.maxHp - p.state.hp));
+    const totalMissing = missing.reduce((sum, value) => sum + value, 0);
+    targets.forEach((p, i) => {
+      // Arrondi à l'unité inférieure : le total distribué ne dépasse jamais le soin.
+      const share = totalMissing <= total ? missing[i] : Math.floor((total * missing[i]) / totalMissing);
+      shares.set(p.id, Math.min(missing[i], share));
+    });
+    return shares;
+  }
+
+  // Bonus du buff de puissance sur les soins du lanceur.
+  private healBonus(source: PlayerRuntime): number {
+    return source.has("buffStrength") ? 1 + STRENGTH_BUFF_BONUS : 1;
   }
 
   // Évitement d'une attaque spéciale de mêlée, avant ses effets. undefined : pas tranché ici, parce qu'un Gardien
@@ -450,12 +480,15 @@ export class CombatSystem {
     if (!ability.radius) return [target];
 
     const offensive = isOffensive(ability);
+    // Une compétence qui ressuscite (Intervention divine) touche les alliés morts de la zone.
+    const dead = ability.effects.some((effect) => effect.type === "resurrect");
     const center = this.areaCenter(caster, ability, targetId);
-    // Une déflagration autour du lanceur touche tout ce qui est dans le rayon, obstacles compris.
-    const needsSight = ability.target !== "enemiesAround";
+    // Une déflagration autour du lanceur touche tout ce qui est dans le rayon, obstacles compris ; l'Intervention
+    // divine relève tous les morts de la zone, même derrière un obstacle.
+    const needsSight = ability.target !== "enemiesAround" && !dead;
     return [...this.players.values()].filter(
       (p) =>
-        p.alive &&
+        p.alive !== dead &&
         this.areEnemies(caster, p) === offensive &&
         distance(center.state, p.state) <= ability.radius! &&
         (!needsSight || hasLineOfSight(center.state, p.state)),
@@ -491,6 +524,17 @@ export class CombatSystem {
       case "heal":
         this.heal(caster, target, effect.amount, ability.id);
         break;
+      case "splitHeal":
+        // Réparti entre toutes les cibles : voir resolveAbility.
+        break;
+      case "hot": {
+        // Relancé par le même Prêtre, il repart de zéro ; ceux de Prêtres différents se cumulent.
+        const ticks = Math.round(effect.duration / HOT_INTERVAL);
+        const renew = this.addEffect(target, "renew", effect.duration, caster.id, effect.amount / ticks, false, true);
+        renew.ticks = { abilityId: ability.id, done: 0, total: ticks, heal: true };
+        this.emit({ kind: "buff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "renew" });
+        break;
+      }
       case "cc":
         this.applyControl(caster, target, effect.cc, effect.duration, ability.id, { magic });
         break;
@@ -596,6 +640,9 @@ export class CombatSystem {
       target = interceptor;
     }
 
+    // Buff de puissance : plus de dégâts, en mêlée comme avec les sorts (tics compris).
+    if (source.has("buffStrength")) amount *= 1 + STRENGTH_BUFF_BONUS;
+
     // Provoqué : la cible d'un Gardien inflige moins de dégâts à tout autre que lui.
     const taunt = source.getEffect("taunted");
     if (taunt && taunt.sourceId !== target.id) amount *= TAUNT_DAMAGE_FACTOR;
@@ -605,7 +652,6 @@ export class CombatSystem {
       target.lastMeleeHitAt = this.time;
       target.lastMeleeAttackerId = source.id;
       if (!avoidanceDone && this.avoidMelee(source, target, abilityId)) return;
-      if (source.has("buffStrength")) amount *= 1 + STRENGTH_BUFF_BONUS;
       crit = source.has("rage") || this.random() < CRIT_CHANCE;
       if (crit) amount *= CRIT_MULTIPLIER;
     } else if (source.has("arcanePower")) {
@@ -675,8 +721,10 @@ export class CombatSystem {
     return null;
   }
 
-  private heal(source: PlayerRuntime, target: PlayerRuntime, amount: number, abilityId: string) {
-    const healed = Math.min(amount, target.state.maxHp - target.state.hp);
+  // withBonus : appliquer le buff de puissance du lanceur (déjà compté dans un soin réparti).
+  private heal(source: PlayerRuntime, target: PlayerRuntime, amount: number, abilityId: string, withBonus = true) {
+    if (withBonus) amount *= this.healBonus(source);
+    const healed = Math.min(Math.round(amount), target.state.maxHp - target.state.hp);
     target.state.hp += healed;
     this.emit({ kind: "heal", sourceId: source.id, targetId: target.id, abilityId, amount: healed });
   }
@@ -750,15 +798,17 @@ export class CombatSystem {
     }
   }
 
-  // Dégâts sur la durée : un tic par DOT_INTERVAL écoulé, le dernier à la fin de l'effet.
+  // Dégâts ou soin sur la durée : un tic par intervalle écoulé, le dernier à la fin de l'effet.
   private updateDot(player: PlayerRuntime, effect: ActiveEffect) {
     const ticks = effect.ticks!;
     const source = this.players.get(effect.sourceId);
     if (!source) return this.removeEffect(player, effect);
     const elapsed = effect.duration - effect.remaining;
-    while (ticks.done < ticks.total && elapsed >= (ticks.done + 1) * DOT_INTERVAL - 1e-6 && player.alive) {
+    const interval = ticks.heal ? HOT_INTERVAL : DOT_INTERVAL;
+    while (ticks.done < ticks.total && elapsed >= (ticks.done + 1) * interval - 1e-6 && player.alive) {
       ticks.done++;
-      this.dealDamage(source, player, effect.value, ticks.abilityId, false, false, true);
+      if (ticks.heal) this.heal(source, player, effect.value, ticks.abilityId);
+      else this.dealDamage(source, player, effect.value, ticks.abilityId, false, false, true);
     }
   }
 
@@ -886,8 +936,10 @@ export class CombatSystem {
     sourceId: string,
     value = 0,
     magic = false,
+    // Un effet par lanceur (Renouveau) : seul celui du même lanceur est rafraîchi.
+    perSource = false,
   ): ActiveEffect {
-    const existing = player.getEffect(kind);
+    const existing = perSource ? player.effects.find((e) => e.kind === kind && e.sourceId === sourceId) : player.getEffect(kind);
     if (existing) {
       existing.remaining = duration;
       existing.duration = duration;

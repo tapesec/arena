@@ -47,7 +47,10 @@ export const DOT_INTERVAL = 1;
 
 // Prêtre
 export const HP_BUFF_AMOUNT = 200;
+// Buff de puissance : +15 % de dégâts (mêlée et sorts, tics compris) et de soins.
 export const STRENGTH_BUFF_BONUS = 0.15;
+// Soin sur la durée (Renouveau) : un tic de soin toutes les HOT_INTERVAL secondes.
+export const HOT_INTERVAL = 1;
 export const AURA_RANGE = 30;
 export const AURA_MANA_REGEN = 5;
 export const AURA_ENDURANCE_REGEN = 2;

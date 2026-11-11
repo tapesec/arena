@@ -423,6 +423,8 @@ describe("Prêtre", () => {
 
   it("la Purification retire le mez et laisse l'immunité", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    // La Purification passe au Barde (prochaine étape) : le Prêtre de test la reçoit en attendant.
+    pretre.classDef.abilities.push("purify");
     const ally = world.spawn("x", "lame", 0, 3, 0);
     const barde = world.spawn("b", "barde", 1, 3, 15, Math.PI);
     world.cast(barde, "mez", ally);
@@ -435,6 +437,7 @@ describe("Prêtre", () => {
 
   it("la Purification ne retire pas le stun", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    pretre.classDef.abilities.push("purify");
     const ally = world.spawn("x", "lame", 0, 3, 0);
     const gardien = world.spawn("g", "gardien", 1, 3, 2, Math.PI);
     world.cast(gardien, "shieldBash", ally);
@@ -449,6 +452,91 @@ describe("Prêtre", () => {
     world.cast(pretre, "heal");
     world.run(2.1);
     assert.equal(pretre.state.hp, 800);
+  });
+
+  it("le Soin de groupe répartit 900 PV selon les PV manquants, Prêtre compris, à 30 m", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    const a = world.spawn("a", "lame", 0, 5, 0);
+    const b = world.spawn("b", "gardien", 0, -5, 0);
+    const far = world.spawn("f", "lame", 0, 0, 31);
+    pretre.state.hp = pretre.state.maxHp - 300;
+    a.state.hp = a.state.maxHp - 600;
+    b.state.hp = b.state.maxHp - 900;
+    far.state.hp = 100;
+    world.cast(pretre, "groupHeal");
+    world.run(3.1);
+    // 1800 PV manquants pour 900 : chacun en récupère la moitié.
+    assert.equal(pretre.state.maxHp - pretre.state.hp, 150);
+    assert.equal(a.state.maxHp - a.state.hp, 300);
+    assert.equal(b.state.maxHp - b.state.hp, 450);
+    assert.equal(far.state.hp, 100);
+  });
+
+  it("le Soin de groupe ne soigne pas au-delà du maximum : le surplus est perdu", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    const a = world.spawn("a", "lame", 0, 5, 0);
+    a.state.hp = a.state.maxHp - 200;
+    world.cast(pretre, "groupHeal");
+    world.run(3.1);
+    assert.equal(a.state.hp, a.state.maxHp);
+    assert.equal(pretre.state.hp, pretre.state.maxHp);
+  });
+
+  it("le Renouveau soigne 50 PV par seconde pendant 10 s, repart de zéro relancé et se cumule entre Prêtres", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    const autre = world.spawn("q", "pretre", 0, 0, 2);
+    const ally = world.spawn("x", "gardien", 0, 3, 0);
+    ally.state.hp = 100;
+    world.cast(pretre, "renew", ally);
+    world.run(2.05);
+    assert.equal(ally.effects.filter((e) => e.kind === "renew").length, 1);
+    world.run(3);
+    assert.equal(ally.state.hp, 250);
+    // Relancé par le même Prêtre : toujours un seul Renouveau, qui repart de zéro.
+    world.cast(pretre, "renew", ally);
+    world.run(2.05);
+    assert.equal(ally.effects.filter((e) => e.kind === "renew").length, 1);
+    assert.equal(ally.state.hp, 350);
+    world.cast(autre, "renew", ally);
+    world.run(2.05);
+    assert.equal(ally.effects.filter((e) => e.kind === "renew").length, 2);
+    world.run(10);
+    assert.equal(ally.effects.filter((e) => e.kind === "renew").length, 0);
+  });
+
+  it("le Buff de puissance augmente de 15 % les dégâts des sorts et les soins", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 0, 2, 0);
+    const enemy = world.spawn("e", "lame", 1, 2, 10, Math.PI);
+    world.cast(pretre, "buffStrength", arcaniste);
+    world.run(2.1);
+    world.cast(pretre, "buffStrength", pretre);
+    world.run(2.1);
+    world.cast(arcaniste, "firebolt", enemy);
+    world.run(2.1);
+    assert.equal(world.eventsOf("damage").at(-1)?.amount, Math.round(250 * 1.15));
+    arcaniste.state.hp = 100;
+    world.cast(pretre, "heal", arcaniste);
+    world.run(2.1);
+    assert.equal(arcaniste.state.hp, 100 + 345);
+  });
+
+  it("l'Intervention divine relève les alliés morts à 30 m, à 50 % de vie", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    world.cast(pretre, "divineIntervention");
+    assert.equal(world.errors.at(-1)?.message, "Aucun allié mort à portée");
+    const near = world.spawn("n", "lame", 0, 10, 0);
+    const far = world.spawn("f", "lame", 0, 0, 31);
+    const kill = (p: PlayerRuntime) => {
+      p.state.hp = 0;
+      (world.combat as unknown as { handleDeath(p: PlayerRuntime): void }).handleDeath(p);
+    };
+    kill(near);
+    kill(far);
+    world.cast(pretre, "divineIntervention");
+    world.run(5.1);
+    assert.equal(near.state.hp, near.state.maxHp / 2);
+    assert.equal(far.state.hp, 0);
   });
 });
 
@@ -654,7 +742,7 @@ describe("Règles communes", () => {
     world.cast(ally, "firebolt", pretre);
     assert.equal(world.errors.at(-1)?.message, "Cible non hostile");
     world.combat.setTarget(pretre.id, enemy.id);
-    world.cast(pretre, "purify");
+    world.cast(pretre, "resurrect");
     assert.equal(world.errors.at(-1)?.message, "Cible hostile");
   });
 });

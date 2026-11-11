@@ -262,6 +262,7 @@ export function statusKindsOf(abilityId: string): string[] {
     if (effect.type === "cc") kinds.push(effect.cc);
     else if (effect.type === "snare") kinds.push("snare");
     else if (effect.type === "dot") kinds.push("burning");
+    else if (effect.type === "hot") kinds.push("renew");
     else if (effect.type === "nearSight") kinds.push("nearSight");
     else if (effect.type === "buff") kinds.push(effect.buff);
     else if (effect.type === "status") kinds.push(effect.status);
