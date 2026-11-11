@@ -83,3 +83,8 @@ const MATCHERS = GROUPS.map(([id, group]) => ({ id, label: group.label, regexes:
 export function gameGroupsUsing(file: string): string[] {
   return MATCHERS.filter((m) => m.regexes.some((r) => r.test(file))).map((m) => m.label);
 }
+
+// Groupes du jeu (identifiant et nom) qui contiennent ce fichier.
+export function gameGroupIdsUsing(file: string): { id: string; label: string }[] {
+  return MATCHERS.filter((m) => m.regexes.some((r) => r.test(file))).map((m) => ({ id: m.id, label: m.label }));
+}

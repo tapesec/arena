@@ -82,18 +82,22 @@ export function SoundList(props: {
   edits: SoundEdits;
   selected: string;
   onSelect: (name: string) => void;
+  // Où sert chaque son (compétences, sons du jeu), par nom.
+  uses: Map<string, string[]>;
 }) {
-  const { sounds, edits, selected, onSelect } = props;
+  const { sounds, edits, selected, onSelect, uses } = props;
   const [pack, setPack] = useState("");
   const [text, setText] = useState("");
   const [showRejected, setShowRejected] = useState(true);
+  const [usedOnly, setUsedOnly] = useState(false);
   const packs = useMemo(() => [...new Set(sounds.map((s) => s.pack))].sort((a, b) => a.localeCompare(b)), [sounds]);
   const rejected = new Set(edits.rejected);
   const shown = sounds.filter(
     (s) =>
       (!pack || s.pack === pack) &&
       (!text || s.name.toLowerCase().includes(text.toLowerCase())) &&
-      (showRejected || !rejected.has(s.name)),
+      (showRejected || !rejected.has(s.name)) &&
+      (!usedOnly || !!uses.get(s.name)?.length),
   );
   return (
     <div className="lab-abilities sound-list">
@@ -110,6 +114,10 @@ export function SoundList(props: {
         <label className="fx-check">
           <input type="checkbox" checked={showRejected} onChange={(e) => setShowRejected(e.target.checked)} />
           Montrer les sons retirés
+        </label>
+        <label className="fx-check">
+          <input type="checkbox" checked={usedOnly} onChange={(e) => setUsedOnly(e.target.checked)} />
+          Seulement les sons utilisés
         </label>
         <small className="lab-hint">{shown.length} sons</small>
       </div>
@@ -133,6 +141,7 @@ export function SoundList(props: {
               {cuts > 0 && !s.split && ` · à découper en ${cuts + 1}`}
               {s.intact && " · intact (CC BY-ND)"}
             </small>
+            {!!uses.get(s.name)?.length && <small className="sound-uses">♪ {uses.get(s.name)!.join(" · ")}</small>}
           </button>
         );
       })}
@@ -177,6 +186,8 @@ function detectCuts(buffer: AudioBuffer, thresholdDb: number, minGap: number): n
 // retirer), détection automatique, morceaux à écouter ou à retirer, retrait du son entier.
 export function SoundEditor(props: {
   sound: CatalogSound;
+  // Où sert ce son.
+  uses: string[];
   edits: SoundEdits;
   onChange: (edits: SoundEdits) => void;
   // Ouvre un autre son (la piste d'origine d'un morceau).
@@ -313,7 +324,7 @@ export function SoundEditor(props: {
           </button>
         </div>
       </div>
-      {usedBy.length > 0 && <p className="lab-hint">Utilisé par le jeu : {usedBy.join(", ")}.</p>}
+      <p className="lab-hint">{props.uses.length ? `Utilisé : ${props.uses.join(" · ")}.` : "Pas encore utilisé."}</p>
       {failed && <p className="anim-error">Fichier d'écoute introuvable : lancez « node scripts/build-sound-catalog.mjs ».</p>}
 
       <div className="sound-wave">

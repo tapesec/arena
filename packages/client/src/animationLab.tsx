@@ -85,7 +85,7 @@ import {
 } from "./game/overlays2d";
 import { OverlayEditor, OverlayList } from "./overlayLab";
 import soundCatalog from "./audio/soundCatalog.json";
-import { EMPTY_EDITS, GAME_SOUND, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
+import { EMPTY_EDITS, GAME_SOUND, gameGroupIdsUsing, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
 import { SoundEditor, SoundList, SoundPending } from "./soundLab";
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
@@ -1664,6 +1664,46 @@ function AnimationLab() {
     return `${base}${n}`;
   };
 
+  // Où sert chaque son du catalogue : pistes des compétences (brouillon compris), et groupes du jeu qui le
+  // contiennent, avec les compétences qui les jouent (dans le code tant que le moment n'a pas ses propres sons, ou
+  // dans une piste réglée).
+  const soundUses = useMemo(() => {
+    const uses = new Map<string, string[]>();
+    const add = (name: string, use: string) => {
+      const list = uses.get(name) ?? [];
+      if (!list.includes(use)) list.push(use);
+      uses.set(name, list);
+    };
+    const groupAbilities = new Map<string, string[]>();
+    const addGroup = (id: string, use: string) => groupAbilities.set(id, [...(groupAbilities.get(id) ?? []), use]);
+    const hasSound = (effects: AnimationEffect[] | undefined) => !!effects?.some((effect) => effect.type === "sound");
+    // Sons du code par compétence, tant que le moment n'est pas réglé avec ses propres sons.
+    for (const [abilityId, sounds] of Object.entries(ABILITY_SOUNDS)) {
+      const entry = tuningOf(draft, abilityId);
+      if (!hasSound(entry?.effects)) for (const cue of sounds.cast ?? []) addGroup(cue.sound, `${abilityName(abilityId)} (lancement, code)`);
+      if (!hasSound(entry?.impact?.effects)) for (const cue of sounds.impact ?? []) addGroup(cue.sound, `${abilityName(abilityId)} (impact, code)`);
+    }
+    for (const entries of Object.values(draft)) {
+      for (const [abilityId, entry] of Object.entries(entries)) {
+        for (const [moment, effects] of momentEffects(entry)) {
+          for (const effect of effects) {
+            if (effect.type !== "sound") continue;
+            const use = `${abilityName(abilityId)} (${momentLabel(moment, abilityId)})`;
+            if (effect.recipe.startsWith(GAME_SOUND)) addGroup(effect.recipe.slice(GAME_SOUND.length), use);
+            else add(effect.recipe, use);
+          }
+        }
+      }
+    }
+    for (const sound of SOUNDS) {
+      for (const group of gameGroupIdsUsing(sound.file)) {
+        const abilities = groupAbilities.get(group.id);
+        add(sound.name, abilities?.length ? `${abilities.join(", ")} — son « ${group.label} »` : `jeu : ${group.label}`);
+      }
+    }
+    return uses;
+  }, [draft]);
+
   // Ouvre un élément d'une piste dans son onglet d'édition (et retient d'où l'on vient, pour y revenir).
   const [returnToAbility, setReturnToAbility] = useState(false);
   const open = (next: Tab, select: () => void) => () => {
@@ -2049,7 +2089,7 @@ function AnimationLab() {
             }}
           />
         )}
-        {tab === "sons" && <SoundList sounds={SOUNDS} edits={soundsDraft} selected={soundName} onSelect={setSoundName} />}
+        {tab === "sons" && <SoundList sounds={SOUNDS} edits={soundsDraft} selected={soundName} onSelect={setSoundName} uses={soundUses} />}
         {tab === "2d" && (
           <OverlayList
             ids={overlayIds}
@@ -2119,6 +2159,7 @@ function AnimationLab() {
             {SOUNDS.find((sound) => sound.name === soundName) ? (
               <SoundEditor
                 sound={SOUNDS.find((sound) => sound.name === soundName)!}
+                uses={soundUses.get(soundName) ?? []}
                 edits={soundsDraft}
                 onChange={setSoundsDraft}
                 onSelect={setSoundName}

@@ -2013,3 +2013,8 @@ body,
   background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0 6px, transparent 6px 12px);
   pointer-events: none;
 }
+
+.sound-uses {
+  display: block;
+  color: #9be37f;
+}
