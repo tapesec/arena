@@ -6,12 +6,15 @@ import { BUILTIN_DEFS, CODE_RECIPES } from "./particleDefs";
 import { AFFLICTIONS, STATUS_CODE, VISUALS } from "./codeVisuals";
 import animationTuning from "./animationTuning.json";
 import particleEffects from "./particleEffects.json";
+import groundMarks from "./groundMarks.json";
+import { BUILTIN_MARKS } from "./groundMarks";
 
 // Les réglages enregistrés depuis animation-lab.html restent cohérents avec le jeu : chaque effet utilisé existe,
 // chaque moment réglé correspond à ce que fait la compétence.
 
 const tuning = animationTuning as unknown as AnimationTuning;
 const known = new Set([...Object.keys(CODE_RECIPES), ...Object.keys(BUILTIN_DEFS), ...Object.keys(particleEffects)]);
+const knownMarks = new Set([...Object.keys(BUILTIN_MARKS), ...Object.keys(groundMarks)]);
 
 function allEffects(entry: AbilityAnimation): [string, AnimationEffect[]][] {
   return [
@@ -27,7 +30,8 @@ test("chaque effet utilisé par une compétence existe", () => {
     for (const [abilityId, entry] of Object.entries(entries)) {
       for (const [moment, effects] of allEffects(entry)) {
         for (const effect of effects) {
-          assert.ok(known.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'effet introuvable « ${effect.recipe} »`);
+          if (effect.type === "ground") assert.ok(knownMarks.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise la marque au sol introuvable « ${effect.recipe} »`);
+          else assert.ok(known.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'effet introuvable « ${effect.recipe} »`);
           assert.ok(effect.end >= effect.start, `${classId}/${abilityId} (${moment}) : effet « ${effect.recipe} » qui finit avant de commencer`);
         }
       }

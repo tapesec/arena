@@ -47,6 +47,8 @@ export type EffectAnchor = "hands" | "hand_r" | "hand_l" | "weapon" | "head" | "
 // temps), sa position va de l'un à l'autre à vitesse constante, chacun avec son accroche et son décalage ; avant le
 // premier et après le dernier, elle reste sur celui-ci.
 export interface AnimationEffect {
+  // Effet à particules (par défaut), ou marque au sol (recipe : nom de la marque, voir groundMarks.ts).
+  type?: "ground";
   recipe: string;
   start: number;
   end: number;

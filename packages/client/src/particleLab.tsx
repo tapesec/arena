@@ -3,6 +3,7 @@ import type { EffectAnchor } from "./game/abilityAnimations";
 import { EFFECT_ANCHORS } from "./game/abilityEffects";
 import { BUILTIN_DEFS, DEFAULT_DEF, type ParticleEffectDef } from "./game/particleDefs";
 import type { ParticleTexture } from "./game/particles";
+import type { GroundMarkDef } from "./game/groundMarks";
 
 // Onglet « Effets à particules » de animation-lab.html : liste des effets, réglages de l'effet choisi, demandes de
 // nouveaux effets adressées à Claude (particle-requests.json, traitées dans Claude Code).
@@ -11,12 +12,12 @@ export interface ParticleRequest {
   id: string;
   date: string;
   // Type d'élément demandé (pour l'instant, les effets à particules).
-  kind?: "particules";
+  kind?: "particules" | "sol";
   prompt: string;
   // Variante d'un effet existant : l'effet sélectionné (point de départ), ses réglages et son accroche. Absents,
   // la demande porte sur un effet entièrement nouveau.
   effect?: string;
-  def?: ParticleEffectDef;
+  def?: ParticleEffectDef | GroundMarkDef;
   anchor?: EffectAnchor;
   status: "en attente" | "fait";
   // Nom de l'effet créé, et mot de Claude.
@@ -79,7 +80,7 @@ export function EffectList(props: {
   );
 }
 
-function Slider(props: {
+export function Slider(props: {
   label: string;
   value: number;
   min: number;
@@ -525,25 +526,32 @@ export function RequestsPanel(props: {
   requests: ParticleRequest[];
   selectedLabel: string;
   onSend: (prompt: string, variant: boolean) => void;
+  // Ce qui est demandé : un effet à particules (par défaut) ou une marque au sol.
+  kind?: "particules" | "sol";
 }) {
   const [prompt, setPrompt] = useState("");
   const [variant, setVariant] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const { requests, selectedLabel, onSend } = props;
+  const { selectedLabel, onSend, kind = "particules" } = props;
+  const requests = props.requests.filter((request) => (request.kind ?? "particules") === kind);
+  const words =
+    kind === "sol"
+      ? { title: "Demander une nouvelle marque au sol à Claude", example: "Ex. : un pentacle rouge qui s'allume trait par trait", selected: "la marque sélectionnée", created: "une nouvelle marque" }
+      : { title: "Demander un nouvel effet à Claude", example: "Ex. : des plumes dorées qui tombent en tournoyant autour du personnage", selected: "l'effet sélectionné", created: "un nouvel effet" };
   const listed = [...requests].reverse();
   const shown = showAll ? listed : listed.slice(0, 3);
   return (
     <div className="fx-requests">
-      <h4>Demander un nouvel effet à Claude</h4>
+      <h4>{words.title}</h4>
       <textarea
-        placeholder="Ex. : des plumes dorées qui tombent en tournoyant autour du personnage"
+        placeholder={words.example}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         rows={3}
       />
-      <label className="fx-check" title="Joint l'effet sélectionné à la demande, comme point de départ">
+      <label className="fx-check" title="Joint l'élément sélectionné à la demande, comme point de départ">
         <input type="checkbox" checked={variant} onChange={(e) => setVariant(e.target.checked)} />
-        Partir de l'effet sélectionné (« {selectedLabel} »)
+        Partir de {words.selected} (« {selectedLabel} »)
       </label>
       <button
         disabled={!prompt.trim()}
@@ -556,7 +564,7 @@ export function RequestsPanel(props: {
         Envoyer la demande
       </button>
       <small className="lab-hint">
-        Claude crée un nouvel effet dans la liste, que vous réglez ensuite. Dites-lui dans le chat : « regarde les demandes de l'atelier ».
+        Claude crée {words.created} dans la liste, à régler ensuite. Dites-lui dans le chat : « regarde les demandes de l'atelier ».
       </small>
       {listed.length > 0 && (
         <ul>

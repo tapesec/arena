@@ -21,6 +21,7 @@ import particleEffects from "./particleEffects.json";
 import type { PlayerVisual } from "./PlayerVisual";
 import { hasTunedEffects, type AnimationTuning } from "./abilityAnimations";
 import { AbilityEffectPlayer } from "./abilityEffects";
+import type { GroundMarks } from "./groundMarks";
 import animationTuning from "./animationTuning.json";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
@@ -142,6 +143,7 @@ export class StatusFx {
   constructor(
     private scene: Scene,
     private particles: ParticleFactory,
+    private marks: GroundMarks | null = null,
   ) {
     this.starMaterial = starMaterial(scene);
     this.iceMaterial = iceMaterial(scene);
@@ -229,7 +231,7 @@ export class StatusFx {
       rampartAngle: 0,
 
       auras: new Map(),
-      abilityFx: new AbilityEffectPlayer(this.particles),
+      abilityFx: new AbilityEffectPlayer(this.particles, this.marks),
       body: new Vector3(),
       hands: new Vector3(),
       lastX: player.root.position.x,

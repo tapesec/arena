@@ -12,6 +12,7 @@ const GAME_SERVER_URL = process.env.GAME_SERVER_URL ?? "http://localhost:2567";
 const DEV_FILES: Record<string, URL> = {
   animationTuning: new URL("./src/game/animationTuning.json", import.meta.url),
   particleEffects: new URL("./src/game/particleEffects.json", import.meta.url),
+  groundMarks: new URL("./src/game/groundMarks.json", import.meta.url),
   particleRequests: new URL("./particle-requests.json", import.meta.url),
 };
 function devFilesEndpoint(): Plugin {

@@ -4,6 +4,7 @@ import { CLASSES, getAbility, type ClassId, type CombatEvent, type EffectKind } 
 import { momentLength, statusKindsOf, tuningOf, zoneCenterIsTarget, type AbilityAnimation, type AnimationTuning } from "./abilityAnimations";
 import { AbilityEffectPlayer } from "./abilityEffects";
 import type { ParticleFactory } from "./particles";
+import type { GroundMarks } from "./groundMarks";
 import type { PlayerVisual } from "./PlayerVisual";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 
@@ -76,6 +77,7 @@ export class TargetVisuals {
   constructor(
     private particles: ParticleFactory,
     private tuning: AnimationTuning,
+    private marks: GroundMarks | null = null,
   ) {}
 
   // La réaction d'un coup reçu est celle réglée pour l'impact de la compétence (le jeu ne joue pas la sienne).
@@ -111,7 +113,7 @@ export class TargetVisuals {
         yaw: caster ? yawOf(caster.root) : 0,
         radius: ability.radius,
         center: null,
-        player: new AbilityEffectPlayer(this.particles),
+        player: new AbilityEffectPlayer(this.particles, this.marks),
       });
     }
   }
@@ -177,7 +179,7 @@ export class TargetVisuals {
       age: -Math.max(0, delay),
       length: momentLength(entry.impact.effects, entry.impact.reaction),
       reacted: false,
-      player: new AbilityEffectPlayer(this.particles),
+      player: new AbilityEffectPlayer(this.particles, this.marks),
     });
   }
 
@@ -235,7 +237,7 @@ export class TargetVisuals {
         if (!run) {
           this.noticeAreaStatus(id, effect.kind, effect.source);
           const abilityId = this.originOf(id, effect.kind, effect.source, players);
-          run = { abilityId, entry: abilityId ? tuningOf(this.tuning, abilityId) : undefined, age: 0, player: new AbilityEffectPlayer(this.particles) };
+          run = { abilityId, entry: abilityId ? tuningOf(this.tuning, abilityId) : undefined, age: 0, player: new AbilityEffectPlayer(this.particles, this.marks) };
           if (!runs) this.statuses.set(id, (runs = new Map()));
           runs.set(effect.kind, run);
         } else run.age += dt;

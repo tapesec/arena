@@ -40,6 +40,15 @@ import { CharacterAnimator, framesPerSecond, type AnimationInput } from "./game/
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile } from "./game/spellFx";
 import { SpellEffects } from "./game/SpellEffects";
 import { codeImpact, codeStatus, codeZone } from "./game/codeVisuals";
+import {
+  BUILTIN_MARKS,
+  DEFAULT_MARK,
+  groundMarkChoices,
+  groundMarkLabel,
+  setGroundMarkDefs,
+  type GroundMark,
+  type GroundMarkDef,
+} from "./game/groundMarks";
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
@@ -54,6 +63,7 @@ import {
   type ParticleEffectDef,
 } from "./game/particleDefs";
 import { EffectEditor, EffectList, RequestsPanel, newEffectDef, type EffectStatus, type ParticleRequest } from "./particleLab";
+import { MarkEditor, MarkList } from "./markLab";
 import { ParticleFactory, type Recipe } from "./game/particles";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import catalog from "./animationCatalog.json";
@@ -68,6 +78,9 @@ const LIBRARIES = ["/dev-models/animations/UAL1.glb", "/dev-models/animations/UA
 const DRAFT_KEY = "arena.animationLab.draft2";
 const SELECTION_KEY = "arena.animationLab.selection";
 const FX_DRAFT_KEY = "arena.animationLab.fxDraft2";
+const MARKS_DRAFT_KEY = "arena.animationLab.marksDraft";
+type MarkDefs = Record<string, GroundMarkDef>;
+type Tab = "animations" | "effets" | "sol";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -150,6 +163,8 @@ class Stage {
   // boucle sur le personnage au repos.
   private fxPreview: { def: ParticleEffectDef; anchor: EffectAnchor; compare: Recipe | null; key: string } | null = null;
   private fxRuns: { system: ParticleSystem | null; at: Vector3; created: number; compare: boolean }[] = [];
+  // Onglet des marques au sol : marque réglée, rejouée en boucle sous le personnage au repos.
+  private markPreview: { def: GroundMarkDef; key: string; mark: GroundMark | null; created: number; at: Vector3 } | null = null;
   private clock = 0;
   private camera: ArcRotateCamera;
   onFrame: ((info: FrameInfo) => void) | null = null;
@@ -181,10 +196,11 @@ class Stage {
     this.targetHolder.position.z = 6;
     this.assets = new CharacterAssets(this.scene, LIBRARIES);
     this.fx = new ParticleFactory(this.scene);
-    this.effects = new AbilityEffectPlayer(this.fx);
-    this.targetFx = new AbilityEffectPlayer(this.fx);
-    this.zoneFx = new AbilityEffectPlayer(this.fx);
-    this.codeFx = new SpellEffects(this.scene);
+    // Le sol de la page est plat.
+    this.codeFx = new SpellEffects(this.scene, () => 0);
+    this.effects = new AbilityEffectPlayer(this.fx, this.codeFx.marks);
+    this.targetFx = new AbilityEffectPlayer(this.fx, this.codeFx.marks);
+    this.zoneFx = new AbilityEffectPlayer(this.fx, this.codeFx.marks);
     // Un état réglé dans le brouillon remplace les particules d'état du code.
     this.codeFx.statuses.isTuned = () => this.entry?.status !== undefined;
     this.zoneDisc = CreateDisc("zone", { radius: 1, tessellation: 64 }, this.scene);
@@ -314,13 +330,47 @@ class Stage {
     }
   }
 
+  // Onglet d'atelier ouvert (effets à particules ou marques au sol) : le personnage est au repos.
+  private get workshop(): boolean {
+    return !!this.fxPreview || !!this.markPreview;
+  }
+
+  previewMark(def: GroundMarkDef | null) {
+    const key = def ? JSON.stringify(def) : "";
+    if (key === (this.markPreview?.key ?? "")) return;
+    const switched = !!def !== !!this.markPreview;
+    // Un réglage qui change (curseur glissé) remplace la marque aussitôt, sans fondu (pas d'empilement).
+    this.markPreview?.mark?.remove();
+    this.markPreview = def ? { def, key, mark: null, created: -Infinity, at: new Vector3() } : null;
+    this.updateTargetVisibility();
+    if (switched) {
+      this.frameMoment();
+      this.restart();
+    }
+  }
+
+  // Marque rejouée en boucle : apparition, tenue (sa durée, sinon 2,5 s), disparition, une pause, puis on recommence.
+  private tickMark() {
+    const preview = this.markPreview!;
+    const hold = preview.def.duration > 0 ? preview.def.duration : MARK_HOLD;
+    const age = this.clock - preview.created;
+    if (preview.mark && preview.def.duration <= 0 && age >= hold) {
+      preview.mark.stop();
+      preview.mark = null;
+    }
+    if (age < hold + preview.def.fadeOut + 0.6) return;
+    preview.mark?.stop();
+    preview.mark = this.codeFx.marks.createFromDef(preview.def, preview.at);
+    preview.created = this.clock;
+  }
+
   // Personnage qui subit la compétence : le mannequin, ou le lanceur pour une compétence sur soi.
   private targetCharacter(): CharacterInstance | null {
     return targetsSelf(this.abilityId) ? this.instance : this.target;
   }
 
   private updateTargetVisibility() {
-    this.targetHolder.setEnabled(!this.fxPreview && !targetsSelf(this.abilityId));
+    this.targetHolder.setEnabled(!this.workshop && !targetsSelf(this.abilityId));
   }
 
   // Centre de la zone d'effet : la cible d'un sort offensif, sinon le lanceur.
@@ -330,7 +380,7 @@ class Stage {
 
   // Caméra tournée vers ce que règle le moment : le lanceur, la cible ou toute la zone.
   private frameMoment() {
-    const moment = this.fxPreview ? "caster" : this.moment;
+    const moment = this.workshop ? "caster" : this.moment;
     if (moment === "zone") {
       const radius = getAbility(this.abilityId)?.radius ?? 5;
       this.camera.setTarget(this.zoneCenter(new Vector3()).addInPlace(new Vector3(0, 1, 0)));
@@ -417,7 +467,7 @@ class Stage {
     this.animator = new CharacterAnimator(instance.animations, instance.set, this.tuning);
     this.unfreezeTarget();
     this.cycle = { phase: "idle", time: IDLE_PAUSE - 0.3 };
-    if (this.mode === "scrub" && !this.fxPreview) this.showFrame();
+    if (this.mode === "scrub" && !this.workshop) this.showFrame();
   }
 
   private unfreezeTarget() {
@@ -430,7 +480,7 @@ class Stage {
 
   private showFrame() {
     const instance = this.instance;
-    if (!instance || this.fxPreview) return;
+    if (!instance || this.workshop) return;
     const group = this.entry && instance.animations.get(this.entry.animation);
     if (group) {
       if (this.frozen !== group) {
@@ -479,17 +529,18 @@ class Stage {
   private tick(dt: number) {
     this.fx.update();
     this.codeFx.update(dt);
-    this.tickCodeStatus(dt, this.mode === "play" && !this.fxPreview && this.sequence ? this.sequence.time : null);
+    this.tickCodeStatus(dt, this.mode === "play" && !this.workshop && this.sequence ? this.sequence.time : null);
     this.clock += dt;
     const instance = this.instance;
     const animator = this.animator;
     const entry = this.entry;
     if (!this.targetFrozen) this.targetAnimator?.update(this.idleInput());
-    if (this.fxPreview) {
+    if (this.workshop) {
       if (!instance || !animator) return;
       animator.update(this.idleInput());
       instance.setStowed(false);
-      this.tickFx(instance);
+      if (this.fxPreview) this.tickFx(instance);
+      if (this.markPreview) this.tickMark();
       this.onFrame?.({ playhead: null, cast: null, labels: this.fxLabels() });
       return;
     }
@@ -681,6 +732,9 @@ class Stage {
   }
 }
 
+// Tenue d'une marque sans durée dans l'aperçu de l'atelier (secondes).
+const MARK_HOLD = 2.5;
+
 // Identifiant du mannequin pour les visuels d'état du code.
 const CODE_DUMMY = "lab-target";
 
@@ -712,12 +766,12 @@ function isStance(set: CharacterAnimationSet | null, id: string): boolean {
 }
 
 // Compétences (et moment) qui utilisent un effet à particules, d'après les réglages.
-function effectUses(tuning: AnimationTuning, recipe: string): string[] {
+function effectUses(tuning: AnimationTuning, recipe: string, type?: "ground"): string[] {
   const uses: string[] = [];
   for (const entries of Object.values(tuning)) {
     for (const [abilityId, entry] of Object.entries(entries)) {
       for (const [moment, effects] of momentEffects(entry)) {
-        if (effects.some((effect) => effect.recipe === recipe)) uses.push(`${abilityName(abilityId)} (${momentLabel(moment, abilityId)})`);
+        if (effects.some((effect) => effect.recipe === recipe && effect.type === type)) uses.push(`${abilityName(abilityId)} (${momentLabel(moment, abilityId)})`);
       }
     }
   }
@@ -786,6 +840,7 @@ function round(value: number): number {
 
 function roundEffect(effect: AnimationEffect): AnimationEffect {
   return {
+    ...(effect.type && { type: effect.type }),
     recipe: effect.recipe,
     start: round(effect.start),
     end: round(effect.end),
@@ -907,14 +962,18 @@ function AnimationLab() {
   const initial = readStorage<{
     classId: ClassId;
     abilityId: string;
-    tab?: "animations" | "effets";
+    tab?: Tab;
+    markId?: string;
     fxId?: string;
     fxAnchor?: EffectAnchor;
     moment?: Moment;
     targetClass?: ClassId;
     distance?: number;
   }>(SELECTION_KEY);
-  const [tab, setTab] = useState<"animations" | "effets">(initial?.tab ?? "animations");
+  const [tab, setTab] = useState<Tab>(initial?.tab ?? "animations");
+  const [marksSaved, setMarksSaved] = useState<MarkDefs | null>(null);
+  const [marksDraft, setMarksDraft] = useState<MarkDefs>({});
+  const [markId, setMarkId] = useState(initial?.markId ?? Object.keys(BUILTIN_MARKS)[0]);
   const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
   const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
   const [fxId, setFxId] = useState(initial?.fxId ?? "fireCharge");
@@ -999,10 +1058,22 @@ function AnimationLab() {
     void fetch("/__dev-file/particleRequests")
       .then((response) => response.json() as Promise<ParticleRequest[] | null>)
       .then((list) => setRequests(list ?? []));
+    void fetch("/__dev-file/groundMarks")
+      .then((response) => response.json() as Promise<MarkDefs | null>)
+      .then((defs) => {
+        setMarksSaved(defs ?? {});
+        setMarksDraft(rebaseDraft(readStorage<StoredDraft<GroundMarkDef>>(MARKS_DRAFT_KEY), defs ?? {}));
+      });
   }, []);
 
   // Effets en cours de réglage : utilisés aussi par l'onglet des animations.
   useEffect(() => setParticleEffectDefs(fxDraft), [fxDraft]);
+  useEffect(() => setGroundMarkDefs(marksDraft), [marksDraft]);
+
+  useEffect(() => {
+    if (!marksSaved) return;
+    writeStorage(MARKS_DRAFT_KEY, JSON.stringify(marksDraft) !== JSON.stringify(marksSaved) ? { base: marksSaved, draft: marksDraft } : null);
+  }, [marksDraft, marksSaved]);
 
   useEffect(() => {
     if (!fxSaved) return;
@@ -1012,7 +1083,7 @@ function AnimationLab() {
   // Onglet des effets : suit les demandes traitées par Claude et les effets qu'il ajoute (sans écraser un effet en
   // cours de modification ici).
   useEffect(() => {
-    if (tab !== "effets") return;
+    if (tab === "animations") return;
     const timer = setInterval(() => {
       void fetch("/__dev-file/particleRequests")
         .then((response) => response.json() as Promise<ParticleRequest[] | null>)
@@ -1033,6 +1104,22 @@ function AnimationLab() {
             return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
           });
         });
+      void fetch("/__dev-file/groundMarks")
+        .then((response) => response.json() as Promise<MarkDefs | null>)
+        .then((file) => {
+          if (!file) return;
+          setMarksSaved((previous) => {
+            if (!previous) return previous;
+            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
+            if (!changed.length) return previous;
+            setMarksDraft((draft) => {
+              const next = { ...draft };
+              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
+              return next;
+            });
+            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
+          });
+        });
     }, 4000);
     return () => clearInterval(timer);
   }, [tab]);
@@ -1044,8 +1131,8 @@ function AnimationLab() {
   }, [draft, saved]);
 
   useEffect(
-    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance }),
-    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance],
+    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId }),
+    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId],
   );
 
   // Effets à particules : ceux du jeu convertis en réglages, puis ceux créés ici.
@@ -1072,6 +1159,39 @@ function AnimationLab() {
     stageRef.current?.previewEffect(tab === "effets" ? fxDef : null, fxAnchor, compareRecipe);
   }, [tab, fxDef, fxAnchor, compareRecipe, instance]);
 
+  // Marques au sol : celles de départ, puis celles créées ici.
+  const markIds = useMemo(() => {
+    const created = Object.keys({ ...marksSaved, ...marksDraft }).filter((id) => !(id in BUILTIN_MARKS));
+    return [...Object.keys(BUILTIN_MARKS), ...created.sort()];
+  }, [marksSaved, marksDraft]);
+  const markBase = marksDraft[markId] ?? BUILTIN_MARKS[markId] ?? null;
+  const markDef = useMemo(() => (markBase ? { ...DEFAULT_MARK, ...markBase } : null), [markBase]);
+  const markStatus = (id: string): EffectStatus => {
+    const d = marksDraft[id];
+    const s = marksSaved?.[id];
+    if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_MARKS) ? "new" : "draft";
+    return s ? "saved" : "code";
+  };
+  const marksUnsaved = marksSaved !== null && JSON.stringify(marksDraft) !== JSON.stringify(marksSaved);
+  useEffect(() => {
+    if (marksSaved && !markIds.includes(markId)) setMarkId(markIds[0]);
+  }, [marksSaved, markIds, markId]);
+  useEffect(() => {
+    stageRef.current?.previewMark(tab === "sol" ? markDef : null);
+  }, [tab, markDef, instance]);
+  const setMark = (id: string, def: GroundMarkDef | null) =>
+    setMarksDraft((d) => {
+      const next = { ...d };
+      if (def) next[id] = def;
+      else delete next[id];
+      return next;
+    });
+  const uniqueMarkId = (base: string) => {
+    let n = 1;
+    while (`${base}${n}` in marksDraft || `${base}${n}` in BUILTIN_MARKS || `${base}${n}` in (marksSaved ?? {})) n++;
+    return `${base}${n}`;
+  };
+
   const setFx = (id: string, def: ParticleEffectDef | null) =>
     setFxDraft((d) => {
       const next = { ...d };
@@ -1084,13 +1204,14 @@ function AnimationLab() {
     while (`${base}${n}` in fxDraft || `${base}${n}` in BUILTIN_DEFS || `${base}${n}` in (fxSaved ?? {})) n++;
     return `${base}${n}`;
   };
-  const sendRequest = async (prompt: string, variant: boolean) => {
+  const sendRequest = async (prompt: string, variant: boolean, kind: "particules" | "sol" = "particules") => {
     const request: ParticleRequest = {
       id: Date.now().toString(36),
       date: new Date().toISOString(),
-      kind: "particules",
+      kind,
       prompt,
-      ...(variant && fxDef && { effect: fxId, def: fxDef, anchor: fxAnchor }),
+      ...(variant && kind === "particules" && fxDef && { effect: fxId, def: fxDef, anchor: fxAnchor }),
+      ...(variant && kind === "sol" && markDef && { effect: markId, def: markDef }),
       status: "en attente",
     };
     const list = [...requests, request];
@@ -1289,7 +1410,18 @@ function AnimationLab() {
       setFxSaved(defs);
       setFxDraft(defs);
     }
-    setMessage("Enregistré (src/game/animationTuning.json, src/game/particleEffects.json) : le jeu l'utilise au prochain chargement.");
+    if (marksUnsaved) {
+      const file = ((await fetch("/__dev-file/groundMarks").then((r) => r.json())) ?? {}) as MarkDefs;
+      const defs = rebaseDraft({ base: marksSaved ?? {}, draft: marksDraft }, file);
+      const response = await fetch("/__dev-file/groundMarks", { method: "POST", body: JSON.stringify(defs) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement des marques au sol : ${await response.text()}`);
+        return;
+      }
+      setMarksSaved(defs);
+      setMarksDraft(defs);
+    }
+    setMessage("Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json) : le jeu l'utilise au prochain chargement.");
     setTimeout(() => setMessage(null), 4000);
   };
 
@@ -1315,6 +1447,9 @@ function AnimationLab() {
           <button className={tab === "effets" ? "lab-tab-active" : ""} onClick={() => setTab("effets")}>
             Effets à particules
           </button>
+          <button className={tab === "sol" ? "lab-tab-active" : ""} onClick={() => setTab("sol")}>
+            Marques au sol
+          </button>
         </span>
         <label>
           Classe
@@ -1329,8 +1464,12 @@ function AnimationLab() {
         <span className="lab-hint">Souris : tourner autour · molette : zoom · espace : lecture</span>
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
-          <button disabled={!unsaved && !fxUnsaved} onClick={() => void save()} className={unsaved || fxUnsaved ? "lab-save" : ""}>
-            {unsaved || fxUnsaved ? "Enregistrer" : "Tout est enregistré"}
+          <button
+            disabled={!unsaved && !fxUnsaved && !marksUnsaved}
+            onClick={() => void save()}
+            className={unsaved || fxUnsaved || marksUnsaved ? "lab-save" : ""}
+          >
+            {unsaved || fxUnsaved || marksUnsaved ? "Enregistrer" : "Tout est enregistré"}
           </button>
         </span>
       </div>
@@ -1346,6 +1485,20 @@ function AnimationLab() {
               const id = uniqueFxId("effet");
               setFx(id, newEffectDef());
               setFxId(id);
+            }}
+          />
+        )}
+        {tab === "sol" && (
+          <MarkList
+            ids={markIds}
+            defs={marksDraft}
+            selected={markId}
+            status={markStatus}
+            onSelect={setMarkId}
+            onNew={() => {
+              const id = uniqueMarkId("marque");
+              setMark(id, { ...DEFAULT_MARK });
+              setMarkId(id);
             }}
           />
         )}
@@ -1384,6 +1537,33 @@ function AnimationLab() {
           {!instance && !error && <div className="lab-loading">Chargement des animations…</div>}
           {error && <div className="anim-error">{error}</div>}
         </div>
+        {tab === "sol" && markDef && (
+          <div className="fx-side">
+            <RequestsPanel
+              kind="sol"
+              requests={requests}
+              selectedLabel={markDef.label}
+              onSend={(prompt, variant) => void sendRequest(prompt, variant, "sol")}
+            />
+            <MarkEditor
+              id={markId}
+              def={markDef}
+              onChange={(def) => setMark(markId, def)}
+              canRevert={markStatus(markId) === "draft" || (markStatus(markId) === "new" && saved !== null && !effectUses(draft, markId, "ground").length)}
+              onRevert={() => setMark(markId, marksSaved?.[markId] ?? null)}
+              canBackToStart={markId in BUILTIN_MARKS && markId in marksDraft}
+              onBackToStart={() => setMark(markId, null)}
+              onDuplicate={() => {
+                const id = uniqueMarkId(markId.replace(/\d+$/, ""));
+                setMark(id, { ...markDef, label: `${markDef.label} (copie)` });
+                setMarkId(id);
+              }}
+              canDelete={!(markId in BUILTIN_MARKS)}
+              onDelete={() => setMark(markId, null)}
+              usedBy={saved === null ? ["chargement des réglages…"] : effectUses(draft, markId, "ground")}
+            />
+          </div>
+        )}
         {tab === "effets" && fxDef && (
           <div className="fx-side">
             <RequestsPanel requests={requests} selectedLabel={fxDef.label} onSend={(prompt, variant) => void sendRequest(prompt, variant)} />
@@ -1819,6 +1999,7 @@ function dragOnTrack(event: ReactPointerEvent, track: HTMLElement | null, length
 
 // Effet proposé à l'ajout, selon le moment.
 const DEFAULT_RECIPES: Record<Moment, string> = { caster: "fireCharge", impact: "fireBurst", status: "mezHalo", zone: "frostField" };
+const DEFAULT_MARKS: Record<Moment, string> = { caster: "arcaneRunes", impact: "fireCracks", status: "frostCircle", zone: "frostCircle" };
 
 // Réglage du décalage d'un effet (mètres) : un double-clic remet à zéro.
 const OFFSETS: { label: string; min: number; max: number }[] = [
@@ -1896,12 +2077,13 @@ function EffectsPanel(props: {
     });
   };
 
-  const add = () => {
+  const add = (ground = false) => {
     const created: AnimationEffect = {
-      recipe: DEFAULT_RECIPES[kind],
+      ...(ground && { type: "ground" as const }),
+      recipe: ground ? DEFAULT_MARKS[kind] : DEFAULT_RECIPES[kind],
       start: addSpan[0],
       end: addSpan[1],
-      anchor: kind === "zone" ? "feet" : kind === "caster" ? "hands" : "chest",
+      anchor: ground || kind === "zone" ? "feet" : kind === "caster" ? "hands" : "chest",
       offset: [0, 0, 0],
       ...(kind === "status" && { untilEnd: true }),
       ...(kind === "zone" && { fitZone: true }),
@@ -1948,7 +2130,8 @@ function EffectsPanel(props: {
     <div className="lab-effects">
       <div className="lab-effects-head">
         <strong>Effets</strong>
-        <button onClick={add}>+ Ajouter un effet</button>
+        <button onClick={() => add()}>+ Ajouter un effet</button>
+        <button onClick={() => add(true)}>+ Marque au sol</button>
       </div>
       {effects.map((effect, i) => (
         <div
@@ -1966,7 +2149,7 @@ function EffectsPanel(props: {
             onPointerDown={(e) => begin(i, "move", e)}
           >
             <span>
-              {particleEffectLabel(effect.recipe)}
+              {effect.type === "ground" ? `◎ ${groundMarkLabel(effect.recipe)}` : particleEffectLabel(effect.recipe)}
               {effect.untilEnd && " → fin de l'état"}
             </span>
             <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin(i, "start", e)} title="Début de l'effet" />
@@ -1986,9 +2169,9 @@ function EffectsPanel(props: {
       {current && place && (
         <div className="lab-controls lab-effect-controls">
           <label>
-            Effet
+            {current.type === "ground" ? "Marque au sol" : "Effet"}
             <select value={current.recipe} onChange={(e) => replace(index, { ...current, recipe: e.target.value })}>
-              {particleEffectChoices().map(({ id, label }) => (
+              {(current.type === "ground" ? groundMarkChoices() : particleEffectChoices()).map(({ id, label }) => (
                 <option key={id} value={id}>
                   {label}
                 </option>

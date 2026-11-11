@@ -35,10 +35,15 @@ function tunedMoments(abilityId: string): TunedMoments {
 const recipes = (ids: string[] | undefined): Recipe[] => (ids ?? []).map(recipeById);
 import { StatusFx } from "./statusFx";
 import { TargetVisuals } from "./targetVisuals";
+import { GroundMarks, setGroundMarkDefs, type GroundMarkDef } from "./groundMarks";
+import groundMarks from "./groundMarks.json";
+import { terrainHeight } from "@arena/shared";
 import { tuningOf, type AnimationTuning } from "./abilityAnimations";
 import animationTuning from "./animationTuning.json";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
+// Marques au sol réglées sur la page de réglage (elles remplacent celles de départ de même nom).
+setGroundMarkDefs(groundMarks as unknown as Record<string, GroundMarkDef>);
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 
 const SLASH_DURATION = 0.25;
@@ -75,12 +80,19 @@ export class SpellEffects {
   readonly statuses: StatusFx;
   // Impact, état et zone réglés sur la page de réglage.
   readonly targets: TargetVisuals;
+  // Marques au sol des compétences réglées.
+  readonly marks: GroundMarks;
 
-  constructor(private scene: Scene) {
+  // heightAt : hauteur du sol (le terrain de l'arène en jeu, le sol plat de la page de réglage).
+  constructor(
+    private scene: Scene,
+    heightAt: (x: number, z: number) => number = terrainHeight,
+  ) {
     this.particles = new ParticleFactory(scene);
     this.particles.prewarm(P.RECIPES);
-    this.statuses = new StatusFx(scene, this.particles);
-    this.targets = new TargetVisuals(this.particles, TUNING);
+    this.marks = new GroundMarks(scene, heightAt);
+    this.statuses = new StatusFx(scene, this.particles, this.marks);
+    this.targets = new TargetVisuals(this.particles, TUNING, this.marks);
     // Un état dont les effets sont réglés ne joue plus les particules du code (ses objets restent).
     this.statuses.isTuned = (playerId, kind) => this.targets.hasTunedStatus(playerId, kind);
   }
@@ -266,6 +278,7 @@ export class SpellEffects {
 
   update(dt: number) {
     this.particles.update();
+    this.marks.update(dt);
     for (const item of [...this.attached]) {
       item.left -= dt;
       if (!item.anchor.isDisposed()) item.at.copyFrom(item.anchor.getAbsolutePosition());
@@ -299,6 +312,7 @@ export class SpellEffects {
     for (const line of this.guardLinks.values()) line.dispose();
     this.statuses.dispose();
     this.targets.dispose();
+    this.marks.dispose();
     this.particles.dispose();
     this.effects = [];
     this.guardLinks.clear();
