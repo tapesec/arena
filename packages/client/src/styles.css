@@ -2004,3 +2004,12 @@ body,
   background: #2c4a6b;
   border-color: #7fb4e3;
 }
+
+/* Après la fin de l'animation (seuls les sons s'y prolongent) */
+.lab-after-clip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0 6px, transparent 6px 12px);
+  pointer-events: none;
+}

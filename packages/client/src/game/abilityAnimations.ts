@@ -212,7 +212,9 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
   if (entry.effects) {
     clamped.effects = entry.effects.map((effect) => {
       const effectStart = Math.min(Math.max(effect.start, start), end - MIN_EFFECT);
-      const effectEnd = Math.min(end, Math.max(effect.end, effectStart + MIN_EFFECT));
+      // Un son peut continuer après la fin du geste (jusqu'à SOUND_TAIL secondes d'animation).
+      const limit = effect.type === "sound" ? end + SOUND_TAIL : end;
+      const effectEnd = Math.min(limit, Math.max(effect.end, effectStart + MIN_EFFECT));
       const clampedEffect: AnimationEffect = { ...effect, start: effectStart, end: effectEnd };
       // Les points clés restent dans l'effet.
       if (effect.keys) clampedEffect.keys = effect.keys.map((key) => ({ ...key, time: Math.min(effectEnd, Math.max(effectStart, key.time)) }));
@@ -224,6 +226,8 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
 
 // Durée minimale d'un effet (secondes dans l'animation).
 const MIN_EFFECT = 0.02;
+// Un son du geste peut dépasser la fin de l'animation de tant (secondes d'animation).
+export const SOUND_TAIL = 3;
 
 // Effets d'un moment de la cible (impact, état, zone) gardés entre 0 et length secondes.
 export function clampMomentEffects(effects: AnimationEffect[], length: number): AnimationEffect[] {

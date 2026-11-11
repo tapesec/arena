@@ -133,6 +133,8 @@ export interface EffectTrack {
   ally?: boolean;
   // Sans les sons (pose figée de la page de réglage).
   silent?: boolean;
+  // Vitesse du temps de la piste (secondes de piste par seconde réelle) : celle du geste pour le lanceur.
+  speed?: number;
 }
 
 // Écart de vitesse tiré au hasard à chaque lecture d'un son (un même son ne sonne jamais deux fois pareil).
@@ -181,6 +183,10 @@ interface Run {
   // Son à arrêter avec sa barre (coupé ou en boucle), relevé au départ : changer de mode ensuite ne doit pas
   // l'empêcher de s'arrêter.
   cutAtEnd: boolean;
+  // Dernier instant vu de sa piste, et la vitesse de celle-ci : si la piste disparaît avant la fin de la barre (le
+  // geste est fini), le son continue jusqu'à la fin de sa barre.
+  time: number;
+  speed: number;
 }
 
 // Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
@@ -197,7 +203,7 @@ export class AbilityEffectPlayer {
   update(character: CharacterInstance | null, playing: PlayingAbility | null, ally?: boolean, silent = false) {
     this.updateTracks(
       character,
-      playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time, ally, silent }] : [],
+      playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time, ally, silent, speed: playing.entry.rate }] : [],
     );
   }
 
@@ -215,7 +221,7 @@ export class AbilityEffectPlayer {
         let run = this.running.get(key);
         const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
         if (!run) {
-          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, cutAtEnd: false };
+          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, cutAtEnd: false, time: 0, speed: 1 };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
           if (effect.type === "sound") {
@@ -235,6 +241,8 @@ export class AbilityEffectPlayer {
           this.running.set(key, run);
         }
         run.effect = effect;
+        run.time = track.time;
+        run.speed = track.speed ?? 1;
         place(run.at);
         if (run.object) {
           const aim = track.point?.aim ?? null;
@@ -252,16 +260,26 @@ export class AbilityEffectPlayer {
     return this.running.size === 0;
   }
 
+  // Tout arrêter tout de suite (joueur disparu, page relancée), sons compris.
+  private stoppingAll = false;
   stopAll() {
+    this.stoppingAll = true;
     for (const [key, run] of this.running) this.stop(key, run);
+    this.stoppingAll = false;
   }
 
   private stop(key: string, run: Run) {
     run.mark?.stop();
     run.object?.stop();
     run.overlay?.stop();
-    // Un son s'arrête avec sa barre, sauf s'il doit être joué jusqu'au bout.
-    if (run.cutAtEnd) run.sound?.stop();
+    // Un son s'arrête avec sa barre, sauf s'il doit être joué jusqu'au bout. Si sa piste s'arrête avant la fin de
+    // la barre (geste fini alors que le son la dépasse), il continue jusqu'à la fin de sa barre.
+    if (run.cutAtEnd && run.sound) {
+      const sound = run.sound;
+      const left = (run.effect.end - run.time) / Math.max(0.05, run.speed);
+      if (left > 0.05 && !this.stoppingAll) setTimeout(() => sound.stop(), left * 1000);
+      else sound.stop();
+    }
     if (run.system) {
       // Les dernières particules restent où elles sont, au lieu de suivre le personnage.
       run.system.emitter = run.at.clone();

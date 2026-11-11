@@ -24,6 +24,7 @@ import {
   statusDurationOf,
   statusKindsOf,
   targetsSelf,
+  SOUND_TAIL,
   zoneCenterIsTarget,
   canHaveProjectile,
   tuningOf,
@@ -1749,6 +1750,8 @@ function AnimationLab() {
     return clampAbilityAnimation(withEffects, castTime, stageRef.current?.clipLength(base.animation) ?? 0);
   }, [instance, stance, tuned, abilityId, castTime]);
   const length = entry ? clipLength(entry.animation) : 0;
+  // Timeline du lanceur : l'animation, prolongée après la fin du geste si un son peut la dépasser.
+  const casterAxis = entry?.effects?.some((effect) => effect.type === "sound") ? Math.max(length, entry.end + SOUND_TAIL) : length;
 
   // Moments réglables de la compétence : l'état seulement si elle en laisse un, la zone si elle en a une.
   const ability = getAbility(abilityId);
@@ -2340,11 +2343,20 @@ function AnimationLab() {
                       Revenir au calage du code
                     </button>
                   </div>
-                  <Timeline length={length} castTime={castTime} entry={entry} playheadRef={playheadRef} onChange={update} onScrub={scrub} />
+                  <Timeline
+                    length={length}
+                    axis={casterAxis}
+                    castTime={castTime}
+                    entry={entry}
+                    playheadRef={playheadRef}
+                    onChange={update}
+                    onScrub={scrub}
+                  />
                   <EffectsPanel
                     kind="caster"
                     codeSounds={codeSoundTracks(abilityId, "cast", castTime > 0 ? releaseTime(entry, castTime) : entry.start)}
-                    length={length}
+                    soundTail={SOUND_TAIL}
+                    length={casterAxis}
                     bounds={[entry.start, entry.end]}
                     addSpan={[entry.start, castTime > 0 ? releaseTime(entry, castTime) : entry.end]}
                     effects={entry.effects ?? []}
@@ -2501,12 +2513,15 @@ function Timeline(props: {
   playheadRef: RefObject<HTMLDivElement | null>;
   onChange: (entry: AbilityAnimation) => void;
   onScrub: (time: number) => void;
+  // Longueur affichée (secondes), si elle dépasse l'animation (sons après la fin du geste).
+  axis?: number;
 }) {
   const { length, castTime, entry, playheadRef, onChange, onScrub } = props;
+  const axis = Math.max(length, props.axis ?? length);
   const trackRef = useRef<HTMLDivElement>(null);
   const casting = castTime > 0;
   const release = releaseTime(entry, castTime);
-  const percent = (time: number) => `${(time / Math.max(length, 1e-3)) * 100}%`;
+  const percent = (time: number) => `${(time / Math.max(axis, 1e-3)) * 100}%`;
   const snap = (time: number) => Math.round(time / SNAP) * SNAP;
 
   const begin = (kind: Drag, event: ReactPointerEvent) => {
@@ -2520,9 +2535,9 @@ function Timeline(props: {
     const e0 = entry;
     const r0 = release;
     const apply = (clientX: number) => {
-      const d = snap(((clientX - x0) / width) * length);
+      const d = snap(((clientX - x0) / width) * axis);
       if (kind === "scrub") {
-        onScrub(snap(((clientX - left) / width) * length));
+        onScrub(Math.min(length, snap(((clientX - left) / width) * axis)));
         return;
       }
       let next = e0;
@@ -2548,13 +2563,13 @@ function Timeline(props: {
       }
       onChange(next);
       // La pose montrée suit le bord déplacé, ou le pointeur quand on glisse toute la fenêtre.
-      const pointer = snap(((clientX - left) / width) * length);
+      const pointer = snap(((clientX - left) / width) * axis);
       const shown = kind === "end" ? next.end : kind === "release" ? releaseTime(next, castTime) : kind === "move" ? pointer : next.start;
       onScrub(Math.min(length, shown));
     };
     if (kind === "scrub") apply(event.clientX);
     // Un clic sur la fenêtre montre la pose à cet endroit.
-    if (kind === "move") onScrub(snap(((event.clientX - left) / width) * length));
+    if (kind === "move") onScrub(Math.min(length, snap(((event.clientX - left) / width) * axis)));
     const move = (e: PointerEvent) => apply(e.clientX);
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -2565,7 +2580,7 @@ function Timeline(props: {
   };
 
   const ticks = [];
-  for (let t = 0; t <= length + 1e-6; t += 0.25) {
+  for (let t = 0; t <= axis + 1e-6; t += 0.25) {
     const whole = Math.abs(t - Math.round(t)) < 1e-6;
     ticks.push(
       <div key={t} className={`lab-tick ${whole ? "lab-tick-major" : ""}`} style={{ left: percent(t) }}>
@@ -2614,7 +2629,10 @@ function Timeline(props: {
             <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin("end", e)} title="Fin" />
           </div>
         )}
-        <div ref={playheadRef} className="lab-playhead" data-length={length} />
+        {axis > length && (
+          <div className="lab-after-clip" style={{ left: percent(length), width: percent(axis - length) }} title="Après la fin de l'animation (sons seulement)" />
+        )}
+        <div ref={playheadRef} className="lab-playhead" data-length={axis} />
       </div>
     </div>
   );
@@ -2847,6 +2865,8 @@ function EffectsPanel(props: {
   effects: AnimationEffect[];
   // Geste du lanceur : sons du code au départ du sort, à reprendre en pistes.
   codeSounds?: AnimationEffect[];
+  // Un son peut dépasser la portion de tant (secondes) : après la fin du geste.
+  soundTail?: number;
   selected: number;
   onSelect: (index: number) => void;
   cursor: number;
@@ -2857,6 +2877,8 @@ function EffectsPanel(props: {
   onEdit: (effect: AnimationEffect) => (() => void) | null;
 }) {
   const { kind, length, bounds, addSpan, effects, codeSounds, selected, onSelect, cursor, playing, onChange, onScrub, onEdit } = props;
+  // Fin permise d'un effet : celle de la portion, plus loin pour un son.
+  const limitOf = (effect: AnimationEffect) => bounds[1] + (effect.type === "sound" ? (props.soundTail ?? 0) : 0);
   const [soundFilter, setSoundFilter] = useState("");
   const tracks = useRef<(HTMLDivElement | null)[]>([]);
   const [selectedKey, setSelectedKey] = useState(0);
@@ -2882,10 +2904,10 @@ function EffectsPanel(props: {
     const e0 = effects[i];
     dragOnTrack(event, tracks.current[i], length, (d, at) => {
       let next = e0;
-      if (part === "move") next = shiftEffect(e0, Math.max(bounds[0] - e0.start, Math.min(d, bounds[1] - e0.end)));
+      if (part === "move") next = shiftEffect(e0, Math.max(bounds[0] - e0.start, Math.min(d, limitOf(e0) - e0.end)));
       else if (part === "start")
         next = { ...e0, start: Math.max(bounds[0], Math.min(e0.keys?.[0]?.time ?? e0.end - SNAP, e0.end - SNAP, e0.start + d)) };
-      else next = { ...e0, end: Math.min(bounds[1], Math.max(e0.keys?.at(-1)?.time ?? e0.start + SNAP, e0.start + SNAP, e0.end + d)) };
+      else next = { ...e0, end: Math.min(limitOf(e0), Math.max(e0.keys?.at(-1)?.time ?? e0.start + SNAP, e0.start + SNAP, e0.end + d)) };
       if (next !== e0 || part !== "move") replace(i, next);
       // Un clic (ou un glissement) sur la barre montre la pose sous le pointeur.
       onScrub(part === "end" ? next.end : part === "start" ? next.start : at);
