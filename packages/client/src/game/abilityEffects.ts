@@ -6,6 +6,13 @@ import type { CharacterInstance } from "./characterAssets";
 import { particleRecipe, zoneRecipe } from "./particleDefs";
 import type { ParticleFactory } from "./particles";
 import type { GroundMark, GroundMarks } from "./groundMarks";
+import type { Objects3D, PlacedObject } from "./objects3d";
+
+// Marques au sol et objets 3D que peut poser un joueur d'effets (sans eux, ces effets ne sont pas joués).
+export interface Scenery {
+  marks: GroundMarks | null;
+  objects: Objects3D | null;
+}
 
 // Effets à particules d'une compétence (réglés sur animation-lab.html) : portés par le lanceur pendant son geste,
 // par chaque cible à l'impact et pendant l'état laissé, ou posés sur la zone d'effet. Chacun démarre et s'arrête
@@ -147,6 +154,7 @@ interface Run {
   at: Vector3;
   system: ParticleSystem | null;
   mark: GroundMark | null;
+  object: PlacedObject | null;
 }
 
 // Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
@@ -154,10 +162,9 @@ interface Run {
 export class AbilityEffectPlayer {
   private running = new Map<string, Run>();
 
-  // marks : marques au sol (sans elles, les effets de type « ground » ne sont pas joués).
   constructor(
     private particles: ParticleFactory,
-    private marks: GroundMarks | null = null,
+    private scenery: Scenery = { marks: null, objects: null },
   ) {}
 
   // Geste de compétence en cours du personnage.
@@ -177,10 +184,11 @@ export class AbilityEffectPlayer {
         const place = (out: Vector3) =>
           track.zone ? zonePosition(track.zone, effect, track.time, out) : effectPosition(character!, effect, track.time, out);
         if (!run) {
-          run = { effect, at: new Vector3(), system: null, mark: null };
+          run = { effect, at: new Vector3(), system: null, mark: null, object: null };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
-          if (effect.type === "ground") run.mark = this.marks?.create(effect.recipe, run.at, radius) ?? null;
+          if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius) ?? null;
+          else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius) ?? null;
           else {
             const recipe = radius !== undefined ? zoneRecipe(effect.recipe, radius) : particleRecipe(effect.recipe);
             run.system = recipe?.(this.particles, run.at) ?? null;
@@ -204,6 +212,7 @@ export class AbilityEffectPlayer {
 
   private stop(key: string, run: Run) {
     run.mark?.stop();
+    run.object?.stop();
     if (run.system) {
       // Les dernières particules restent où elles sont, au lieu de suivre le personnage.
       run.system.emitter = run.at.clone();

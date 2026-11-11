@@ -37,6 +37,9 @@ import { StatusFx } from "./statusFx";
 import { TargetVisuals } from "./targetVisuals";
 import { GroundMarks, setGroundMarkDefs, type GroundMarkDef } from "./groundMarks";
 import groundMarks from "./groundMarks.json";
+import { Objects3D, setObjectDefs, type ObjectDef } from "./objects3d";
+import objects3d from "./objects3d.json";
+import type { Scenery } from "./abilityEffects";
 import { terrainHeight } from "@arena/shared";
 import { tuningOf, type AnimationTuning } from "./abilityAnimations";
 import animationTuning from "./animationTuning.json";
@@ -44,6 +47,7 @@ import animationTuning from "./animationTuning.json";
 const TUNING = animationTuning as unknown as AnimationTuning;
 // Marques au sol réglées sur la page de réglage (elles remplacent celles de départ de même nom).
 setGroundMarkDefs(groundMarks as unknown as Record<string, GroundMarkDef>);
+setObjectDefs(objects3d as unknown as Record<string, ObjectDef>);
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 
 const SLASH_DURATION = 0.25;
@@ -82,6 +86,8 @@ export class SpellEffects {
   readonly targets: TargetVisuals;
   // Marques au sol des compétences réglées.
   readonly marks: GroundMarks;
+  // Objets 3D des compétences réglées.
+  readonly objects: Objects3D;
 
   // heightAt : hauteur du sol (le terrain de l'arène en jeu, le sol plat de la page de réglage).
   constructor(
@@ -91,9 +97,10 @@ export class SpellEffects {
     this.particles = new ParticleFactory(scene);
     this.particles.prewarm(P.RECIPES);
     this.marks = new GroundMarks(scene, heightAt);
-    this.statuses = new StatusFx(scene, this.particles, this.marks);
-    this.targets = new TargetVisuals(this.particles, TUNING, this.marks);
-    // Un état dont les effets sont réglés ne joue plus les particules du code (ses objets restent).
+    this.objects = new Objects3D(scene);
+    this.statuses = new StatusFx(scene, this.particles, this.scenery);
+    this.targets = new TargetVisuals(this.particles, TUNING, this.scenery);
+    // Un état dont les effets sont réglés ne joue plus les particules ni les objets d'état du code.
     this.statuses.isTuned = (playerId, kind) => this.targets.hasTunedStatus(playerId, kind);
   }
 
@@ -279,6 +286,7 @@ export class SpellEffects {
   update(dt: number) {
     this.particles.update();
     this.marks.update(dt);
+    this.objects.update(dt);
     for (const item of [...this.attached]) {
       item.left -= dt;
       if (!item.anchor.isDisposed()) item.at.copyFrom(item.anchor.getAbsolutePosition());
@@ -299,6 +307,11 @@ export class SpellEffects {
     }
   }
 
+  // Marques au sol et objets 3D, pour les joueurs d'effets.
+  get scenery(): Scenery {
+    return { marks: this.marks, objects: this.objects };
+  }
+
   // Efface les effets passagers en cours (projectiles, impulsions, brûlures…) : la page de réglage relance sa lecture.
   clearTransient() {
     for (const effect of this.effects) effect.mesh.dispose(false, true);
@@ -313,6 +326,7 @@ export class SpellEffects {
     this.statuses.dispose();
     this.targets.dispose();
     this.marks.dispose();
+    this.objects.dispose();
     this.particles.dispose();
     this.effects = [];
     this.guardLinks.clear();

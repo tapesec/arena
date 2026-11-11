@@ -49,6 +49,16 @@ import {
   type GroundMark,
   type GroundMarkDef,
 } from "./game/groundMarks";
+import {
+  BUILTIN_OBJECTS,
+  DEFAULT_OBJECT,
+  objectChoices,
+  objectLabel,
+  setObjectDefs,
+  type ObjectDef,
+  type PlacedObject,
+} from "./game/objects3d";
+import { ObjectEditor, ObjectList } from "./objectLab";
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
@@ -79,8 +89,10 @@ const DRAFT_KEY = "arena.animationLab.draft2";
 const SELECTION_KEY = "arena.animationLab.selection";
 const FX_DRAFT_KEY = "arena.animationLab.fxDraft2";
 const MARKS_DRAFT_KEY = "arena.animationLab.marksDraft";
+const OBJECTS_DRAFT_KEY = "arena.animationLab.objectsDraft";
 type MarkDefs = Record<string, GroundMarkDef>;
-type Tab = "animations" | "effets" | "sol";
+type ObjectDefs = Record<string, ObjectDef>;
+type Tab = "animations" | "effets" | "sol" | "objets";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -165,6 +177,9 @@ class Stage {
   private fxRuns: { system: ParticleSystem | null; at: Vector3; created: number; compare: boolean }[] = [];
   // Onglet des marques au sol : marque réglée, rejouée en boucle sous le personnage au repos.
   private markPreview: { def: GroundMarkDef; key: string; mark: GroundMark | null; created: number; at: Vector3 } | null = null;
+  // Onglet des objets 3D : objet réglé, rejoué en boucle à l'accroche choisie, sur le personnage au repos.
+  private objectPreview: { def: ObjectDef; anchor: EffectAnchor; key: string; object: PlacedObject | null; created: number; at: Vector3 } | null =
+    null;
   private clock = 0;
   private camera: ArcRotateCamera;
   onFrame: ((info: FrameInfo) => void) | null = null;
@@ -198,9 +213,9 @@ class Stage {
     this.fx = new ParticleFactory(this.scene);
     // Le sol de la page est plat.
     this.codeFx = new SpellEffects(this.scene, () => 0);
-    this.effects = new AbilityEffectPlayer(this.fx, this.codeFx.marks);
-    this.targetFx = new AbilityEffectPlayer(this.fx, this.codeFx.marks);
-    this.zoneFx = new AbilityEffectPlayer(this.fx, this.codeFx.marks);
+    this.effects = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
+    this.targetFx = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
+    this.zoneFx = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
     // Un état réglé dans le brouillon remplace les particules d'état du code.
     this.codeFx.statuses.isTuned = () => this.entry?.status !== undefined;
     this.zoneDisc = CreateDisc("zone", { radius: 1, tessellation: 64 }, this.scene);
@@ -332,7 +347,7 @@ class Stage {
 
   // Onglet d'atelier ouvert (effets à particules ou marques au sol) : le personnage est au repos.
   private get workshop(): boolean {
-    return !!this.fxPreview || !!this.markPreview;
+    return !!this.fxPreview || !!this.markPreview || !!this.objectPreview;
   }
 
   previewMark(def: GroundMarkDef | null) {
@@ -347,6 +362,35 @@ class Stage {
       this.frameMoment();
       this.restart();
     }
+  }
+
+  previewObject(def: ObjectDef | null, anchor: EffectAnchor) {
+    const key = def ? `${JSON.stringify(def)}|${anchor}` : "";
+    if (key === (this.objectPreview?.key ?? "")) return;
+    const switched = !!def !== !!this.objectPreview;
+    this.objectPreview?.object?.remove();
+    this.objectPreview = def ? { def, anchor, key, object: null, created: -Infinity, at: new Vector3() } : null;
+    this.updateTargetVisibility();
+    if (switched) {
+      this.frameMoment();
+      this.restart();
+    }
+  }
+
+  // Objet rejoué en boucle comme une marque, accroché au personnage.
+  private tickObject(instance: CharacterInstance) {
+    const preview = this.objectPreview!;
+    effectPosition(instance, { recipe: "", start: 0, end: 0, anchor: preview.anchor, offset: [0, 0, 0] }, 0, preview.at);
+    const hold = preview.def.duration > 0 ? preview.def.duration : MARK_HOLD;
+    const age = this.clock - preview.created;
+    if (preview.object && preview.def.duration <= 0 && age >= hold) {
+      preview.object.stop();
+      preview.object = null;
+    }
+    if (age < hold + preview.def.fadeOut + 0.6) return;
+    preview.object?.stop();
+    preview.object = this.codeFx.objects.createFromDef(preview.def, preview.at);
+    preview.created = this.clock;
   }
 
   // Marque rejouée en boucle : apparition, tenue (sa durée, sinon 2,5 s), disparition, une pause, puis on recommence.
@@ -541,6 +585,7 @@ class Stage {
       instance.setStowed(false);
       if (this.fxPreview) this.tickFx(instance);
       if (this.markPreview) this.tickMark();
+      if (this.objectPreview) this.tickObject(instance);
       this.onFrame?.({ playhead: null, cast: null, labels: this.fxLabels() });
       return;
     }
@@ -766,7 +811,7 @@ function isStance(set: CharacterAnimationSet | null, id: string): boolean {
 }
 
 // Compétences (et moment) qui utilisent un effet à particules, d'après les réglages.
-function effectUses(tuning: AnimationTuning, recipe: string, type?: "ground"): string[] {
+function effectUses(tuning: AnimationTuning, recipe: string, type?: "ground" | "object"): string[] {
   const uses: string[] = [];
   for (const entries of Object.values(tuning)) {
     for (const [abilityId, entry] of Object.entries(entries)) {
@@ -806,7 +851,7 @@ function codeOf(moment: Moment, abilityId: string): { effects: AnimationEffect[]
 }
 
 function listOf(effects: AnimationEffect[]): string {
-  return [...new Set(effects.map((effect) => `« ${particleEffectLabel(effect.recipe)} »`))].join(", ");
+  return [...new Set(effects.map((effect) => `« ${effectLabel(effect)} »`))].join(", ");
 }
 
 // Ce que fait le jeu pour un moment pas encore réglé.
@@ -964,6 +1009,8 @@ function AnimationLab() {
     abilityId: string;
     tab?: Tab;
     markId?: string;
+    objectId?: string;
+    objectAnchor?: EffectAnchor;
     fxId?: string;
     fxAnchor?: EffectAnchor;
     moment?: Moment;
@@ -974,6 +1021,10 @@ function AnimationLab() {
   const [marksSaved, setMarksSaved] = useState<MarkDefs | null>(null);
   const [marksDraft, setMarksDraft] = useState<MarkDefs>({});
   const [markId, setMarkId] = useState(initial?.markId ?? Object.keys(BUILTIN_MARKS)[0]);
+  const [objectsSaved, setObjectsSaved] = useState<ObjectDefs | null>(null);
+  const [objectsDraft, setObjectsDraft] = useState<ObjectDefs>({});
+  const [objectId, setObjectId] = useState(initial?.objectId ?? Object.keys(BUILTIN_OBJECTS)[0]);
+  const [objectAnchor, setObjectAnchor] = useState<EffectAnchor>(initial?.objectAnchor ?? "chest");
   const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
   const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
   const [fxId, setFxId] = useState(initial?.fxId ?? "fireCharge");
@@ -1064,11 +1115,25 @@ function AnimationLab() {
         setMarksSaved(defs ?? {});
         setMarksDraft(rebaseDraft(readStorage<StoredDraft<GroundMarkDef>>(MARKS_DRAFT_KEY), defs ?? {}));
       });
+    void fetch("/__dev-file/objects3d")
+      .then((response) => response.json() as Promise<ObjectDefs | null>)
+      .then((defs) => {
+        setObjectsSaved(defs ?? {});
+        setObjectsDraft(rebaseDraft(readStorage<StoredDraft<ObjectDef>>(OBJECTS_DRAFT_KEY), defs ?? {}));
+      });
   }, []);
 
   // Effets en cours de réglage : utilisés aussi par l'onglet des animations.
   useEffect(() => setParticleEffectDefs(fxDraft), [fxDraft]);
   useEffect(() => setGroundMarkDefs(marksDraft), [marksDraft]);
+  useEffect(() => setObjectDefs(objectsDraft), [objectsDraft]);
+  useEffect(() => {
+    if (!objectsSaved) return;
+    writeStorage(
+      OBJECTS_DRAFT_KEY,
+      JSON.stringify(objectsDraft) !== JSON.stringify(objectsSaved) ? { base: objectsSaved, draft: objectsDraft } : null,
+    );
+  }, [objectsDraft, objectsSaved]);
 
   useEffect(() => {
     if (!marksSaved) return;
@@ -1104,6 +1169,22 @@ function AnimationLab() {
             return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
           });
         });
+      void fetch("/__dev-file/objects3d")
+        .then((response) => response.json() as Promise<ObjectDefs | null>)
+        .then((file) => {
+          if (!file) return;
+          setObjectsSaved((previous) => {
+            if (!previous) return previous;
+            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
+            if (!changed.length) return previous;
+            setObjectsDraft((draft) => {
+              const next = { ...draft };
+              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
+              return next;
+            });
+            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
+          });
+        });
       void fetch("/__dev-file/groundMarks")
         .then((response) => response.json() as Promise<MarkDefs | null>)
         .then((file) => {
@@ -1131,8 +1212,8 @@ function AnimationLab() {
   }, [draft, saved]);
 
   useEffect(
-    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId }),
-    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId],
+    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor }),
+    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor],
   );
 
   // Effets à particules : ceux du jeu convertis en réglages, puis ceux créés ici.
@@ -1192,6 +1273,39 @@ function AnimationLab() {
     return `${base}${n}`;
   };
 
+  // Objets 3D : ceux du jeu convertis, puis ceux créés ici.
+  const objectIds = useMemo(() => {
+    const created = Object.keys({ ...objectsSaved, ...objectsDraft }).filter((id) => !(id in BUILTIN_OBJECTS));
+    return [...Object.keys(BUILTIN_OBJECTS), ...created.sort()];
+  }, [objectsSaved, objectsDraft]);
+  const objectBase = objectsDraft[objectId] ?? BUILTIN_OBJECTS[objectId] ?? null;
+  const objectDefShown = useMemo(() => (objectBase ? { ...DEFAULT_OBJECT, ...objectBase } : null), [objectBase]);
+  const objectStatus = (id: string): EffectStatus => {
+    const d = objectsDraft[id];
+    const s = objectsSaved?.[id];
+    if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_OBJECTS) ? "new" : "draft";
+    return s ? "saved" : "code";
+  };
+  const objectsUnsaved = objectsSaved !== null && JSON.stringify(objectsDraft) !== JSON.stringify(objectsSaved);
+  useEffect(() => {
+    if (objectsSaved && !objectIds.includes(objectId)) setObjectId(objectIds[0]);
+  }, [objectsSaved, objectIds, objectId]);
+  useEffect(() => {
+    stageRef.current?.previewObject(tab === "objets" ? objectDefShown : null, objectAnchor);
+  }, [tab, objectDefShown, objectAnchor, instance]);
+  const setObject = (id: string, def: ObjectDef | null) =>
+    setObjectsDraft((d) => {
+      const next = { ...d };
+      if (def) next[id] = def;
+      else delete next[id];
+      return next;
+    });
+  const uniqueObjectId = (base: string) => {
+    let n = 1;
+    while (`${base}${n}` in objectsDraft || `${base}${n}` in BUILTIN_OBJECTS || `${base}${n}` in (objectsSaved ?? {})) n++;
+    return `${base}${n}`;
+  };
+
   const setFx = (id: string, def: ParticleEffectDef | null) =>
     setFxDraft((d) => {
       const next = { ...d };
@@ -1204,7 +1318,7 @@ function AnimationLab() {
     while (`${base}${n}` in fxDraft || `${base}${n}` in BUILTIN_DEFS || `${base}${n}` in (fxSaved ?? {})) n++;
     return `${base}${n}`;
   };
-  const sendRequest = async (prompt: string, variant: boolean, kind: "particules" | "sol" = "particules") => {
+  const sendRequest = async (prompt: string, variant: boolean, kind: "particules" | "sol" | "objet" = "particules") => {
     const request: ParticleRequest = {
       id: Date.now().toString(36),
       date: new Date().toISOString(),
@@ -1212,6 +1326,7 @@ function AnimationLab() {
       prompt,
       ...(variant && kind === "particules" && fxDef && { effect: fxId, def: fxDef, anchor: fxAnchor }),
       ...(variant && kind === "sol" && markDef && { effect: markId, def: markDef }),
+      ...(variant && kind === "objet" && objectDefShown && { effect: objectId, def: objectDefShown, anchor: objectAnchor }),
       status: "en attente",
     };
     const list = [...requests, request];
@@ -1421,7 +1536,18 @@ function AnimationLab() {
       setMarksSaved(defs);
       setMarksDraft(defs);
     }
-    setMessage("Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json) : le jeu l'utilise au prochain chargement.");
+    if (objectsUnsaved) {
+      const file = ((await fetch("/__dev-file/objects3d").then((r) => r.json())) ?? {}) as ObjectDefs;
+      const defs = rebaseDraft({ base: objectsSaved ?? {}, draft: objectsDraft }, file);
+      const response = await fetch("/__dev-file/objects3d", { method: "POST", body: JSON.stringify(defs) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement des objets 3D : ${await response.text()}`);
+        return;
+      }
+      setObjectsSaved(defs);
+      setObjectsDraft(defs);
+    }
+    setMessage("Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json) : le jeu l'utilise au prochain chargement.");
     setTimeout(() => setMessage(null), 4000);
   };
 
@@ -1450,6 +1576,9 @@ function AnimationLab() {
           <button className={tab === "sol" ? "lab-tab-active" : ""} onClick={() => setTab("sol")}>
             Marques au sol
           </button>
+          <button className={tab === "objets" ? "lab-tab-active" : ""} onClick={() => setTab("objets")}>
+            Objets 3D
+          </button>
         </span>
         <label>
           Classe
@@ -1465,11 +1594,11 @@ function AnimationLab() {
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
           <button
-            disabled={!unsaved && !fxUnsaved && !marksUnsaved}
+            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved}
             onClick={() => void save()}
-            className={unsaved || fxUnsaved || marksUnsaved ? "lab-save" : ""}
+            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved ? "lab-save" : ""}
           >
-            {unsaved || fxUnsaved || marksUnsaved ? "Enregistrer" : "Tout est enregistré"}
+            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved ? "Enregistrer" : "Tout est enregistré"}
           </button>
         </span>
       </div>
@@ -1485,6 +1614,20 @@ function AnimationLab() {
               const id = uniqueFxId("effet");
               setFx(id, newEffectDef());
               setFxId(id);
+            }}
+          />
+        )}
+        {tab === "objets" && (
+          <ObjectList
+            ids={objectIds}
+            defs={objectsDraft}
+            selected={objectId}
+            status={objectStatus}
+            onSelect={setObjectId}
+            onNew={() => {
+              const id = uniqueObjectId("objet");
+              setObject(id, { ...DEFAULT_OBJECT });
+              setObjectId(id);
             }}
           />
         )}
@@ -1537,6 +1680,37 @@ function AnimationLab() {
           {!instance && !error && <div className="lab-loading">Chargement des animations…</div>}
           {error && <div className="anim-error">{error}</div>}
         </div>
+        {tab === "objets" && objectDefShown && (
+          <div className="fx-side">
+            <RequestsPanel
+              kind="objet"
+              requests={requests}
+              selectedLabel={objectDefShown.label}
+              onSend={(prompt, variant) => void sendRequest(prompt, variant, "objet")}
+            />
+            <ObjectEditor
+              id={objectId}
+              def={objectDefShown}
+              onChange={(def) => setObject(objectId, def)}
+              anchor={objectAnchor}
+              onAnchor={setObjectAnchor}
+              canRevert={
+                objectStatus(objectId) === "draft" || (objectStatus(objectId) === "new" && saved !== null && !effectUses(draft, objectId, "object").length)
+              }
+              onRevert={() => setObject(objectId, objectsSaved?.[objectId] ?? null)}
+              canBackToStart={objectId in BUILTIN_OBJECTS && objectId in objectsDraft}
+              onBackToStart={() => setObject(objectId, null)}
+              onDuplicate={() => {
+                const id = uniqueObjectId(objectId.replace(/\d+$/, ""));
+                setObject(id, { ...objectDefShown, label: `${objectDefShown.label} (copie)` });
+                setObjectId(id);
+              }}
+              canDelete={!(objectId in BUILTIN_OBJECTS)}
+              onDelete={() => setObject(objectId, null)}
+              usedBy={saved === null ? ["chargement des réglages…"] : effectUses(draft, objectId, "object")}
+            />
+          </div>
+        )}
         {tab === "sol" && markDef && (
           <div className="fx-side">
             <RequestsPanel
@@ -2000,6 +2174,14 @@ function dragOnTrack(event: ReactPointerEvent, track: HTMLElement | null, length
 // Effet proposé à l'ajout, selon le moment.
 const DEFAULT_RECIPES: Record<Moment, string> = { caster: "fireCharge", impact: "fireBurst", status: "mezHalo", zone: "frostField" };
 const DEFAULT_MARKS: Record<Moment, string> = { caster: "arcaneRunes", impact: "fireCracks", status: "frostCircle", zone: "frostCircle" };
+const DEFAULT_OBJECTS: Record<Moment, string> = { caster: "pulseSphere", impact: "slash", status: "iceCrystals", zone: "frostRing" };
+
+// Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D.
+function effectLabel(effect: AnimationEffect): string {
+  if (effect.type === "ground") return `◎ ${groundMarkLabel(effect.recipe)}`;
+  if (effect.type === "object") return `◆ ${objectLabel(effect.recipe)}`;
+  return particleEffectLabel(effect.recipe);
+}
 
 // Réglage du décalage d'un effet (mètres) : un double-clic remet à zéro.
 const OFFSETS: { label: string; min: number; max: number }[] = [
@@ -2077,10 +2259,11 @@ function EffectsPanel(props: {
     });
   };
 
-  const add = (ground = false) => {
+  const add = (type?: "ground" | "object") => {
+    const ground = type === "ground";
     const created: AnimationEffect = {
-      ...(ground && { type: "ground" as const }),
-      recipe: ground ? DEFAULT_MARKS[kind] : DEFAULT_RECIPES[kind],
+      ...(type && { type }),
+      recipe: type === "ground" ? DEFAULT_MARKS[kind] : type === "object" ? DEFAULT_OBJECTS[kind] : DEFAULT_RECIPES[kind],
       start: addSpan[0],
       end: addSpan[1],
       anchor: ground || kind === "zone" ? "feet" : kind === "caster" ? "hands" : "chest",
@@ -2131,7 +2314,8 @@ function EffectsPanel(props: {
       <div className="lab-effects-head">
         <strong>Effets</strong>
         <button onClick={() => add()}>+ Ajouter un effet</button>
-        <button onClick={() => add(true)}>+ Marque au sol</button>
+        <button onClick={() => add("ground")}>+ Marque au sol</button>
+        <button onClick={() => add("object")}>+ Objet 3D</button>
       </div>
       {effects.map((effect, i) => (
         <div
@@ -2149,7 +2333,7 @@ function EffectsPanel(props: {
             onPointerDown={(e) => begin(i, "move", e)}
           >
             <span>
-              {effect.type === "ground" ? `◎ ${groundMarkLabel(effect.recipe)}` : particleEffectLabel(effect.recipe)}
+              {effectLabel(effect)}
               {effect.untilEnd && " → fin de l'état"}
             </span>
             <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin(i, "start", e)} title="Début de l'effet" />
@@ -2169,9 +2353,9 @@ function EffectsPanel(props: {
       {current && place && (
         <div className="lab-controls lab-effect-controls">
           <label>
-            {current.type === "ground" ? "Marque au sol" : "Effet"}
+            {current.type === "ground" ? "Marque au sol" : current.type === "object" ? "Objet 3D" : "Effet"}
             <select value={current.recipe} onChange={(e) => replace(index, { ...current, recipe: e.target.value })}>
-              {(current.type === "ground" ? groundMarkChoices() : particleEffectChoices()).map(({ id, label }) => (
+              {(current.type === "ground" ? groundMarkChoices() : current.type === "object" ? objectChoices() : particleEffectChoices()).map(({ id, label }) => (
                 <option key={id} value={id}>
                   {label}
                 </option>

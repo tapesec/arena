@@ -1,6 +1,7 @@
 import { getAbility, type AbilityDef } from "@arena/shared";
 import { statusKindsOf, type AnimationEffect } from "./abilityAnimations";
 import { ONE_SHOT_DURATION } from "./particleDefs";
+import { objectDef } from "./objects3d";
 import { ABILITY_FX } from "./spellFx";
 
 // Visuels de compétence prévus dans le code (avant la page de réglage), décrits par le nom de leurs effets à
@@ -66,10 +67,13 @@ export const HEAD_HEIGHT = 2.35;
 // Effets d'état prévus dans le code, par type d'état (EffectKind) : effets à particules (aux pieds, au corps ou à
 // la tête) et ce qui n'est pas fait de particules.
 const AT = { feet: 0, body: BODY_CENTER, head: HEAD_HEIGHT };
-export const STATUS_CODE: Record<string, { particles: { recipe: string; at: keyof typeof AT }[]; extras: string[] }> = {
+export const STATUS_CODE: Record<
+  string,
+  { particles: { recipe: string; at: keyof typeof AT }[]; objects?: { id: string; at: keyof typeof AT }[]; extras: string[] }
+> = {
   mez: { particles: [{ recipe: "mezHalo", at: "head" }], extras: ["« Zzz » au-dessus de la tête (affichage 2D)"] },
-  stun: { particles: [], extras: ["étoiles qui tournent autour de la tête (objets 3D)"] },
-  root: { particles: [{ recipe: "frostMist", at: "feet" }], extras: ["cristaux de glace aux pieds, qui fondent (objets 3D)"] },
+  stun: { particles: [], extras: ["étoiles qui tournent autour de la tête (affichage 2D)"] },
+  root: { particles: [{ recipe: "frostMist", at: "feet" }], objects: [{ id: "iceCrystals", at: "feet" }], extras: [] },
   burning: {
     particles: [
       { recipe: "burning", at: "feet" },
@@ -86,8 +90,15 @@ export const STATUS_CODE: Record<string, { particles: { recipe: string; at: keyo
     extras: [],
   },
   magicImmune: { particles: [{ recipe: "rallyHalo", at: "head" }], extras: [] },
-  rampart: { particles: [{ recipe: "rampartFlames", at: "feet" }], extras: ["zone crénelée au sol (marque au sol)"] },
-  bubble: { particles: [], extras: ["bulle irisée pendant 2 s (objet 3D)"] },
+  rampart: { particles: [{ recipe: "rampartFlames", at: "feet" }], extras: ["zone crénelée au sol, bleue ou rouge selon le camp"] },
+  bubble: {
+    particles: [],
+    objects: [
+      { id: "bubble", at: "body" },
+      { id: "bubbleRim", at: "body" },
+    ],
+    extras: [],
+  },
 };
 
 // Durée donnée à un effet du code lancé une seule fois quand il devient un effet réglé : celle que le jeu lui laisse
@@ -100,6 +111,13 @@ function placed(recipe: string, height: number, start: number, end: number): Ani
   return { recipe, start, end, anchor: "feet", offset: [0, height, 0] };
 }
 
+// Objet 3D du code devenu effet réglé : sa barre couvre toute sa vie (sinon il serait coupé avant de s'effacer).
+function object(id: string, height: number): AnimationEffect {
+  const def = objectDef(id);
+  const end = Math.max(ONCE, (def?.duration ?? 0) + (def?.fadeOut ?? 0));
+  return { type: "object", ...placed(id, height, 0, end) };
+}
+
 // Ce que le code joue sur la cible à l'impact : effets à particules, et le reste (formes lumineuses).
 export function codeImpact(abilityId: string): { effects: AnimationEffect[]; extras: string[] } {
   const visual = VISUALS[abilityId];
@@ -110,13 +128,14 @@ export function codeImpact(abilityId: string): { effects: AnimationEffect[]; ext
   for (const recipe of visual?.ground ?? []) effects.push(placed(recipe, 0, 0, LONGER[recipe] ?? ONCE));
   if (visual?.slash) {
     effects.push(placed("critSparks", BODY_CENTER, 0, ONCE));
-    extras.push("estafilade lumineuse (objet 3D)");
+    effects.push(object("slash", BODY_CENTER));
   }
-  if (visual?.beam) extras.push("rayon de lumière qui descend du ciel (objet 3D)");
+  if (visual?.beam) effects.push(object("lightBeam", 0));
   if (!visual) {
     const shape = ABILITY_FX[abilityId]?.shape;
-    if (shape === "melee") extras.push("éclair aplati (objet 3D)");
-    else if (shape) extras.push("sphère lumineuse qui grossit et s'efface (objet 3D)");
+    if (shape === "melee") effects.push(object("meleeFlash", BODY_CENTER));
+    // Dans la couleur de la compétence : l'objet converti garde celle de « Sphère lumineuse ».
+    else if (shape) effects.push(object("pulseSphere", BODY_CENTER));
   }
   // Sort de dégâts : la cible brûle ou se couvre de givre un instant.
   const school = ability?.school;
@@ -140,6 +159,10 @@ export function codeStatus(abilityId: string): { effects: AnimationEffect[]; ext
     const code = STATUS_CODE[kind];
     if (!code) continue;
     for (const { recipe, at } of code.particles) effects.push({ ...placed(recipe, AT[at], 0, 1), untilEnd: true });
+    for (const { id, at } of code.objects ?? []) {
+      const timed = (objectDef(id)?.duration ?? 0) > 0;
+      effects.push(timed ? object(id, AT[at]) : { ...object(id, AT[at]), untilEnd: true });
+    }
     extras.push(...code.extras);
   }
   return { effects, extras };

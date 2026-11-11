@@ -20,8 +20,7 @@ import { recipeById, setParticleEffectDefs, type ParticleEffectDef } from "./par
 import particleEffects from "./particleEffects.json";
 import type { PlayerVisual } from "./PlayerVisual";
 import { hasTunedEffects, type AnimationTuning } from "./abilityAnimations";
-import { AbilityEffectPlayer } from "./abilityEffects";
-import type { GroundMarks } from "./groundMarks";
+import { AbilityEffectPlayer, type Scenery } from "./abilityEffects";
 import animationTuning from "./animationTuning.json";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
@@ -135,15 +134,15 @@ export class StatusFx {
   private rimMaterial: StandardMaterial;
   private novaMaterial: StandardMaterial;
   private novaRadius = getAbility("frostNova")?.radius ?? 15;
-  // Les effets de l'état (kind) du joueur sont réglés sur la page de réglage : ses particules du code ne sont plus
-  // jouées (ses objets, étoiles, cristaux, bulle, restent).
+  // Les effets de l'état (kind) du joueur sont réglés sur la page de réglage : ses particules et ses objets du code
+  // (cristaux du root, bulle) ne sont plus joués ; restent les étoiles du stun (affichage 2D, pas encore réglable).
   isTuned: ((playerId: string, kind: string) => boolean) | null = null;
   private time = 0;
 
   constructor(
     private scene: Scene,
     private particles: ParticleFactory,
-    private marks: GroundMarks | null = null,
+    private scenery: Scenery = { marks: null, objects: null },
   ) {
     this.starMaterial = starMaterial(scene);
     this.iceMaterial = iceMaterial(scene);
@@ -183,8 +182,8 @@ export class StatusFx {
       status.abilityFx.update(player.character, playing);
       this.updateMez(status, mez && !this.tuned(player, "mez"));
       this.updateStars(status, stun, player);
-      this.updateRoot(status, root, player);
-      this.updateBubble(status, bubble, this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
+      this.updateRoot(status, this.tuned(player, "root") ? 0 : root, player);
+      this.updateBubble(status, bubble && !this.tuned(player, "bubble"), this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);
       this.updateRampartZone(status, rampart, dt, player.state.team === localTeam);
     }
@@ -231,7 +230,7 @@ export class StatusFx {
       rampartAngle: 0,
 
       auras: new Map(),
-      abilityFx: new AbilityEffectPlayer(this.particles, this.marks),
+      abilityFx: new AbilityEffectPlayer(this.particles, this.scenery),
       body: new Vector3(),
       hands: new Vector3(),
       lastX: player.root.position.x,
