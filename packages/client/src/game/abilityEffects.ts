@@ -19,7 +19,7 @@ export interface Scenery {
 
 // Joue le son d'une piste, à un endroit (le jeu l'atténue avec la distance) ; rend de quoi l'arrêter.
 export interface SoundSink {
-  play(recipe: string, at: Vector3, options: { volume: number; rate: number; loop: boolean }): { stop(): void } | null;
+  play(recipe: string, at: Vector3, options: { volume: number; rate: number; loop: boolean; offset: number }): { stop(): void } | null;
 }
 
 // Effets à particules d'une compétence (réglés sur animation-lab.html) : portés par le lanceur pendant son geste,
@@ -228,7 +228,9 @@ export class AbilityEffectPlayer {
             // Pas de son en pose figée (page de réglage) : il repartirait à chaque instant montré.
             if (!track.silent) {
               const rate = (effect.rate ?? 1) * (1 + (Math.random() * 2 - 1) * SOUND_RATE_JITTER);
-              run.sound = this.scenery.sounds?.play(effect.recipe, run.at, { volume: effect.volume ?? 1, rate, loop: !!effect.loop }) ?? null;
+              run.sound =
+                this.scenery.sounds?.play(effect.recipe, run.at, { volume: effect.volume ?? 1, rate, loop: !!effect.loop, offset: effect.skip ?? 0 }) ??
+                null;
               run.cutAtEnd = !!effect.loop || !effect.full;
             }
           } else if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;

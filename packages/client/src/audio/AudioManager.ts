@@ -169,8 +169,9 @@ export class AudioManager {
 
   // Son d'une piste de compétence (page de réglage) : un groupe du jeu (« jeu:<id> », son généré ou enregistré) ou un
   // son du catalogue (son nom). Rend de quoi l'arrêter (son en boucle), ou null s'il n'est pas joué.
-  async playTrack(recipe: string, options: PlayOptions & { loop?: boolean } = {}): Promise<{ stop(): void } | null> {
-    const { volume = 1, pan = 0, rate = 1, loop = false } = options;
+  // offset : instant du son où commencer (secondes ; une boucle reprend aussi à cet instant).
+  async playTrack(recipe: string, options: PlayOptions & { loop?: boolean; offset?: number } = {}): Promise<{ stop(): void } | null> {
+    const { volume = 1, pan = 0, rate = 1, loop = false, offset = 0 } = options;
     if (this.muted || volume <= 0.01) return null;
     if (recipe.startsWith(GAME_SOUND)) {
       const id = recipe.slice(GAME_SOUND.length);
@@ -180,10 +181,10 @@ export class AudioManager {
       }
       const variants = await this.loadSample(id).catch(() => [] as Variant[]);
       const variant = variants[Math.floor(Math.random() * variants.length)];
-      return variant ? this.startBuffer(recipe, variant.buffer, variant.start, volume, pan, rate, loop) : null;
+      return variant ? this.startBuffer(recipe, variant.buffer, variant.start + offset, volume, pan, rate, loop) : null;
     }
     const buffer = await this.loadCatalogSound(recipe);
-    return buffer ? this.startBuffer(recipe, buffer, soundStart(buffer), volume, pan, rate, loop) : null;
+    return buffer ? this.startBuffer(recipe, buffer, soundStart(buffer) + offset, volume, pan, rate, loop) : null;
   }
 
   // Mêmes limites que les autres sons : nombre de sons simultanés, et pas deux fois le même son au même instant (un
@@ -196,6 +197,11 @@ export class AudioManager {
     const source = this.context.createBufferSource();
     source.buffer = buffer;
     source.loop = loop;
+    // Une boucle reprend à l'instant choisi, pas au début du fichier.
+    if (loop) {
+      source.loopStart = Math.min(start, Math.max(0, buffer.duration - 0.05));
+      source.loopEnd = buffer.duration;
+    }
     source.playbackRate.value = rate;
     const gain = this.context.createGain();
     gain.gain.value = volume;
@@ -203,7 +209,7 @@ export class AudioManager {
     source.connect(panner).connect(gain).connect(this.master);
     this.activeSounds++;
     source.onended = () => this.activeSounds--;
-    source.start(this.context.currentTime, start);
+    source.start(this.context.currentTime, Math.min(start, Math.max(0, buffer.duration - 0.05)));
     return {
       stop: () => {
         // Fondu très bref plutôt qu'une coupure sèche (qui ferait un « clic »).

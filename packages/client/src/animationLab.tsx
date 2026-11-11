@@ -262,11 +262,11 @@ class Stage {
     this.codeFx.statuses.isTuned = () => this.entry?.status !== undefined;
     // Sons des pistes : joués au centre, un peu à gauche ou à droite selon leur place devant la caméra.
     this.codeFx.scenery.sounds = {
-      play: (recipe, at, { volume, rate, loop }) => {
+      play: (recipe, at, { volume, rate, loop, offset }) => {
         let stopped = false;
         let handle: { stop(): void } | null = null;
         audio
-          .playTrack(recipe, { volume, rate, loop, pan: Math.max(-1, Math.min(1, at.x / 6)) })
+          .playTrack(recipe, { volume, rate, loop, offset, pan: Math.max(-1, Math.min(1, at.x / 6)) })
           .then((h) => {
             handle = h;
             if (stopped) handle?.stop();
@@ -1145,6 +1145,7 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
     ...(effect.rate !== undefined && { rate: round(effect.rate) }),
     ...(effect.loop && { loop: true }),
     ...(effect.full && { full: true }),
+    ...(effect.skip && { skip: round(effect.skip) }),
     ...(effect.scale !== undefined && effect.scale !== 1 && { scale: round(effect.scale) }),
   };
 }
@@ -3143,7 +3144,33 @@ function EffectsPanel(props: {
                   ))}
                 </select>
               </label>
-              <button onClick={() => void audio.playTrack(current.recipe, { volume: current.volume ?? 1, rate: current.rate ?? 1 })}>▶</button>
+              <button
+                onClick={() => void audio.playTrack(current.recipe, { volume: current.volume ?? 1, rate: current.rate ?? 1, offset: current.skip ?? 0 })}
+              >
+                ▶
+              </button>
+              <label className="lab-offset" title="Le début du son est sauté · double-clic : depuis le début">
+                Commencer à {(current.skip ?? 0).toFixed(2).replace(".", ",")} s
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(0.05, soundDuration(current.recipe) - 0.05)}
+                  step={0.01}
+                  value={current.skip ?? 0}
+                  onChange={(e) => {
+                    const offset = Number(e.target.value);
+                    const next: AnimationEffect = { ...current, skip: offset };
+                    // La barre d'un son coupé ne dépasse pas ce qui reste du son (sans s'allonger d'elle-même).
+                    if (!current.loop && !current.full) next.end = Math.min(current.end, current.start + Math.max(0.05, soundDuration(current.recipe) - offset));
+                    replace(index, next);
+                  }}
+                  onDoubleClick={() => {
+                    const next: AnimationEffect = { ...current };
+                    delete next.skip;
+                    replace(index, next);
+                  }}
+                />
+              </label>
               <label className="lab-offset" title="Double-clic : volume normal">
                 Volume ×{(current.volume ?? 1).toFixed(2).replace(".", ",")}
                 <input

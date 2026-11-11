@@ -103,6 +103,8 @@ export interface AnimationEffect {
   rate?: number;
   loop?: boolean;
   full?: boolean;
+  // Son : instant du son où commence la lecture (secondes ; le début est sauté).
+  skip?: number;
   // Marque, objet ou affichage 2D : couleur du camp de celui qui le porte (bleu dans le camp du joueur, rouge chez
   // l'adversaire), à la place de tint.
   teamColor?: boolean;

@@ -292,12 +292,12 @@ export class GameAudio {
 
   // Sons des pistes de compétence réglées (voir AbilityEffectPlayer), placés dans l'espace comme les autres.
   readonly sink: SoundSink = {
-    play: (recipe, at, { volume, rate, loop }) => {
+    play: (recipe, at, { volume, rate, loop, offset }) => {
       const { attenuation, pan } = this.placement(at);
       let stopped = false;
       let handle: { stop(): void } | null = null;
       audio
-        .playTrack(recipe, { volume: volume * attenuation, pan, rate, loop })
+        .playTrack(recipe, { volume: volume * attenuation, pan, rate, loop, offset })
         .then((h) => {
           handle = h;
           if (stopped) handle?.stop();
