@@ -79,6 +79,9 @@ import {
   type PlacedOverlay,
 } from "./game/overlays2d";
 import { OverlayEditor, OverlayList } from "./overlayLab";
+import soundCatalog from "./audio/soundCatalog.json";
+import { EMPTY_EDITS, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
+import { SoundEditor, SoundList, SoundPending } from "./soundLab";
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
@@ -111,10 +114,12 @@ const FX_DRAFT_KEY = "arena.animationLab.fxDraft2";
 const MARKS_DRAFT_KEY = "arena.animationLab.marksDraft";
 const OBJECTS_DRAFT_KEY = "arena.animationLab.objectsDraft";
 const OVERLAYS_DRAFT_KEY = "arena.animationLab.overlaysDraft";
+const SOUNDS_DRAFT_KEY = "arena.animationLab.soundsDraft";
+const SOUNDS = soundCatalog as CatalogSound[];
 type OverlayDefs = Record<string, OverlayDef>;
 type MarkDefs = Record<string, GroundMarkDef>;
 type ObjectDefs = Record<string, ObjectDef>;
-type Tab = "animations" | "effets" | "sol" | "objets" | "2d";
+type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -1197,6 +1202,7 @@ function AnimationLab() {
     objectAnchor?: EffectAnchor;
     overlayId?: string;
     overlayAnchor?: EffectAnchor;
+    soundName?: string;
     fxId?: string;
     fxAnchor?: EffectAnchor;
     moment?: Moment;
@@ -1215,6 +1221,9 @@ function AnimationLab() {
   const [overlaysDraft, setOverlaysDraft] = useState<OverlayDefs>({});
   const [overlayId, setOverlayId] = useState(initial?.overlayId ?? Object.keys(BUILTIN_OVERLAYS)[0]);
   const [overlayAnchor, setOverlayAnchor] = useState<EffectAnchor>(initial?.overlayAnchor ?? "head");
+  const [soundsSaved, setSoundsSaved] = useState<SoundEdits | null>(null);
+  const [soundsDraft, setSoundsDraft] = useState<SoundEdits>(EMPTY_EDITS);
+  const [soundName, setSoundName] = useState(initial?.soundName ?? SOUNDS[0]?.name ?? "");
   const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
   const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
   const [fxId, setFxId] = useState(initial?.fxId ?? "fireCharge");
@@ -1305,6 +1314,15 @@ function AnimationLab() {
         setMarksSaved(defs ?? {});
         setMarksDraft(rebaseDraft(readStorage<StoredDraft<GroundMarkDef>>(MARKS_DRAFT_KEY), defs ?? {}));
       });
+    void fetch("/__dev-file/soundEdits")
+      .then((response) => response.json() as Promise<SoundEdits | null>)
+      .then((edits) => {
+        const file = { ...EMPTY_EDITS, ...edits };
+        setSoundsSaved(file);
+        // Un brouillon fait sur une autre version du fichier (sons appliqués depuis) n'est pas repris.
+        const stored = readStorage<{ base: SoundEdits; draft: SoundEdits }>(SOUNDS_DRAFT_KEY);
+        setSoundsDraft(stored?.base && sameEdits(stored.base, file) ? stored.draft : file);
+      });
     void fetch("/__dev-file/overlays2d")
       .then((response) => response.json() as Promise<OverlayDefs | null>)
       .then((defs) => {
@@ -1326,6 +1344,10 @@ function AnimationLab() {
   useEffect(() => setProjectileLookup((id) => tuningOf(draft, id)?.projectile?.enabled), [draft]);
   useEffect(() => setObjectDefs(objectsDraft), [objectsDraft]);
   useEffect(() => setOverlayDefs(overlaysDraft), [overlaysDraft]);
+  const soundsUnsaved = soundsSaved !== null && !sameEdits(soundsDraft, soundsSaved);
+  useEffect(() => {
+    if (soundsSaved) writeStorage(SOUNDS_DRAFT_KEY, soundsUnsaved ? { base: soundsSaved, draft: soundsDraft } : null);
+  }, [soundsDraft, soundsSaved, soundsUnsaved]);
   useEffect(() => {
     if (!overlaysSaved) return;
     writeStorage(
@@ -1434,8 +1456,8 @@ function AnimationLab() {
   }, [draft, saved]);
 
   useEffect(
-    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor, overlayId, overlayAnchor }),
-    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor, overlayId, overlayAnchor],
+    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor, overlayId, overlayAnchor, soundName }),
+    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor, overlayId, overlayAnchor, soundName],
   );
 
   // Effets à particules : ceux du jeu convertis en réglages, puis ceux créés ici.
@@ -1809,6 +1831,14 @@ function AnimationLab() {
       setMarksSaved(defs);
       setMarksDraft(defs);
     }
+    if (soundsUnsaved) {
+      const response = await fetch("/__dev-file/soundEdits", { method: "POST", body: JSON.stringify(soundsDraft) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement des sons : ${await response.text()}`);
+        return;
+      }
+      setSoundsSaved(soundsDraft);
+    }
     if (overlaysUnsaved) {
       const file = ((await fetch("/__dev-file/overlays2d").then((r) => r.json())) ?? {}) as OverlayDefs;
       const defs = rebaseDraft({ base: overlaysSaved ?? {}, draft: overlaysDraft }, file);
@@ -1831,7 +1861,9 @@ function AnimationLab() {
       setObjectsSaved(defs);
       setObjectsDraft(defs);
     }
-    setMessage("Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json, overlays2d.json) : le jeu l'utilise au prochain chargement.");
+    setMessage(
+      `Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json, overlays2d.json${soundsUnsaved ? ", src/audio/soundEdits.json" : ""}) : le jeu l'utilise au prochain chargement.${soundsUnsaved ? " Sons : dites à Claude « applique les sons »." : ""}`,
+    );
     setTimeout(() => setMessage(null), 4000);
   };
 
@@ -1866,6 +1898,9 @@ function AnimationLab() {
           <button className={tab === "2d" ? "lab-tab-active" : ""} onClick={() => setTab("2d")}>
             Affichage 2D
           </button>
+          <button className={tab === "sons" ? "lab-tab-active" : ""} onClick={() => setTab("sons")}>
+            Sons
+          </button>
         </span>
         <label>
           Classe
@@ -1881,11 +1916,11 @@ function AnimationLab() {
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
           <button
-            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved && !overlaysUnsaved}
+            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved && !overlaysUnsaved && !soundsUnsaved}
             onClick={() => void save()}
-            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved ? "lab-save" : ""}
+            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved || soundsUnsaved ? "lab-save" : ""}
           >
-            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved ? "Enregistrer" : "Tout est enregistré"}
+            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved || soundsUnsaved ? "Enregistrer" : "Tout est enregistré"}
           </button>
         </span>
       </div>
@@ -1904,6 +1939,7 @@ function AnimationLab() {
             }}
           />
         )}
+        {tab === "sons" && <SoundList sounds={SOUNDS} edits={soundsDraft} selected={soundName} onSelect={setSoundName} />}
         {tab === "2d" && (
           <OverlayList
             ids={overlayIds}
@@ -1968,7 +2004,23 @@ function AnimationLab() {
             })}
           </div>
         )}
-        <div className="anim-stage">
+        {tab === "sons" && (
+          <div className="sound-pane">
+            {SOUNDS.find((sound) => sound.name === soundName) ? (
+              <SoundEditor
+                sound={SOUNDS.find((sound) => sound.name === soundName)!}
+                edits={soundsDraft}
+                onChange={setSoundsDraft}
+                onSelect={setSoundName}
+              />
+            ) : (
+              <p className="lab-note">Choisissez un son dans la liste.</p>
+            )}
+            <SoundPending catalog={SOUNDS} saved={soundsSaved} draft={soundsDraft} />
+          </div>
+        )}
+        {/* La scène reste montée (son moteur), cachée sur l'onglet des sons. */}
+        <div className="anim-stage" style={tab === "sons" ? { display: "none" } : undefined}>
           <canvas ref={canvasRef} className="anim-canvas" />
           <div ref={labelsRef} className="anim-labels">
             <span className="lab-fx-tag" style={{ display: "none" }} />

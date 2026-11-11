@@ -1884,3 +1884,111 @@ body,
   min-width: 28px;
   font-size: 16px;
 }
+
+/* Onglet des sons */
+.sound-list .sound-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sound-rejected {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.sound-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.sound-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sound-head h3 {
+  margin: 0 0 4px;
+}
+
+.sound-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sound-actions button,
+.sound-part button,
+.sound-detect button {
+  font: inherit;
+  color: inherit;
+  background: #232833;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 3px 8px;
+}
+
+.sound-actions button.lab-play {
+  background: #2c4a6b;
+  border-color: #7fb4e3;
+}
+
+.sound-wave {
+  position: relative;
+  height: 160px;
+  margin: 14px 0 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sound-wave canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: pointer;
+}
+
+.sound-cut {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  margin-left: -3px;
+  background: linear-gradient(to right, transparent 3px, #ffd76a 3px, #ffd76a 4px, transparent 4px);
+  cursor: ew-resize;
+}
+
+.sound-head-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #ff5a5a;
+  pointer-events: none;
+  display: none;
+}
+
+.sound-detect {
+  margin-top: 10px;
+}
+
+.sound-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.sound-part {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sound-pending {
+  margin-top: 18px;
+}

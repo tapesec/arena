@@ -15,6 +15,7 @@ const DEV_FILES: Record<string, URL> = {
   groundMarks: new URL("./src/game/groundMarks.json", import.meta.url),
   objects3d: new URL("./src/game/objects3d.json", import.meta.url),
   overlays2d: new URL("./src/game/overlays2d.json", import.meta.url),
+  soundEdits: new URL("./src/audio/soundEdits.json", import.meta.url),
   particleRequests: new URL("./particle-requests.json", import.meta.url),
 };
 function devFilesEndpoint(): Plugin {
