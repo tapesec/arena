@@ -331,7 +331,7 @@
       "animation": "Mixamo_2H_Area_Attack_02",
       "start": 0.183,
       "rate": 1.2,
-      "end": 2.483,
+      "end": 1.983,
       "effects": [
         {
           "recipe": "effet5",
@@ -343,8 +343,37 @@
             0,
             0
           ]
+        },
+        {
+          "type": "sound",
+          "recipe": "jeu:ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03",
+          "start": 1.666,
+          "end": 2.666,
+          "anchor": "feet",
+          "offset": [
+            0,
+            1.1,
+            0
+          ],
+          "rate": 0.85,
+          "full": true
+        },
+        {
+          "type": "sound",
+          "recipe": "ice_blade_09",
+          "start": 0.183,
+          "end": 1.68,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
         }
-      ]
+      ],
+      "impact": {
+        "effects": []
+      }
     },
     "frostbolt": {
       "animation": "Mixamo_Casting_Spell",
