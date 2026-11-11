@@ -107,6 +107,41 @@
             }
           ]
         }
+      ],
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Chest",
+          "start": 0,
+          "rate": 1,
+          "end": 0.333
+        },
+        "effects": [
+          {
+            "recipe": "fireBurst",
+            "start": 0,
+            "end": 1,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          }
+        ]
+      },
+      "status": [
+        {
+          "recipe": "burning",
+          "start": 0,
+          "end": 1,
+          "anchor": "feet",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "untilEnd": true
+        }
       ]
     },
     "concentration": {
