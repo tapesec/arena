@@ -1314,10 +1314,22 @@ function AnimationLab() {
   const stage = stageRef.current;
   const clipLength = (name: string) => stage?.clipLength(name) ?? 0;
 
+  // Le navigateur n'autorise le son qu'après une action de l'utilisateur : le circuit audio du jeu (pistes de sons,
+  // sons du code) est débloqué au premier clic ou à la première touche, comme dans le jeu.
+  useEffect(() => {
+    const unlock = () => audio.unlock();
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
   useEffect(() => {
     const created = new Stage(canvasRef.current!);
     stageRef.current = created;
-    Object.assign(window, { lab: created });
+    Object.assign(window, { lab: created, audio });
     created.onFrame = ({ playhead, cast, labels, reactionHead }) => {
       const reactionMark = reactionHeadRef.current;
       if (reactionMark) {
