@@ -86,7 +86,11 @@ import {
 import { OverlayEditor, OverlayList } from "./overlayLab";
 import soundCatalog from "./audio/soundCatalog.json";
 import { EMPTY_EDITS, GAME_SOUND, gameGroupIdsUsing, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
-import { SoundEditor, SoundList, SoundPending } from "./soundLab";
+import { SoundEditor, SoundList, SoundPending, soundPlayer } from "./soundLab";
+
+// L'éditeur a sa propre sourdine : celle du jeu (même adresse, donc même stockage) ne le coupe pas.
+audio.useMutedKey("arena.lab.muted");
+soundPlayer.setMuted(audio.settings.muted);
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
@@ -1283,6 +1287,12 @@ function AnimationLab() {
     distance?: number;
   }>(SELECTION_KEY);
   const [tab, setTab] = useState<Tab>(initial?.tab ?? "animations");
+  const [muted, setMuted] = useState(audio.settings.muted);
+  const toggleMuted = () => {
+    audio.setMuted(!muted);
+    soundPlayer.setMuted(!muted);
+    setMuted(!muted);
+  };
   const [marksSaved, setMarksSaved] = useState<MarkDefs | null>(null);
   const [marksDraft, setMarksDraft] = useState<MarkDefs>({});
   const [markId, setMarkId] = useState(initial?.markId ?? Object.keys(BUILTIN_MARKS)[0]);
@@ -2062,6 +2072,9 @@ function AnimationLab() {
             Sons
           </button>
         </span>
+        <button onClick={toggleMuted} title={muted ? "Rétablir le son de l'éditeur" : "Couper le son de l'éditeur (le jeu garde son propre réglage)"}>
+          {muted ? "🔇 Son coupé" : "🔊 Son"}
+        </button>
         <label>
           Classe
           <select value={classId} onChange={(e) => setClassId(e.target.value as ClassId)}>

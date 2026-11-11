@@ -63,6 +63,7 @@ export class AudioManager {
   private lastPlayed = new Map<string, number>();
   private volume: number;
   private muted: boolean;
+  private mutedKey = MUTED_KEY;
   private variantCounts: Promise<Record<string, number>> | null = null;
   private samples = new Map<string, Promise<Variant[]>>();
   private catalogSounds = new Map<string, Promise<AudioBuffer | null>>();
@@ -100,7 +101,15 @@ export class AudioManager {
 
   setMuted(muted: boolean) {
     this.muted = muted;
-    write(MUTED_KEY, muted ? "1" : "0");
+    write(this.mutedKey, muted ? "1" : "0");
+    this.applyVolume();
+  }
+
+  // Sourdine mémorisée sous une autre clé : l'éditeur (même adresse que le jeu, donc même stockage) a la sienne,
+  // indépendante de celle du jeu.
+  useMutedKey(key: string) {
+    this.mutedKey = key;
+    this.muted = readNumber(key, 0) === 1;
     this.applyVolume();
   }
 

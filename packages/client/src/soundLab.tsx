@@ -12,6 +12,8 @@ class SoundPlayer {
   private context: AudioContext | null = null;
   private buffers = new Map<string, Promise<AudioBuffer>>();
   private source: AudioBufferSourceNode | null = null;
+  private output: GainNode | null = null;
+  private muted = false;
   onPlay: ((name: string | null, start: number, started: number) => void) | null = null;
 
   buffer(name: string): Promise<AudioBuffer> {
@@ -46,7 +48,7 @@ class SoundPlayer {
     if (token !== this.token) return;
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(ctx.destination);
+    source.connect(this.out(ctx));
     source.start(0, start, end !== undefined ? Math.max(0.01, end - start) : undefined);
     source.onended = () => {
       if (this.source === source) {
@@ -66,6 +68,21 @@ class SoundPlayer {
 
   now(): number {
     return this.context?.currentTime ?? 0;
+  }
+
+  // Sourdine de l'éditeur (bouton en haut de la page), aussi pour le son en cours.
+  setMuted(muted: boolean) {
+    this.muted = muted;
+    if (this.output) this.output.gain.value = muted ? 0 : 1;
+  }
+
+  private out(ctx: AudioContext): GainNode {
+    if (!this.output) {
+      this.output = ctx.createGain();
+      this.output.gain.value = this.muted ? 0 : 1;
+      this.output.connect(ctx.destination);
+    }
+    return this.output;
   }
 
   private ctx(): AudioContext {
