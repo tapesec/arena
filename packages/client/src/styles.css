@@ -1871,3 +1871,16 @@ body,
   background: #3d6b2c;
   border: 1px solid #9be37f;
 }
+
+/* Symboles proposés en un clic (affichage 2D) */
+.fx-symbols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 6px;
+}
+
+.fx-symbols button {
+  min-width: 28px;
+  font-size: 16px;
+}

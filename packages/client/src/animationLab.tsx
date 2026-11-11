@@ -68,6 +68,17 @@ import {
   type PlacedObject,
 } from "./game/objects3d";
 import { ObjectEditor, ObjectList } from "./objectLab";
+import {
+  BUILTIN_OVERLAYS,
+  DEFAULT_OVERLAY,
+  overlayChoices,
+  overlayDef,
+  overlayLabel,
+  setOverlayDefs,
+  type OverlayDef,
+  type PlacedOverlay,
+} from "./game/overlays2d";
+import { OverlayEditor, OverlayList } from "./overlayLab";
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
@@ -99,9 +110,11 @@ const SELECTION_KEY = "arena.animationLab.selection";
 const FX_DRAFT_KEY = "arena.animationLab.fxDraft2";
 const MARKS_DRAFT_KEY = "arena.animationLab.marksDraft";
 const OBJECTS_DRAFT_KEY = "arena.animationLab.objectsDraft";
+const OVERLAYS_DRAFT_KEY = "arena.animationLab.overlaysDraft";
+type OverlayDefs = Record<string, OverlayDef>;
 type MarkDefs = Record<string, GroundMarkDef>;
 type ObjectDefs = Record<string, ObjectDef>;
-type Tab = "animations" | "effets" | "sol" | "objets";
+type Tab = "animations" | "effets" | "sol" | "objets" | "2d";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -193,6 +206,9 @@ class Stage {
   // Onglet des marques au sol : marque réglée, rejouée en boucle sous le personnage au repos.
   private markPreview: { def: GroundMarkDef; key: string; mark: GroundMark | null; created: number; at: Vector3 } | null = null;
   // Onglet des objets 3D : objet réglé, rejoué en boucle à l'accroche choisie, sur le personnage au repos.
+  // Onglet de l'affichage 2D : affichage réglé, rejoué en boucle à l'accroche choisie.
+  private overlayPreview: { def: OverlayDef; anchor: EffectAnchor; key: string; overlay: PlacedOverlay | null; created: number; at: Vector3 } | null =
+    null;
   private objectPreview: { def: ObjectDef; anchor: EffectAnchor; key: string; object: PlacedObject | null; created: number; at: Vector3 } | null =
     null;
   private clock = 0;
@@ -363,7 +379,7 @@ class Stage {
 
   // Onglet d'atelier ouvert (effets à particules ou marques au sol) : le personnage est au repos.
   private get workshop(): boolean {
-    return !!this.fxPreview || !!this.markPreview || !!this.objectPreview;
+    return !!this.fxPreview || !!this.markPreview || !!this.objectPreview || !!this.overlayPreview;
   }
 
   previewMark(def: GroundMarkDef | null) {
@@ -391,6 +407,36 @@ class Stage {
       this.frameMoment();
       this.restart();
     }
+  }
+
+  previewOverlay(def: OverlayDef | null, anchor: EffectAnchor) {
+    const key = def ? `${JSON.stringify(def)}|${anchor}` : "";
+    if (key === (this.overlayPreview?.key ?? "")) return;
+    const switched = !!def !== !!this.overlayPreview;
+    this.overlayPreview?.overlay?.remove();
+    this.overlayPreview = def ? { def, anchor, key, overlay: null, created: -Infinity, at: new Vector3() } : null;
+    this.updateTargetVisibility();
+    if (switched) {
+      this.frameMoment();
+      this.restart();
+    }
+  }
+
+  // Affichage rejoué en boucle comme un objet, accroché au personnage.
+  private tickOverlay(instance: CharacterInstance) {
+    const preview = this.overlayPreview!;
+    effectPosition(instance, { recipe: "", start: 0, end: 0, anchor: preview.anchor, offset: [0, 0, 0] }, 0, preview.at);
+    const hold = preview.def.duration > 0 ? preview.def.duration : MARK_HOLD * 1.6;
+    const age = this.clock - preview.created;
+    if (preview.overlay && preview.def.duration <= 0 && age >= hold) {
+      preview.overlay.stop();
+      preview.overlay = null;
+    }
+    const tail = preview.def.layout === "rise" ? preview.def.life : 0;
+    if (age < hold + preview.def.fadeOut + tail + 0.6) return;
+    preview.overlay?.stop();
+    preview.overlay = this.codeFx.overlays.createFromDef(preview.def, preview.at);
+    preview.created = this.clock;
   }
 
   // Objet rejoué en boucle comme une marque, accroché au personnage.
@@ -598,6 +644,7 @@ class Stage {
   private tick(dt: number) {
     this.fx.update();
     this.codeFx.update(dt);
+    this.codeFx.updateScenery(dt);
     this.tickCodeStatus(dt, this.mode === "play" && !this.workshop && this.sequence ? this.sequence.time : null);
     this.clock += dt;
     const instance = this.instance;
@@ -611,6 +658,7 @@ class Stage {
       if (this.fxPreview) this.tickFx(instance);
       if (this.markPreview) this.tickMark();
       if (this.objectPreview) this.tickObject(instance);
+      if (this.overlayPreview) this.tickOverlay(instance);
       this.onFrame?.({ playhead: null, cast: null, labels: this.fxLabels() });
       return;
     }
@@ -905,7 +953,7 @@ function isStance(set: CharacterAnimationSet | null, id: string): boolean {
 }
 
 // Compétences (et moment) qui utilisent un effet à particules, d'après les réglages.
-function effectUses(tuning: AnimationTuning, recipe: string, type?: "ground" | "object"): string[] {
+function effectUses(tuning: AnimationTuning, recipe: string, type?: "ground" | "object" | "overlay"): string[] {
   const uses: string[] = [];
   for (const entries of Object.values(tuning)) {
     for (const [abilityId, entry] of Object.entries(entries)) {
@@ -1130,6 +1178,8 @@ function AnimationLab() {
     markId?: string;
     objectId?: string;
     objectAnchor?: EffectAnchor;
+    overlayId?: string;
+    overlayAnchor?: EffectAnchor;
     fxId?: string;
     fxAnchor?: EffectAnchor;
     moment?: Moment;
@@ -1144,6 +1194,10 @@ function AnimationLab() {
   const [objectsDraft, setObjectsDraft] = useState<ObjectDefs>({});
   const [objectId, setObjectId] = useState(initial?.objectId ?? Object.keys(BUILTIN_OBJECTS)[0]);
   const [objectAnchor, setObjectAnchor] = useState<EffectAnchor>(initial?.objectAnchor ?? "chest");
+  const [overlaysSaved, setOverlaysSaved] = useState<OverlayDefs | null>(null);
+  const [overlaysDraft, setOverlaysDraft] = useState<OverlayDefs>({});
+  const [overlayId, setOverlayId] = useState(initial?.overlayId ?? Object.keys(BUILTIN_OVERLAYS)[0]);
+  const [overlayAnchor, setOverlayAnchor] = useState<EffectAnchor>(initial?.overlayAnchor ?? "head");
   const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
   const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
   const [fxId, setFxId] = useState(initial?.fxId ?? "fireCharge");
@@ -1234,6 +1288,12 @@ function AnimationLab() {
         setMarksSaved(defs ?? {});
         setMarksDraft(rebaseDraft(readStorage<StoredDraft<GroundMarkDef>>(MARKS_DRAFT_KEY), defs ?? {}));
       });
+    void fetch("/__dev-file/overlays2d")
+      .then((response) => response.json() as Promise<OverlayDefs | null>)
+      .then((defs) => {
+        setOverlaysSaved(defs ?? {});
+        setOverlaysDraft(rebaseDraft(readStorage<StoredDraft<OverlayDef>>(OVERLAYS_DRAFT_KEY), defs ?? {}));
+      });
     void fetch("/__dev-file/objects3d")
       .then((response) => response.json() as Promise<ObjectDefs | null>)
       .then((defs) => {
@@ -1248,6 +1308,14 @@ function AnimationLab() {
   // Projectile réglé (ou retiré) dans le brouillon : durée du vol et impact dans la lecture.
   useEffect(() => setProjectileLookup((id) => tuningOf(draft, id)?.projectile?.enabled), [draft]);
   useEffect(() => setObjectDefs(objectsDraft), [objectsDraft]);
+  useEffect(() => setOverlayDefs(overlaysDraft), [overlaysDraft]);
+  useEffect(() => {
+    if (!overlaysSaved) return;
+    writeStorage(
+      OVERLAYS_DRAFT_KEY,
+      JSON.stringify(overlaysDraft) !== JSON.stringify(overlaysSaved) ? { base: overlaysSaved, draft: overlaysDraft } : null,
+    );
+  }, [overlaysDraft, overlaysSaved]);
   useEffect(() => {
     if (!objectsSaved) return;
     writeStorage(
@@ -1283,6 +1351,22 @@ function AnimationLab() {
             const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
             if (!changed.length) return previous;
             setFxDraft((draft) => {
+              const next = { ...draft };
+              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
+              return next;
+            });
+            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
+          });
+        });
+      void fetch("/__dev-file/overlays2d")
+        .then((response) => response.json() as Promise<OverlayDefs | null>)
+        .then((file) => {
+          if (!file) return;
+          setOverlaysSaved((previous) => {
+            if (!previous) return previous;
+            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
+            if (!changed.length) return previous;
+            setOverlaysDraft((draft) => {
               const next = { ...draft };
               for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
               return next;
@@ -1333,8 +1417,8 @@ function AnimationLab() {
   }, [draft, saved]);
 
   useEffect(
-    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor }),
-    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor],
+    () => writeStorage(SELECTION_KEY, { classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor, overlayId, overlayAnchor }),
+    [classId, abilityId, tab, fxId, fxAnchor, moment, targetClass, distance, markId, objectId, objectAnchor, overlayId, overlayAnchor],
   );
 
   // Effets à particules : ceux du jeu convertis en réglages, puis ceux créés ici.
@@ -1394,6 +1478,39 @@ function AnimationLab() {
     return `${base}${n}`;
   };
 
+  // Affichage 2D : ceux de départ, puis ceux créés ici.
+  const overlayIds = useMemo(() => {
+    const created = Object.keys({ ...overlaysSaved, ...overlaysDraft }).filter((id) => !(id in BUILTIN_OVERLAYS));
+    return [...Object.keys(BUILTIN_OVERLAYS), ...created.sort()];
+  }, [overlaysSaved, overlaysDraft]);
+  const overlayBase = overlaysDraft[overlayId] ?? BUILTIN_OVERLAYS[overlayId] ?? null;
+  const overlayDefShown = useMemo(() => (overlayBase ? { ...DEFAULT_OVERLAY, ...overlayBase } : null), [overlayBase]);
+  const overlayStatus = (id: string): EffectStatus => {
+    const d = overlaysDraft[id];
+    const s = overlaysSaved?.[id];
+    if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_OVERLAYS) ? "new" : "draft";
+    return s ? "saved" : "code";
+  };
+  const overlaysUnsaved = overlaysSaved !== null && JSON.stringify(overlaysDraft) !== JSON.stringify(overlaysSaved);
+  useEffect(() => {
+    if (overlaysSaved && !overlayIds.includes(overlayId)) setOverlayId(overlayIds[0]);
+  }, [overlaysSaved, overlayIds, overlayId]);
+  useEffect(() => {
+    stageRef.current?.previewOverlay(tab === "2d" ? overlayDefShown : null, overlayAnchor);
+  }, [tab, overlayDefShown, overlayAnchor, instance]);
+  const setOverlay = (id: string, def: OverlayDef | null) =>
+    setOverlaysDraft((d) => {
+      const next = { ...d };
+      if (def) next[id] = def;
+      else delete next[id];
+      return next;
+    });
+  const uniqueOverlayId = (base: string) => {
+    let n = 1;
+    while (`${base}${n}` in overlaysDraft || `${base}${n}` in BUILTIN_OVERLAYS || `${base}${n}` in (overlaysSaved ?? {})) n++;
+    return `${base}${n}`;
+  };
+
   // Objets 3D : ceux du jeu convertis, puis ceux créés ici.
   const objectIds = useMemo(() => {
     const created = Object.keys({ ...objectsSaved, ...objectsDraft }).filter((id) => !(id in BUILTIN_OBJECTS));
@@ -1439,7 +1556,7 @@ function AnimationLab() {
     while (`${base}${n}` in fxDraft || `${base}${n}` in BUILTIN_DEFS || `${base}${n}` in (fxSaved ?? {})) n++;
     return `${base}${n}`;
   };
-  const sendRequest = async (prompt: string, variant: boolean, kind: "particules" | "sol" | "objet" = "particules") => {
+  const sendRequest = async (prompt: string, variant: boolean, kind: "particules" | "sol" | "objet" | "2d" = "particules") => {
     const request: ParticleRequest = {
       id: Date.now().toString(36),
       date: new Date().toISOString(),
@@ -1448,6 +1565,7 @@ function AnimationLab() {
       ...(variant && kind === "particules" && fxDef && { effect: fxId, def: fxDef, anchor: fxAnchor }),
       ...(variant && kind === "sol" && markDef && { effect: markId, def: markDef }),
       ...(variant && kind === "objet" && objectDefShown && { effect: objectId, def: objectDefShown, anchor: objectAnchor }),
+      ...(variant && kind === "2d" && overlayDefShown && { effect: overlayId, def: overlayDefShown, anchor: overlayAnchor }),
       status: "en attente",
     };
     const list = [...requests, request];
@@ -1662,6 +1780,17 @@ function AnimationLab() {
       setMarksSaved(defs);
       setMarksDraft(defs);
     }
+    if (overlaysUnsaved) {
+      const file = ((await fetch("/__dev-file/overlays2d").then((r) => r.json())) ?? {}) as OverlayDefs;
+      const defs = rebaseDraft({ base: overlaysSaved ?? {}, draft: overlaysDraft }, file);
+      const response = await fetch("/__dev-file/overlays2d", { method: "POST", body: JSON.stringify(defs) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement de l'affichage 2D : ${await response.text()}`);
+        return;
+      }
+      setOverlaysSaved(defs);
+      setOverlaysDraft(defs);
+    }
     if (objectsUnsaved) {
       const file = ((await fetch("/__dev-file/objects3d").then((r) => r.json())) ?? {}) as ObjectDefs;
       const defs = rebaseDraft({ base: objectsSaved ?? {}, draft: objectsDraft }, file);
@@ -1673,7 +1802,7 @@ function AnimationLab() {
       setObjectsSaved(defs);
       setObjectsDraft(defs);
     }
-    setMessage("Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json) : le jeu l'utilise au prochain chargement.");
+    setMessage("Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json, overlays2d.json) : le jeu l'utilise au prochain chargement.");
     setTimeout(() => setMessage(null), 4000);
   };
 
@@ -1705,6 +1834,9 @@ function AnimationLab() {
           <button className={tab === "objets" ? "lab-tab-active" : ""} onClick={() => setTab("objets")}>
             Objets 3D
           </button>
+          <button className={tab === "2d" ? "lab-tab-active" : ""} onClick={() => setTab("2d")}>
+            Affichage 2D
+          </button>
         </span>
         <label>
           Classe
@@ -1720,11 +1852,11 @@ function AnimationLab() {
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
           <button
-            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved}
+            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved && !overlaysUnsaved}
             onClick={() => void save()}
-            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved ? "lab-save" : ""}
+            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved ? "lab-save" : ""}
           >
-            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved ? "Enregistrer" : "Tout est enregistré"}
+            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved ? "Enregistrer" : "Tout est enregistré"}
           </button>
         </span>
       </div>
@@ -1740,6 +1872,20 @@ function AnimationLab() {
               const id = uniqueFxId("effet");
               setFx(id, newEffectDef());
               setFxId(id);
+            }}
+          />
+        )}
+        {tab === "2d" && (
+          <OverlayList
+            ids={overlayIds}
+            defs={overlaysDraft}
+            selected={overlayId}
+            status={overlayStatus}
+            onSelect={setOverlayId}
+            onNew={() => {
+              const id = uniqueOverlayId("affichage");
+              setOverlay(id, { ...DEFAULT_OVERLAY });
+              setOverlayId(id);
             }}
           />
         )}
@@ -1806,6 +1952,38 @@ function AnimationLab() {
           {!instance && !error && <div className="lab-loading">Chargement des animations…</div>}
           {error && <div className="anim-error">{error}</div>}
         </div>
+        {tab === "2d" && overlayDefShown && (
+          <div className="fx-side">
+            <RequestsPanel
+              kind="2d"
+              requests={requests}
+              selectedLabel={overlayDefShown.label}
+              onSend={(prompt, variant) => void sendRequest(prompt, variant, "2d")}
+            />
+            <OverlayEditor
+              id={overlayId}
+              def={overlayDefShown}
+              onChange={(def) => setOverlay(overlayId, def)}
+              anchor={overlayAnchor}
+              onAnchor={setOverlayAnchor}
+              canRevert={
+                overlayStatus(overlayId) === "draft" ||
+                (overlayStatus(overlayId) === "new" && saved !== null && !effectUses(draft, overlayId, "overlay").length)
+              }
+              onRevert={() => setOverlay(overlayId, overlaysSaved?.[overlayId] ?? null)}
+              canBackToStart={overlayId in BUILTIN_OVERLAYS && overlayId in overlaysDraft}
+              onBackToStart={() => setOverlay(overlayId, null)}
+              onDuplicate={() => {
+                const id = uniqueOverlayId(overlayId.replace(/\d+$/, ""));
+                setOverlay(id, { ...overlayDefShown, label: `${overlayDefShown.label} (copie)` });
+                setOverlayId(id);
+              }}
+              canDelete={!(overlayId in BUILTIN_OVERLAYS)}
+              onDelete={() => setOverlay(overlayId, null)}
+              usedBy={saved === null ? ["chargement des réglages…"] : effectUses(draft, overlayId, "overlay")}
+            />
+          </div>
+        )}
         {tab === "objets" && objectDefShown && (
           <div className="fx-side">
             <RequestsPanel
@@ -2411,11 +2589,13 @@ function dragOnTrack(event: ReactPointerEvent, track: HTMLElement | null, length
 const DEFAULT_RECIPES: Record<Moment, string> = { caster: "fireCharge", projectile: "fireTrail", impact: "fireBurst", status: "mezHalo", zone: "frostField" };
 const DEFAULT_MARKS: Record<Moment, string> = { caster: "arcaneRunes", projectile: "frostCircle", impact: "fireCracks", status: "frostCircle", zone: "frostCircle" };
 const DEFAULT_OBJECTS: Record<Moment, string> = { caster: "pulseSphere", projectile: "orb", impact: "slash", status: "iceCrystals", zone: "frostRing" };
+const DEFAULT_OVERLAYS: Record<Moment, string> = { caster: "notes", projectile: "stunStars", impact: "question", status: "zzz", zone: "notes" };
 
-// Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D.
+// Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D, ✦ affichage 2D.
 function effectLabel(effect: AnimationEffect): string {
   if (effect.type === "ground") return `◎ ${groundMarkLabel(effect.recipe)}`;
   if (effect.type === "object") return `◆ ${objectLabel(effect.recipe)}`;
+  if (effect.type === "overlay") return `✦ ${overlayLabel(effect.recipe)}`;
   return particleEffectLabel(effect.recipe);
 }
 
@@ -2495,14 +2675,21 @@ function EffectsPanel(props: {
     });
   };
 
-  const add = (type?: "ground" | "object") => {
+  const add = (type?: "ground" | "object" | "overlay") => {
     const ground = type === "ground";
     const created: AnimationEffect = {
       ...(type && { type }),
-      recipe: type === "ground" ? DEFAULT_MARKS[kind] : type === "object" ? DEFAULT_OBJECTS[kind] : DEFAULT_RECIPES[kind],
+      recipe:
+        type === "ground"
+          ? DEFAULT_MARKS[kind]
+          : type === "object"
+            ? DEFAULT_OBJECTS[kind]
+            : type === "overlay"
+              ? DEFAULT_OVERLAYS[kind]
+              : DEFAULT_RECIPES[kind],
       start: addSpan[0],
       end: addSpan[1],
-      anchor: ground || kind === "zone" ? "feet" : kind === "caster" ? "hands" : "chest",
+      anchor: ground || kind === "zone" ? "feet" : type === "overlay" ? "head" : kind === "caster" ? "hands" : "chest",
       offset: [0, 0, 0],
       ...(kind === "status" && { untilEnd: true }),
       ...(kind === "zone" && { fitZone: true }),
@@ -2552,6 +2739,7 @@ function EffectsPanel(props: {
         <button onClick={() => add()}>+ Ajouter un effet</button>
         <button onClick={() => add("ground")}>+ Marque au sol</button>
         <button onClick={() => add("object")}>+ Objet 3D</button>
+        <button onClick={() => add("overlay")}>+ Affichage 2D</button>
       </div>
       {effects.map((effect, i) => (
         <div
@@ -2589,22 +2777,37 @@ function EffectsPanel(props: {
       {current && place && (
         <div className="lab-controls lab-effect-controls">
           <label>
-            {current.type === "ground" ? "Marque au sol" : current.type === "object" ? "Objet 3D" : "Effet"}
+            {current.type === "ground" ? "Marque au sol" : current.type === "object" ? "Objet 3D" : current.type === "overlay" ? "Affichage 2D" : "Effet"}
             <select value={current.recipe} onChange={(e) => replace(index, { ...current, recipe: e.target.value })}>
-              {(current.type === "ground" ? groundMarkChoices() : current.type === "object" ? objectChoices() : particleEffectChoices()).map(({ id, label }) => (
+              {(current.type === "ground"
+                ? groundMarkChoices()
+                : current.type === "object"
+                  ? objectChoices()
+                  : current.type === "overlay"
+                    ? overlayChoices()
+                    : particleEffectChoices()
+              ).map(({ id, label }) => (
                 <option key={id} value={id}>
                   {label}
                 </option>
               ))}
             </select>
           </label>
-          {(current.type === "ground" || current.type === "object") && (
+          {(current.type === "ground" || current.type === "object" || current.type === "overlay") && (
             <>
               <label title="Couleur imposée à cette marque ou cet objet sur cette compétence">
                 Teinte
                 <input
                   type="color"
-                  value={current.tint ?? (current.type === "ground" ? groundMarkDef(current.recipe)?.color : objectDef(current.recipe)?.color) ?? "#ffffff"}
+                  value={
+                    current.tint ??
+                    (current.type === "ground"
+                      ? groundMarkDef(current.recipe)?.color
+                      : current.type === "overlay"
+                        ? overlayDef(current.recipe)?.color
+                        : objectDef(current.recipe)?.color) ??
+                    "#ffffff"
+                  }
                   onChange={(e) => replace(index, { ...current, tint: e.target.value })}
                 />
               </label>

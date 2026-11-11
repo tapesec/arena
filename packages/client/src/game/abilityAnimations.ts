@@ -82,7 +82,7 @@ export type EffectAnchor = "hands" | "hand_r" | "hand_l" | "weapon" | "head" | "
 export interface AnimationEffect {
   // Effet à particules (par défaut), marque au sol ou objet 3D (recipe : nom de la marque ou de l'objet, voir
   // groundMarks.ts et objects3d.ts).
-  type?: "ground" | "object";
+  type?: "ground" | "object" | "overlay";
   recipe: string;
   start: number;
   end: number;

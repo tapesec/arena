@@ -41,6 +41,8 @@ import { GroundMarks, setGroundMarkDefs, type GroundMarkDef } from "./groundMark
 import groundMarks from "./groundMarks.json";
 import { Objects3D, setObjectDefs, type ObjectDef } from "./objects3d";
 import objects3d from "./objects3d.json";
+import { Overlays2D, setOverlayDefs, type OverlayDef } from "./overlays2d";
+import overlays2d from "./overlays2d.json";
 import type { Scenery } from "./abilityEffects";
 import { terrainHeight } from "@arena/shared";
 import { tuningOf, zoneCenterIsTarget, type AnimationTuning } from "./abilityAnimations";
@@ -50,6 +52,7 @@ const TUNING = animationTuning as unknown as AnimationTuning;
 // Marques au sol réglées sur la page de réglage (elles remplacent celles de départ de même nom).
 setGroundMarkDefs(groundMarks as unknown as Record<string, GroundMarkDef>);
 setObjectDefs(objects3d as unknown as Record<string, ObjectDef>);
+setOverlayDefs(overlays2d as unknown as Record<string, OverlayDef>);
 // Projectile réglé (ou retiré) sur la page de réglage.
 setProjectileLookup((abilityId) => tuningOf(TUNING, abilityId)?.projectile?.enabled);
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
@@ -92,6 +95,8 @@ export class SpellEffects {
   readonly marks: GroundMarks;
   // Objets 3D des compétences réglées.
   readonly objects: Objects3D;
+  // Affichage 2D (textes, symboles) des compétences réglées.
+  readonly overlays: Overlays2D;
 
   // heightAt : hauteur du sol (le terrain de l'arène en jeu, le sol plat de la page de réglage).
   constructor(
@@ -102,6 +107,7 @@ export class SpellEffects {
     this.particles.prewarm(P.RECIPES);
     this.marks = new GroundMarks(scene, heightAt);
     this.objects = new Objects3D(scene);
+    this.overlays = new Overlays2D(scene);
     this.statuses = new StatusFx(scene, this.particles, this.scenery);
     this.targets = new TargetVisuals(this.particles, TUNING, this.scenery);
     // Un état dont les effets sont réglés ne joue plus les particules ni les objets d'état du code.
@@ -295,8 +301,7 @@ export class SpellEffects {
 
   update(dt: number) {
     this.particles.update();
-    this.marks.update(dt);
-    this.objects.update(dt);
+
     for (const item of [...this.attached]) {
       item.left -= dt;
       if (!item.anchor.isDisposed()) item.at.copyFrom(item.anchor.getAbsolutePosition());
@@ -317,9 +322,16 @@ export class SpellEffects {
     }
   }
 
+  // Marques, objets et affichages 2D : après les joueurs d'effets qui les déplacent.
+  updateScenery(dt: number) {
+    this.marks.update(dt);
+    this.objects.update(dt);
+    this.overlays.update(dt);
+  }
+
   // Marques au sol et objets 3D, pour les joueurs d'effets.
   get scenery(): Scenery {
-    return { marks: this.marks, objects: this.objects };
+    return { marks: this.marks, objects: this.objects, overlays: this.overlays };
   }
 
   // Efface les effets passagers en cours (projectiles, impulsions, brûlures…) : la page de réglage relance sa lecture.
@@ -337,6 +349,7 @@ export class SpellEffects {
     this.targets.dispose();
     this.marks.dispose();
     this.objects.dispose();
+    this.overlays.dispose();
     this.particles.dispose();
     this.effects = [];
     this.guardLinks.clear();

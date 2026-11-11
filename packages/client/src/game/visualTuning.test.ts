@@ -10,6 +10,8 @@ import groundMarks from "./groundMarks.json";
 import { BUILTIN_MARKS } from "./groundMarks";
 import objects3d from "./objects3d.json";
 import { BUILTIN_OBJECTS } from "./objects3d";
+import overlays2d from "./overlays2d.json";
+import { BUILTIN_OVERLAYS } from "./overlays2d";
 
 // Les réglages enregistrés depuis animation-lab.html restent cohérents avec le jeu : chaque effet utilisé existe,
 // chaque moment réglé correspond à ce que fait la compétence.
@@ -18,6 +20,7 @@ const tuning = animationTuning as unknown as AnimationTuning;
 const known = new Set([...Object.keys(CODE_RECIPES), ...Object.keys(BUILTIN_DEFS), ...Object.keys(particleEffects)]);
 const knownMarks = new Set([...Object.keys(BUILTIN_MARKS), ...Object.keys(groundMarks)]);
 const knownObjects = new Set([...Object.keys(BUILTIN_OBJECTS), ...Object.keys(objects3d)]);
+const knownOverlays = new Set([...Object.keys(BUILTIN_OVERLAYS), ...Object.keys(overlays2d)]);
 
 function allEffects(entry: AbilityAnimation): [string, AnimationEffect[]][] {
   return [
@@ -34,7 +37,8 @@ test("chaque effet utilisé par une compétence existe", () => {
     for (const [abilityId, entry] of Object.entries(entries)) {
       for (const [moment, effects] of allEffects(entry)) {
         for (const effect of effects) {
-          if (effect.type === "object") assert.ok(knownObjects.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'objet 3D introuvable « ${effect.recipe} »`);
+          if (effect.type === "overlay") assert.ok(knownOverlays.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'affichage 2D introuvable « ${effect.recipe} »`);
+          else if (effect.type === "object") assert.ok(knownObjects.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'objet 3D introuvable « ${effect.recipe} »`);
           else if (effect.type === "ground") assert.ok(knownMarks.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise la marque au sol introuvable « ${effect.recipe} »`);
           else assert.ok(known.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'effet introuvable « ${effect.recipe} »`);
           assert.ok(effect.end >= effect.start, `${classId}/${abilityId} (${moment}) : effet « ${effect.recipe} » qui finit avant de commencer`);
@@ -73,5 +77,6 @@ test("les visuels du code nomment des effets qui existent", () => {
   }
   for (const status of Object.values(STATUS_CODE)) {
     for (const { id } of status.objects ?? []) assert.ok(id in BUILTIN_OBJECTS, `objet du code introuvable : « ${id} »`);
+    for (const { id } of status.overlays ?? []) assert.ok(id in BUILTIN_OVERLAYS, `affichage du code introuvable : « ${id} »`);
   }
 });

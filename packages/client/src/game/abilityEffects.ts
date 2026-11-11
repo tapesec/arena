@@ -7,11 +7,13 @@ import { particleRecipe, zoneRecipe } from "./particleDefs";
 import type { ParticleFactory } from "./particles";
 import type { GroundMark, GroundMarks } from "./groundMarks";
 import type { Objects3D, PlacedObject } from "./objects3d";
+import type { Overlays2D, PlacedOverlay } from "./overlays2d";
 
 // Marques au sol et objets 3D que peut poser un joueur d'effets (sans eux, ces effets ne sont pas joués).
 export interface Scenery {
   marks: GroundMarks | null;
   objects: Objects3D | null;
+  overlays?: Overlays2D | null;
 }
 
 // Effets à particules d'une compétence (réglés sur animation-lab.html) : portés par le lanceur pendant son geste,
@@ -158,6 +160,7 @@ interface Run {
   system: ParticleSystem | null;
   mark: GroundMark | null;
   object: PlacedObject | null;
+  overlay: PlacedOverlay | null;
 }
 
 // Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
@@ -187,10 +190,11 @@ export class AbilityEffectPlayer {
         let run = this.running.get(key);
         const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
         if (!run) {
-          run = { effect, at: new Vector3(), system: null, mark: null, object: null };
+          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
           if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
+          else if (effect.type === "overlay") run.overlay = this.scenery.overlays?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
           else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
           else {
             const recipe = radius !== undefined ? zoneRecipe(effect.recipe, radius) : particleRecipe(effect.recipe);
@@ -223,6 +227,7 @@ export class AbilityEffectPlayer {
   private stop(key: string, run: Run) {
     run.mark?.stop();
     run.object?.stop();
+    run.overlay?.stop();
     if (run.system) {
       // Les dernières particules restent où elles sont, au lieu de suivre le personnage.
       run.system.emitter = run.at.clone();

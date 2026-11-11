@@ -5,6 +5,7 @@ import { BUILTIN_DEFS, DEFAULT_DEF, type ParticleEffectDef } from "./game/partic
 import type { ParticleTexture } from "./game/particles";
 import type { GroundMarkDef } from "./game/groundMarks";
 import type { ObjectDef } from "./game/objects3d";
+import type { OverlayDef } from "./game/overlays2d";
 
 // Onglet « Effets à particules » de animation-lab.html : liste des effets, réglages de l'effet choisi, demandes de
 // nouveaux effets adressées à Claude (particle-requests.json, traitées dans Claude Code).
@@ -13,12 +14,12 @@ export interface ParticleRequest {
   id: string;
   date: string;
   // Type d'élément demandé (pour l'instant, les effets à particules).
-  kind?: "particules" | "sol" | "objet";
+  kind?: "particules" | "sol" | "objet" | "2d";
   prompt: string;
   // Variante d'un effet existant : l'effet sélectionné (point de départ), ses réglages et son accroche. Absents,
   // la demande porte sur un effet entièrement nouveau.
   effect?: string;
-  def?: ParticleEffectDef | GroundMarkDef | ObjectDef;
+  def?: ParticleEffectDef | GroundMarkDef | ObjectDef | OverlayDef;
   anchor?: EffectAnchor;
   status: "en attente" | "fait";
   // Nom de l'effet créé, et mot de Claude.
@@ -528,7 +529,7 @@ export function RequestsPanel(props: {
   selectedLabel: string;
   onSend: (prompt: string, variant: boolean) => void;
   // Ce qui est demandé : un effet à particules (par défaut), une marque au sol ou un objet 3D.
-  kind?: "particules" | "sol" | "objet";
+  kind?: "particules" | "sol" | "objet" | "2d";
 }) {
   const [prompt, setPrompt] = useState("");
   const [variant, setVariant] = useState(false);
@@ -538,7 +539,9 @@ export function RequestsPanel(props: {
   const words =
     kind === "sol"
       ? { title: "Demander une nouvelle marque au sol à Claude", example: "Ex. : un pentacle rouge qui s'allume trait par trait", selected: "la marque sélectionnée", created: "une nouvelle marque" }
-      : kind === "objet"
+      : kind === "2d"
+        ? { title: "Demander un nouvel affichage 2D à Claude", example: "Ex. : des petits éclairs jaunes qui tournent au-dessus de la tête", selected: "l'affichage sélectionné", created: "un nouvel affichage" }
+        : kind === "objet"
         ? { title: "Demander un nouvel objet 3D à Claude", example: "Ex. : trois épées de lumière qui tournent autour du personnage", selected: "l'objet sélectionné", created: "un nouvel objet" }
         : { title: "Demander un nouvel effet à Claude", example: "Ex. : des plumes dorées qui tombent en tournoyant autour du personnage", selected: "l'effet sélectionné", created: "un nouvel effet" };
   const listed = [...requests].reverse();

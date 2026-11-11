@@ -181,7 +181,7 @@ export class StatusFx {
       this.updateAuras(status, alive, player, speed);
       status.abilityFx.update(player.character, playing);
       this.updateMez(status, mez && !this.tuned(player, "mez"));
-      this.updateStars(status, stun, player);
+      this.updateStars(status, stun && !this.tuned(player, "stun"), player);
       this.updateRoot(status, this.tuned(player, "root") ? 0 : root, player);
       this.updateBubble(status, bubble && !this.tuned(player, "bubble"), this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);

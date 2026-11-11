@@ -2,6 +2,7 @@ import { getAbility, type AbilityDef } from "@arena/shared";
 import { statusKindsOf, type AnimationEffect, type ProjectileVisual } from "./abilityAnimations";
 import { ONE_SHOT_DURATION } from "./particleDefs";
 import { objectDef } from "./objects3d";
+import { overlayDef } from "./overlays2d";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME } from "./spellFx";
 
 // Visuels de compétence prévus dans le code (avant la page de réglage), décrits par le nom de leurs effets à
@@ -63,16 +64,26 @@ export const OWN_AFFLICTION = new Set(["burn"]);
 // Hauteur (au-dessus des pieds) du milieu du corps, où apparaissent les impacts, et de la tête des personnages.
 export const BODY_CENTER = 1.1;
 export const HEAD_HEIGHT = 2.35;
+// Hauteur des indicateurs du code (« Zzz », « !!! »), au-dessus du nom (WorldOverlay).
+const INDICATOR_HEIGHT = 3.1;
 
 // Effets d'état prévus dans le code, par type d'état (EffectKind) : effets à particules (aux pieds, au corps ou à
 // la tête) et ce qui n'est pas fait de particules.
 const AT = { feet: 0, body: BODY_CENTER, head: HEAD_HEIGHT };
 export const STATUS_CODE: Record<
   string,
-  { particles: { recipe: string; at: keyof typeof AT }[]; objects?: { id: string; at: keyof typeof AT }[]; extras: string[] }
+  {
+    particles: { recipe: string; at: keyof typeof AT }[];
+    objects?: { id: string; at: keyof typeof AT }[];
+    overlays?: { id: string; height: number }[];
+    extras: string[];
+  }
 > = {
-  mez: { particles: [{ recipe: "mezHalo", at: "head" }], extras: ["« Zzz » au-dessus de la tête (affichage 2D)"] },
-  stun: { particles: [], extras: ["étoiles qui tournent autour de la tête (affichage 2D)"] },
+  mez: { particles: [{ recipe: "mezHalo", at: "head" }], overlays: [{ id: "zzz", height: INDICATOR_HEIGHT }], extras: [] },
+  stun: { particles: [], overlays: [{ id: "stunStars", height: HEAD_HEIGHT + 0.1 }], extras: [] },
+  // La provocation est marquée par « !!! » pendant ses premières secondes.
+  taunted: { particles: [], overlays: [{ id: "tauntMarks", height: INDICATOR_HEIGHT }], extras: [] },
+  nearSight: { particles: [], extras: ["deux yeux fermés au-dessus de la tête (affichage du code)"] },
   root: { particles: [{ recipe: "frostMist", at: "feet" }], objects: [{ id: "iceCrystals", at: "feet" }], extras: [] },
   burning: {
     particles: [
@@ -187,6 +198,11 @@ export function codeStatus(abilityId: string): { effects: AnimationEffect[]; ext
     const code = STATUS_CODE[kind];
     if (!code) continue;
     for (const { recipe, at } of code.particles) effects.push({ ...placed(recipe, AT[at], 0, 1), untilEnd: true });
+    for (const { id, height } of code.overlays ?? []) {
+      const timed = (overlayDef(id)?.duration ?? 0) > 0;
+      const effect: AnimationEffect = { type: "overlay", ...placed(id, height, 0, timed ? (overlayDef(id)?.duration ?? 0) + (overlayDef(id)?.fadeOut ?? 0) : 1) };
+      effects.push(timed ? effect : { ...effect, untilEnd: true });
+    }
     for (const { id, at } of code.objects ?? []) {
       const timed = (objectDef(id)?.duration ?? 0) > 0;
       effects.push(timed ? object(id, AT[at]) : { ...object(id, AT[at]), untilEnd: true });

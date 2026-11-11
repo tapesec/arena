@@ -47,7 +47,7 @@ import {
   type TeammateFrame,
 } from "../store";
 import { CameraController } from "./CameraController";
-import { WorldOverlay } from "./WorldOverlay";
+import { WorldOverlay, type StatusIndicator } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
 import { audio } from "../audio/AudioManager";
 import { Nature } from "./nature";
@@ -328,6 +328,23 @@ export class Game {
     this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
   }
 
+  // Indicateur au-dessus de la tête. Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez
+  // garde ses « Zzz » ; une cible provoquée porte des points d'exclamation rouges pendant les premières secondes ;
+  // Near sight : deux yeux fermés tant que dure l'effet ; Rempart : une tour au-dessus des joueurs protégés, bleue
+  // dans son camp, rouge chez l'adversaire. Un mez ou une provocation dont les effets sont réglés (page de réglage)
+  // a son propre affichage.
+  private indicatorOf(player: PlayerVisual): StatusIndicator | null {
+    if (!player.isAlive) return null;
+    const own = (kind: string) => this.spellEffects.targets.hasTunedStatus(player.sessionId, kind);
+    const enemy = !!this.self && player.state.team !== this.self.state.team;
+    const taunted = player.effectRemaining("taunted") > TAUNT_DURATION - TAUNT_MARK_DURATION;
+    if (player.hasEffect("mez")) return own("mez") ? null : "mez";
+    if (taunted) return own("taunted") ? null : "taunt";
+    if (player.hasEffect("nearSight")) return "nearSight";
+    if (player.hasEffect("meleeImmune")) return enemy ? "rampartEnemy" : "rampartAlly";
+    return null;
+  }
+
   // Joueurs gardés et leur Gardien, tous deux vivants et visibles : id du protégé → [protégé, Gardien].
   private guardLinks(): Map<string, [TransformNode, TransformNode]> {
     const links = new Map<string, [TransformNode, TransformNode]>();
@@ -480,26 +497,7 @@ export class Game {
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
     for (const player of this.players.values()) {
       player.update(smoothing);
-      // Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez garde ses « Zzz » ; une
-      // cible provoquée porte des points d'exclamation rouges pendant les premières secondes.
-      const taunted = player.effectRemaining("taunted") > TAUNT_DURATION - TAUNT_MARK_DURATION;
-      // Near sight : deux yeux fermés tant que dure l'effet. Rempart : une tour au-dessus des joueurs protégés, bleue
-      // dans son camp, rouge chez l'adversaire.
       const enemy = !!this.self && player.state.team !== this.self.state.team;
-      const control = !player.isAlive
-        ? null
-        : player.hasEffect("mez")
-          ? "mez"
-          : taunted
-            ? "taunt"
-            : player.hasEffect("nearSight")
-              ? "nearSight"
-              : player.hasEffect("meleeImmune")
-                ? enemy
-                  ? "rampartEnemy"
-                  : "rampartAlly"
-                : null;
-      this.overlay.setIndicator(player.sessionId, player.root, control);
       const classId = player.state.classId as ClassId | "";
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (getClass(classId)?.name ?? "") : player.state.name;
@@ -512,6 +510,10 @@ export class Game {
     // Les effets d'état réglés d'abord : ils décident si les particules d'état du code sont jouées.
     this.spellEffects.targets.update(dt, this.players);
     this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
+    // Marques, objets et affichages 2D après les effets qui les déplacent (sinon ils suivent avec une image de retard).
+    this.spellEffects.updateScenery(dt);
+    // Indicateurs au-dessus des têtes, après les effets réglés (un état réglé a son propre affichage).
+    for (const player of this.players.values()) this.overlay.setIndicator(player.sessionId, player.root, this.indicatorOf(player));
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
