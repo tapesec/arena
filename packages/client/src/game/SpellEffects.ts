@@ -12,12 +12,12 @@ import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { getAbility, type AbilityDef } from "@arena/shared";
+import { getAbility, revivesInArea, type AbilityDef } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { oneShot, recipeById } from "./particleDefs";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile, setProjectileLookup, type AbilityFx } from "./spellFx";
-import { AFFLICTIONS, BODY_CENTER, OWN_AFFLICTION, VISUALS, type CodeVisual } from "./codeVisuals";
+import { AFFLICTIONS, AREA_REVIVE, BODY_CENTER, OWN_AFFLICTION, VISUALS, type CodeVisual } from "./codeVisuals";
 
 // Moments réglés sur la page de réglage pour une compétence (par défaut, d'après animationTuning.json) : ils
 // remplacent l'impact et la zone du code.
@@ -150,6 +150,14 @@ export class SpellEffects {
     if (visual) this.burst(visual, anchor);
     else if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
     else this.spawnPulse(fx.color, anchor, 1);
+  }
+
+  // Allié relevé par une résurrection de zone (Intervention divine) : la pluie d'étincelles et le rayon de lumière
+  // tombent sur lui, pas sur le lanceur. Un impact réglé est joué par TargetVisuals.
+  revived(abilityId: string, target: TransformNode, tunedImpact = tunedMoments(abilityId).impact) {
+    const ability = getAbility(abilityId);
+    if (!ability || !revivesInArea(ability) || tunedImpact) return;
+    this.burst(AREA_REVIVE, target);
   }
 
   // Dégâts magiques subis : la cible brûle (ou gèle…) un instant, selon le type du sort.

@@ -353,6 +353,7 @@ const list: AbilityDef[] = [
     target: "ally",
     effects: [{ type: "heal", amount: 200 }],
   },
+  // TODO Barde : passe au Barde (étape suivante)
   {
     id: "purify",
     name: "Purification",
@@ -580,4 +581,19 @@ export const RAMPART_RADIUS = 30;
 // Compétence dirigée contre un ennemi : soumise au cône de vision, interrompt le chant du Barde.
 export function isOffensive(ability: AbilityDef): boolean {
   return ability.target === "enemy" || ability.target === "enemiesAround";
+}
+
+// Résurrection de zone (Intervention divine) : elle relève les alliés morts dans son rayon.
+export function revivesInArea(ability: AbilityDef): boolean {
+  return !!ability.radius && ability.effects.some((effect) => effect.type === "resurrect");
+}
+
+// Zone qui touche tout ce qui est dans son rayon, même derrière un obstacle : déflagration autour du lanceur,
+// résurrection de zone et soin réparti (Soin de groupe).
+export function ignoresLineOfSight(ability: AbilityDef): boolean {
+  return (
+    ability.target === "enemiesAround" ||
+    revivesInArea(ability) ||
+    ability.effects.some((effect) => effect.type === "splitHeal")
+  );
 }

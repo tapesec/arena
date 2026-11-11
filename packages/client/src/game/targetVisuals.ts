@@ -329,7 +329,12 @@ export class TargetVisuals {
     }
     for (const [id, player] of players) {
       if (!player.isAlive) continue;
+      // Un même type d'état peut être là plusieurs fois (Renouveaux de lanceurs différents) : son suivi, rangé par
+      // type, n'avance qu'une fois par image.
+      const seen = new Set<string>();
       for (const effect of player.state.effects) {
+        if (seen.has(effect.kind)) continue;
+        seen.add(effect.kind);
         let runs = this.statuses.get(id);
         let run = runs?.get(effect.kind);
         if (!run) {

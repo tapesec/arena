@@ -74,7 +74,7 @@ function weaponTip(attach: TransformNode): Vector3 {
   return tip;
 }
 
-// Position d'un effet à un instant du geste (secondes dans l'animation) : entre ses deux points clés qui
+// Position d'un effet à un instant de son moment (secondes depuis le début du geste ou du moment) : entre ses deux points clés qui
 // encadrent cet instant, à vitesse constante ; sans point clé, son accroche et son décalage.
 const between = new Vector3();
 export function effectPosition(character: CharacterInstance, effect: AnimationEffect, time: number, out: Vector3): Vector3 {
@@ -135,8 +135,6 @@ export interface EffectTrack {
   ally?: boolean;
   // Sans les sons (pose figée de la page de réglage).
   silent?: boolean;
-  // Vitesse du temps de la piste (secondes de piste par seconde réelle) : celle du geste pour le lanceur.
-  speed?: number;
 }
 
 // Écart de vitesse tiré au hasard à chaque lecture d'un son (un même son ne sonne jamais deux fois pareil).
@@ -185,10 +183,9 @@ interface Run {
   // Son à arrêter avec sa barre (coupé ou en boucle), relevé au départ : changer de mode ensuite ne doit pas
   // l'empêcher de s'arrêter.
   cutAtEnd: boolean;
-  // Dernier instant vu de sa piste, et la vitesse de celle-ci : si la piste disparaît avant la fin de la barre (le
-  // geste est fini), le son continue jusqu'à la fin de sa barre.
+  // Dernier instant vu de sa piste (secondes réelles) : si la piste disparaît avant la fin de la barre (le geste est
+  // fini), le son continue jusqu'à la fin de sa barre.
   time: number;
-  speed: number;
 }
 
 // Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
@@ -226,7 +223,7 @@ export class AbilityEffectPlayer {
         let run = this.running.get(key);
         const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
         if (!run) {
-          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, cutAtEnd: false, time: 0, speed: 1 };
+          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, cutAtEnd: false, time: 0 };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
           if (effect.type === "sound") {
@@ -249,7 +246,6 @@ export class AbilityEffectPlayer {
         }
         run.effect = effect;
         run.time = track.time;
-        run.speed = track.speed ?? 1;
         place(run.at);
         if (run.object) {
           const aim = track.point?.aim ?? null;
@@ -283,7 +279,7 @@ export class AbilityEffectPlayer {
     // la barre (geste fini alors que le son la dépasse), il continue jusqu'à la fin de sa barre.
     if (run.cutAtEnd && run.sound) {
       const sound = run.sound;
-      const left = (run.effect.end - run.time) / Math.max(0.05, run.speed);
+      const left = run.effect.end - run.time;
       if (left > 0.05 && !this.stoppingAll) setTimeout(() => sound.stop(), left * 1000);
       else sound.stop();
     }

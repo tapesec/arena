@@ -37,7 +37,6 @@ import {
   type ProjectileVisual,
   type ProjectilePath,
   shiftEffect,
-  releaseTime,
   suggestedAbilityAnimation,
   type AbilityAnimation,
   type AbilityClip,
@@ -181,8 +180,8 @@ class Stage {
   private abilityId = "";
   private entry: AbilityAnimation | null = null;
   private mode: "play" | "scrub" = "scrub";
-  // Instant montré en pose figée, pour chaque moment (secondes dans l'animation du lanceur, ou depuis l'impact,
-  // le début de l'état, l'apparition de la zone).
+  // Instant montré en pose figée, pour chaque moment (secondes depuis le début du geste du lanceur, ou depuis
+  // l'impact, le début de l'état, l'apparition de la zone).
   private scrubTimes: Record<Moment, number> = { caster: 0, projectile: 0, impact: 0, status: 0, zone: 0 };
   private moment: Moment = "caster";
   private cycle: { phase: "idle" | "cast" | "after"; time: number } = { phase: "idle", time: 0 };
@@ -653,7 +652,7 @@ class Stage {
     if (!instance || this.workshop) return;
     if (this.entry) {
       // Sur le trajet, le lanceur est montré au départ du sort (d'où part le projectile, comme en jeu).
-      const casterTime = this.moment === "projectile" ? releaseTime(this.abilityId) : this.scrubTimes.caster;
+      const casterTime = this.moment === "projectile" ? castTimeOf(this.abilityId) : this.scrubTimes.caster;
       // L'animation du geste à cet instant ; hors des animations, la pose normale.
       const at = clipAt(this.entry, casterTime);
       const group = at ? instance.animations.get(at.clip.animation) : instance.animations.get(instance.set.idle);
@@ -756,6 +755,8 @@ class Stage {
         zoneParticles: !!entry.zone?.length,
       };
       this.codeFx.play(this.abilityId, this.holder, target, tuned);
+      // Résurrection de zone : le mannequin fait l'allié relevé (en jeu, à la réception de son événement de combat).
+      this.codeFx.revived(this.abilityId, target, tuned.impact);
       if (getAbility(this.abilityId)?.effects.some((effect) => effect.type === "damage")) this.codeFx.magicHit(this.abilityId, target, tuned.impact);
       if (this.abilityId === "bubble") this.codeFx.statuses.bubbleWasApplied(CODE_DUMMY);
       // Sons du code (comme GameAudio) pour les moments dont les sons ne sont pas réglés.
@@ -1847,7 +1848,6 @@ function AnimationLab() {
   // Timeline du lanceur (secondes réelles depuis le début du geste) : les animations et l'incantation, et
   // CASTER_AFTER secondes après pour les effets et les sons qui les dépassent.
   const casterAxis = entry ? casterAxisOf(entry, castTime) : 0;
-  const length = casterAxis;
 
   // Moments réglables de la compétence : l'état seulement si elle en laisse un, la zone si elle en a une.
   const ability = getAbility(abilityId);
@@ -1874,7 +1874,7 @@ function AnimationLab() {
   const impactLength = Math.max(3, momentLength(entry?.impact?.effects, entry?.impact?.reaction) + 1);
   const zoneLength = Math.max(3, momentLength(entry?.zone) + 1);
   const statusLength = Math.max(statusShown, momentLength(entry?.status?.filter((effect) => !effect.untilEnd)) + 0.5);
-  const momentAxis = shownMoment === "projectile" ? PROJECTILE_TRAVEL_TIME : shownMoment === "impact" ? impactLength : shownMoment === "status" ? statusLength : shownMoment === "zone" ? zoneLength : length;
+  const momentAxis = shownMoment === "projectile" ? PROJECTILE_TRAVEL_TIME : shownMoment === "impact" ? impactLength : shownMoment === "status" ? statusLength : shownMoment === "zone" ? zoneLength : casterAxis;
   const reaction = entry?.impact?.reaction;
   const reactionLength = reaction ? clipLength(reaction.animation) : 0;
   const reactionAnimations = useMemo(() => {
@@ -2507,7 +2507,10 @@ function AnimationLab() {
                         clip={currentClip}
                         playheadRef={clipHeadRef}
                         onChange={(next) => setClip(clipShown, { start: next.start, end: next.end })}
-                        onScrub={(clipTime) => scrub(clipOffset + (clipTime - currentClip.start) / currentClip.rate)}
+                        onScrub={(clipTime, shown) =>
+                          // Portion en cours de glisser (shown), bornée juste avant sa fin : clipAt exclut la fin.
+                          scrub(Math.min(clipOffset + (clipTime - shown.start) / shown.rate, clipOffset + clipDuration(shown) - 1e-3))
+                        }
                       />
                     </div>
                   ) : (
@@ -2515,8 +2518,7 @@ function AnimationLab() {
                   )}
                   <EffectsPanel
                     kind="caster"
-                    codeSounds={codeSoundTracks(abilityId, "cast", releaseTime(abilityId))}
-                    soundTail={0}
+                    codeSounds={codeSoundTracks(abilityId, "cast", castTimeOf(abilityId))}
                     length={casterAxis}
                     bounds={[0, casterAxis]}
                     addSpan={[0, castTime > 0 ? castTime : Math.max(0.5, sequenceLength(entry))]}
@@ -2608,7 +2610,7 @@ function AnimationLab() {
                         clip={reaction}
                         playheadRef={reactionHeadRef}
                         onChange={(next) => setReaction({ animation: next.animation, start: next.start, rate: next.rate, end: next.end })}
-                        onScrub={(clipTime) => scrub((clipTime - reaction.start) / reaction.rate)}
+                        onScrub={(clipTime, shown) => scrub((clipTime - shown.start) / shown.rate)}
                       />
                     </div>
                   )}
@@ -2633,7 +2635,7 @@ function AnimationLab() {
                     kind={shownMoment}
                     codeSounds={shownMoment === "impact" ? codeSoundTracks(abilityId, "impact", 0) : undefined}
                     length={momentAxis}
-                    bounds={[0, shownMoment === "status" ? momentAxis : momentAxis]}
+                    bounds={[0, momentAxis]}
                     addSpan={[0, shownMoment === "status" ? statusShown : shownMoment === "projectile" ? PROJECTILE_TRAVEL_TIME : 0.6]}
                     effects={(shownMoment === "impact" ? entry.impact?.effects : shownMoment === "projectile" ? entry.projectile?.effects : entry[shownMoment]) ?? []}
                     selected={selectedEffect}
@@ -2660,13 +2662,14 @@ function AnimationLab() {
 type Drag = "move" | "start" | "end" | "scrub";
 
 // Portion jouée d'une animation (réaction de la cible, ou une animation du geste du lanceur) : la fenêtre de start à
-// end, sur toute la longueur de l'animation. Les temps sont en secondes dans l'animation.
+// end, sur toute la longueur de l'animation. Les temps sont en secondes dans l'animation. onScrub reçoit aussi la
+// portion telle qu'elle est à cet instant (déjà modifiée pendant un glisser, avant que le parent ne la renvoie).
 function ClipTimeline(props: {
   length: number;
   clip: TargetReaction;
   playheadRef: RefObject<HTMLDivElement | null>;
   onChange: (clip: TargetReaction) => void;
-  onScrub: (time: number) => void;
+  onScrub: (time: number, clip: TargetReaction) => void;
 }) {
   const { length, clip, playheadRef, onChange, onScrub } = props;
   const axis = Math.max(length, 1e-3);
@@ -2685,7 +2688,7 @@ function ClipTimeline(props: {
     const apply = (clientX: number) => {
       const d = snap(((clientX - x0) / width) * axis);
       if (kind === "scrub") {
-        onScrub(Math.min(length, snap(((clientX - left) / width) * axis)));
+        onScrub(Math.min(length, snap(((clientX - left) / width) * axis)), c0);
         return;
       }
       let next: TargetReaction;
@@ -2700,10 +2703,10 @@ function ClipTimeline(props: {
       onChange(next);
       // La pose montrée suit le bord déplacé, ou le pointeur quand on glisse toute la fenêtre.
       const pointer = snap(((clientX - left) / width) * axis);
-      onScrub(Math.min(length, kind === "end" ? next.end : kind === "move" ? pointer : next.start));
+      onScrub(Math.min(length, kind === "end" ? next.end : kind === "move" ? pointer : next.start), next);
     };
     if (kind === "scrub") apply(event.clientX);
-    if (kind === "move") onScrub(Math.min(length, snap(((event.clientX - left) / width) * axis)));
+    if (kind === "move") onScrub(Math.min(length, snap(((event.clientX - left) / width) * axis)), c0);
     const move = (e: PointerEvent) => apply(e.clientX);
     const up = () => {
       window.removeEventListener("pointermove", move);
@@ -3043,8 +3046,6 @@ function EffectsPanel(props: {
   effects: AnimationEffect[];
   // Sons du code du moment (départ du sort pour le geste, arrivée pour l'impact), à reprendre en pistes.
   codeSounds?: AnimationEffect[];
-  // Un son peut dépasser la portion de tant (secondes) : après la fin du geste.
-  soundTail?: number;
   selected: number;
   onSelect: (index: number) => void;
   cursor: number;
@@ -3055,8 +3056,6 @@ function EffectsPanel(props: {
   onEdit: (effect: AnimationEffect) => (() => void) | null;
 }) {
   const { kind, length, bounds, addSpan, effects, codeSounds, selected, onSelect, cursor, playing, onChange, onScrub, onEdit } = props;
-  // Fin permise d'un effet : celle de la portion, plus loin pour un son.
-  const limitOf = (effect: AnimationEffect) => bounds[1] + (effect.type === "sound" ? (props.soundTail ?? 0) : 0);
   const [soundFilter, setSoundFilter] = useState("");
   const tracks = useRef<(HTMLDivElement | null)[]>([]);
   const [selectedKey, setSelectedKey] = useState(0);
@@ -3082,10 +3081,10 @@ function EffectsPanel(props: {
     const e0 = effects[i];
     dragOnTrack(event, tracks.current[i], length, (d, at) => {
       let next = e0;
-      if (part === "move") next = shiftEffect(e0, Math.max(bounds[0] - e0.start, Math.min(d, limitOf(e0) - e0.end)));
+      if (part === "move") next = shiftEffect(e0, Math.max(bounds[0] - e0.start, Math.min(d, bounds[1] - e0.end)));
       else if (part === "start")
         next = { ...e0, start: Math.max(bounds[0], Math.min(e0.keys?.[0]?.time ?? e0.end - SNAP, e0.end - SNAP, e0.start + d)) };
-      else next = { ...e0, end: Math.min(limitOf(e0), Math.max(e0.keys?.at(-1)?.time ?? e0.start + SNAP, e0.start + SNAP, e0.end + d)) };
+      else next = { ...e0, end: Math.min(bounds[1], Math.max(e0.keys?.at(-1)?.time ?? e0.start + SNAP, e0.start + SNAP, e0.end + d)) };
       if (next !== e0 || part !== "move") replace(i, next);
       // Un clic (ou un glissement) sur la barre montre la pose sous le pointeur.
       onScrub(part === "end" ? next.end : part === "start" ? next.start : at);

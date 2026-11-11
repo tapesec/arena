@@ -2,6 +2,7 @@ import { MAX_ENDURANCE, MAX_MANA, type ResourceType } from "./combat";
 
 export type ClassId = "gardien" | "arcaniste" | "pretre" | "barde" | "lame";
 
+// TODO Barde : passe au Barde (étape suivante) — passif regenAura, sur aucune classe pour l'instant.
 export type Passive = "shieldBlock" | "regenAura";
 
 export interface ClassDef {

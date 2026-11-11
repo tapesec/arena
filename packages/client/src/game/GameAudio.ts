@@ -1,5 +1,5 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { PLAZA, type CombatEvent, type MatchPhase } from "@arena/shared";
+import { PLAZA, getAbility, revivesInArea, type CombatEvent, type MatchPhase } from "@arena/shared";
 import { audio, type SoundName } from "../audio/AudioManager";
 import type { CameraController } from "./CameraController";
 import { isGrass } from "./environment";
@@ -82,7 +82,10 @@ export class GameAudio {
     const sounds = ABILITY_SOUNDS[abilityId];
     if (!sounds) return;
     if (sounds.cast && caster && !tunedSounds(abilityId, "caster")) this.playCues(sounds.cast, caster.root.position);
-    if (sounds.impact && target && !tunedSounds(abilityId, "impact")) {
+    // Une résurrection de zone (Intervention divine) résonne sur chaque allié relevé (voir onCombat), pas sur son
+    // lanceur.
+    const ability = getAbility(abilityId);
+    if (sounds.impact && target && !tunedSounds(abilityId, "impact") && !(ability && revivesInArea(ability))) {
       // Un sort à projectile résonne à son arrivée.
       const delay = isProjectile(abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
       this.playCues(sounds.impact, target.root.position, delay);
@@ -109,8 +112,15 @@ export class GameAudio {
         } else this.pain(target, isSelf);
         break;
       }
+      case "resurrect": {
+        const ability = getAbility(event.abilityId);
+        const impact = ABILITY_SOUNDS[event.abilityId]?.impact;
+        if (ability && revivesInArea(ability) && impact && !tunedSounds(event.abilityId, "impact")) this.playCues(impact, position);
+        break;
+      }
       case "heal":
-        this.healed(target);
+        // Un soin qui ne rend rien (cible pleine, touchée par le Soin de groupe) ne fait pas soupirer.
+        if (event.amount !== 0) this.healed(target);
         break;
       case "blocked":
         this.playCues([{ sound: BLOCK_SOUND }], position, melee ? HIT_DELAY : 0);

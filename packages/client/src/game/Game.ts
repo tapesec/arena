@@ -306,6 +306,10 @@ export class Game {
         if (target && event.crit) this.spellEffects.critHit(target.root);
         if (target) this.spellEffects.magicHit(event.abilityId, target.root);
       }
+      if (event.kind === "resurrect") {
+        const target = this.players.get(event.targetId);
+        if (target) this.spellEffects.revived(event.abilityId, target.root);
+      }
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       hud.pushLog(formatInterrupt(event, nameOf));

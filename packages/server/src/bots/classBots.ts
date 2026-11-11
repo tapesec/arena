@@ -20,6 +20,10 @@ const CHARGE_MIN = getAbility("charge")?.minRange ?? 10;
 const RALLY_RADIUS = getAbility("rallyCry")?.radius ?? 20;
 const RALLY_CONTROLS: EffectKind[] = ["mez", "root"];
 
+// Prêtre : rayons de l'Intervention divine et du Soin de groupe.
+const DIVINE_INTERVENTION_RADIUS = getAbility("divineIntervention")?.radius ?? 30;
+const GROUP_HEAL_RADIUS = getAbility("groupHeal")?.radius ?? 30;
+
 // Distance que les lanceurs de sorts cherchent à garder avec l'ennemi (la portée des sorts est de 30 m).
 const CASTER_MIN_DISTANCE = 15;
 const CASTER_MAX_DISTANCE = 26;
@@ -178,11 +182,11 @@ class PretreBot extends CasterBot {
 
     // 2. Plusieurs alliés morts autour, sans ennemi trop près : Intervention divine.
     const safe = !this.enemies().some((e) => this.distanceTo(e) < CASTER_MIN_DISTANCE);
-    const deadNearby = this.deadAllies().filter((a) => this.distanceTo(a) <= 30);
+    const deadNearby = this.deadAllies().filter((a) => this.distanceTo(a) <= DIVINE_INTERVENTION_RADIUS);
     if (safe && deadNearby.length >= 2 && this.tryUse("divineIntervention")) return;
 
     // 3. Plusieurs blessés autour : soin de groupe.
-    const hurtNearby = allies.filter((a) => this.hpRatio(a) < 0.75 && this.distanceTo(a) <= 30);
+    const hurtNearby = allies.filter((a) => this.hpRatio(a) < 0.75 && this.distanceTo(a) <= GROUP_HEAL_RADIUS);
     if (hurtNearby.length >= 3 && this.tryUse("groupHeal")) return;
 
     // 4. Soigner le plus blessé, en s'approchant si besoin.

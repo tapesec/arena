@@ -119,7 +119,7 @@ export class CharacterAnimator {
   // Coup d'auto-attaque : les animations du set défilent à tour de rôle.
   attack() {
     if (this.set.attacks.length === 0) return;
-    if (this.abilityBusy) return;
+    if (this.performingAbility) return;
     const name = this.set.attacks[this.attackIndex % this.set.attacks.length];
     this.attackIndex++;
     this.playAction(name, "attack");
@@ -138,10 +138,6 @@ export class CharacterAnimator {
   // Le geste d'une compétence est en cours (le lanceur range alors son bâton dans le dos), y compris quand une de
   // ses animations tient sa dernière pose en attendant la suivante.
   get performingAbility(): boolean {
-    return this.abilityBusy;
-  }
-
-  private get abilityBusy(): boolean {
     if (this.actionKind !== "ability" || !this.action) return false;
     return this.action.isPlaying || (this.sequence !== null && this.sequence.group === this.action);
   }
@@ -181,7 +177,7 @@ export class CharacterAnimator {
     if (reaction === "block" && this.stunned) return;
     if (reaction !== "stun") {
       if (this.action?.isPlaying && this.actionKind !== "reaction") return;
-      if (this.abilityBusy) return;
+      if (this.performingAbility) return;
       if (now - this.lastReaction < REACTION_INTERVAL) return;
     }
     this.lastReaction = now;
@@ -196,7 +192,7 @@ export class CharacterAnimator {
     const now = performance.now() / 1000;
     if (this.stunned) return;
     if (this.action?.isPlaying && this.actionKind !== "reaction") return;
-    if (this.abilityBusy) return;
+    if (this.performingAbility) return;
     if (now - this.lastReaction < REACTION_INTERVAL) return;
     this.lastReaction = now;
     this.playAction(reaction.animation, "reaction", reaction.rate, reaction.start, reaction.end);
@@ -308,7 +304,8 @@ export class CharacterAnimator {
     const time = now - sequence.origin;
     const at = clipAt(sequence.entry, time);
     if (!at) {
-      // Après la dernière animation (ou entre deux) : le personnage reprend sa pose normale ; les effets continuent.
+      // Après la dernière animation (les animations s'enchaînent sans trou) : le personnage reprend sa pose normale ;
+      // les effets continuent.
       if (sequence.group && this.action === sequence.group) this.action = null;
       sequence.group = null;
       sequence.clip = -1;

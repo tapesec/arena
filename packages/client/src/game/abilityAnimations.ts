@@ -92,12 +92,7 @@ export function casterLength(entry: AbilityAnimation): number {
 
 // Ancien format (une seule animation, temps en secondes dans l'animation) : converti au format actuel. Les effets
 // passent en secondes réelles depuis le début du geste (t → (t - start) / rate).
-interface LegacyAbilityAnimation extends Omit<AbilityAnimation, "clips"> {
-  animation: string;
-  start: number;
-  rate: number;
-  end: number;
-}
+interface LegacyAbilityAnimation extends Omit<AbilityAnimation, "clips">, AbilityClip {}
 export function normalizeAbilityAnimation(raw: AbilityAnimation | LegacyAbilityAnimation): AbilityAnimation {
   if ("clips" in raw && Array.isArray(raw.clips)) return raw as AbilityAnimation;
   const legacy = raw as LegacyAbilityAnimation;
@@ -130,12 +125,7 @@ export function canHaveProjectile(abilityId: string): boolean {
 }
 
 // Réaction de la cible à l'impact : la portion start → end (secondes dans l'animation) jouée à la vitesse rate.
-export interface TargetReaction {
-  animation: string;
-  start: number;
-  rate: number;
-  end: number;
-}
+export type TargetReaction = AbilityClip;
 
 export interface ImpactVisual {
   reaction?: TargetReaction;
@@ -145,7 +135,7 @@ export interface ImpactVisual {
 // Point du personnage où s'accroche un effet.
 export type EffectAnchor = "hands" | "hand_r" | "hand_l" | "weapon" | "head" | "chest" | "feet";
 
-// Effet joué de start à end (secondes dans l'animation, dans la portion jouée), accroché à anchor, décalé de
+// Effet joué de start à end (secondes réelles depuis le début du geste ou du moment), accroché à anchor, décalé de
 // offset (droite, haut, avant, en mètres, dans le repère du personnage). Avec des points clés (keys, triés par
 // temps), sa position va de l'un à l'autre à vitesse constante, chacun avec son accroche et son décalage ; avant le
 // premier et après le dernier, elle reste sur celui-ci.
@@ -225,13 +215,9 @@ export function effectsOf(entry: AbilityAnimation, abilityId: string): Animation
   return [{ recipe, start: 0, end: castTimeOf(abilityId), anchor: "hands", offset: [0, 0, 0] }];
 }
 
+// Durée d'incantation : instant (secondes depuis le début du geste) où le sort part.
 export function castTimeOf(abilityId: string): number {
   return getAbility(abilityId)?.castTime ?? 0;
-}
-
-// Instant (secondes depuis le début du geste) où le sort part : la fin de l'incantation.
-export function releaseTime(abilityId: string): number {
-  return castTimeOf(abilityId);
 }
 
 // Calage d'un sort incanté sans réglage enregistré, d'après son geste d'incantation déclaré dans le code : le moment
@@ -281,16 +267,7 @@ export function clampAbilityAnimation(entry: AbilityAnimation, clipLength: (anim
   if (entry.impact) clamped.impact = entry.impact;
   if (entry.status) clamped.status = entry.status;
   if (entry.zone) clamped.zone = entry.zone;
-  if (entry.effects) {
-    clamped.effects = entry.effects.map((effect) => {
-      const effectStart = Math.min(Math.max(effect.start, 0), maxTime - MIN_EFFECT);
-      const effectEnd = Math.min(maxTime, Math.max(effect.end, effectStart + MIN_EFFECT));
-      const clampedEffect: AnimationEffect = { ...effect, start: effectStart, end: effectEnd };
-      // Les points clés restent dans l'effet.
-      if (effect.keys) clampedEffect.keys = effect.keys.map((key) => ({ ...key, time: Math.min(effectEnd, Math.max(effectStart, key.time)) }));
-      return clampedEffect;
-    });
-  }
+  if (entry.effects) clamped.effects = clampMomentEffects(entry.effects, maxTime);
   return clamped;
 }
 
@@ -302,7 +279,8 @@ const MIN_EFFECT = 0.02;
 // qui les dépassent).
 export const CASTER_AFTER = 3;
 
-// Effets d'un moment de la cible (impact, état, zone) gardés entre 0 et length secondes.
+// Effets d'un moment (geste du lanceur, impact, état, zone) gardés entre 0 et length secondes ; leurs points clés
+// restent dans l'effet.
 export function clampMomentEffects(effects: AnimationEffect[], length: number): AnimationEffect[] {
   return effects.map((effect) => {
     const start = Math.min(Math.max(0, effect.start), length - MIN_EFFECT);
@@ -321,7 +299,7 @@ export function tuningOf(tuning: AnimationTuning, abilityId: string): AbilityAni
 
 // Durée d'un moment de la cible : jusqu'à la fin de son dernier effet (et de la réaction, pour l'impact).
 export function momentLength(effects: readonly AnimationEffect[] | undefined, reaction?: TargetReaction): number {
-  let length = reaction ? (reaction.end - reaction.start) / reaction.rate : 0;
+  let length = reaction ? clipDuration(reaction) : 0;
   for (const effect of effects ?? []) length = Math.max(length, effect.end);
   return length;
 }

@@ -1,4 +1,4 @@
-import { RAMPART_RADIUS, getAbility, type AbilityDef } from "@arena/shared";
+import { RAMPART_RADIUS, getAbility, revivesInArea, type AbilityDef } from "@arena/shared";
 import { statusKindsOf, type AnimationEffect, type ProjectileVisual } from "./abilityAnimations";
 import { ONE_SHOT_DURATION } from "./particleDefs";
 import { objectDef } from "./objects3d";
@@ -52,9 +52,20 @@ export const VISUALS: Record<string, CodeVisual> = {
   buffStrength: { ground: ["buffSpiral"] },
   resurrect: { ground: ["resurrectRain"], beam: true },
   renew: { impact: ["healFlash"] },
-  divineIntervention: { area: ["healField"], ground: ["resurrectRain"], beam: true },
+  // Les alliés relevés ont leurs propres effets : voir AREA_REVIVE.
+  divineIntervention: { area: ["healField"] },
   speedSong: { impact: ["noteBurst"] },
 };
+
+// Résurrection de zone (Intervention divine) : ce que le code joue sur chaque allié relevé, à la réception de son
+// événement de combat, comme pour la Résurrection.
+export const AREA_REVIVE: CodeVisual = { ground: ["resurrectRain"], beam: true };
+
+// Visuel du code sur chaque cible touchée : pour une résurrection de zone, celui de chaque allié relevé.
+export function impactVisualOf(abilityId: string): CodeVisual | undefined {
+  const ability = getAbility(abilityId);
+  return ability && revivesInArea(ability) ? AREA_REVIVE : VISUALS[abilityId];
+}
 
 // Effet sur la cible touchée par un sort de dégâts, selon son type (AbilityDef.school) : elle brûle un instant, ou
 // se couvre de givre le temps du ralentissement du Trait de givre. La Brûlure (un dot) a son effet à part, qui
@@ -139,7 +150,7 @@ function object(id: string, height: number): AnimationEffect {
 
 // Ce que le code joue sur la cible à l'impact : effets à particules, et le reste (formes lumineuses).
 export function codeImpact(abilityId: string): { effects: AnimationEffect[]; extras: string[] } {
-  const visual = VISUALS[abilityId];
+  const visual = impactVisualOf(abilityId);
   const ability = getAbility(abilityId);
   const effects: AnimationEffect[] = [];
   const extras: string[] = [];

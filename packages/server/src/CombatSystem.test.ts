@@ -504,6 +504,32 @@ describe("Prêtre", () => {
     assert.equal(ally.effects.filter((e) => e.kind === "renew").length, 0);
   });
 
+  it("un tic du Renouveau sur une cible pleine n'émet pas de soin à 0", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    const ally = world.spawn("x", "gardien", 0, 3, 0);
+    ally.state.hp = ally.state.maxHp - 75;
+    world.cast(pretre, "renew", ally);
+    world.run(10.1);
+    const ticks = world.eventsOf("heal").filter((e) => e.abilityId === "renew");
+    assert.deepEqual(
+      ticks.map((e) => e.amount),
+      [50, 25],
+    );
+    assert.equal(ally.state.hp, ally.state.maxHp);
+  });
+
+  it("le Soin de groupe annonce aussi les alliés pleins de la zone, à 0", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    world.spawn("a", "lame", 0, 5, 0);
+    world.cast(pretre, "groupHeal");
+    world.run(3.1);
+    const heals = world.eventsOf("heal").filter((e) => e.abilityId === "groupHeal");
+    assert.deepEqual(heals.map((e) => [e.targetId, e.amount]).sort(), [
+      ["a", 0],
+      ["p", 0],
+    ]);
+  });
+
   it("le Buff de puissance augmente de 15 % les dégâts des sorts et les soins", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);
     const arcaniste = world.spawn("a", "arcaniste", 0, 2, 0);

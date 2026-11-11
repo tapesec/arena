@@ -13,9 +13,9 @@ export interface ActiveEffect {
   value: number;
   // Posé par un sort magique (mana) : le Cri de ralliement le retire et en protège.
   magic: boolean;
-  // Dégâts ou soin sur la durée (Brûlure, Renouveau) : compétence d'origine, tics déjà faits et nombre total, soin ou
-  // dégâts ; value = montant par tic.
-  ticks?: { abilityId: string; done: number; total: number; heal?: boolean };
+  // Dégâts ou soin sur la durée (Brûlure, Renouveau) : compétence d'origine, tics déjà faits et nombre total, dégâts
+  // ou soin ; value = montant par tic.
+  ticks?: { abilityId: string; done: number; total: number; kind: "damage" | "heal" };
   // Copie synchronisée vers les clients.
   view: EffectState;
 }

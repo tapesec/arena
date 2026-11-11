@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { getAbility } from "@arena/shared";
 import { canHaveProjectile, clipAt, normalizeAbilityAnimation, normalizeTuning, sequenceLength, statusKindsOf, type AbilityAnimation, type AnimationEffect } from "./abilityAnimations";
 import { BUILTIN_DEFS, CODE_RECIPES } from "./particleDefs";
-import { AFFLICTIONS, STATUS_CODE, VISUALS, codeImpact } from "./codeVisuals";
+import { AFFLICTIONS, AREA_REVIVE, STATUS_CODE, VISUALS, codeImpact } from "./codeVisuals";
 import animationTuning from "./animationTuning.json";
 import particleEffects from "./particleEffects.json";
 import groundMarks from "./groundMarks.json";
@@ -75,7 +75,7 @@ test("les moments réglés correspondent à la compétence", () => {
 
 test("les visuels du code nomment des effets qui existent", () => {
   const names = [
-    ...Object.values(VISUALS).flatMap((v) => [...(v.trail ?? []), ...(v.impact ?? []), ...(v.ground ?? []), ...(v.area ?? [])]),
+    ...[...Object.values(VISUALS), AREA_REVIVE].flatMap((v) => [...(v.trail ?? []), ...(v.impact ?? []), ...(v.ground ?? []), ...(v.area ?? [])]),
     ...Object.values(AFFLICTIONS).flatMap((a) => a.recipes),
     ...Object.values(STATUS_CODE).flatMap((s) => s.particles.map((p) => p.recipe)),
   ];
@@ -91,6 +91,12 @@ test("les visuels du code nomment des effets qui existent", () => {
     for (const { id } of status.overlays ?? []) assert.ok(id in BUILTIN_OVERLAYS, `affichage du code introuvable : « ${id} »`);
     for (const { id } of status.marks ?? []) assert.ok(id in BUILTIN_MARKS, `marque du code introuvable : « ${id} »`);
   }
+});
+
+test("Intervention divine : l'impact du code (sur chaque allié relevé) est celui de la Résurrection", () => {
+  const recipes = codeImpact("divineIntervention").effects.map((effect) => effect.recipe);
+  assert.ok(recipes.includes("resurrectRain") && recipes.includes("lightBeam"), recipes.join(", "));
+  assert.deepEqual(VISUALS.divineIntervention, { area: ["healField"] });
 });
 
 // Sons protégés (licence), et index du conteneur brouillé public/sounds/tuned/protected.bin (voir build-sounds.mjs).
