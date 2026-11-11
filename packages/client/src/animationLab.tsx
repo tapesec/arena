@@ -301,7 +301,7 @@ class Stage {
       return;
     }
     if (!instance) return;
-    instance.setTeam(1);
+    instance.setTeam(this.targetAlly() ? 0 : 1);
     this.target = instance;
     this.targetAnimator = new CharacterAnimator(instance.animations, instance.set, {});
     this.updateTargetVisibility();
@@ -340,6 +340,8 @@ class Stage {
     if (switched) {
       this.updateTargetVisibility();
       this.frameMoment();
+      // Le mannequin porte la tenue de son camp : allié pour un soin ou un buff, ennemi sinon.
+      this.target?.setTeam(this.targetAlly() ? 0 : 1);
     }
     if (this.mode === "scrub") this.showFrame();
     else if (changed) this.restart();
@@ -468,6 +470,11 @@ class Stage {
     preview.mark?.stop();
     preview.mark = this.codeFx.marks.createFromDef(preview.def, preview.at);
     preview.created = this.clock;
+  }
+
+  // La cible est dans le camp du lanceur (vu par le lanceur) : sur soi ou pour un sort sur un allié.
+  private targetAlly(): boolean {
+    return targetsSelf(this.abilityId) || !isOffensiveTarget(this.abilityId);
   }
 
   // Personnage qui subit la compétence : le mannequin, ou le lanceur pour une compétence sur soi.
@@ -665,7 +672,7 @@ class Stage {
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
     if (this.mode === "scrub" && instance && entry) {
       const time = this.scrubTimes[this.moment];
-      if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time });
+      if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time }, true);
       else this.effects.stopAll();
       this.showMoments(this.moment === "caster" || this.moment === "projectile" ? null : time, this.moment);
       // Trajet : le projectile à l'instant montré, et sa ligne.
@@ -715,7 +722,7 @@ class Stage {
     const casting = cycle.phase === "cast";
     animator.update({ ...this.idleInput(), castAbility: casting ? this.abilityId : "", castElapsed: casting ? cycle.time : 0, castDuration: castTime });
     instance.setStowed(casting || animator.performingAbility);
-    this.effects.update(instance, animator.playingAbility());
+    this.effects.update(instance, animator.playingAbility(), true);
     const impactTime = this.tickSequence(dt);
     if (this.moment === "caster") {
       const group = instance.animations.get(entry.animation);
@@ -802,7 +809,7 @@ class Stage {
     projectilePosition(p, from, to, t, seed, this.flightAt);
     projectileDirection(p, from, to, t, seed, this.flightAim);
     this.projectileFx.updateTracks(null, [
-      { id: "projectile", effects: p.effects, time, point: { center: this.flightAt, yaw: 0, aim: p.align ? this.flightAim : null } },
+      { id: "projectile", effects: p.effects, time, point: { center: this.flightAt, yaw: 0, aim: p.align ? this.flightAim : null }, ally: true },
     ]);
   }
 
@@ -878,14 +885,14 @@ class Stage {
       const status = only ? this.statusEffects() : (entry.status ?? []);
       const zoneEffects = only ? this.zoneEffects() : (entry.zone ?? []);
       if ((!only || only === "impact") && time >= 0 && time <= momentLength(impact, entry.impact?.reaction)) {
-        tracks.push({ id: "impact", effects: impact, time });
+        tracks.push({ id: "impact", effects: impact, time, ally: this.targetAlly() });
       }
       if ((!only || only === "status") && status.length && statusTime !== null && (only || statusTime < this.statusShown)) {
-        tracks.push({ id: "status", effects: status, time: statusTime });
+        tracks.push({ id: "status", effects: status, time: statusTime, ally: this.targetAlly() });
       }
       if ((!only || only === "zone") && radius && time >= 0) {
         const zone = { center: this.zoneCenter(new Vector3()), yaw: 0, radius };
-        if (zoneEffects.length && (only || time <= momentLength(zoneEffects))) zoneTracks.push({ id: "zone", effects: zoneEffects, time, zone });
+        if (zoneEffects.length && (only || time <= momentLength(zoneEffects))) zoneTracks.push({ id: "zone", effects: zoneEffects, time, zone, ally: true });
         // Le disque de portée en pose figée (en lecture, c'est celui du jeu), plus discret avec des particules.
         if (only) {
           disc = zoneEffects.length ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA;
@@ -914,6 +921,15 @@ class Stage {
     this.fx.dispose();
     this.engine.dispose();
   }
+}
+
+// Réglage d'une posture tenue : pas d'animation (le jeu garde la posture), seulement des moments de la cible.
+const STANCE_ENTRY: AbilityAnimation = { animation: "", start: 0, rate: 1, end: 0 };
+
+// Sort qui vise un ennemi (le mannequin est alors dans l'autre camp).
+function isOffensiveTarget(abilityId: string): boolean {
+  const target = getAbility(abilityId)?.target;
+  return target === "enemy" || target === "enemiesAround";
 }
 
 // Tirage du zigzag dessiné en pose figée (en lecture, chaque vol a le sien, comme en jeu).
@@ -1025,7 +1041,7 @@ function momentHint(moment: Moment, abilityId: string): string {
   if (moment === "projectile") return "0 s : départ du sort · durée fixe de 0,3 s · les effets se placent autour du projectile";
   if (moment === "impact")
     return `0 s : ${isProjectile(abilityId) ? "arrivée du projectile" : "départ du sort"} · joué sur chaque cible touchée`;
-  if (moment === "status") return "0 s : début de l'état (au départ du sort) · remplace les particules d'état du code";
+  if (moment === "status") return "0 s : début de l'état (au départ du sort) · remplace les visuels d'état du code";
   return `Centre : ${zoneCenterIsTarget(abilityId) ? "la cible" : "le lanceur"} · joué une fois par lancement`;
 }
 
@@ -1051,6 +1067,7 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
     ...(effect.untilEnd && { untilEnd: true }),
     ...(effect.fitZone && { fitZone: true }),
     ...(effect.tint && { tint: effect.tint }),
+    ...(effect.teamColor && { teamColor: true }),
     ...(effect.scale !== undefined && effect.scale !== 1 && { scale: round(effect.scale) }),
   };
 }
@@ -1604,7 +1621,9 @@ function AnimationLab() {
   const tuned = draft[classId]?.[abilityId];
   const savedEntry = saved?.[classId]?.[abilityId];
   const entry = useMemo(() => {
-    if (!instance || stance) return null;
+    if (!instance) return null;
+    // Posture tenue (Rempart, course de la Charge) : pas de geste réglable, seulement les moments de la cible.
+    if (stance) return tuned ?? { ...STANCE_ENTRY };
     const base = tuned ?? suggestedAbilityAnimation(instance.set, abilityId, (name) => stageRef.current?.clipLength(name) ?? 0);
     if (!base) return null;
     // Effets montrés tels que le jeu les jouera : ceux du réglage, sinon ceux prévus dans le code.
@@ -1617,7 +1636,15 @@ function AnimationLab() {
   const ability = getAbility(abilityId);
   const statusKinds = statusKindsOf(abilityId);
   const statusDuration = statusDurationOf(abilityId);
-  const moments: Moment[] = ["caster", ...(canHaveProjectile(abilityId) ? (["projectile"] as const) : []), "impact", ...(statusKinds.length ? (["status"] as const) : []), ...(ability?.radius ? (["zone"] as const) : [])];
+  // Une posture (course de la Charge, Rempart) n'a ni trajet ni impact réglables ici : l'arrivée de la Charge se règle
+  // sur « Charge (impact à l'arrivée) ».
+  const moments: Moment[] = [
+    "caster",
+    ...(canHaveProjectile(abilityId) && !stance ? (["projectile"] as const) : []),
+    ...(!stance ? (["impact"] as const) : []),
+    ...(statusKinds.length ? (["status"] as const) : []),
+    ...(ability?.radius ? (["zone"] as const) : []),
+  ];
   const shownMoment: Moment = moments.includes(moment) ? moment : "caster";
   const [statusShown, setStatusShown] = useState(4);
   // Durée montrée d'un état : la sienne, au plus 8 s (un buff permanent : 4 s).
@@ -1702,7 +1729,9 @@ function AnimationLab() {
     if (!entry) return;
     const next: AbilityAnimation = { ...entry, ...patch };
     for (const key of ["projectile", "impact", "status", "zone"] as const) if (key in patch && patch[key] === undefined) delete next[key];
-    update(next);
+    // Une posture sans aucun moment réglé n'a plus de réglage.
+    if (stance && !next.projectile && !next.impact && !next.status && !next.zone) removeEntry();
+    else update(next);
   };
   const setMomentEffects = (effects: AnimationEffect[]) => {
     if (!entry) return;
@@ -2072,12 +2101,7 @@ function AnimationLab() {
       </div>
       {tab === "animations" && (
         <div className="lab-panel">
-          {stance ? (
-            <p className="lab-note">
-              {abilityName(abilityId)} est jouée par une posture tenue pendant tout l'effet (voir stances dans characterAssets.ts) : elle ne
-              se règle pas ici.
-            </p>
-          ) : entry ? (
+          {entry ? (
             <>
               <div className="lab-moments">
                 <button className="lab-play" onClick={togglePlay}>
@@ -2110,7 +2134,12 @@ function AnimationLab() {
                   </>
                 )}
               </div>
-              {shownMoment === "caster" ? (
+              {shownMoment === "caster" && stance ? (
+                <p className="lab-note">
+                  {abilityName(abilityId)} est jouée par une posture tenue pendant tout l'effet (voir stances dans characterAssets.ts) : son
+                  geste ne se règle pas ici, mais ses autres moments oui.
+                </p>
+              ) : shownMoment === "caster" ? (
                 <>
                   <div className="lab-controls">
                     <label>
@@ -2795,6 +2824,19 @@ function EffectsPanel(props: {
           </label>
           {(current.type === "ground" || current.type === "object" || current.type === "overlay") && (
             <>
+              <label className="lab-check" title="Bleu quand celui qui le porte est dans le camp du joueur, rouge sinon">
+                <input
+                  type="checkbox"
+                  checked={!!current.teamColor}
+                  onChange={(e) => {
+                    const next: AnimationEffect = { ...current, teamColor: e.target.checked };
+                    if (!e.target.checked) delete next.teamColor;
+                    replace(index, next);
+                  }}
+                />
+                Couleur du camp
+              </label>
+              {!current.teamColor && (
               <label title="Couleur imposée à cette marque ou cet objet sur cette compétence">
                 Teinte
                 <input
@@ -2811,7 +2853,8 @@ function EffectsPanel(props: {
                   onChange={(e) => replace(index, { ...current, tint: e.target.value })}
                 />
               </label>
-              {current.tint && (
+              )}
+              {current.tint && !current.teamColor && (
                 <button
                   onClick={() => {
                     const next: AnimationEffect = { ...current };

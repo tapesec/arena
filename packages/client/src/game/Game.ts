@@ -508,7 +508,7 @@ export class Game {
     this.overlay.update(dt);
     this.spellEffects.update(dt);
     // Les effets d'état réglés d'abord : ils décident si les particules d'état du code sont jouées.
-    this.spellEffects.targets.update(dt, this.players);
+    this.spellEffects.targets.update(dt, this.players, this.self?.state.team ?? null);
     this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
     // Marques, objets et affichages 2D après les effets qui les déplacent (sinon ils suivent avec une image de retard).
     this.spellEffects.updateScenery(dt);

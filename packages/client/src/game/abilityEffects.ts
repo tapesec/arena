@@ -123,7 +123,12 @@ export interface EffectTrack {
   time: number;
   zone?: { center: Vector3; yaw: number; radius: number };
   point?: { center: Vector3; yaw: number; aim: Vector3 | null };
+  // Celui qui porte ces effets est dans le camp du joueur (pour les effets « couleur du camp »).
+  ally?: boolean;
 }
+
+// Couleurs des camps, vues par le joueur : le sien en bleu, l'adversaire en rouge (comme les tenues et le Rempart).
+export const TEAM_COLORS = { ally: "#2878ff", enemy: "#eb2d14" };
 
 // Un effet joue de start à end (ou jusqu'à la fin du moment, avec untilEnd).
 function isActive(effect: AnimationEffect, time: number): boolean {
@@ -174,8 +179,8 @@ export class AbilityEffectPlayer {
   ) {}
 
   // Geste de compétence en cours du personnage.
-  update(character: CharacterInstance | null, playing: PlayingAbility | null) {
-    this.updateTracks(character, playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time }] : []);
+  update(character: CharacterInstance | null, playing: PlayingAbility | null, ally?: boolean) {
+    this.updateTracks(character, playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time, ally }] : []);
   }
 
   updateTracks(character: CharacterInstance | null, tracks: readonly EffectTrack[]) {
@@ -185,7 +190,9 @@ export class AbilityEffectPlayer {
       if (!character && !frame) continue;
       track.effects.forEach((effect, index) => {
         if (!isActive(effect, track.time)) return;
-        const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}:${effect.tint ?? ""}:${effect.scale ?? 1}`;
+        // Couleur imposée : celle du camp de celui qui porte l'effet, sinon la teinte réglée.
+        const tint = effect.teamColor && track.ally !== undefined ? TEAM_COLORS[track.ally ? "ally" : "enemy"] : effect.tint;
+        const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}:${tint ?? ""}:${effect.scale ?? 1}`;
         active.add(key);
         let run = this.running.get(key);
         const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
@@ -193,9 +200,9 @@ export class AbilityEffectPlayer {
           run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
-          if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
-          else if (effect.type === "overlay") run.overlay = this.scenery.overlays?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
-          else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
+          if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
+          else if (effect.type === "overlay") run.overlay = this.scenery.overlays?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
+          else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
           else {
             const recipe = radius !== undefined ? zoneRecipe(effect.recipe, radius) : particleRecipe(effect.recipe);
             run.system = recipe?.(this.particles, run.at) ?? null;

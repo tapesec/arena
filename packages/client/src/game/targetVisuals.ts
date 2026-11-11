@@ -39,6 +39,7 @@ interface Impact {
 // Projectile réglé en vol : parti de from (relevé au départ du sort), il suit sa cible.
 interface Flight {
   casterId: string;
+  casterTeam: number | undefined;
   targetId: string;
   entry: AbilityAnimation;
   age: number;
@@ -52,6 +53,9 @@ interface Flight {
 
 interface Zone {
   abilityId: string;
+  casterId: string;
+  // Camp du lanceur, relevé au lancement (il peut ensuite sortir du champ de vision).
+  casterTeam: number | undefined;
   entry: AbilityAnimation;
   age: number;
   length: number;
@@ -83,6 +87,7 @@ export class TargetVisuals {
   private impacts: Impact[] = [];
   private zones: Zone[] = [];
   private flights: Flight[] = [];
+  private localTeam: number | null = null;
   private areaCasts: AreaCast[] = [];
   // États en cours sur chaque joueur : type d'état → compétence d'origine et ses effets.
   private statuses = new Map<string, Map<string, StatusRun>>();
@@ -123,6 +128,8 @@ export class TargetVisuals {
       const caster = players.get(casterId);
       this.zones.push({
         abilityId,
+        casterId,
+        casterTeam: caster?.state.team,
         entry,
         age: -delay,
         length: momentLength(entry.zone),
@@ -162,7 +169,9 @@ export class TargetVisuals {
     }
   }
 
-  update(dt: number, players: Map<string, PlayerVisual>) {
+  // localTeam : camp du joueur (effets « couleur du camp »).
+  update(dt: number, players: Map<string, PlayerVisual>, localTeam: number | null = null) {
+    this.localTeam = localTeam;
     for (const cast of this.areaCasts) cast.age += dt;
     this.areaCasts = this.areaCasts.filter((cast) => cast.age <= AREA_WINDOW);
     for (const id of this.origins.keys()) if (!players.has(id)) this.origins.delete(id);
@@ -185,6 +194,16 @@ export class TargetVisuals {
     this.origins.clear();
   }
 
+  // Le joueur est dans le camp du joueur local (inconnu : undefined, la couleur du camp n'est pas appliquée).
+  private ally(player: PlayerVisual | undefined): boolean | undefined {
+    return this.allyTeam(player?.state.team);
+  }
+
+  private allyTeam(team: number | undefined): boolean | undefined {
+    if (team === undefined || this.localTeam === null) return undefined;
+    return team === this.localTeam;
+  }
+
   // Départ d'un projectile réglé, du point de départ du lanceur.
   private launch(casterId: string, targetId: string, entry: AbilityAnimation, players: Map<string, PlayerVisual>) {
     const caster = players.get(casterId);
@@ -196,6 +215,7 @@ export class TargetVisuals {
     else return;
     this.flights.push({
       casterId,
+      casterTeam: caster.state.team,
       targetId,
       entry,
       age: 0,
@@ -229,6 +249,7 @@ export class TargetVisuals {
         effects: projectile.effects,
         time: flight.age,
         point: { center: flight.at, yaw: flight.yaw, aim: projectile.align ? flight.aim : null },
+        ally: this.allyTeam(flight.casterTeam),
       },
     ]);
     return true;
@@ -265,7 +286,9 @@ export class TargetVisuals {
     const reaction = impact.entry.impact?.reaction;
     if (!impact.reacted && reaction && target.isAlive) target.playTunedReaction(reaction);
     impact.reacted = true;
-    impact.player.updateTracks(target.character, [{ id: impact.abilityId, effects: impact.entry.impact?.effects ?? [], time: impact.age }]);
+    impact.player.updateTracks(target.character, [
+      { id: impact.abilityId, effects: impact.entry.impact?.effects ?? [], time: impact.age, ally: this.ally(target) },
+    ]);
     return true;
   }
 
@@ -282,7 +305,13 @@ export class TargetVisuals {
       return false;
     }
     zone.player.updateTracks(null, [
-      { id: zone.abilityId, effects: zone.entry.zone ?? [], time: zone.age, zone: { center: zone.center, yaw: zone.yaw, radius: zone.radius } },
+      {
+        id: zone.abilityId,
+        effects: zone.entry.zone ?? [],
+        time: zone.age,
+        zone: { center: zone.center, yaw: zone.yaw, radius: zone.radius },
+        ally: this.allyTeam(zone.casterTeam),
+      },
     ]);
     return true;
   }
@@ -311,7 +340,9 @@ export class TargetVisuals {
           runs.set(effect.kind, run);
         } else run.age += dt;
         if (run.entry?.status?.length) {
-          run.player.updateTracks(player.character, [{ id: `${effect.kind}:${run.abilityId}`, effects: run.entry.status, time: run.age }]);
+          run.player.updateTracks(player.character, [
+            { id: `${effect.kind}:${run.abilityId}`, effects: run.entry.status, time: run.age, ally: this.ally(player) },
+          ]);
         }
       }
     }

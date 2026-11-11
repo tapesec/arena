@@ -85,7 +85,24 @@ export const BUILTIN_MARKS: Record<string, GroundMarkDef> = {
   fireCracks: { ...DEFAULT_MARK, label: "Fissures de feu", pattern: "cracks", color: "#ff8a2a", radius: 1.8, inner: 0.1, count: 9, thickness: 0.035, seed: 5, appear: 0.15, fadeOut: 1 },
   holyRays: { ...DEFAULT_MARK, label: "Rayons dorés", pattern: "rays", color: "#ffd86a", radius: 1.5, inner: 0.25, count: 16, thickness: 0.05, spin: 0.25 },
   healPool: { ...DEFAULT_MARK, label: "Flaque de soin", pattern: "disc", color: "#60f08a", alpha: 0.5, radius: 1.3, inner: 0.4, appear: 0.4, appearScale: 0.2, pulse: 0.2 },
-  rampartWall: { ...DEFAULT_MARK, label: "Rempart crénelé", pattern: "crenels", color: "#4080ff", alpha: 0.85, radius: 3, inner: 0.94, count: 40, spin: 0.15, glow: false },
+  rampartWall: {
+    ...DEFAULT_MARK,
+    label: "Rempart crénelé",
+    pattern: "crenels",
+    color: "#4080ff",
+    alpha: 0.85,
+    radius: 3,
+    inner: 0.94,
+    count: 40,
+    spin: 0.15,
+    glow: false,
+    appear: 0,
+    appearScale: 1,
+    fadeIn: 0.5,
+    fadeOut: 0.8,
+    pulse: 0.3,
+    pulseSpeed: 0.4,
+  },
 };
 
 export const PATTERNS: Record<GroundPattern, string> = {
@@ -121,8 +138,9 @@ export function groundMarkLabel(id: string): string {
 
 // Hauteur au-dessus du sol (évite le scintillement avec le terrain).
 const LIFT = 0.05;
-// Taille de la texture dessinée.
+// Taille de la texture dessinée, doublée au-delà de LARGE_MARK mètres de rayon.
 const TEXTURE_SIZE = 512;
+const LARGE_MARK = 8;
 // Maillage qui épouse le relief : mailles d'au plus 1 m (comme la grille du terrain), au moins 4 par côté.
 const CELL = 1;
 const MIN_SUBDIVISIONS = 4;
@@ -179,8 +197,10 @@ export class GroundMarks {
     const subdivisions = Math.min(MAX_SUBDIVISIONS, Math.max(MIN_SUBDIVISIONS, Math.ceil(size / CELL)));
     const mesh = CreateGround("groundMark", { width: size, height: size, subdivisions, updatable: true }, this.scene);
     mesh.isPickable = false;
-    const key = JSON.stringify(def);
-    mesh.material = this.acquire(key, def);
+    // Une grande marque est dessinée plus finement.
+    const textureSize = radius > LARGE_MARK ? TEXTURE_SIZE * 2 : TEXTURE_SIZE;
+    const key = `${JSON.stringify(def)}|${textureSize}`;
+    mesh.material = this.acquire(key, def, textureSize);
     mesh.visibility = 0;
     const base = Float32Array.from(mesh.getVerticesData(VertexBuffer.PositionKind)!);
     const live: Live = {
@@ -222,11 +242,11 @@ export class GroundMarks {
     for (const live of [...this.live]) this.remove(live);
   }
 
-  private acquire(key: string, def: GroundMarkDef): StandardMaterial {
+  private acquire(key: string, def: GroundMarkDef, textureSize: number): StandardMaterial {
     let shared = this.shared.get(key);
     if (!shared) {
       const material = new StandardMaterial("groundMark", this.scene);
-      material.diffuseTexture = drawMark(this.scene, def);
+      material.diffuseTexture = drawMark(this.scene, def, textureSize);
       material.useAlphaFromDiffuseTexture = true;
       material.emissiveColor = Color3.White();
       material.diffuseColor = Color3.Black();
@@ -296,8 +316,7 @@ function random(seed: number): () => number {
 }
 
 // Dessine la marque sur une texture transparente (centre au milieu, rayon au bord).
-export function drawMark(scene: Scene, def: GroundMarkDef): DynamicTexture {
-  const size = TEXTURE_SIZE;
+export function drawMark(scene: Scene, def: GroundMarkDef, size = TEXTURE_SIZE): DynamicTexture {
   const texture = new DynamicTexture("groundMark", size, scene, true);
   const ctx = texture.getContext() as CanvasRenderingContext2D;
   const c = size / 2;

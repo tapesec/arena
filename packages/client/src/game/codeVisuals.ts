@@ -1,8 +1,9 @@
-import { getAbility, type AbilityDef } from "@arena/shared";
+import { RAMPART_RADIUS, getAbility, type AbilityDef } from "@arena/shared";
 import { statusKindsOf, type AnimationEffect, type ProjectileVisual } from "./abilityAnimations";
 import { ONE_SHOT_DURATION } from "./particleDefs";
 import { objectDef } from "./objects3d";
 import { overlayDef } from "./overlays2d";
+import { groundMarkDef } from "./groundMarks";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME } from "./spellFx";
 
 // Visuels de compétence prévus dans le code (avant la page de réglage), décrits par le nom de leurs effets à
@@ -76,6 +77,8 @@ export const STATUS_CODE: Record<
     particles: { recipe: string; at: keyof typeof AT }[];
     objects?: { id: string; at: keyof typeof AT }[];
     overlays?: { id: string; height: number }[];
+    // Marques au sol, au rayon donné (mètres), dans la couleur du camp.
+    marks?: { id: string; radius: number }[];
     extras: string[];
   }
 > = {
@@ -101,7 +104,8 @@ export const STATUS_CODE: Record<
     extras: [],
   },
   magicImmune: { particles: [{ recipe: "rallyHalo", at: "head" }], extras: [] },
-  rampart: { particles: [{ recipe: "rampartFlames", at: "feet" }], extras: ["zone crénelée au sol, bleue ou rouge selon le camp"] },
+  // La zone protégée (30 m), bleue dans son camp, rouge chez l'adversaire.
+  rampart: { particles: [{ recipe: "rampartFlames", at: "feet" }], marks: [{ id: "rampartWall", radius: RAMPART_RADIUS }], extras: [] },
   bubble: {
     particles: [],
     objects: [
@@ -198,6 +202,10 @@ export function codeStatus(abilityId: string): { effects: AnimationEffect[]; ext
     const code = STATUS_CODE[kind];
     if (!code) continue;
     for (const { recipe, at } of code.particles) effects.push({ ...placed(recipe, AT[at], 0, 1), untilEnd: true });
+    for (const { id, radius } of code.marks ?? []) {
+      const scale = radius / Math.max(0.1, groundMarkDef(id)?.radius ?? radius);
+      effects.push({ type: "ground", ...placed(id, 0, 0, 1), untilEnd: true, teamColor: true, scale });
+    }
     for (const { id, height } of code.overlays ?? []) {
       const timed = (overlayDef(id)?.duration ?? 0) > 0;
       const effect: AnimationEffect = { type: "overlay", ...placed(id, height, 0, timed ? (overlayDef(id)?.duration ?? 0) + (overlayDef(id)?.fadeOut ?? 0) : 1) };

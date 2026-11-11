@@ -37,9 +37,8 @@ const BODY = 1.1;
 const STARS = 3;
 const STAR_ORBIT = 0.45;
 const STAR_SPEED = 4;
-// Cristaux du root : nombre, et taille restante quand le root est sur le point de finir.
+// Cristaux du root : nombre.
 const CRYSTALS = 7;
-const MELTED = 0.25;
 const BUBBLE_DIAMETER = 2.4;
 // La bulle (un buff, comme le bladeturn de DAoC) ne se montre que lorsqu'elle se forme : 2 s, dont un fondu final.
 const BUBBLE_SHOWN = 2;
@@ -56,8 +55,6 @@ interface PlayerStatus {
   stars: TransformNode | null;
   crystals: TransformNode | null;
   mist: ParticleSystem | null;
-  // Durée totale du root en cours, relevée à son apparition (le serveur n'envoie que le temps restant).
-  rootDuration: number;
   bubble: Mesh | null;
   // Cercles de la Nova de givre en cours d'incantation.
   nova: TransformNode | null;
@@ -123,7 +120,7 @@ const RAMPART_LIFT = 0.12;
 const RAMPART_ALLY = "40,120,255";
 const RAMPART_ENEMY = "235,45,20";
 
-// États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root qui fondent, bulle irisée.
+// États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root, bulle irisée.
 export class StatusFx {
   private statuses = new Map<PlayerVisual, PlayerStatus>();
   // Instant (en secondes, horloge de StatusFx) où la bulle de chaque joueur a été appliquée, par identifiant.
@@ -134,8 +131,8 @@ export class StatusFx {
   private rimMaterial: StandardMaterial;
   private novaMaterial: StandardMaterial;
   private novaRadius = getAbility("frostNova")?.radius ?? 15;
-  // Les effets de l'état (kind) du joueur sont réglés sur la page de réglage : ses particules et ses objets du code
-  // (cristaux du root, bulle) ne sont plus joués ; restent les étoiles du stun (affichage 2D, pas encore réglable).
+  // Les effets de l'état (kind) du joueur sont réglés sur la page de réglage : ses visuels du code (particules,
+  // cristaux du root, bulle, étoiles du stun, zone du Rempart) ne sont plus joués.
   isTuned: ((playerId: string, kind: string) => boolean) | null = null;
   private time = 0;
 
@@ -179,13 +176,13 @@ export class StatusFx {
       status.body.copyFrom(player.root.position).y += BODY;
       if (!player.handsPosition(status.hands)) status.hands.copyFrom(status.body);
       this.updateAuras(status, alive, player, speed);
-      status.abilityFx.update(player.character, playing);
+      status.abilityFx.update(player.character, playing, localTeam === null ? undefined : player.state.team === localTeam);
       this.updateMez(status, mez && !this.tuned(player, "mez"));
       this.updateStars(status, stun && !this.tuned(player, "stun"), player);
       this.updateRoot(status, this.tuned(player, "root") ? 0 : root, player);
       this.updateBubble(status, bubble && !this.tuned(player, "bubble"), this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);
-      this.updateRampartZone(status, rampart, dt, player.state.team === localTeam);
+      this.updateRampartZone(status, this.tuned(player, "rampart") ? 0 : rampart, dt, player.state.team === localTeam);
     }
     // Joueurs disparus (déconnectés, sortis du champ de vision).
     for (const [player, status] of this.statuses) {
@@ -222,7 +219,6 @@ export class StatusFx {
       stars: null,
       crystals: null,
       mist: null,
-      rootDuration: 0,
       bubble: null,
       nova: null,
       rampartZone: null,
@@ -297,13 +293,12 @@ export class StatusFx {
     }
   }
 
-  // Couronne de cristaux de glace aux pieds, qui rapetissent à mesure que la vitesse revient.
+  // Couronne de cristaux de glace aux pieds, tant que dure le root.
   private updateRoot(status: PlayerStatus, left: number, player: PlayerVisual) {
     if (left > 0 && !status.crystals) {
       status.crystals = crystalCrown(this.scene, this.iceMaterial);
       status.crystals.parent = status.anchor;
       if (!this.tuned(player, "root")) status.mist = recipeById("frostMist")(this.particles, status.feet);
-      status.rootDuration = left;
     }
     if (left <= 0 && status.crystals) {
       status.crystals.dispose();
@@ -313,14 +308,7 @@ export class StatusFx {
         status.mist.stop();
         status.mist = null;
       }
-      status.rootDuration = 0;
-      return;
     }
-    if (!status.crystals) return;
-    // Un root relancé repart de sa pleine durée.
-    if (left > status.rootDuration) status.rootDuration = left;
-    const solid = left / status.rootDuration;
-    status.crystals.scaling.set(1, MELTED + (1 - MELTED) * solid, 1).scaleInPlace(0.6 + 0.4 * solid);
   }
 
   // Nova de givre en incantation : des anneaux bleus semi-transparents partent de l'Arcaniste jusqu'au bord de la
@@ -359,7 +347,8 @@ export class StatusFx {
 
   // Rempart : la zone protégée (30 m) est marquée au sol, pour tous les joueurs : bord crénelé qui tourne et léger
   // voile vers l'intérieur, bleus pour un Rempart de son camp, rouges pour celui de l'adversaire (ally). Le Gardien est figé pendant tout l'effet : la zone épouse le
-  // relief une fois pour toutes. left : temps restant du Rempart (0 quand il n'y en a pas).
+  // relief une fois pour toutes. left : temps restant du Rempart (0 quand il n'y en a pas, ou quand son état est réglé sur
+  // la page de réglage : la zone réglée la remplace).
   private updateRampartZone(status: PlayerStatus, left: number, dt: number, ally: boolean) {
     if (left > 0 && !status.rampartZone) {
       status.rampartZone = terrainDisc(this.scene, status.feet.x, status.feet.z, RAMPART_RADIUS);

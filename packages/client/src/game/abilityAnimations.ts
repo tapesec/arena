@@ -96,6 +96,9 @@ export interface AnimationEffect {
   // Marque au sol ou objet 3D : couleur imposée (sinon, celle de la marque ou de l'objet), et taille (× la sienne).
   tint?: string;
   scale?: number;
+  // Marque, objet ou affichage 2D : couleur du camp de celui qui le porte (bleu dans le camp du joueur, rouge chez
+  // l'adversaire), à la place de tint.
+  teamColor?: boolean;
 }
 
 export interface EffectKey {

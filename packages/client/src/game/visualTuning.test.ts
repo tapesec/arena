@@ -78,5 +78,6 @@ test("les visuels du code nomment des effets qui existent", () => {
   for (const status of Object.values(STATUS_CODE)) {
     for (const { id } of status.objects ?? []) assert.ok(id in BUILTIN_OBJECTS, `objet du code introuvable : « ${id} »`);
     for (const { id } of status.overlays ?? []) assert.ok(id in BUILTIN_OVERLAYS, `affichage du code introuvable : « ${id} »`);
+    for (const { id } of status.marks ?? []) assert.ok(id in BUILTIN_MARKS, `marque du code introuvable : « ${id} »`);
   }
 });
