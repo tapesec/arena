@@ -384,6 +384,13 @@ class Stage {
 
   // Pose figée à un instant du moment réglé.
   scrub(time: number) {
+    // Sur un moment de la cible, les effets actifs à l'instant montré sont relancés : une gerbe (impact, zone) émet
+    // une seule fois à sa création, elle ne se reverrait pas sinon.
+    if (this.moment !== "caster" && time !== this.scrubTimes[this.moment]) {
+      this.targetFx.stopAll();
+      this.zoneFx.stopAll();
+      this.projectileFx.stopAll();
+    }
     this.mode = "scrub";
     this.scrubTimes[this.moment] = time;
     this.showFrame();
