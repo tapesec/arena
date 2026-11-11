@@ -2049,3 +2049,44 @@ body,
   padding-left: 18px;
   opacity: 0.85;
 }
+
+/* Geste du lanceur : animations bout à bout, sur une bande d'incantation, et le départ du sort */
+.lab-range-casting {
+  top: auto;
+  bottom: 2px;
+  height: 6px;
+  background: rgba(224, 176, 74, 0.35);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.lab-range-casting span {
+  display: none;
+}
+
+.lab-range-clip {
+  bottom: 12px;
+  background: rgba(127, 180, 227, 0.3);
+  border: 1px solid #7fb4e3;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.lab-range-clip span {
+  left: 6px;
+  font-size: 11px;
+}
+
+.lab-range-selected {
+  background: rgba(224, 176, 74, 0.45);
+  border-color: #ffd76a;
+}
+
+.lab-release {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 0;
+  border-left: 2px dashed #ffd76a;
+  pointer-events: none;
+}

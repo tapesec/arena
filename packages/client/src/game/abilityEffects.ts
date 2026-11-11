@@ -36,11 +36,13 @@ export const EFFECT_ANCHORS: Record<EffectAnchor, string> = {
   feet: "Pieds (sol)",
 };
 
-// Compétence dont le geste est en cours, et où il en est (secondes dans l'animation).
+// Compétence dont le geste est en cours, et où il en est (secondes réelles depuis le début du geste).
 export interface PlayingAbility {
   abilityId: string;
   entry: AbilityAnimation;
   time: number;
+  // Numéro du geste (un sort relancé aussitôt a ses propres effets).
+  run?: number;
 }
 
 const BONES: Partial<Record<EffectAnchor, string>> = { hand_r: "hand_r", hand_l: "hand_l", head: "Head", chest: "spine_03" };
@@ -203,7 +205,10 @@ export class AbilityEffectPlayer {
   update(character: CharacterInstance | null, playing: PlayingAbility | null, ally?: boolean, silent = false) {
     this.updateTracks(
       character,
-      playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time, ally, silent, speed: playing.entry.rate }] : [],
+      // Les temps du lanceur sont en secondes réelles.
+      playing
+        ? [{ id: playing.run === undefined ? playing.abilityId : `${playing.abilityId}#${playing.run}`, effects: playing.entry.effects ?? [], time: playing.time, ally, silent }]
+        : [],
     );
   }
 

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { getAbility } from "@arena/shared";
-import { canHaveProjectile, statusKindsOf, type AbilityAnimation, type AnimationEffect, type AnimationTuning } from "./abilityAnimations";
+import { canHaveProjectile, clipAt, normalizeAbilityAnimation, normalizeTuning, sequenceLength, statusKindsOf, type AbilityAnimation, type AnimationEffect } from "./abilityAnimations";
 import { BUILTIN_DEFS, CODE_RECIPES } from "./particleDefs";
 import { AFFLICTIONS, STATUS_CODE, VISUALS, codeImpact } from "./codeVisuals";
 import animationTuning from "./animationTuning.json";
@@ -21,7 +21,7 @@ import { BUILTIN_OVERLAYS } from "./overlays2d";
 // Les réglages enregistrés depuis animation-lab.html restent cohérents avec le jeu : chaque effet utilisé existe,
 // chaque moment réglé correspond à ce que fait la compétence.
 
-const tuning = animationTuning as unknown as AnimationTuning;
+const tuning = normalizeTuning(animationTuning);
 const known = new Set([...Object.keys(CODE_RECIPES), ...Object.keys(BUILTIN_DEFS), ...Object.keys(particleEffects)]);
 const knownMarks = new Set([...Object.keys(BUILTIN_MARKS), ...Object.keys(groundMarks)]);
 const knownObjects = new Set([...Object.keys(BUILTIN_OBJECTS), ...Object.keys(objects3d)]);
@@ -132,6 +132,48 @@ test("chaque son du catalogue utilisé par une compétence est prêt pour le jeu
           );
         }
       }
+    }
+  }
+});
+
+test("l'ancien format (une seule animation, temps dans l'animation) est converti en secondes réelles", () => {
+  const legacy = {
+    animation: "A",
+    start: 1,
+    rate: 0.5,
+    end: 3,
+    effects: [{ recipe: "x", start: 2, end: 3, anchor: "hands" as const, offset: [0, 0, 0] as [number, number, number], keys: [{ time: 2.5, anchor: "hands" as const, offset: [0, 0, 0] as [number, number, number] }] }],
+  };
+  const entry = normalizeAbilityAnimation(legacy as unknown as AbilityAnimation);
+  assert.deepEqual(entry.clips, [{ animation: "A", start: 1, end: 3, rate: 0.5 }]);
+  assert.equal(entry.effects?.[0].start, 2);
+  assert.equal(entry.effects?.[0].end, 4);
+  assert.equal(entry.effects?.[0].keys?.[0].time, 3);
+  // Sans animation : pas d'animation dans la suite, temps inchangés (vitesse 1, début 0).
+  const bare = normalizeAbilityAnimation({ animation: "", start: 0, rate: 1, end: 2, effects: [] } as unknown as AbilityAnimation);
+  assert.deepEqual(bare.clips, []);
+});
+
+test("les animations du geste s'enchaînent", () => {
+  const entry: AbilityAnimation = {
+    clips: [
+      { animation: "A", start: 0, end: 1, rate: 2 },
+      { animation: "B", start: 0.5, end: 1.5, rate: 0.5 },
+    ],
+  };
+  assert.equal(sequenceLength(entry), 2.5);
+  assert.equal(clipAt(entry, 0.25)?.clip.animation, "A");
+  assert.equal(clipAt(entry, 0.25)?.clipTime, 0.5);
+  const second = clipAt(entry, 1.5);
+  assert.equal(second?.index, 1);
+  assert.equal(second?.clipTime, 1);
+  assert.equal(clipAt(entry, 2.5), null);
+});
+
+test("animationTuning.json est au format actuel (suite d'animations)", () => {
+  for (const [classId, entries] of Object.entries(animationTuning as Record<string, Record<string, unknown>>)) {
+    for (const [abilityId, entry] of Object.entries(entries)) {
+      assert.ok(Array.isArray((entry as AbilityAnimation).clips), `${classId}/${abilityId} : ancien format`);
     }
   }
 });

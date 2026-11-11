@@ -1,5 +1,5 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
-import { castTimeOf, legacyCastGesture, releaseTime, type AbilityAnimation, type ClassAnimationTuning, type TargetReaction } from "./abilityAnimations";
+import { casterLength, castTimeOf, clipAt, legacyCastGesture, type AbilityAnimation, type ClassAnimationTuning, type TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import type { CharacterAnimationSet } from "./characterAssets";
 
@@ -33,7 +33,7 @@ const DEATH = "Death01";
 // Geste d'incantation (voir AbilityAnimation) : délai au-delà duquel une incantation finie sans départ du sort est
 // tenue pour interrompue.
 const GESTURE_RELEASE_GRACE = 0.35;
-// Écart toléré (secondes d'animation) entre le geste et la progression de l'incantation reçue du serveur.
+// Écart toléré (secondes) entre le geste et la progression de l'incantation reçue du serveur.
 const GESTURE_MAX_DRIFT = 0.15;
 // Stun : une fois relevé de la projection, un « non » de la tête, puis il titube jusqu'à la fin du stun.
 const STUN_GETUP = "Idle_No_Loop";
@@ -84,24 +84,23 @@ export class CharacterAnimator {
   private stunStage: "none" | "getup" | "dazed" = "none";
   private stunned = false;
   private attackIndex = 0;
-  // Geste d'incantation en cours : sort, animation et calage, vitesse pendant l'incantation (le calage est fait pour
-  // le temps d'incantation normal, celui reçu du serveur peut différer) ; released une fois le sort parti ;
-  // endedAt : fin de l'incantation vue sans départ du sort.
-  private gesture: {
+  // Geste réglé en cours (voir AbilityAnimation) : ses animations s'enchaînent sur une horloge en secondes réelles
+  // depuis le début du geste (origin : instant, en secondes de performance.now, du temps 0). Pendant l'incantation,
+  // l'horloge suit la progression reçue du serveur ; après le départ du sort (released), elle avance seule. clip :
+  // rang de l'animation en cours (-1 : aucune encore, ou finies) ; endedAt : fin de l'incantation vue sans départ du
+  // sort.
+  private sequence: {
     abilityId: string;
-    group: AnimationGroup;
     entry: AbilityAnimation;
-    release: number;
-    castRate: number;
-    started: boolean;
+    origin: number;
     released: boolean;
+    clip: number;
+    group: AnimationGroup | null;
     endedAt: number | null;
+    // Numéro du geste : un sort relancé aussitôt a ses propres effets (ses sons repartent).
+    run: number;
   } | null = null;
-  // Geste de compétence en cours (incantation ou compétence réglée), pour ses effets.
-  private abilityClip: { abilityId: string; entry: AbilityAnimation; group: AnimationGroup } | null = null;
-  // Compétence réglée sans animation (page de réglage) : ses effets suivent une horloge au lieu d'une animation —
-  // l'incantation (time), puis le temps réel après le départ du sort (à partir de releasedAt), jusqu'à sa fin.
-  private virtual: { abilityId: string; entry: AbilityAnimation; time: number; releasedAt: number | null; endedAt?: number } | null = null;
+  private runs = 0;
   // Incantation vue à la mise à jour précédente, pour reconnaître une nouvelle incantation du même sort.
   private lastCast = { abilityId: "", elapsed: 0 };
 
@@ -120,51 +119,48 @@ export class CharacterAnimator {
   // Coup d'auto-attaque : les animations du set défilent à tour de rôle.
   attack() {
     if (this.set.attacks.length === 0) return;
-    if (this.action?.isPlaying && this.actionKind === "ability") return;
+    if (this.abilityBusy) return;
     const name = this.set.attacks[this.attackIndex % this.set.attacks.length];
     this.attackIndex++;
     this.playAction(name, "attack");
   }
 
-  // Compétence réglée dont le geste est en cours, et où il en est dans l'animation (pour ses effets).
+  // Compétence réglée dont le geste est en cours, et où il en est (secondes depuis le début du geste, pour ses
+  // effets) : jusqu'à la fin de sa dernière animation ou de son dernier effet.
   playingAbility(): PlayingAbility | null {
-    const virtual = this.virtual;
-    if (virtual) {
-      const time =
-        virtual.releasedAt === null ? virtual.time : virtual.time + (performance.now() / 1000 - virtual.releasedAt) * virtual.entry.rate;
-      if (time < virtual.entry.end) return { abilityId: virtual.abilityId, entry: virtual.entry, time };
-      this.virtual = null;
-    }
-    const clip = this.abilityClip;
-    if (!clip || this.action !== clip.group || !clip.group.isPlaying) return null;
-    const frame = clip.group.animatables[0]?.masterFrame;
-    if (frame === undefined) return null;
-    return { abilityId: clip.abilityId, entry: clip.entry, time: (frame - clip.group.from) / framesPerSecond(clip.group) };
+    const sequence = this.sequence;
+    if (!sequence) return null;
+    const time = performance.now() / 1000 - sequence.origin;
+    if (time >= casterLength(sequence.entry)) return null;
+    return { abilityId: sequence.abilityId, entry: sequence.entry, time, run: sequence.run };
   }
 
-  // Le geste d'une compétence est en cours (le lanceur range alors son bâton dans le dos).
+  // Le geste d'une compétence est en cours (le lanceur range alors son bâton dans le dos), y compris quand une de
+  // ses animations tient sa dernière pose en attendant la suivante.
   get performingAbility(): boolean {
-    return this.actionKind === "ability" && this.action?.isPlaying === true;
+    return this.abilityBusy;
+  }
+
+  private get abilityBusy(): boolean {
+    if (this.actionKind !== "ability" || !this.action) return false;
+    return this.action.isPlaying || (this.sequence !== null && this.sequence.group === this.action);
   }
 
   ability(abilityId: string) {
+    const now = performance.now() / 1000;
+    const castTime = castTimeOf(abilityId);
     const gesture = this.castGesture(abilityId);
-    // Sans animation : l'horloge part du départ du sort (sort incanté) ou du début (compétence instantanée).
-    const bare = gesture ?? this.tuning[abilityId];
-    if (bare && !bare.animation) {
-      const castTime = castTimeOf(abilityId);
-      this.virtual = { abilityId, entry: bare, time: castTime > 0 ? releaseTime(bare, castTime) : bare.start, releasedAt: performance.now() / 1000 };
-      return;
-    }
     if (gesture) {
-      this.releaseGesture(abilityId, gesture);
+      // Le sort part : l'horloge continue seule. Sans geste en cours (incantation commencée avant que le personnage
+      // soit visible), il reprend à l'instant du départ du sort.
+      const sequence = this.sequence;
+      if (sequence && sequence.abilityId === abilityId && !sequence.released) sequence.released = true;
+      else this.startSequence(abilityId, gesture, now - castTime, true);
       return;
     }
-    const tuned = this.tuning[abilityId];
+    const tuned = castTime > 0 ? undefined : this.tuning[abilityId];
     if (tuned) {
-      this.playAction(tuned.animation, "ability", tuned.rate, tuned.start, tuned.end);
-      const group = this.animations.get(tuned.animation);
-      if (group) this.abilityClip = { abilityId, entry: tuned, group };
+      this.startSequence(abilityId, tuned, now, true);
       return;
     }
     this.playAction(this.set.abilities[abilityId] ?? this.set.abilities.default, "ability", this.set.abilityRates?.[abilityId] ?? 1);
@@ -185,6 +181,7 @@ export class CharacterAnimator {
     if (reaction === "block" && this.stunned) return;
     if (reaction !== "stun") {
       if (this.action?.isPlaying && this.actionKind !== "reaction") return;
+      if (this.abilityBusy) return;
       if (now - this.lastReaction < REACTION_INTERVAL) return;
     }
     this.lastReaction = now;
@@ -199,6 +196,7 @@ export class CharacterAnimator {
     const now = performance.now() / 1000;
     if (this.stunned) return;
     if (this.action?.isPlaying && this.actionKind !== "reaction") return;
+    if (this.abilityBusy) return;
     if (now - this.lastReaction < REACTION_INTERVAL) return;
     this.lastReaction = now;
     this.playAction(reaction.animation, "reaction", reaction.rate, reaction.start, reaction.end);
@@ -206,8 +204,7 @@ export class CharacterAnimator {
 
   // Incantation interrompue (déplacement, Silence, dégâts…) : le geste s'arrête aussitôt.
   interruptCast() {
-    this.stopGesture();
-    if (this.virtual?.releasedAt === null) this.virtual = null;
+    if (this.sequence && !this.sequence.released) this.stopSequence();
   }
 
   update(input: AnimationInput) {
@@ -222,6 +219,8 @@ export class CharacterAnimator {
     // Une action en cours va jusqu'au bout, même si le personnage se déplace.
     if (this.action) {
       if (this.action.isPlaying) return;
+      // Animation du geste finie un peu avant l'horloge : sa dernière pose tient jusqu'à l'animation suivante.
+      if (this.sequence && this.sequence.group === this.action) return;
       this.action = null;
     }
     if (this.stunned) {
@@ -272,8 +271,8 @@ export class CharacterAnimator {
 
   dispose() {}
 
-  // Geste d'incantation : démarre avec l'incantation, suit sa progression, puis va jusqu'à sa fin après le départ
-  // du sort, ou s'arrête aussitôt si l'incantation se termine sans que le sort parte.
+  // Geste réglé : démarre avec l'incantation et suit sa progression ; s'arrête si l'incantation se termine sans que
+  // le sort parte ; après le départ du sort, ses animations vont jusqu'au bout.
   private updateGesture(input: AnimationInput) {
     const now = performance.now() / 1000;
     const casting = input.alive ? input.castAbility : "";
@@ -281,92 +280,64 @@ export class CharacterAnimator {
     // Nouvelle incantation : un autre sort, ou le même relancé (son temps écoulé repart de zéro).
     const fresh = casting !== this.lastCast.abilityId || input.castElapsed + 0.05 < this.lastCast.elapsed;
     this.lastCast = { abilityId: casting, elapsed: input.castElapsed };
-    // Sans animation : l'horloge suit la progression de l'incantation ; une incantation finie sans départ du sort
-    // (interrompue) l'arrête.
-    if (entry && !entry.animation) {
-      const release = releaseTime(entry, castTimeOf(casting));
-      const castRate = (release - entry.start) / Math.max(input.castDuration, 0.1);
-      this.virtual = { abilityId: casting, entry, time: Math.min(release, entry.start + input.castElapsed * castRate), releasedAt: null };
-      return;
-    }
-    if (!casting && this.virtual && this.virtual.releasedAt === null) {
-      this.virtual.endedAt ??= now;
-      if (now - this.virtual.endedAt > GESTURE_RELEASE_GRACE) this.virtual = null;
-    }
-    if (entry && fresh) this.startGesture(casting, entry, input.castDuration);
+    // Le temps d'incantation reçu peut différer du temps normal : l'horloge suit la progression de l'incantation.
+    const castClock = input.castElapsed * (castTimeOf(casting) / Math.max(input.castDuration, 0.1));
+    if (entry && fresh) this.startSequence(casting, entry, now - castClock, false);
 
-    const gesture = this.gesture;
-    if (!gesture) return;
-    if (!input.alive) return this.stopGesture();
-    if (gesture.released) {
-      if (!gesture.group.isPlaying) this.stopGesture();
-      return;
+    const sequence = this.sequence;
+    if (!sequence) return;
+    if (!input.alive) return this.stopSequence();
+    if (!sequence.released) {
+      if (casting === sequence.abilityId) {
+        // Recalée sur l'incantation si elle s'en écarte.
+        const origin = now - castClock;
+        if (Math.abs(origin - sequence.origin) > GESTURE_MAX_DRIFT) sequence.origin = origin;
+      } else {
+        // Incantation finie : le départ du sort (message à part) peut arriver juste après.
+        sequence.endedAt ??= now;
+        if (now - sequence.endedAt > GESTURE_RELEASE_GRACE) return this.stopSequence();
+      }
     }
-    if (casting !== gesture.abilityId) {
-      // Incantation finie : le départ du sort (message à part) peut arriver juste après.
-      gesture.endedAt ??= now;
-      if (now - gesture.endedAt > GESTURE_RELEASE_GRACE) this.stopGesture();
-      return;
-    }
-    // Position voulue dans l'animation d'après la progression de l'incantation.
-    const target = Math.min(gesture.release, gesture.entry.start + input.castElapsed * gesture.castRate);
-    const fps = framesPerSecond(gesture.group);
-    const targetFrame = gesture.group.from + target * fps;
-    if (!gesture.started) {
-      gesture.started = true;
-      this.switchTo(gesture.group, `gesture:${gesture.abilityId}`, false, gesture.castRate, targetFrame, this.frame(gesture.group, gesture.entry.end));
-      this.action = gesture.group;
-      this.actionKind = "ability";
-      this.abilityClip = { abilityId: gesture.abilityId, entry: gesture.entry, group: gesture.group };
-      return;
-    }
-    // Recalé sur l'incantation ; arrivé au départ du sort, le geste y attend le message de départ.
-    const frame = gesture.group.animatables[0]?.masterFrame ?? targetFrame;
-    const drift = frame - targetFrame;
-    if (Math.abs(drift) > GESTURE_MAX_DRIFT * fps) gesture.group.goToFrame(targetFrame);
-    gesture.group.speedRatio = target >= gesture.release ? 0 : gesture.castRate;
+    this.advanceSequence(sequence, now);
   }
 
-  private startGesture(abilityId: string, entry: AbilityAnimation, castDuration: number) {
-    const group = this.animations.get(entry.animation);
+  // Joue l'animation du geste qui correspond à l'horloge, et la recale si elle s'en écarte.
+  private advanceSequence(sequence: NonNullable<CharacterAnimator["sequence"]>, now: number) {
+    // Geste coupé par une autre action (stun, réaction, mort…) : il s'arrête, ses effets aussi.
+    if (sequence.group && this.action !== sequence.group) return this.stopSequence();
+    const time = now - sequence.origin;
+    const at = clipAt(sequence.entry, time);
+    if (!at) {
+      // Après la dernière animation (ou entre deux) : le personnage reprend sa pose normale ; les effets continuent.
+      if (sequence.group && this.action === sequence.group) this.action = null;
+      sequence.group = null;
+      sequence.clip = -1;
+      if (time >= casterLength(sequence.entry)) this.sequence = null;
+      return;
+    }
+    const group = this.animations.get(at.clip.animation);
     if (!group) return;
-    this.stopGesture();
-    const release = releaseTime(entry, castTimeOf(abilityId));
-    this.gesture = {
-      abilityId,
-      group,
-      entry,
-      release,
-      castRate: (release - entry.start) / Math.max(castDuration, 0.1),
-      started: false,
-      released: false,
-      endedAt: null,
-    };
+    const targetFrame = this.frame(group, at.clipTime);
+    if (sequence.clip !== at.index || sequence.group !== group) {
+      sequence.clip = at.index;
+      sequence.group = group;
+      this.switchTo(group, `gesture:${sequence.abilityId}:${at.index}`, false, at.clip.rate, targetFrame, this.frame(group, at.clip.end));
+      this.action = group;
+      this.actionKind = "ability";
+      return;
+    }
+    // Recalage seulement une fois l'animation partie (juste après son départ, l'image lue vaut encore 0 : la recaler
+    // à ce moment-là la termine aussitôt).
+    const frame = group.animatables[0]?.masterFrame;
+    const startFrame = this.frame(group, at.clip.start);
+    if (!group.isPlaying || frame === undefined || frame < startFrame - 0.5) return;
+    if (Math.abs(frame - targetFrame) > GESTURE_MAX_DRIFT * framesPerSecond(group) * at.clip.rate) group.goToFrame(targetFrame);
   }
 
-  // Le sort part : le geste reprend sa vitesse réglée à partir du départ du sort, jusqu'à sa fin. Sans geste en
-  // cours (incantation commencée avant que le personnage soit visible), on n'en joue que la fin.
-  private releaseGesture(abilityId: string, entry: AbilityAnimation) {
-    let gesture = this.gesture;
-    if (!gesture || gesture.abilityId !== abilityId || gesture.released) {
-      this.startGesture(abilityId, entry, castTimeOf(abilityId));
-      gesture = this.gesture;
-      if (!gesture) return;
-    }
-    gesture.released = true;
-    const releaseFrame = this.frame(gesture.group, gesture.release);
-    if (!gesture.started) {
-      gesture.started = true;
-      this.switchTo(gesture.group, `gesture:${abilityId}`, false, entry.rate, releaseFrame, this.frame(gesture.group, entry.end));
-      this.action = gesture.group;
-      this.actionKind = "ability";
-      this.abilityClip = { abilityId, entry: gesture.entry, group: gesture.group };
-    } else {
-      gesture.group.speedRatio = gesture.entry.rate;
-      const fps = framesPerSecond(gesture.group);
-      const frame = gesture.group.animatables[0]?.masterFrame ?? releaseFrame;
-      if (frame < releaseFrame - GESTURE_MAX_DRIFT * fps) gesture.group.goToFrame(releaseFrame);
-    }
+  private startSequence(abilityId: string, entry: AbilityAnimation, origin: number, released: boolean) {
+    this.stopSequence();
+    this.sequence = { abilityId, entry, origin, released, clip: -1, group: null, endedAt: null, run: ++this.runs };
+    this.advanceSequence(this.sequence, performance.now() / 1000);
   }
 
   // Image d'une animation à un temps donné (secondes depuis son début).
@@ -375,11 +346,11 @@ export class CharacterAnimator {
   }
 
   // Rend la main aux animations courantes (fondu vers l'attente ou le déplacement).
-  private stopGesture() {
-    const gesture = this.gesture;
-    if (!gesture) return;
-    this.gesture = null;
-    if (this.action === gesture.group) this.action = null;
+  private stopSequence() {
+    const sequence = this.sequence;
+    if (!sequence) return;
+    this.sequence = null;
+    if (sequence.group && this.action === sequence.group) this.action = null;
   }
 
   // start, end : portion jouée (secondes dans l'animation), par défaut l'animation entière.

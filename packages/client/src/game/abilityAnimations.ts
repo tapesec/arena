@@ -1,19 +1,17 @@
 import { getAbility } from "@arena/shared";
 import type { CharacterAnimationSet } from "./characterAssets";
 
-// Calage de l'animation d'une compétence, réglé sur la page animation-lab.html et enregistré dans
-// animationTuning.json (par classe, puis par compétence). Les temps sont en secondes dans l'animation.
-// - Sort incanté : le geste part de start au début de l'incantation et avance à la vitesse rate ; le sort part
-//   au moment release = start + temps d'incantation × rate. Le geste continue ensuite jusqu'à end, à la même
-//   vitesse, puis le personnage revient en fondu à sa pose normale.
-// - Compétence instantanée : la portion de start à end est jouée à la vitesse rate.
-// - effects : effets à particules portés par le personnage pendant le geste (voir abilityEffects.ts). Absents, le
-//   sort garde ses effets d'incantation prévus dans le code (formation du Trait de feu et du Trait de givre).
+// Calage du geste d'une compétence, réglé sur la page animation-lab.html et enregistré dans animationTuning.json
+// (par classe, puis par compétence). Les temps du lanceur sont en secondes réelles depuis le début du geste : le
+// début de l'incantation pour un sort incanté (le sort part à castTime), le lancement pour une compétence
+// instantanée (le sort part à 0).
+// - clips : les animations jouées l'une après l'autre, chacune sur sa portion et à sa vitesse. Elles vont jusqu'au
+//   bout, même après le départ du sort ; après la dernière, le personnage revient en fondu à sa pose normale (et
+//   pendant une incantation plus longue que les animations, il attend dans sa pose normale). Aucune : pas de geste.
+// - effects : effets portés par le personnage (voir abilityEffects.ts). Absents, le sort garde ses effets
+//   d'incantation prévus dans le code (formation du Trait de feu et du Trait de givre).
 export interface AbilityAnimation {
-  animation: string;
-  start: number;
-  rate: number;
-  end: number;
+  clips: AbilityClip[];
   effects?: AnimationEffect[];
   // Vol vers la cible (PROJECTILE_TRAVEL_TIME, 0,3 s), seulement pour une compétence qui vise un autre que son
   // lanceur. Absent : le jeu garde son projectile du code (les « bolts ») ou son absence ; enabled false : pas de
@@ -52,6 +50,78 @@ export interface ProjectileVisual {
 }
 
 export type ProjectilePath = "straight" | "arc" | "spiral" | "wave" | "zigzag" | "curve";
+
+// Une animation du geste : la portion start → end (secondes dans l'animation), jouée à la vitesse rate.
+export interface AbilityClip {
+  animation: string;
+  start: number;
+  end: number;
+  rate: number;
+}
+
+// Durée à l'écran d'une animation du geste.
+export function clipDuration(clip: AbilityClip): number {
+  return Math.max(0, clip.end - clip.start) / clip.rate;
+}
+
+// Durée à l'écran de toutes les animations du geste.
+export function sequenceLength(entry: AbilityAnimation): number {
+  return entry.clips.reduce((sum, clip) => sum + clipDuration(clip), 0);
+}
+
+// Animation jouée à l'instant time (secondes depuis le début du geste), son rang, son début à l'écran et l'instant
+// montré dans l'animation ; null avant le début ou après la dernière.
+export function clipAt(entry: AbilityAnimation, time: number): { clip: AbilityClip; index: number; offset: number; clipTime: number } | null {
+  if (time < 0) return null;
+  let offset = 0;
+  for (let index = 0; index < entry.clips.length; index++) {
+    const clip = entry.clips[index];
+    const duration = clipDuration(clip);
+    if (time < offset + duration) return { clip, index, offset, clipTime: clip.start + (time - offset) * clip.rate };
+    offset += duration;
+  }
+  return null;
+}
+
+// Durée du moment du lanceur : jusqu'à la fin de la dernière animation ou du dernier effet.
+export function casterLength(entry: AbilityAnimation): number {
+  let length = sequenceLength(entry);
+  for (const effect of entry.effects ?? []) length = Math.max(length, effect.end);
+  return length;
+}
+
+// Ancien format (une seule animation, temps en secondes dans l'animation) : converti au format actuel. Les effets
+// passent en secondes réelles depuis le début du geste (t → (t - start) / rate).
+interface LegacyAbilityAnimation extends Omit<AbilityAnimation, "clips"> {
+  animation: string;
+  start: number;
+  rate: number;
+  end: number;
+}
+export function normalizeAbilityAnimation(raw: AbilityAnimation | LegacyAbilityAnimation): AbilityAnimation {
+  if ("clips" in raw && Array.isArray(raw.clips)) return raw as AbilityAnimation;
+  const legacy = raw as LegacyAbilityAnimation;
+  const { animation, start, rate, end, ...rest } = legacy;
+  const toReal = (time: number) => (time - start) / rate;
+  const entry: AbilityAnimation = { ...rest, clips: animation ? [{ animation, start, end, rate }] : [] };
+  if (legacy.effects) {
+    entry.effects = legacy.effects.map((effect) => ({
+      ...effect,
+      start: toReal(effect.start),
+      end: toReal(effect.end),
+      ...(effect.keys && { keys: effect.keys.map((key) => ({ ...key, time: toReal(key.time) })) }),
+    }));
+  }
+  return entry;
+}
+export function normalizeTuning(raw: unknown): AnimationTuning {
+  const tuning: AnimationTuning = {};
+  for (const [classId, entries] of Object.entries((raw ?? {}) as Record<string, Record<string, AbilityAnimation>>)) {
+    tuning[classId] = {};
+    for (const [abilityId, entry] of Object.entries(entries)) tuning[classId][abilityId] = normalizeAbilityAnimation(entry);
+  }
+  return tuning;
+}
 
 // La compétence peut avoir un projectile : elle vise quelqu'un d'autre que son lanceur (un ennemi, un allié…).
 export function canHaveProjectile(abilityId: string): boolean {
@@ -147,35 +217,32 @@ export function hasTunedEffects(tuning: AnimationTuning, classId: string, abilit
   return tuning[classId]?.[abilityId]?.effects !== undefined;
 }
 
-// Effets d'un réglage : les siens, sinon ceux prévus dans le code.
+// Effets d'un réglage : les siens, sinon ceux prévus dans le code (la formation du trait pendant l'incantation).
 export function effectsOf(entry: AbilityAnimation, abilityId: string): AnimationEffect[] {
   if (entry.effects) return entry.effects;
   const recipe = LEGACY_CHARGES[abilityId];
   if (!recipe) return [];
-  return [{ recipe, start: entry.start, end: releaseTime(entry, castTimeOf(abilityId)), anchor: "hands", offset: [0, 0, 0] }];
+  return [{ recipe, start: 0, end: castTimeOf(abilityId), anchor: "hands", offset: [0, 0, 0] }];
 }
 
 export function castTimeOf(abilityId: string): number {
   return getAbility(abilityId)?.castTime ?? 0;
 }
 
-// Moment (dans l'animation) où le sort part.
-export function releaseTime(entry: AbilityAnimation, castTime: number): number {
-  return entry.start + castTime * entry.rate;
+// Instant (secondes depuis le début du geste) où le sort part : la fin de l'incantation.
+export function releaseTime(abilityId: string): number {
+  return castTimeOf(abilityId);
 }
 
-// Calage d'un sort incanté sans réglage enregistré, d'après son geste d'incantation déclaré dans le code.
+// Calage d'un sort incanté sans réglage enregistré, d'après son geste d'incantation déclaré dans le code : le moment
+// fort de l'animation (gesture.release) tombe au départ du sort.
 export function legacyCastGesture(set: CharacterAnimationSet, abilityId: string): AbilityAnimation | null {
   const gesture = set.castGestures?.[abilityId];
   const castTime = castTimeOf(abilityId);
   if (!gesture || castTime <= 0) return null;
   const rate = Math.min(LEGACY_MAX_RATE, Math.max(LEGACY_MIN_RATE, gesture.release / castTime));
-  return {
-    animation: gesture.animation,
-    start: Math.max(0, gesture.release - castTime * rate),
-    rate,
-    end: gesture.release + LEGACY_FOLLOW_THROUGH,
-  };
+  const start = Math.max(0, gesture.release - castTime * rate);
+  return { clips: [{ animation: gesture.animation, start, end: gesture.release + LEGACY_FOLLOW_THROUGH, rate }] };
 }
 
 // Point de départ proposé sur la page de réglage pour une compétence pas encore réglée : l'ancien geste
@@ -192,31 +259,32 @@ export function suggestedAbilityAnimation(
   const length = clipLength(animation);
   const castTime = castTimeOf(abilityId);
   const baseRate = set.abilityRates?.[abilityId] ?? 1;
-  if (castTime <= 0) return { animation, start: 0, rate: baseRate, end: length };
-  // Incanté : fenêtre d'incantation au début de l'animation, ralentie s'il le faut pour y tenir.
+  if (castTime <= 0) return { clips: [{ animation, start: 0, end: length, rate: baseRate }] };
+  // Incanté : l'animation couvre l'incantation, ralentie s'il le faut, et un peu après.
   const rate = Math.max(MIN_RATE, Math.min(baseRate, length / castTime));
-  return { animation, start: 0, rate, end: Math.min(length, castTime * rate + LEGACY_FOLLOW_THROUGH) };
+  return { clips: [{ animation, start: 0, end: Math.min(length, castTime * rate + LEGACY_FOLLOW_THROUGH), rate }] };
 }
 
-// Garde un réglage dans les limites de son animation : la fenêtre d'incantation y tient, la fin suit le départ.
-export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number, length: number): AbilityAnimation {
-  const rate = Math.min(MAX_RATE, Math.max(MIN_RATE, castTime > 0 ? Math.min(entry.rate, length / castTime) : entry.rate));
-  const start = Math.min(Math.max(0, entry.start), Math.max(0, length - castTime * rate));
-  const release = start + castTime * rate;
-  const end = Math.min(length, Math.max(entry.end, release + (castTime > 0 ? 0 : 0.05)));
-  const clamped: AbilityAnimation = { animation: entry.animation, start, rate, end };
+// Garde un réglage dans ses limites : chaque animation dans sa longueur, à une vitesse permise ; les effets entre
+// 0 et maxTime secondes.
+export function clampAbilityAnimation(entry: AbilityAnimation, clipLength: (animation: string) => number, maxTime: number): AbilityAnimation {
+  const clips = entry.clips.map((clip) => {
+    const length = clipLength(clip.animation);
+    const rate = Math.min(MAX_RATE, Math.max(MIN_RATE, clip.rate));
+    const start = Math.min(Math.max(0, clip.start), Math.max(0, length - MIN_CLIP));
+    const end = Math.min(length, Math.max(clip.end, start + MIN_CLIP));
+    return { animation: clip.animation, start, end, rate };
+  });
+  const clamped: AbilityAnimation = { clips };
   // Les moments de la cible ne dépendent pas du geste du lanceur.
   if (entry.projectile) clamped.projectile = entry.projectile;
   if (entry.impact) clamped.impact = entry.impact;
   if (entry.status) clamped.status = entry.status;
   if (entry.zone) clamped.zone = entry.zone;
-  // Les effets restent dans la portion jouée.
   if (entry.effects) {
     clamped.effects = entry.effects.map((effect) => {
-      const effectStart = Math.min(Math.max(effect.start, start), end - MIN_EFFECT);
-      // Un son peut continuer après la fin du geste (jusqu'à SOUND_TAIL secondes d'animation).
-      const limit = effect.type === "sound" ? end + SOUND_TAIL : end;
-      const effectEnd = Math.min(limit, Math.max(effect.end, effectStart + MIN_EFFECT));
+      const effectStart = Math.min(Math.max(effect.start, 0), maxTime - MIN_EFFECT);
+      const effectEnd = Math.min(maxTime, Math.max(effect.end, effectStart + MIN_EFFECT));
       const clampedEffect: AnimationEffect = { ...effect, start: effectStart, end: effectEnd };
       // Les points clés restent dans l'effet.
       if (effect.keys) clampedEffect.keys = effect.keys.map((key) => ({ ...key, time: Math.min(effectEnd, Math.max(effectStart, key.time)) }));
@@ -226,10 +294,13 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
   return clamped;
 }
 
-// Durée minimale d'un effet (secondes dans l'animation).
+// Portion minimale d'une animation (secondes dans l'animation).
+const MIN_CLIP = 0.05;
+// Durée minimale d'un effet (secondes).
 const MIN_EFFECT = 0.02;
-// Un son du geste peut dépasser la fin de l'animation de tant (secondes d'animation).
-export const SOUND_TAIL = 3;
+// La timeline du lanceur va jusqu'à tant de secondes après la fin des animations et de l'incantation (effets et sons
+// qui les dépassent).
+export const CASTER_AFTER = 3;
 
 // Effets d'un moment de la cible (impact, état, zone) gardés entre 0 et length secondes.
 export function clampMomentEffects(effects: AnimationEffect[], length: number): AnimationEffect[] {

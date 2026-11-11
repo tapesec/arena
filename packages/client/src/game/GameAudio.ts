@@ -6,8 +6,8 @@ import { isGrass } from "./environment";
 import type { PlayerVisual } from "./PlayerVisual";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 import { ABILITY_SOUNDS, type Cue } from "./codeSounds";
-import { tuningOf, type AnimationTuning } from "./abilityAnimations";
-import animationTuning from "./animationTuning.json";
+import { tuningOf } from "./abilityAnimations";
+import { TUNING } from "./tuning";
 import type { SoundSink } from "./abilityEffects";
 import {
   ABSORB_SOUND,
@@ -43,7 +43,6 @@ import {
   WALK_STRIDE,
 } from "./commonSounds";
 
-const TUNING = animationTuning as unknown as AnimationTuning;
 // Les sons du code d'un moment ne sont plus joués quand ce moment est réglé sur la page de réglage : un impact réglé
 // (comme ses visuels), ou un geste du lanceur qui a au moins une piste de son.
 const tunedSounds = (abilityId: string, moment: "caster" | "impact") => {

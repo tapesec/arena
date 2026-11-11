@@ -24,7 +24,13 @@ import {
   statusDurationOf,
   statusKindsOf,
   targetsSelf,
-  SOUND_TAIL,
+  CASTER_AFTER,
+  casterLength,
+  clipAt,
+  clipDuration,
+  normalizeAbilityAnimation,
+  normalizeTuning,
+  sequenceLength,
   zoneCenterIsTarget,
   canHaveProjectile,
   tuningOf,
@@ -34,6 +40,7 @@ import {
   releaseTime,
   suggestedAbilityAnimation,
   type AbilityAnimation,
+  type AbilityClip,
   type AnimationEffect,
   type AnimationTuning,
   type EffectAnchor,
@@ -366,7 +373,7 @@ class Stage {
   }
 
   select(abilityId: string, entry: AbilityAnimation | null) {
-    const changed = abilityId !== this.abilityId || entry?.animation !== this.entry?.animation;
+    const changed = abilityId !== this.abilityId || JSON.stringify(entry?.clips) !== JSON.stringify(this.entry?.clips);
     const switched = abilityId !== this.abilityId;
     this.abilityId = abilityId;
     this.entry = entry;
@@ -644,19 +651,23 @@ class Stage {
   private showFrame() {
     const instance = this.instance;
     if (!instance || this.workshop) return;
-    const group = this.entry && instance.animations.get(this.entry.animation);
-    if (group) {
-      if (this.frozen !== group) {
-        for (const other of instance.animations.values()) other.stop();
-        group.enableBlending = false;
-        group.start(false, 1, group.from, group.to);
-        group.pause();
-        this.frozen = group;
-      }
+    if (this.entry) {
       // Sur le trajet, le lanceur est montré au départ du sort (d'où part le projectile, comme en jeu).
-      const casterTime = this.moment === "projectile" && this.entry ? releaseTime(this.entry, castTimeOf(this.abilityId)) : this.scrubTimes.caster;
-      group.goToFrame(group.from + casterTime * framesPerSecond(group));
-      instance.setStowed(true);
+      const casterTime = this.moment === "projectile" ? releaseTime(this.abilityId) : this.scrubTimes.caster;
+      // L'animation du geste à cet instant ; hors des animations, la pose normale.
+      const at = clipAt(this.entry, casterTime);
+      const group = at ? instance.animations.get(at.clip.animation) : instance.animations.get(instance.set.idle);
+      if (group) {
+        if (this.frozen !== group) {
+          for (const other of instance.animations.values()) other.stop();
+          group.enableBlending = false;
+          group.start(false, 1, group.from, group.to);
+          group.pause();
+          this.frozen = group;
+        }
+        group.goToFrame(group.from + (at ? at.clipTime : 0) * framesPerSecond(group));
+      }
+      instance.setStowed(!!at);
     }
     this.showTargetFrame();
     const time = this.scrubTimes[this.moment];
@@ -762,7 +773,7 @@ class Stage {
     } else if (cycle.phase === "cast" && cycle.time >= castTime) {
       cycle.time = 0;
       release();
-    } else if (cycle.phase === "after" && cycle.time > 0.2 && ((!animator.performingAbility && this.sequenceDone()) || cycle.time > 15)) {
+    } else if (cycle.phase === "after" && cycle.time > 0.2 && ((!animator.performingAbility && !animator.playingAbility() && this.sequenceDone()) || cycle.time > 15)) {
       cycle.phase = "idle";
       cycle.time = 0;
       this.sequence = null;
@@ -775,10 +786,10 @@ class Stage {
     this.effects.update(instance, animator.playingAbility(), true);
     const impactTime = this.tickSequence(dt);
     if (this.moment === "caster") {
-      const group = instance.animations.get(entry.animation);
-      const frame = group?.isPlaying ? group.animatables[0]?.masterFrame : undefined;
+      // Temps du geste (secondes depuis son début) : l'horloge de l'animateur.
+      const gesture = animator.playingAbility();
       this.onFrame?.({
-        playhead: group && frame !== undefined ? (frame - group.from) / framesPerSecond(group) : null,
+        playhead: gesture && gesture.abilityId === this.abilityId ? gesture.time : casting ? cycle.time : null,
         cast: casting ? Math.min(1, cycle.time / castTime) : null,
       });
     } else {
@@ -980,11 +991,14 @@ class Stage {
   }
 }
 
-// Sans animation : jusqu'où la timeline du lanceur s'étend après l'incantation (secondes).
-const NO_ANIMATION_AFTER = 5;
+// Longueur de la timeline du lanceur (secondes réelles) : les animations et l'incantation, puis CASTER_AFTER
+// secondes ; au moins jusqu'au dernier effet.
+function casterAxisOf(entry: AbilityAnimation, castTime: number): number {
+  return Math.max(Math.max(sequenceLength(entry), castTime) + CASTER_AFTER, casterLength(entry));
+}
 
 // Réglage d'une posture tenue : pas d'animation (le jeu garde la posture), seulement des moments de la cible.
-const STANCE_ENTRY: AbilityAnimation = { animation: "", start: 0, rate: 1, end: 0 };
+const STANCE_ENTRY: AbilityAnimation = { clips: [] };
 
 // Sort qui vise un ennemi (le mannequin est alors dans l'autre camp).
 function isOffensiveTarget(abilityId: string): boolean {
@@ -1157,10 +1171,7 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
 
 function roundEntry(entry: AbilityAnimation): AbilityAnimation {
   const rounded: AbilityAnimation = {
-    animation: entry.animation,
-    start: round(entry.start),
-    rate: round(entry.rate),
-    end: round(entry.end),
+    clips: entry.clips.map((clip) => ({ animation: clip.animation, start: round(clip.start), end: round(clip.end), rate: round(clip.rate) })),
   };
   if (entry.effects) rounded.effects = entry.effects.map(roundEffect);
   if (entry.projectile) {
@@ -1211,6 +1222,14 @@ function sameEntry(a: AbilityAnimation | undefined, b: AbilityAnimation | undefi
 interface StoredDraft<T> {
   base: Record<string, T>;
   draft: Record<string, T>;
+}
+
+// Brouillon de réglages enregistré à l'ancien format (une seule animation) : converti.
+function normalizeStoredDraft(stored: StoredDraft<AbilityAnimation> | null): StoredDraft<AbilityAnimation> | null {
+  if (!stored?.base || !stored.draft) return stored;
+  const convert = (entries: Record<string, AbilityAnimation>) =>
+    Object.fromEntries(Object.entries(entries).map(([id, entry]) => [id, normalizeAbilityAnimation(entry)]));
+  return { base: convert(stored.base), draft: convert(stored.draft) };
 }
 
 // Reprend un brouillon en y ajoutant ce qui a changé dans le fichier depuis (effet créé par Claude, réglage
@@ -1270,6 +1289,9 @@ function AnimationLab() {
   const playheadRef = useRef<HTMLDivElement>(null);
   const castBarRef = useRef<HTMLDivElement>(null);
   const reactionHeadRef = useRef<HTMLDivElement>(null);
+  // Tête de lecture dans la portion de l'animation du geste choisie : son début à l'écran et sa portion.
+  const clipHeadRef = useRef<HTMLDivElement>(null);
+  const clipHeadInfo = useRef<{ offset: number; clip: AbilityClip } | null>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const initial = readStorage<{
     classId: ClassId;
@@ -1322,6 +1344,8 @@ function AnimationLab() {
   const [playing, setPlaying] = useState(false);
   const [filter, setFilter] = useState("");
   const [selectedEffect, setSelectedEffect] = useState(0);
+  // Animation du geste sélectionnée (rang dans la suite).
+  const [selectedClip, setSelectedClip] = useState(0);
   // Moment réglé (geste du lanceur, impact, état, zone), et instant montré en pose figée pour chacun (secondes) :
   // là où se pose un nouveau point clé.
   const [moment, setMoment] = useState<Moment>(initial?.moment ?? "caster");
@@ -1355,6 +1379,14 @@ function AnimationLab() {
     stageRef.current = created;
     Object.assign(window, { lab: created, audio });
     created.onFrame = ({ playhead, cast, labels, reactionHead }) => {
+      const clipMark = clipHeadRef.current;
+      const info = clipHeadInfo.current;
+      if (clipMark) {
+        const clipTime = info && playhead != null ? info.clip.start + (playhead - info.offset) * info.clip.rate : null;
+        const shown = clipTime !== null && clipTime >= info!.clip.start && clipTime <= info!.clip.end;
+        clipMark.style.display = shown ? "block" : "none";
+        if (shown) clipMark.style.left = `${(clipTime! / Math.max(1e-3, Number(clipMark.dataset.length))) * 100}%`;
+      }
       const reactionMark = reactionHeadRef.current;
       if (reactionMark) {
         reactionMark.style.display = reactionHead == null ? "none" : "block";
@@ -1390,9 +1422,11 @@ function AnimationLab() {
       .then((response) =>
         response.ok ? (response.json() as Promise<AnimationTuning>) : Promise.reject(new Error(String(response.status))),
       )
-      .then((tuning) => {
+      .then((raw) => {
+        // Réglages ou brouillon encore à l'ancien format (une seule animation) : convertis.
+        const tuning = normalizeTuning(raw);
         setSaved(tuning);
-        setDraft(nestedTuning(rebaseDraft(readStorage<StoredDraft<AbilityAnimation>>(DRAFT_KEY), flatTuning(tuning))));
+        setDraft(nestedTuning(rebaseDraft(normalizeStoredDraft(readStorage<StoredDraft<AbilityAnimation>>(DRAFT_KEY)), flatTuning(tuning))));
       })
       .catch(() => setError("Impossible de lire les réglages : la page doit être servie par le serveur de développement (npm run dev)."));
     void fetch("/__dev-file/particleEffects")
@@ -1808,15 +1842,12 @@ function AnimationLab() {
     if (!base) return null;
     // Effets montrés tels que le jeu les jouera : ceux du réglage, sinon ceux prévus dans le code.
     const withEffects = { ...base, effects: effectsOf(base, abilityId) };
-    // Sans animation, la timeline couvre l'incantation et jusqu'à NO_ANIMATION_AFTER secondes après.
-    const span = base.animation ? (stageRef.current?.clipLength(base.animation) ?? 0) : castTime + NO_ANIMATION_AFTER;
-    return clampAbilityAnimation(withEffects, castTime, span);
+    return clampAbilityAnimation(withEffects, (name) => stageRef.current?.clipLength(name) ?? 0, casterAxisOf(withEffects, castTime));
   }, [instance, stance, tuned, abilityId, castTime]);
-  // Longueur de la timeline du lanceur : l'animation, ou sans animation l'incantation et ce qui peut la suivre.
-  const axisOf = (animation: string) => (animation ? clipLength(animation) : castTime + NO_ANIMATION_AFTER);
-  const length = entry ? axisOf(entry.animation) : 0;
-  // Timeline du lanceur : l'animation, prolongée après la fin du geste si un son peut la dépasser.
-  const casterAxis = entry?.effects?.some((effect) => effect.type === "sound") ? Math.max(length, entry.end + SOUND_TAIL) : length;
+  // Timeline du lanceur (secondes réelles depuis le début du geste) : les animations et l'incantation, et
+  // CASTER_AFTER secondes après pour les effets et les sons qui les dépassent.
+  const casterAxis = entry ? casterAxisOf(entry, castTime) : 0;
+  const length = casterAxis;
 
   // Moments réglables de la compétence : l'état seulement si elle en laisse un, la zone si elle en a une.
   const ability = getAbility(abilityId);
@@ -1862,12 +1893,12 @@ function AnimationLab() {
     if (!instance) return [];
     const text = filter.trim().toLowerCase();
     return [...instance.animations.keys()]
-      .filter((name) => !text || name.toLowerCase().includes(text) || name === entry?.animation)
+      .filter((name) => !text || name.toLowerCase().includes(text) || entry?.clips.some((clip) => clip.animation === name))
       .sort((a, b) => a.localeCompare(b));
-  }, [instance, filter, entry?.animation]);
+  }, [instance, filter, entry?.clips]);
 
   const update = (next: AbilityAnimation) => {
-    const clamped = roundEntry(clampAbilityAnimation(next, castTime, axisOf(next.animation)));
+    const clamped = roundEntry(clampAbilityAnimation(next, clipLength, casterAxisOf(next, castTime)));
     setDraft((d) => ({ ...d, [classId]: { ...d[classId], [abilityId]: clamped } }));
   };
 
@@ -1892,22 +1923,34 @@ function AnimationLab() {
     else removeEntry();
   };
 
-  const chooseAnimation = (name: string) => {
-    // Sans animation : l'incantation, puis 1 s après le départ du sort pour les effets (réglable).
-    if (!name) {
-      const shift = -(entry?.start ?? 0);
-      const effects = entry?.effects?.map((effect) => shiftEffect(effect, shift));
-      update({ animation: "", start: 0, rate: 1, end: castTime + 1, effects, impact: entry?.impact, status: entry?.status, zone: entry?.zone });
-      return;
-    }
-    const clip = clipLength(name);
-    const rate = castTime > 0 ? Math.min(1, clip / castTime) : 1;
-    const end = castTime > 0 ? Math.min(clip, castTime * rate + 0.5) : clip;
-    // Les effets gardent leur place par rapport au début du geste.
-    const shift = -(entry?.start ?? 0);
-    const effects = entry?.effects?.map((effect) => shiftEffect(effect, shift));
-    // Les moments de la cible ne dépendent pas du geste.
-    update({ animation: name, start: 0, rate, end, effects, impact: entry?.impact, status: entry?.status, zone: entry?.zone });
+  // Animations du geste : changer, ajouter, retirer, déplacer. Les effets gardent leur place (secondes réelles).
+  const setClips = (clips: AbilityClip[]) => entry && update({ ...entry, clips });
+  const setClip = (index: number, patch: Partial<AbilityClip>) =>
+    entry && setClips(entry.clips.map((clip, i) => (i === index ? { ...clip, ...patch } : clip)));
+  const newClip = (name: string): AbilityClip => ({ animation: name, start: 0, end: clipLength(name), rate: 1 });
+  const chooseClipAnimation = (index: number, name: string) => {
+    if (!entry || !name) return;
+    // L'animation entière, à vitesse normale.
+    setClip(index, newClip(name));
+  };
+  const addClip = (name: string) => {
+    if (!entry || !name) return;
+    setClips([...entry.clips, newClip(name)]);
+    setSelectedClip(entry.clips.length);
+  };
+  const removeClip = (index: number) => {
+    if (!entry) return;
+    setClips(entry.clips.filter((_, i) => i !== index));
+    setSelectedClip(Math.max(0, Math.min(index, entry.clips.length - 2)));
+  };
+  const moveClip = (index: number, delta: number) => {
+    if (!entry) return;
+    const to = index + delta;
+    if (to < 0 || to >= entry.clips.length) return;
+    const clips = [...entry.clips];
+    [clips[index], clips[to]] = [clips[to], clips[index]];
+    setClips(clips);
+    setSelectedClip(to);
   };
 
   const scrub = (time: number) => {
@@ -1950,7 +1993,7 @@ function AnimationLab() {
   const togglePlay = () => {
     const current = stageRef.current;
     if (!current) return;
-    if (current.playing) current.scrub(shownMoment === "caster" ? (entry?.start ?? 0) : cursors[shownMoment]);
+    if (current.playing) current.scrub(cursors[shownMoment]);
     else current.play();
     setPlaying(current.playing);
   };
@@ -1970,7 +2013,7 @@ function AnimationLab() {
   // modifications, par-dessus sa version actuelle.
   const save = async () => {
     if (unsaved) {
-      const file = ((await fetch("/__dev-file/animationTuning").then((r) => r.json())) ?? {}) as AnimationTuning;
+      const file = normalizeTuning(await fetch("/__dev-file/animationTuning").then((r) => r.json()));
       const tuning = normalized(nestedTuning(rebaseDraft({ base: flatTuning(saved ?? {}), draft: flatTuning(draft) }, flatTuning(file))));
       const response = await fetch("/__dev-file/animationTuning", { method: "POST", body: JSON.stringify(tuning) });
       if (!response.ok) {
@@ -2046,8 +2089,11 @@ function AnimationLab() {
   };
   const unsaved = saved !== null && JSON.stringify(normalized(draft)) !== JSON.stringify(normalized(saved));
 
-  const release = entry ? releaseTime(entry, castTime) : 0;
-  const screenAfter = entry ? (entry.end - (castTime > 0 ? release : entry.start)) / entry.rate : 0;
+  // Animation du geste choisie, et son début à l'écran.
+  const clipShown = entry ? Math.max(0, Math.min(selectedClip, entry.clips.length - 1)) : 0;
+  const currentClip = entry?.clips[clipShown];
+  const clipOffset = entry ? entry.clips.slice(0, clipShown).reduce((sum, clip) => sum + clipDuration(clip), 0) : 0;
+  clipHeadInfo.current = currentClip && shownMoment === "caster" ? { offset: clipOffset, clip: currentClip } : null;
 
   return (
     <div className="anim-viewer">
@@ -2384,10 +2430,11 @@ function AnimationLab() {
               ) : shownMoment === "caster" ? (
                 <>
                   <div className="lab-controls">
+                    <input type="search" placeholder="Filtrer les animations" value={filter} onChange={(e) => setFilter(e.target.value)} />
                     <label>
-                      Animation
-                      <select value={entry.animation} onChange={(e) => chooseAnimation(e.target.value)}>
-                        <option value="">— Aucune animation —</option>
+                      Ajouter
+                      <select value="" onChange={(e) => addClip(e.target.value)}>
+                        <option value="">— une animation à la suite —</option>
                         {animations.map((name) => (
                           <option key={name} value={name}>
                             {name}
@@ -2395,23 +2442,6 @@ function AnimationLab() {
                           </option>
                         ))}
                       </select>
-                    </label>
-                    <input type="search" placeholder="Filtrer les animations" value={filter} onChange={(e) => setFilter(e.target.value)} />
-                    <label className="lab-rate">
-                      Vitesse ×{entry.rate.toFixed(2).replace(".", ",")}
-                      <input
-                        type="range"
-                        min={MIN_RATE}
-                        max={MAX_RATE}
-                        step={0.01}
-                        value={entry.rate}
-                        onChange={(e) => {
-                          const rate = Number(e.target.value);
-                          // Sort incanté : le début reste en place, la suite du geste garde sa longueur.
-                          const shift = castTime > 0 ? castTime * (rate - entry.rate) : 0;
-                          update({ ...entry, rate, end: entry.end + shift });
-                        }}
-                      />
                     </label>
                     <button disabled={sameEntry(tuned, savedEntry)} onClick={revert} title="Revenir au réglage enregistré">
                       Annuler les modifications
@@ -2424,22 +2454,72 @@ function AnimationLab() {
                       Revenir au calage du code
                     </button>
                   </div>
-                  <Timeline
-                    length={length}
+                  <SequenceTimeline
                     axis={casterAxis}
                     castTime={castTime}
                     entry={entry}
+                    selected={clipShown}
+                    onSelect={setSelectedClip}
                     playheadRef={playheadRef}
-                    onChange={update}
                     onScrub={scrub}
                   />
+                  {currentClip ? (
+                    <div className="lab-clip">
+                      <div className="lab-controls">
+                        <label>
+                          Animation {clipShown + 1}
+                          <select value={currentClip.animation} onChange={(e) => chooseClipAnimation(clipShown, e.target.value)}>
+                            {animations.map((name) => (
+                              <option key={name} value={name}>
+                                {name}
+                                {IN_GAME.has(name) ? " ✓" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="lab-rate">
+                          Vitesse ×{currentClip.rate.toFixed(2).replace(".", ",")}
+                          <input
+                            type="range"
+                            min={MIN_RATE}
+                            max={MAX_RATE}
+                            step={0.01}
+                            value={currentClip.rate}
+                            onChange={(e) => setClip(clipShown, { rate: Number(e.target.value) })}
+                          />
+                        </label>
+                        <button disabled={clipShown === 0} onClick={() => moveClip(clipShown, -1)} title="Jouer plus tôt">
+                          ←
+                        </button>
+                        <button disabled={clipShown >= entry.clips.length - 1} onClick={() => moveClip(clipShown, 1)} title="Jouer plus tard">
+                          →
+                        </button>
+                        <button onClick={() => removeClip(clipShown)} title="Retirer cette animation du geste">
+                          Retirer
+                        </button>
+                      </div>
+                      <span className="lab-hint">
+                        Portion jouée de « {currentClip.animation} » : {seconds(clipDuration(currentClip))} à l'écran, de{" "}
+                        {seconds(clipOffset)} à {seconds(clipOffset + clipDuration(currentClip))}
+                      </span>
+                      <ClipTimeline
+                        length={clipLength(currentClip.animation)}
+                        clip={currentClip}
+                        playheadRef={clipHeadRef}
+                        onChange={(next) => setClip(clipShown, { start: next.start, end: next.end })}
+                        onScrub={(clipTime) => scrub(clipOffset + (clipTime - currentClip.start) / currentClip.rate)}
+                      />
+                    </div>
+                  ) : (
+                    <p className="lab-note">Aucune animation : le geste n'a que des effets. Ajoutez une animation pour en jouer une.</p>
+                  )}
                   <EffectsPanel
                     kind="caster"
-                    codeSounds={codeSoundTracks(abilityId, "cast", castTime > 0 ? releaseTime(entry, castTime) : entry.start)}
-                    soundTail={SOUND_TAIL}
+                    codeSounds={codeSoundTracks(abilityId, "cast", releaseTime(abilityId))}
+                    soundTail={0}
                     length={casterAxis}
-                    bounds={[entry.start, entry.end]}
-                    addSpan={[entry.start, castTime > 0 ? releaseTime(entry, castTime) : entry.end]}
+                    bounds={[0, casterAxis]}
+                    addSpan={[0, castTime > 0 ? castTime : Math.max(0.5, sequenceLength(entry))]}
                     effects={entry.effects ?? []}
                     selected={selectedEffect}
                     onSelect={setSelectedEffect}
@@ -2450,16 +2530,8 @@ function AnimationLab() {
                     onEdit={editElement}
                   />
                   <div className="lab-summary">
-                    {castTime > 0 ? (
-                      <>
-                        Début {seconds(entry.start)} · départ du sort {seconds(release)} · fin {seconds(entry.end)} — à l'écran : incantation{" "}
-                        {seconds(castTime)}, puis {seconds(screenAfter)} après le départ du sort
-                      </>
-                    ) : (
-                      <>
-                        Début {seconds(entry.start)} · fin {seconds(entry.end)} — à l'écran : {seconds(screenAfter)}
-                      </>
-                    )}
+                    {entry.clips.length} animation{entry.clips.length > 1 ? "s" : ""} : {seconds(sequenceLength(entry))} à l'écran
+                    {castTime > 0 && <> · départ du sort à {seconds(castTime)} (fin de l'incantation)</>}
                     {!tuned && " · calage actuel du code (pas encore réglé)"}
                   </div>
                 </>
@@ -2531,10 +2603,9 @@ function AnimationLab() {
                   {shownMoment === "impact" && reaction && (
                     <div className="lab-reaction">
                       <span className="lab-hint">Portion jouée de « {reaction.animation} »</span>
-                      <Timeline
+                      <ClipTimeline
                         length={reactionLength}
-                        castTime={0}
-                        entry={reaction}
+                        clip={reaction}
                         playheadRef={reactionHeadRef}
                         onChange={(next) => setReaction({ animation: next.animation, start: next.start, rate: next.rate, end: next.end })}
                         onScrub={(clipTime) => scrub((clipTime - reaction.start) / reaction.rate)}
@@ -2586,26 +2657,21 @@ function AnimationLab() {
   );
 }
 
-type Drag = "move" | "start" | "release" | "end" | "scrub";
+type Drag = "move" | "start" | "end" | "scrub";
 
-// Timeline de l'animation entière. Sort incanté : la fenêtre d'incantation (début → départ du sort, sa longueur
-// suit la vitesse) puis la suite du geste jusqu'à la fin. Compétence instantanée : la portion jouée.
-function Timeline(props: {
+// Portion jouée d'une animation (réaction de la cible, ou une animation du geste du lanceur) : la fenêtre de start à
+// end, sur toute la longueur de l'animation. Les temps sont en secondes dans l'animation.
+function ClipTimeline(props: {
   length: number;
-  castTime: number;
-  entry: AbilityAnimation;
+  clip: TargetReaction;
   playheadRef: RefObject<HTMLDivElement | null>;
-  onChange: (entry: AbilityAnimation) => void;
+  onChange: (clip: TargetReaction) => void;
   onScrub: (time: number) => void;
-  // Longueur affichée (secondes), si elle dépasse l'animation (sons après la fin du geste).
-  axis?: number;
 }) {
-  const { length, castTime, entry, playheadRef, onChange, onScrub } = props;
-  const axis = Math.max(length, props.axis ?? length);
+  const { length, clip, playheadRef, onChange, onScrub } = props;
+  const axis = Math.max(length, 1e-3);
   const trackRef = useRef<HTMLDivElement>(null);
-  const casting = castTime > 0;
-  const release = releaseTime(entry, castTime);
-  const percent = (time: number) => `${(time / Math.max(axis, 1e-3)) * 100}%`;
+  const percent = (time: number) => `${(time / axis) * 100}%`;
   const snap = (time: number) => Math.round(time / SNAP) * SNAP;
 
   const begin = (kind: Drag, event: ReactPointerEvent) => {
@@ -2613,46 +2679,30 @@ function Timeline(props: {
     event.stopPropagation();
     const track = trackRef.current;
     if (!track) return;
-    const width = track.getBoundingClientRect().width;
-    const left = track.getBoundingClientRect().left;
+    const { width, left } = track.getBoundingClientRect();
     const x0 = event.clientX;
-    const e0 = entry;
-    const r0 = release;
+    const c0 = clip;
     const apply = (clientX: number) => {
       const d = snap(((clientX - x0) / width) * axis);
       if (kind === "scrub") {
         onScrub(Math.min(length, snap(((clientX - left) / width) * axis)));
         return;
       }
-      let next = e0;
+      let next: TargetReaction;
       if (kind === "move") {
-        const shift = Math.max(-e0.start, Math.min(d, length - Math.max(r0, e0.end)));
-        next = {
-          ...e0,
-          start: e0.start + shift,
-          end: e0.end + shift,
-          effects: e0.effects?.map((effect) => shiftEffect(effect, shift)),
-        };
-      } else if (kind === "start" && casting) {
-        // Le départ du sort reste en place : la fenêtre s'étire, la vitesse change.
-        const start = Math.min(r0 - castTime * MIN_RATE, Math.max(r0 - castTime * MAX_RATE, 0, e0.start + d));
-        next = { ...e0, start, rate: (r0 - start) / castTime };
+        const shift = Math.max(-c0.start, Math.min(length - c0.end, d));
+        next = { ...c0, start: c0.start + shift, end: c0.end + shift };
       } else if (kind === "start") {
-        next = { ...e0, start: Math.max(0, Math.min(e0.end - SNAP, e0.start + d)) };
-      } else if (kind === "release") {
-        const rate = Math.min(MAX_RATE, Math.max(MIN_RATE, (r0 + d - e0.start) / castTime));
-        next = { ...e0, rate, end: e0.end + (e0.start + castTime * rate - r0) };
+        next = { ...c0, start: Math.max(0, Math.min(c0.end - SNAP, c0.start + d)) };
       } else {
-        next = { ...e0, end: Math.max(casting ? r0 : e0.start + SNAP, Math.min(length, e0.end + d)) };
+        next = { ...c0, end: Math.max(c0.start + SNAP, Math.min(length, c0.end + d)) };
       }
       onChange(next);
       // La pose montrée suit le bord déplacé, ou le pointeur quand on glisse toute la fenêtre.
       const pointer = snap(((clientX - left) / width) * axis);
-      const shown = kind === "end" ? next.end : kind === "release" ? releaseTime(next, castTime) : kind === "move" ? pointer : next.start;
-      onScrub(Math.min(length, shown));
+      onScrub(Math.min(length, kind === "end" ? next.end : kind === "move" ? pointer : next.start));
     };
     if (kind === "scrub") apply(event.clientX);
-    // Un clic sur la fenêtre montre la pose à cet endroit.
     if (kind === "move") onScrub(Math.min(length, snap(((event.clientX - left) / width) * axis)));
     const move = (e: PointerEvent) => apply(e.clientX);
     const up = () => {
@@ -2663,6 +2713,27 @@ function Timeline(props: {
     window.addEventListener("pointerup", up);
   };
 
+  return (
+    <div className="lab-timeline">
+      <div ref={trackRef} className="lab-track" onPointerDown={(e) => begin("scrub", e)}>
+        {ticksOf(axis, percent)}
+        <div
+          className="lab-range lab-range-cast"
+          style={{ left: percent(clip.start), width: percent(clip.end - clip.start) }}
+          onPointerDown={(e) => begin("move", e)}
+          title="Portion jouée : glisser pour la déplacer"
+        >
+          <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin("start", e)} title="Début" />
+          <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin("end", e)} title="Fin" />
+        </div>
+        <div ref={playheadRef} className="lab-playhead" data-length={axis} />
+      </div>
+    </div>
+  );
+}
+
+// Graduations d'une timeline (tous les quarts de seconde, chiffrées à chaque seconde).
+function ticksOf(axis: number, percent: (time: number) => string) {
   const ticks = [];
   for (let t = 0; t <= axis + 1e-6; t += 0.25) {
     const whole = Math.abs(t - Math.round(t)) < 1e-6;
@@ -2672,50 +2743,73 @@ function Timeline(props: {
       </div>,
     );
   }
+  return ticks;
+}
 
+// Geste du lanceur en secondes réelles : ses animations bout à bout (cliquer pour en choisir une), le départ du sort
+// (fin de l'incantation) et ce qui suit.
+function SequenceTimeline(props: {
+  axis: number;
+  castTime: number;
+  entry: AbilityAnimation;
+  selected: number;
+  onSelect: (index: number) => void;
+  playheadRef: RefObject<HTMLDivElement | null>;
+  onScrub: (time: number) => void;
+}) {
+  const { axis, castTime, entry, selected, onSelect, playheadRef, onScrub } = props;
+  const trackRef = useRef<HTMLDivElement>(null);
+  const percent = (time: number) => `${(time / Math.max(axis, 1e-3)) * 100}%`;
+  const snap = (time: number) => Math.round(time / SNAP) * SNAP;
+  const scrubAt = (clientX: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const { width, left } = track.getBoundingClientRect();
+    onScrub(Math.max(0, Math.min(axis, snap(((clientX - left) / width) * axis))));
+  };
+  const begin = (event: ReactPointerEvent) => {
+    event.preventDefault();
+    scrubAt(event.clientX);
+    const move = (e: PointerEvent) => scrubAt(e.clientX);
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  let offset = 0;
+  const blocks = entry.clips.map((clip, index) => {
+    const start = offset;
+    const duration = clipDuration(clip);
+    offset += duration;
+    return (
+      <div
+        key={index}
+        className={`lab-range lab-range-clip ${index === selected ? "lab-range-selected" : ""}`}
+        style={{ left: percent(start), width: percent(duration) }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          onSelect(index);
+          begin(e);
+        }}
+        title={`${clip.animation} : ${seconds(duration)} à l'écran (×${clip.rate.toFixed(2).replace(".", ",")})`}
+      >
+        <span>{clip.animation}</span>
+      </div>
+    );
+  });
   return (
     <div className="lab-timeline">
-      <div ref={trackRef} className="lab-track" onPointerDown={(e) => begin("scrub", e)}>
-        {ticks}
-        {casting ? (
-          <>
-            <div
-              className="lab-range lab-range-cast"
-              style={{ left: percent(entry.start), width: percent(release - entry.start) }}
-              onPointerDown={(e) => begin("move", e)}
-              title="Incantation : glisser pour déplacer la portion jouée"
-            >
-              <span>Incantation {seconds(castTime)}</span>
-              <div
-                className="lab-handle lab-handle-left"
-                onPointerDown={(e) => begin("start", e)}
-                title="Début (étire la fenêtre : change la vitesse)"
-              />
-              <div
-                className="lab-handle lab-handle-right"
-                onPointerDown={(e) => begin("release", e)}
-                title="Départ du sort (change la vitesse)"
-              />
-            </div>
-            <div className="lab-range lab-range-after" style={{ left: percent(release), width: percent(entry.end - release) }}>
-              <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin("end", e)} title="Fin du geste" />
-            </div>
-          </>
-        ) : (
-          <div
-            className="lab-range lab-range-cast"
-            style={{ left: percent(entry.start), width: percent(entry.end - entry.start) }}
-            onPointerDown={(e) => begin("move", e)}
-            title="Portion jouée : glisser pour la déplacer"
-          >
-            <span>Geste</span>
-            <div className="lab-handle lab-handle-left" onPointerDown={(e) => begin("start", e)} title="Début" />
-            <div className="lab-handle lab-handle-right" onPointerDown={(e) => begin("end", e)} title="Fin" />
+      <div ref={trackRef} className="lab-track" onPointerDown={begin}>
+        {ticksOf(axis, percent)}
+        {castTime > 0 && (
+          <div className="lab-range lab-range-casting" style={{ left: 0, width: percent(castTime) }} title="Incantation">
+            <span>Incantation {seconds(castTime)}</span>
           </div>
         )}
-        {axis > length && (
-          <div className="lab-after-clip" style={{ left: percent(length), width: percent(axis - length) }} title="Après la fin de l'animation (sons seulement)" />
-        )}
+        {blocks}
+        <div className="lab-release" style={{ left: percent(castTime) }} title="Départ du sort" />
         <div ref={playheadRef} className="lab-playhead" data-length={axis} />
       </div>
     </div>

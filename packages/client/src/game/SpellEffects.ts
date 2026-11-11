@@ -45,10 +45,9 @@ import { Overlays2D, setOverlayDefs, type OverlayDef } from "./overlays2d";
 import overlays2d from "./overlays2d.json";
 import type { Scenery } from "./abilityEffects";
 import { terrainHeight } from "@arena/shared";
-import { tuningOf, zoneCenterIsTarget, type AnimationTuning } from "./abilityAnimations";
-import animationTuning from "./animationTuning.json";
+import { tuningOf, zoneCenterIsTarget } from "./abilityAnimations";
+import { TUNING } from "./tuning";
 
-const TUNING = animationTuning as unknown as AnimationTuning;
 // Marques au sol réglées sur la page de réglage (elles remplacent celles de départ de même nom).
 setGroundMarkDefs(groundMarks as unknown as Record<string, GroundMarkDef>);
 setObjectDefs(objects3d as unknown as Record<string, ObjectDef>);

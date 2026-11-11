@@ -19,11 +19,10 @@ import type { ParticleFactory, Recipe } from "./particles";
 import { recipeById, setParticleEffectDefs, type ParticleEffectDef } from "./particleDefs";
 import particleEffects from "./particleEffects.json";
 import type { PlayerVisual } from "./PlayerVisual";
-import { hasTunedEffects, type AnimationTuning } from "./abilityAnimations";
+import { hasTunedEffects } from "./abilityAnimations";
 import { AbilityEffectPlayer, type Scenery } from "./abilityEffects";
-import animationTuning from "./animationTuning.json";
+import { TUNING } from "./tuning";
 
-const TUNING = animationTuning as unknown as AnimationTuning;
 // Effets à particules réglés sur la page de réglage (ils remplacent ceux du code de même nom).
 setParticleEffectDefs(particleEffects as unknown as Record<string, ParticleEffectDef>);
 // Effet d'incantation prévu dans le code, sauf si le sort a ses effets réglés sur la page de réglage.
