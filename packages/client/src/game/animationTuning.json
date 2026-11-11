@@ -155,13 +155,13 @@
     "burn": {
       "animation": "Mixamo_2H_Magic_Attack_04",
       "start": 0,
-      "rate": 0.558,
-      "end": 1.35,
+      "rate": 0.55,
+      "end": 1.337,
       "effects": [
         {
           "recipe": "fireBurst",
-          "start": 1.017,
-          "end": 1.333,
+          "start": 1.058,
+          "end": 1.211,
           "anchor": "hands",
           "offset": [
             0,
@@ -171,8 +171,8 @@
         },
         {
           "recipe": "effet4",
-          "start": 0.133,
-          "end": 1.2,
+          "start": 0,
+          "end": 0.745,
           "anchor": "hands",
           "offset": [
             0,
@@ -181,7 +181,7 @@
           ],
           "keys": [
             {
-              "time": 0.667,
+              "time": 0.534,
               "anchor": "hands",
               "offset": [
                 0,
@@ -190,8 +190,48 @@
               ]
             }
           ]
+        },
+        {
+          "type": "sound",
+          "recipe": "EM_FIRE_CAST_01",
+          "start": 0,
+          "end": 1.05,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "jeu:FIREWhsh_Whoosh_Fire_Deep_Growl_Monster_Saturated_Crisp_03",
+          "start": 0.858,
+          "end": 2.934,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
         }
       ],
+      "projectile": {
+        "enabled": false,
+        "path": "straight",
+        "height": 1.5,
+        "turns": 2,
+        "speed": "constant",
+        "from": "feet",
+        "fromOffset": [
+          0,
+          1.1,
+          0
+        ],
+        "to": "chest",
+        "align": false,
+        "effects": []
+      },
       "impact": {
         "reaction": {
           "animation": "Hit_Chest",
