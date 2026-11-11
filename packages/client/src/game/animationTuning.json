@@ -463,28 +463,118 @@
       "end": 2.5,
       "effects": [
         {
-          "recipe": "silencePuff",
-          "start": 1.983,
-          "end": 2.117,
+          "recipe": "mezHalo",
+          "start": 0.783,
+          "end": 2.182,
           "anchor": "hands",
           "offset": [
-            0.5,
+            0,
             0,
             0
           ]
         },
         {
-          "recipe": "speedDust",
-          "start": 0.783,
-          "end": 1.982,
-          "anchor": "hands",
+          "type": "sound",
+          "recipe": "Activate_Crystal",
+          "start": 0,
+          "end": 1.989,
+          "anchor": "chest",
           "offset": [
             0,
             0,
             0
           ]
         }
-      ]
+      ],
+      "projectile": {
+        "enabled": true,
+        "path": "straight",
+        "height": 1.5,
+        "turns": 2,
+        "speed": "constant",
+        "from": "feet",
+        "fromOffset": [
+          0,
+          1.1,
+          0
+        ],
+        "to": "head",
+        "align": false,
+        "effects": [
+          {
+            "recipe": "arcaneTrail",
+            "start": 0,
+            "end": 0.3,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "object",
+            "recipe": "orb",
+            "start": 0,
+            "end": 0.3,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "tint": "#BF73FF",
+            "scale": 0.15
+          },
+          {
+            "type": "sound",
+            "recipe": "jeu:Wind_effects_5",
+            "start": 0,
+            "end": 0.3,
+            "anchor": "chest",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Head",
+          "start": 0,
+          "rate": 1,
+          "end": 0.433
+        },
+        "effects": [
+          {
+            "recipe": "arcaneBurst",
+            "start": 0,
+            "end": 1,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "jeu:Wind_effects_5",
+            "start": 0,
+            "end": 0.834,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "full": true,
+            "skip": 0.3
+          }
+        ]
+      }
     }
   }
 }
