@@ -330,8 +330,11 @@ export class SpellEffects {
   }
 
   // Marques au sol et objets 3D, pour les joueurs d'effets.
+  // Un seul objet, partagé par tous les joueurs d'effets : le jeu y branche ensuite les sons (sounds).
+  private sceneryRef: Scenery | null = null;
   get scenery(): Scenery {
-    return { marks: this.marks, objects: this.objects, overlays: this.overlays };
+    this.sceneryRef ??= { marks: this.marks, objects: this.objects, overlays: this.overlays, sounds: null };
+    return this.sceneryRef;
   }
 
   // Efface les effets passagers en cours (projectiles, impulsions, brûlures…) : la page de réglage relance sa lecture.

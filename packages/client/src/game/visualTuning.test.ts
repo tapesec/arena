@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { getAbility } from "@arena/shared";
 import { canHaveProjectile, statusKindsOf, type AbilityAnimation, type AnimationEffect, type AnimationTuning } from "./abilityAnimations";
 import { BUILTIN_DEFS, CODE_RECIPES } from "./particleDefs";
@@ -11,6 +13,9 @@ import { BUILTIN_MARKS } from "./groundMarks";
 import objects3d from "./objects3d.json";
 import { BUILTIN_OBJECTS } from "./objects3d";
 import overlays2d from "./overlays2d.json";
+import soundCatalog from "../audio/soundCatalog.json";
+import samples from "../audio/samples.json";
+import { SOUNDS } from "../audio/sounds";
 import { BUILTIN_OVERLAYS } from "./overlays2d";
 
 // Les réglages enregistrés depuis animation-lab.html restent cohérents avec le jeu : chaque effet utilisé existe,
@@ -20,6 +25,11 @@ const tuning = animationTuning as unknown as AnimationTuning;
 const known = new Set([...Object.keys(CODE_RECIPES), ...Object.keys(BUILTIN_DEFS), ...Object.keys(particleEffects)]);
 const knownMarks = new Set([...Object.keys(BUILTIN_MARKS), ...Object.keys(groundMarks)]);
 const knownObjects = new Set([...Object.keys(BUILTIN_OBJECTS), ...Object.keys(objects3d)]);
+const knownSounds = new Set([
+  ...(soundCatalog as { name: string }[]).map((s) => s.name),
+  ...Object.keys(samples.groups).map((id) => `jeu:${id}`),
+  ...Object.keys(SOUNDS).map((id) => `jeu:${id}`),
+]);
 const knownOverlays = new Set([...Object.keys(BUILTIN_OVERLAYS), ...Object.keys(overlays2d)]);
 
 function allEffects(entry: AbilityAnimation): [string, AnimationEffect[]][] {
@@ -37,7 +47,8 @@ test("chaque effet utilisé par une compétence existe", () => {
     for (const [abilityId, entry] of Object.entries(entries)) {
       for (const [moment, effects] of allEffects(entry)) {
         for (const effect of effects) {
-          if (effect.type === "overlay") assert.ok(knownOverlays.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'affichage 2D introuvable « ${effect.recipe} »`);
+          if (effect.type === "sound") assert.ok(knownSounds.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise le son introuvable « ${effect.recipe} »`);
+          else if (effect.type === "overlay") assert.ok(knownOverlays.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'affichage 2D introuvable « ${effect.recipe} »`);
           else if (effect.type === "object") assert.ok(knownObjects.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'objet 3D introuvable « ${effect.recipe} »`);
           else if (effect.type === "ground") assert.ok(knownMarks.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise la marque au sol introuvable « ${effect.recipe} »`);
           else assert.ok(known.has(effect.recipe), `${classId}/${abilityId} (${moment}) utilise l'effet introuvable « ${effect.recipe} »`);
@@ -79,5 +90,23 @@ test("les visuels du code nomment des effets qui existent", () => {
     for (const { id } of status.objects ?? []) assert.ok(id in BUILTIN_OBJECTS, `objet du code introuvable : « ${id} »`);
     for (const { id } of status.overlays ?? []) assert.ok(id in BUILTIN_OVERLAYS, `affichage du code introuvable : « ${id} »`);
     for (const { id } of status.marks ?? []) assert.ok(id in BUILTIN_MARKS, `marque du code introuvable : « ${id} »`);
+  }
+});
+
+test("chaque son du catalogue utilisé par une compétence est prêt pour le jeu publié", () => {
+  // public/sounds/tuned/<nom>.m4a : produit par « node scripts/build-sounds.mjs --tuned ».
+  const tuned = fileURLToPath(new URL("../../public/sounds/tuned/", import.meta.url));
+  for (const [classId, entries] of Object.entries(tuning)) {
+    for (const [abilityId, entry] of Object.entries(entries)) {
+      for (const [moment, effects] of allEffects(entry)) {
+        for (const effect of effects) {
+          if (effect.type !== "sound" || effect.recipe.startsWith("jeu:")) continue;
+          assert.ok(
+            existsSync(`${tuned}${effect.recipe}.m4a`),
+            `${classId}/${abilityId} (${moment}) : « ${effect.recipe} » n'est pas converti pour le jeu (node scripts/build-sounds.mjs --tuned)`,
+          );
+        }
+      }
+    }
   }
 });

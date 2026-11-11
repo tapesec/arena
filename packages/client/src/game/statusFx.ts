@@ -204,7 +204,11 @@ export class StatusFx {
   }
 
   dispose() {
-    for (const status of this.statuses.values()) status.anchor.dispose(false, false);
+    for (const status of this.statuses.values()) {
+      // Arrête aussi les sons en boucle des gestes en cours.
+      status.abilityFx.stopAll();
+      status.anchor.dispose(false, false);
+    }
     this.statuses.clear();
   }
 

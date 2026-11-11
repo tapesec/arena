@@ -43,7 +43,11 @@ import {
 import { CharacterAnimator, framesPerSecond, type AnimationInput } from "./game/CharacterAnimator";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile, setProjectileLookup } from "./game/spellFx";
 import { SpellEffects } from "./game/SpellEffects";
-import { codeImpact, codeProjectile, codeStatus, codeZone } from "./game/codeVisuals";
+import { codeImpact, codeProjectile, codeSoundTracks, codeStatus, codeZone } from "./game/codeVisuals";
+import { ABILITY_SOUNDS, type Cue } from "./game/codeSounds";
+import { audio } from "./audio/AudioManager";
+import samples from "./audio/samples.json";
+import { SOUNDS as SYNTH_SOUNDS } from "./audio/sounds";
 import { projectileDirection, projectilePosition } from "./game/projectilePaths";
 import { CreateLines } from "@babylonjs/core/Meshes/Builders/linesBuilder";
 import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
@@ -80,7 +84,7 @@ import {
 } from "./game/overlays2d";
 import { OverlayEditor, OverlayList } from "./overlayLab";
 import soundCatalog from "./audio/soundCatalog.json";
-import { EMPTY_EDITS, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
+import { EMPTY_EDITS, GAME_SOUND, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
 import { SoundEditor, SoundList, SoundPending } from "./soundLab";
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
@@ -255,6 +259,26 @@ class Stage {
     this.projectileFx = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
     // Un état réglé dans le brouillon remplace les particules d'état du code.
     this.codeFx.statuses.isTuned = () => this.entry?.status !== undefined;
+    // Sons des pistes : joués au centre, un peu à gauche ou à droite selon leur place devant la caméra.
+    this.codeFx.scenery.sounds = {
+      play: (recipe, at, { volume, rate, loop }) => {
+        let stopped = false;
+        let handle: { stop(): void } | null = null;
+        audio
+          .playTrack(recipe, { volume, rate, loop, pan: Math.max(-1, Math.min(1, at.x / 6)) })
+          .then((h) => {
+            handle = h;
+            if (stopped) handle?.stop();
+          })
+          .catch(() => undefined);
+        return {
+          stop: () => {
+            stopped = true;
+            handle?.stop();
+          },
+        };
+      },
+    };
     this.zoneDisc = CreateDisc("zone", { radius: 1, tessellation: 64 }, this.scene);
     this.zoneDisc.rotation.x = Math.PI / 2;
     this.zoneMaterial = new StandardMaterial("zone", this.scene);
@@ -583,6 +607,7 @@ class Stage {
     this.zoneFx.stopAll();
     this.sequence = null;
     this.codeFx.clearTransient();
+    cancelCues();
     this.projectileFx.stopAll();
     this.drawPath(false);
     this.zoneDisc.isVisible = false;
@@ -677,7 +702,7 @@ class Stage {
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
     if (this.mode === "scrub" && instance && entry) {
       const time = this.scrubTimes[this.moment];
-      if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time }, true);
+      if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time }, true, true);
       else this.effects.stopAll();
       this.showMoments(this.moment === "caster" || this.moment === "projectile" ? null : time, this.moment);
       // Trajet : le projectile à l'instant montré, et sa ligne.
@@ -709,6 +734,13 @@ class Stage {
       this.codeFx.play(this.abilityId, this.holder, target, tuned);
       if (getAbility(this.abilityId)?.effects.some((effect) => effect.type === "damage")) this.codeFx.magicHit(this.abilityId, target, tuned.impact);
       if (this.abilityId === "bubble") this.codeFx.statuses.bubbleWasApplied(CODE_DUMMY);
+      // Sons du code (comme GameAudio) pour les moments dont les sons ne sont pas réglés.
+      const code = ABILITY_SOUNDS[this.abilityId];
+      const hasSound = (effects: AnimationEffect[] | undefined) => !!effects?.some((effect) => effect.type === "sound");
+      if (code?.cast && !hasSound(entry.effects)) for (const cue of code.cast) playCue(cue, 0);
+      if (code?.impact && !hasSound(entry.impact?.effects)) {
+        for (const cue of code.impact) playCue(cue, isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0);
+      }
     };
     if (cycle.phase === "idle" && cycle.time >= IDLE_PAUSE) {
       cycle.time = 0;
@@ -814,7 +846,14 @@ class Stage {
     projectilePosition(p, from, to, t, seed, this.flightAt);
     projectileDirection(p, from, to, t, seed, this.flightAim);
     this.projectileFx.updateTracks(null, [
-      { id: "projectile", effects: p.effects, time, point: { center: this.flightAt, yaw: 0, aim: p.align ? this.flightAim : null }, ally: true },
+      {
+        id: "projectile",
+        effects: p.effects,
+        time,
+        point: { center: this.flightAt, yaw: 0, aim: p.align ? this.flightAim : null },
+        ally: true,
+        silent: this.mode === "scrub",
+      },
     ]);
   }
 
@@ -890,14 +929,14 @@ class Stage {
       const status = only ? this.statusEffects() : (entry.status ?? []);
       const zoneEffects = only ? this.zoneEffects() : (entry.zone ?? []);
       if ((!only || only === "impact") && time >= 0 && time <= momentLength(impact, entry.impact?.reaction)) {
-        tracks.push({ id: "impact", effects: impact, time, ally: this.targetAlly() });
+        tracks.push({ id: "impact", effects: impact, time, ally: this.targetAlly(), silent: !!only });
       }
       if ((!only || only === "status") && status.length && statusTime !== null && (only || statusTime < this.statusShown)) {
-        tracks.push({ id: "status", effects: status, time: statusTime, ally: this.targetAlly() });
+        tracks.push({ id: "status", effects: status, time: statusTime, ally: this.targetAlly(), silent: !!only });
       }
       if ((!only || only === "zone") && radius && time >= 0) {
         const zone = { center: this.zoneCenter(new Vector3()), yaw: 0, radius };
-        if (zoneEffects.length && (only || time <= momentLength(zoneEffects))) zoneTracks.push({ id: "zone", effects: zoneEffects, time, zone, ally: true });
+        if (zoneEffects.length && (only || time <= momentLength(zoneEffects))) zoneTracks.push({ id: "zone", effects: zoneEffects, time, zone, ally: true, silent: !!only });
         // Le disque de portée en pose figée (en lecture, c'est celui du jeu), plus discret avec des particules.
         if (only) {
           disc = zoneEffects.length ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA;
@@ -939,6 +978,24 @@ function isOffensiveTarget(abilityId: string): boolean {
 
 // Tirage du zigzag dessiné en pose figée (en lecture, chaque vol a le sien, comme en jeu).
 const PATH_SEED = 7;
+
+// Son du code (un « cue » de GameAudio), joué après delay secondes ; annulé si la lecture repart (cancelCues).
+const cueTimers = new Set<ReturnType<typeof setTimeout>>();
+function playCue(cue: Cue, delay: number) {
+  const timer = setTimeout(
+    () => {
+      cueTimers.delete(timer);
+      audio.play(cue.sound, { volume: cue.volume ?? 1, rate: cue.rate ?? 1 });
+    },
+    (delay + (cue.delay ?? 0)) * 1000,
+  );
+  cueTimers.add(timer);
+}
+
+function cancelCues() {
+  for (const timer of cueTimers) clearTimeout(timer);
+  cueTimers.clear();
+}
 
 // Tenue d'une marque sans durée dans l'aperçu de l'atelier (secondes).
 const MARK_HOLD = 2.5;
@@ -1073,6 +1130,9 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
     ...(effect.fitZone && { fitZone: true }),
     ...(effect.tint && { tint: effect.tint }),
     ...(effect.teamColor && { teamColor: true }),
+    ...(effect.volume !== undefined && { volume: round(effect.volume) }),
+    ...(effect.rate !== undefined && { rate: round(effect.rate) }),
+    ...(effect.loop && { loop: true }),
     ...(effect.scale !== undefined && effect.scale !== 1 && { scale: round(effect.scale) }),
   };
 }
@@ -2236,6 +2296,7 @@ function AnimationLab() {
                   <Timeline length={length} castTime={castTime} entry={entry} playheadRef={playheadRef} onChange={update} onScrub={scrub} />
                   <EffectsPanel
                     kind="caster"
+                    codeSounds={codeSoundTracks(abilityId, "cast", castTime > 0 ? releaseTime(entry, castTime) : entry.start)}
                     length={length}
                     bounds={[entry.start, entry.end]}
                     addSpan={[entry.start, castTime > 0 ? releaseTime(entry, castTime) : entry.end]}
@@ -2672,11 +2733,48 @@ const DEFAULT_MARKS: Record<Moment, string> = { caster: "arcaneRunes", projectil
 const DEFAULT_OBJECTS: Record<Moment, string> = { caster: "pulseSphere", projectile: "orb", impact: "slash", status: "iceCrystals", zone: "frostRing" };
 const DEFAULT_OVERLAYS: Record<Moment, string> = { caster: "notes", projectile: "stunStars", impact: "question", status: "zzz", zone: "notes" };
 
-// Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D, ✦ affichage 2D.
+// Sons proposés sur une piste : ceux du jeu (groupes enregistrés et sons rétro), puis le catalogue par pack (une piste
+// découpée y est remplacée par ses morceaux).
+const GAME_TRACK_SOUNDS = [
+  ...Object.entries(samples.groups).map(([id, group]) => ({ id: `${GAME_SOUND}${id}`, label: `${group.label} (${id})` })),
+  ...Object.entries(SYNTH_SOUNDS).map(([id, sound]) => ({ id: `${GAME_SOUND}${id}`, label: `${sound.label} (rétro)` })),
+];
+const CATALOG_PACKS = [...new Set(SOUNDS.map((sound) => sound.pack))].sort((a, b) => a.localeCompare(b));
+
+function soundChoices(filter: string, current: string): { group: string; options: { id: string; label: string }[] }[] {
+  const text = filter.trim().toLowerCase();
+  const keep = (option: { id: string; label: string }) => !text || option.label.toLowerCase().includes(text) || option.id === current;
+  const groups = [{ group: "Sons du jeu", options: GAME_TRACK_SOUNDS.filter(keep) }];
+  for (const pack of CATALOG_PACKS) {
+    const options = SOUNDS.filter((sound) => sound.pack === pack && !sound.split)
+      .map((sound) => ({ id: sound.name, label: sound.name }))
+      .filter(keep);
+    if (options.length) groups.push({ group: pack, options });
+  }
+  return groups.filter((group) => group.options.length);
+}
+
+function soundLabel(recipe: string): string {
+  if (recipe.startsWith(GAME_SOUND)) return GAME_TRACK_SOUNDS.find((sound) => sound.id === recipe)?.label ?? recipe;
+  return recipe;
+}
+
+// Son rétro (généré) : ni vitesse ni boucle.
+function isSynthSound(recipe: string): boolean {
+  return recipe.startsWith(GAME_SOUND) && recipe.slice(GAME_SOUND.length) in SYNTH_SOUNDS;
+}
+
+// Durée d'un son (secondes), pour la longueur de sa barre ; 1 s si inconnue (sons du jeu).
+function soundDuration(recipe: string): number {
+  return SOUNDS.find((sound) => sound.name === recipe)?.duration ?? 1;
+}
+
+// Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D, ✦ affichage 2D, ♪ son.
 function effectLabel(effect: AnimationEffect): string {
   if (effect.type === "ground") return `◎ ${groundMarkLabel(effect.recipe)}`;
   if (effect.type === "object") return `◆ ${objectLabel(effect.recipe)}`;
   if (effect.type === "overlay") return `✦ ${overlayLabel(effect.recipe)}`;
+  if (effect.type === "sound") return `♪ ${soundLabel(effect.recipe)}`;
   return particleEffectLabel(effect.recipe);
 }
 
@@ -2698,6 +2796,8 @@ function EffectsPanel(props: {
   bounds: [number, number];
   addSpan: [number, number];
   effects: AnimationEffect[];
+  // Geste du lanceur : sons du code au départ du sort, à reprendre en pistes.
+  codeSounds?: AnimationEffect[];
   selected: number;
   onSelect: (index: number) => void;
   cursor: number;
@@ -2705,7 +2805,8 @@ function EffectsPanel(props: {
   onChange: (effects: AnimationEffect[]) => void;
   onScrub: (time: number) => void;
 }) {
-  const { kind, length, bounds, addSpan, effects, selected, onSelect, cursor, playing, onChange, onScrub } = props;
+  const { kind, length, bounds, addSpan, effects, codeSounds, selected, onSelect, cursor, playing, onChange, onScrub } = props;
+  const [soundFilter, setSoundFilter] = useState("");
   const tracks = useRef<(HTMLDivElement | null)[]>([]);
   const [selectedKey, setSelectedKey] = useState(0);
   const percent = (time: number) => `${(time / Math.max(length, 1e-3)) * 100}%`;
@@ -2756,7 +2857,14 @@ function EffectsPanel(props: {
     });
   };
 
-  const add = (type?: "ground" | "object" | "overlay") => {
+  const add = (type?: "ground" | "object" | "overlay" | "sound") => {
+    if (type === "sound") {
+      const recipe = `${GAME_SOUND}spellGeneric`;
+      onChange([...effects, { type, recipe, start: addSpan[0], end: addSpan[0] + soundDuration(recipe), anchor: "chest", offset: [0, 0, 0] }]);
+      onSelect(effects.length);
+      setSelectedKey(0);
+      return;
+    }
     const ground = type === "ground";
     const created: AnimationEffect = {
       ...(type && { type }),
@@ -2821,6 +2929,15 @@ function EffectsPanel(props: {
         <button onClick={() => add("ground")}>+ Marque au sol</button>
         <button onClick={() => add("object")}>+ Objet 3D</button>
         <button onClick={() => add("overlay")}>+ Affichage 2D</button>
+        <button onClick={() => add("sound")}>+ Son</button>
+        {codeSounds && codeSounds.length > 0 && !effects.some((effect) => effect.type === "sound") && (
+          <button
+            onClick={() => onChange([...effects, ...codeSounds])}
+            title="Ajoute en pistes les sons que le code joue au départ du sort (une piste de son réglée ici les remplace)"
+          >
+            + Sons du code ({codeSounds.map((effect) => soundLabel(effect.recipe)).join(", ")})
+          </button>
+        )}
       </div>
       {effects.map((effect, i) => (
         <div
@@ -2857,6 +2974,80 @@ function EffectsPanel(props: {
       ))}
       {current && place && (
         <div className="lab-controls lab-effect-controls">
+          {current.type === "sound" ? (
+            <>
+              <input type="search" placeholder="Chercher un son" value={soundFilter} onChange={(e) => setSoundFilter(e.target.value)} />
+              <label>
+                Son
+                <select
+                  value={current.recipe}
+                  onChange={(e) => replace(index, { ...current, recipe: e.target.value, end: current.loop ? current.end : current.start + soundDuration(e.target.value) })}
+                >
+                  {soundChoices(soundFilter, current.recipe).map(({ group, options }) => (
+                    <optgroup key={group} label={group}>
+                      {options.map(({ id, label }) => (
+                        <option key={id} value={id}>
+                          {label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+              <button onClick={() => void audio.playTrack(current.recipe, { volume: current.volume ?? 1, rate: current.rate ?? 1 })}>▶</button>
+              <label className="lab-offset" title="Double-clic : volume normal">
+                Volume ×{(current.volume ?? 1).toFixed(2).replace(".", ",")}
+                <input
+                  type="range"
+                  min={0}
+                  max={2}
+                  step={0.05}
+                  value={current.volume ?? 1}
+                  onChange={(e) => replace(index, { ...current, volume: Number(e.target.value) })}
+                  onDoubleClick={() => {
+                    const next: AnimationEffect = { ...current };
+                    delete next.volume;
+                    replace(index, next);
+                  }}
+                />
+              </label>
+              {!isSynthSound(current.recipe) && (
+              <>
+              <label className="lab-offset" title="Plus lent = plus grave · double-clic : vitesse normale">
+                Vitesse ×{(current.rate ?? 1).toFixed(2).replace(".", ",")}
+                <input
+                  type="range"
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  value={current.rate ?? 1}
+                  onChange={(e) => replace(index, { ...current, rate: Number(e.target.value) })}
+                  onDoubleClick={() => {
+                    const next: AnimationEffect = { ...current };
+                    delete next.rate;
+                    replace(index, next);
+                  }}
+                />
+              </label>
+              <label className="lab-check" title="Rejoué en boucle jusqu'à la fin de sa barre (sinon joué une fois en entier)">
+                <input
+                  type="checkbox"
+                  checked={!!current.loop}
+                  onChange={(e) => {
+                    const next: AnimationEffect = { ...current, loop: e.target.checked };
+                    if (!e.target.checked) delete next.loop;
+                    replace(index, next);
+                  }}
+                />
+                En boucle jusqu'à la fin de la barre
+              </label>
+              </>
+              )}
+              <span className="lab-hint">{seconds(current.start)} → {current.loop ? (current.untilEnd ? "fin de l'état" : seconds(current.end)) : "fin du son"}</span>
+              <button onClick={() => onChange(effects.filter((_, j) => j !== index))}>Supprimer le son</button>
+            </>
+          ) : (
+          <>
           <label>
             {current.type === "ground" ? "Marque au sol" : current.type === "object" ? "Objet 3D" : current.type === "overlay" ? "Affichage 2D" : "Effet"}
             <select value={current.recipe} onChange={(e) => replace(index, { ...current, recipe: e.target.value })}>
@@ -3011,6 +3202,8 @@ function EffectsPanel(props: {
           </span>
           {key && <button onClick={removeKey}>Supprimer le point clé</button>}
           <button onClick={() => onChange(effects.filter((_, j) => j !== index))}>Supprimer l'effet</button>
+          </>
+          )}
         </div>
       )}
     </div>

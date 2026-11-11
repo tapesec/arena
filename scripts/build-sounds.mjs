@@ -2,6 +2,8 @@
 // d'après le catalogue packages/client/src/audio/samples.json : public/sounds/<groupe>_<n>.m4a.
 // Chaque son est passé en mono, ramené au même niveau de crête, puis encodé en AAC (lu par tous les navigateurs).
 // Usage : node scripts/build-sounds.mjs (outil requis : afconvert, fourni avec macOS)
+//         node scripts/build-sounds.mjs --tuned : seulement les sons des pistes de compétences réglées (public/sounds/tuned),
+//         sans réencoder le reste (l'encodeur ne donne pas deux fois exactement le même fichier).
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -35,14 +37,33 @@ const MUSIC_BITRATE = 160000;
 
 const { groups } = JSON.parse(readFileSync(CATALOG, "utf8"));
 const work = mkdtempSync(path.join(tmpdir(), "arena-sounds-"));
-rmSync(OUT, { recursive: true, force: true });
+// Sons du catalogue utilisés par les pistes des compétences réglées (animationTuning.json, page de réglage) :
+// public/sounds/tuned/<nom>.m4a, lus par AudioManager.playTrack. Mono, au volume d'origine (tel qu'écouté et réglé
+// sur la page de réglage) ; un morceau d'une piste découpée est coupé à sa portion ; un son « intact » (licence
+// CC BY-ND) est seulement changé de format (ni mono, ni découpe).
+const tuning = JSON.parse(readFileSync(path.join(ROOT, "packages/client/src/game/animationTuning.json"), "utf8"));
+const soundCatalog = JSON.parse(readFileSync(path.join(ROOT, "packages/client/src/audio/soundCatalog.json"), "utf8"));
+const used = new Set();
+for (const entries of Object.values(tuning)) {
+  for (const entry of Object.values(entries)) {
+    const tracks = [entry.effects, entry.projectile?.effects, entry.impact?.effects, entry.status, entry.zone];
+    for (const effect of tracks.flat()) if (effect?.type === "sound" && !effect.recipe.startsWith("jeu:")) used.add(effect.recipe);
+  }
+}
+// Vérifiés avant de toucher à quoi que ce soit (un nom inconnu arrêterait sinon le script à mi-chemin).
+for (const name of used) {
+  if (!soundCatalog.some((s) => s.name === name)) throw new Error(`Son de compétence introuvable dans le catalogue : ${name}`);
+}
+
+const TUNED_ONLY = process.argv.includes("--tuned");
+if (!TUNED_ONLY) rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
 let total = 0;
 let count = 0;
 // Nombre de variantes de chaque groupe, lu par le jeu (public/sounds/index.json).
 const index = {};
-for (const [id, group] of Object.entries(groups)) {
+for (const [id, group] of TUNED_ONLY ? [] : Object.entries(groups)) {
   const files = group.files.flatMap(expand);
   if (!files.length) throw new Error(`${id} : aucun fichier pour ${group.files.join(", ")}`);
   files.forEach((file, i) => {
@@ -58,8 +79,33 @@ for (const [id, group] of Object.entries(groups)) {
   index[id] = files.length;
   console.log(`${id.padEnd(20)} ${files.length} variante(s)`);
 }
+const TUNED_OUT = path.join(OUT, "tuned");
+rmSync(TUNED_OUT, { recursive: true, force: true });
+mkdirSync(TUNED_OUT, { recursive: true });
+for (const name of used) {
+  const sound = soundCatalog.find((s) => s.name === name);
+  const input = path.join(SOURCE, sound.file);
+  const target = path.join(TUNED_OUT, `${name}.m4a`);
+  if (sound.intact) {
+    execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", "128000", input, target]);
+  } else {
+    // Mono, au volume d'origine (comme l'écoute de la page de réglage, où son volume a été réglé).
+    const wav = path.join(work, "tuned.wav");
+    execFileSync("afconvert", ["-f", "WAVE", "-d", `LEI16@${SAMPLE_RATE}`, "-c", "1", input, wav]);
+    if (sound.parent) slice(wav, sound.start, sound.end);
+    execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", String(BITRATE), wav, target]);
+  }
+  total += statSync(target).size;
+  count++;
+  console.log(`son de compétence ${name}`);
+}
+
 rmSync(work, { recursive: true, force: true });
-writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index, null, 2) + "\n");
+if (!TUNED_ONLY) writeFileSync(path.join(OUT, "index.json"), JSON.stringify(index, null, 2) + "\n");
+if (TUNED_ONLY) {
+  console.log(`${count} son(s) de compétence, ${(total / 1024).toFixed(0)} Ko`);
+  process.exit(0);
+}
 console.log(`${count} fichiers, ${(total / 1024 / 1024).toFixed(2)} Mo`);
 
 rmSync(MUSIC_OUT, { recursive: true, force: true });
@@ -87,6 +133,19 @@ function soundEnd(input) {
   for (let i = offset; i < offset + length; i += 2) if (Math.abs(buffer.readInt16LE(i)) > SILENCE * 32768) last = i;
   rmSync(work, { recursive: true, force: true });
   return (last - offset) / 2 / SAMPLE_RATE + 0.05;
+}
+
+// Garde la portion start → end (secondes) d'un WAV 16 bits mono (morceau d'une piste découpée).
+function slice(wavFile, start, end) {
+  const buffer = readFileSync(wavFile);
+  const { offset, length } = dataChunk(buffer);
+  const from = Math.min(length, Math.floor(start * SAMPLE_RATE) * 2);
+  const to = Math.min(length, Math.floor(end * SAMPLE_RATE) * 2);
+  const data = buffer.subarray(offset + from, offset + to);
+  const header = Buffer.from(buffer.subarray(0, offset));
+  header.writeUInt32LE(data.length, offset - 4);
+  header.writeUInt32LE(header.length + data.length - 8, 4);
+  writeFileSync(wavFile, Buffer.concat([header, data]));
 }
 
 // Motif "dossier/nom*.ext" : les fichiers du dossier qui correspondent, triés.

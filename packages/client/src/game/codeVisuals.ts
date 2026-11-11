@@ -3,6 +3,8 @@ import { statusKindsOf, type AnimationEffect, type ProjectileVisual } from "./ab
 import { ONE_SHOT_DURATION } from "./particleDefs";
 import { objectDef } from "./objects3d";
 import { overlayDef } from "./overlays2d";
+import { ABILITY_SOUNDS } from "./codeSounds";
+import { GAME_SOUND } from "../audio/soundEdits";
 import { groundMarkDef } from "./groundMarks";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME } from "./spellFx";
 
@@ -153,6 +155,8 @@ export function codeImpact(abilityId: string): { effects: AnimationEffect[]; ext
     if (shape === "melee") effects.push({ ...object("meleeFlash", BODY_CENTER), tint });
     else if (shape) effects.push({ ...object("pulseSphere", BODY_CENTER), tint });
   }
+  // Sons d'arrivée du code, en pistes (« jeu:<son> »).
+  effects.push(...codeSoundTracks(abilityId, "impact", 0));
   // Sort de dégâts : la cible brûle ou se couvre de givre un instant.
   const school = ability?.school;
   if (school && !OWN_AFFLICTION.has(abilityId) && ability.effects.some((effect) => effect.type === "damage")) {
@@ -187,6 +191,20 @@ export function codeProjectile(abilityId: string): ProjectileVisual {
     effects.push({ type: "object", recipe: "orb", start: 0, end: PROJECTILE_TRAVEL_TIME, anchor: "feet", offset: [0, 0, 0], tint: fx.color.toHexString(), scale: core });
   }
   return { ...base, enabled: true, effects };
+}
+
+// Sons du code d'une compétence (au lancement ou à l'arrivée) en pistes de sons, à partir de l'instant at.
+export function codeSoundTracks(abilityId: string, moment: "cast" | "impact", at: number): AnimationEffect[] {
+  return (ABILITY_SOUNDS[abilityId]?.[moment] ?? []).map((cue) => ({
+    type: "sound" as const,
+    recipe: `${GAME_SOUND}${cue.sound}`,
+    start: at + (cue.delay ?? 0),
+    end: at + (cue.delay ?? 0) + 1,
+    anchor: "feet" as const,
+    offset: [0, BODY_CENTER, 0] as [number, number, number],
+    ...(cue.volume !== undefined && { volume: cue.volume }),
+    ...(cue.rate !== undefined && { rate: cue.rate }),
+  }));
 }
 
 // Ce que le code joue sur la zone d'effet (à la taille de la zone).

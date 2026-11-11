@@ -141,6 +141,8 @@ export class Game {
     this.characterAssets.preload();
     this.fog = new FogOfWar(this.scene);
     this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
+    // Les pistes de sons des compétences réglées passent par l'audio du jeu (spatialisé).
+    this.spellEffects.scenery.sounds = this.gameAudio.sink;
 
     this.createEnvironment();
     this.createTargetMarker();

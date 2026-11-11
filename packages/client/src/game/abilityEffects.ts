@@ -14,6 +14,12 @@ export interface Scenery {
   marks: GroundMarks | null;
   objects: Objects3D | null;
   overlays?: Overlays2D | null;
+  sounds?: SoundSink | null;
+}
+
+// Joue le son d'une piste, à un endroit (le jeu l'atténue avec la distance) ; rend de quoi l'arrêter.
+export interface SoundSink {
+  play(recipe: string, at: Vector3, options: { volume: number; rate: number; loop: boolean }): { stop(): void } | null;
 }
 
 // Effets à particules d'une compétence (réglés sur animation-lab.html) : portés par le lanceur pendant son geste,
@@ -125,7 +131,12 @@ export interface EffectTrack {
   point?: { center: Vector3; yaw: number; aim: Vector3 | null };
   // Celui qui porte ces effets est dans le camp du joueur (pour les effets « couleur du camp »).
   ally?: boolean;
+  // Sans les sons (pose figée de la page de réglage).
+  silent?: boolean;
 }
+
+// Écart de vitesse tiré au hasard à chaque lecture d'un son (un même son ne sonne jamais deux fois pareil).
+const SOUND_RATE_JITTER = 0.05;
 
 // Couleurs des camps, vues par le joueur : le sien en bleu, l'adversaire en rouge (comme les tenues et le Rempart).
 export const TEAM_COLORS = { ally: "#2878ff", enemy: "#eb2d14" };
@@ -166,6 +177,9 @@ interface Run {
   mark: GroundMark | null;
   object: PlacedObject | null;
   overlay: PlacedOverlay | null;
+  sound: { stop(): void } | null;
+  // Son lancé en boucle (relevé au départ : décocher la boucle ensuite ne doit pas l'empêcher de s'arrêter).
+  looping: boolean;
 }
 
 // Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
@@ -179,8 +193,11 @@ export class AbilityEffectPlayer {
   ) {}
 
   // Geste de compétence en cours du personnage.
-  update(character: CharacterInstance | null, playing: PlayingAbility | null, ally?: boolean) {
-    this.updateTracks(character, playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time, ally }] : []);
+  update(character: CharacterInstance | null, playing: PlayingAbility | null, ally?: boolean, silent = false) {
+    this.updateTracks(
+      character,
+      playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time, ally, silent }] : [],
+    );
   }
 
   updateTracks(character: CharacterInstance | null, tracks: readonly EffectTrack[]) {
@@ -192,15 +209,22 @@ export class AbilityEffectPlayer {
         if (!isActive(effect, track.time)) return;
         // Couleur imposée : celle du camp de celui qui porte l'effet, sinon la teinte réglée.
         const tint = effect.teamColor && track.ally !== undefined ? TEAM_COLORS[track.ally ? "ally" : "enemy"] : effect.tint;
-        const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}:${tint ?? ""}:${effect.scale ?? 1}`;
+        const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}:${tint ?? ""}:${effect.scale ?? 1}${track.silent ? ":muet" : ""}`;
         active.add(key);
         let run = this.running.get(key);
         const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
         if (!run) {
-          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null };
+          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, looping: false };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
-          if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
+          if (effect.type === "sound") {
+            // Pas de son en pose figée (page de réglage) : il repartirait à chaque instant montré.
+            if (!track.silent) {
+              const rate = (effect.rate ?? 1) * (1 + (Math.random() * 2 - 1) * SOUND_RATE_JITTER);
+              run.sound = this.scenery.sounds?.play(effect.recipe, run.at, { volume: effect.volume ?? 1, rate, loop: !!effect.loop }) ?? null;
+              run.looping = !!effect.loop;
+            }
+          } else if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
           else if (effect.type === "overlay") run.overlay = this.scenery.overlays?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
           else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
           else {
@@ -235,6 +259,8 @@ export class AbilityEffectPlayer {
     run.mark?.stop();
     run.object?.stop();
     run.overlay?.stop();
+    // Un son joué une fois va jusqu'au bout ; un son en boucle s'arrête avec sa barre.
+    if (run.looping) run.sound?.stop();
     if (run.system) {
       // Les dernières particules restent où elles sont, au lieu de suivre le personnage.
       run.system.emitter = run.at.clone();

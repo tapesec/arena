@@ -13,6 +13,10 @@ export interface SoundEdits {
 
 export const EMPTY_EDITS: SoundEdits = { rejected: [], cuts: {} };
 
+// Préfixe d'un son du jeu (groupe enregistré ou son généré) sur une piste de compétence ; sans préfixe, un son du
+// catalogue.
+export const GAME_SOUND = "jeu:";
+
 // Mêmes choix (quel que soit l'ordre des clés et des sons retirés).
 export function sameEdits(a: SoundEdits, b: SoundEdits): boolean {
   const key = (e: SoundEdits) =>

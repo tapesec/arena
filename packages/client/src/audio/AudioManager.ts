@@ -1,6 +1,7 @@
 import { ZZFX } from "zzfx";
 import samples from "./samples.json";
 import { SOUNDS, type SoundId } from "./sounds";
+import { GAME_SOUND } from "./soundEdits";
 
 // Groupe de sons enregistrés (voir samples.json).
 export type SampleId = keyof typeof samples.groups;
@@ -64,6 +65,7 @@ export class AudioManager {
   private muted: boolean;
   private variantCounts: Promise<Record<string, number>> | null = null;
   private samples = new Map<string, Promise<Variant[]>>();
+  private catalogSounds = new Map<string, Promise<AudioBuffer | null>>();
   private lastVariant = new Map<string, number>();
   // Morceau en cours : chacun a son propre volume, pour les fondus enchaînés. Sous le volume général.
   private music: MusicTrack | null = null;
@@ -162,6 +164,71 @@ export class AudioManager {
     this.activeSounds++;
     source.onended = () => this.activeSounds--;
     source.start(now, variant.start);
+  }
+
+  // Son d'une piste de compétence (page de réglage) : un groupe du jeu (« jeu:<id> », son généré ou enregistré) ou un
+  // son du catalogue (son nom). Rend de quoi l'arrêter (son en boucle), ou null s'il n'est pas joué.
+  async playTrack(recipe: string, options: PlayOptions & { loop?: boolean } = {}): Promise<{ stop(): void } | null> {
+    const { volume = 1, pan = 0, rate = 1, loop = false } = options;
+    if (this.muted || volume <= 0.01) return null;
+    if (recipe.startsWith(GAME_SOUND)) {
+      const id = recipe.slice(GAME_SOUND.length);
+      if (id in SOUNDS) {
+        this.playSynth(id as SoundId, options);
+        return null;
+      }
+      const variants = await this.loadSample(id).catch(() => [] as Variant[]);
+      const variant = variants[Math.floor(Math.random() * variants.length)];
+      return variant ? this.startBuffer(recipe, variant.buffer, variant.start, volume, pan, rate, loop) : null;
+    }
+    const buffer = await this.loadCatalogSound(recipe);
+    return buffer ? this.startBuffer(recipe, buffer, soundStart(buffer), volume, pan, rate, loop) : null;
+  }
+
+  // Mêmes limites que les autres sons : nombre de sons simultanés, et pas deux fois le même son au même instant (un
+  // sort de zone qui touche huit joueurs ne joue son impact qu'une fois).
+  private startBuffer(id: string, buffer: AudioBuffer, start: number, volume: number, pan: number, rate: number, loop: boolean) {
+    if (this.activeSounds >= MAX_CONCURRENT_SOUNDS) return null;
+    const now = this.context.currentTime;
+    if (now - (this.lastPlayed.get(id) ?? -Infinity) < MIN_REPEAT_INTERVAL) return null;
+    this.lastPlayed.set(id, now);
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    source.loop = loop;
+    source.playbackRate.value = rate;
+    const gain = this.context.createGain();
+    gain.gain.value = volume;
+    const panner = new StereoPannerNode(this.context, { pan: Math.max(-1, Math.min(1, pan)) });
+    source.connect(panner).connect(gain).connect(this.master);
+    this.activeSounds++;
+    source.onended = () => this.activeSounds--;
+    source.start(this.context.currentTime, start);
+    return {
+      stop: () => {
+        // Fondu bref plutôt qu'une coupure sèche.
+        gain.gain.setTargetAtTime(0, this.context.currentTime, 0.05);
+        source.stop(this.context.currentTime + 0.25);
+      },
+    };
+  }
+
+  // Son du catalogue : en développement, le fichier d'écoute de la page des sons ; sinon, celui converti pour le
+  // jeu par scripts/build-sounds.mjs (sons utilisés par les compétences réglées).
+  private loadCatalogSound(name: string): Promise<AudioBuffer | null> {
+    let loading = this.catalogSounds.get(name);
+    if (!loading) {
+      const url = import.meta.env.DEV ? `/dev-sounds/${encodeURIComponent(name)}.m4a` : `${SOUNDS_URL}tuned/${encodeURIComponent(name)}.m4a`;
+      loading = fetch(url)
+        .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(String(response.status)))))
+        .then((data) => this.context.decodeAudioData(data))
+        .catch(() => {
+          // Un échec n'est pas gardé : on réessaiera.
+          this.catalogSounds.delete(name);
+          return null;
+        });
+      this.catalogSounds.set(name, loading);
+    }
+    return loading;
   }
 
   // Charge toutes les variantes d'un groupe (une seule fois).

@@ -82,7 +82,7 @@ export type EffectAnchor = "hands" | "hand_r" | "hand_l" | "weapon" | "head" | "
 export interface AnimationEffect {
   // Effet à particules (par défaut), marque au sol ou objet 3D (recipe : nom de la marque ou de l'objet, voir
   // groundMarks.ts et objects3d.ts).
-  type?: "ground" | "object" | "overlay";
+  type?: "ground" | "object" | "overlay" | "sound";
   recipe: string;
   start: number;
   end: number;
@@ -96,6 +96,11 @@ export interface AnimationEffect {
   // Marque au sol ou objet 3D : couleur imposée (sinon, celle de la marque ou de l'objet), et taille (× la sienne).
   tint?: string;
   scale?: number;
+  // Son : volume (1 : normal), vitesse de lecture (plus lente = plus grave ; un léger écart au hasard s'y ajoute),
+  // et en boucle jusqu'à la fin de sa barre (sinon joué une fois en entier).
+  volume?: number;
+  rate?: number;
+  loop?: boolean;
   // Marque, objet ou affichage 2D : couleur du camp de celui qui le porte (bleu dans le camp du joueur, rouge chez
   // l'adversaire), à la place de tint.
   teamColor?: boolean;

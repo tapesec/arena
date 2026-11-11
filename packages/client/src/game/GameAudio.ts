@@ -5,52 +5,20 @@ import type { CameraController } from "./CameraController";
 import { isGrass } from "./environment";
 import type { PlayerVisual } from "./PlayerVisual";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
+import { ABILITY_SOUNDS, type Cue } from "./codeSounds";
+import { tuningOf, type AnimationTuning } from "./abilityAnimations";
+import animationTuning from "./animationTuning.json";
+import type { SoundSink } from "./abilityEffects";
 
-// Un son à jouer, avec son réglage : volume, vitesse de lecture (plus lente = plus grave) et délai en secondes.
-interface Cue {
-  sound: SoundName;
-  volume?: number;
-  rate?: number;
-  delay?: number;
-}
-
-// Sons d'une compétence : au lancement (sur le lanceur) et à l'arrivée (sur la cible).
-const ABILITY_SOUNDS: Record<string, { cast?: Cue[]; impact?: Cue[] }> = {
-  firebolt: { cast: [{ sound: "spellFire" }], impact: [{ sound: "spellFire", rate: 0.8, volume: 0.9 }] },
-  blast: { cast: [{ sound: "spellFire", rate: 0.7 }] },
-  freeze: { impact: [{ sound: "spellIce" }] },
-  aoeRoot: { impact: [{ sound: "spellIceSnap" }] },
-  mez: { impact: [{ sound: "spellFantasy2" }] },
-  aoeMez: { impact: [{ sound: "spellFantasy2" }] },
-  concentration: { cast: [{ sound: "spellGeneric" }] },
-  frostbolt: { impact: [{ sound: "ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03" }] },
-  nearSight: { impact: [{ sound: "Wind_effects_5" }] },
-  burn: { impact: [{ sound: "FIREWhsh_Whoosh_Fire_Deep_Growl_Monster_Saturated_Crisp_03" }] },
-  frostNova: { cast: [{ sound: "ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03", rate: 0.85 }] },
-  // Pas encore de son choisi dans le tableur : un son de sort générique, plus grave.
-  arcanePower: { cast: [{ sound: "spellGeneric", rate: 0.7 }, { sound: "spellFantasy3", volume: 0.7 }] },
-  bubble: { cast: [{ sound: "spellFantasy1", rate: 1.3 }] },
-  silence: { impact: [{ sound: "spellFantasy1" }] },
-  heal: { impact: [{ sound: "Healing_Full" }] },
-  groupHeal: { cast: [{ sound: "spellHeal" }] },
-  instantHeal: { impact: [{ sound: "spellHeal" }] },
-  buffHp: { impact: [{ sound: "spellFantasy0" }] },
-  buffStrength: { impact: [{ sound: "spellFantasy0" }] },
-  purify: { impact: [{ sound: "spellFantasy4" }] },
-  resurrect: { impact: [{ sound: "spellFantasy3" }] },
-  speedSong: { cast: [{ sound: "song" }] },
-  guard: { impact: [{ sound: "hitWood" }] },
-  intercept: { impact: [{ sound: "hitWood" }] },
-  shieldBash: { impact: [{ sound: "hitWoodHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
-  evasion: { cast: [{ sound: "evade" }] },
-  rage: { cast: [{ sound: "crit" }] },
-  // Gardien. Charge et Rempart : sons d'impact et de sort en attendant mieux (pas de galop ni de grondement).
-  charge: { cast: [{ sound: "swingHeavy", rate: 0.8 }] },
-  chargeImpact: { impact: [{ sound: "hitPlateHeavy" }, { sound: "hitSoftHeavy", volume: 0.8 }] },
-  taunt: { cast: [{ sound: "provocation_face_me_coward_1" }] },
-  rallyCry: { cast: [{ sound: "ralliement_hold_the_line" }] },
-  rampart: { cast: [{ sound: "hitPlateHeavy", rate: 0.8 }, { sound: "spellFire", rate: 0.6, volume: 0.7 }] },
+const TUNING = animationTuning as unknown as AnimationTuning;
+// Le moment (geste du lanceur, impact) de la compétence a ses sons réglés sur la page de réglage : ceux du code ne
+// sont plus joués pour ce moment.
+const tunedSounds = (abilityId: string, moment: "caster" | "impact") => {
+  const entry = tuningOf(TUNING, abilityId);
+  const effects = moment === "caster" ? entry?.effects : entry?.impact?.effects;
+  return !!effects?.some((effect) => effect.type === "sound");
 };
+
 // Attaques au corps à corps : le geste de l'arme chez l'attaquant, puis le coup qui porte chez la cible.
 const MELEE_ABILITIES = new Set(["backstab", "flankStrike", "powerStrike", "cripplingStrike"]);
 // Le coup porte juste après le geste.
@@ -147,8 +115,8 @@ export class GameAudio {
     if (MELEE_ABILITIES.has(abilityId) && caster) this.swing(caster);
     const sounds = ABILITY_SOUNDS[abilityId];
     if (!sounds) return;
-    if (sounds.cast && caster) this.playCues(sounds.cast, caster.root.position);
-    if (sounds.impact && target) {
+    if (sounds.cast && caster && !tunedSounds(abilityId, "caster")) this.playCues(sounds.cast, caster.root.position);
+    if (sounds.impact && target && !tunedSounds(abilityId, "impact")) {
       // Un sort à projectile résonne à son arrivée.
       const delay = isProjectile(abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
       this.playCues(sounds.impact, target.root.position, delay);
@@ -320,6 +288,44 @@ export class GameAudio {
       action();
     }, seconds * 1000);
     this.timers.add(timer);
+  }
+
+  // Sons des pistes de compétence réglées (voir AbilityEffectPlayer), placés dans l'espace comme les autres.
+  readonly sink: SoundSink = {
+    play: (recipe, at, { volume, rate, loop }) => {
+      const { attenuation, pan } = this.placement(at);
+      let stopped = false;
+      let handle: { stop(): void } | null = null;
+      audio
+        .playTrack(recipe, { volume: volume * attenuation, pan, rate, loop })
+        .then((h) => {
+          handle = h;
+          if (stopped) handle?.stop();
+        })
+        .catch(() => undefined);
+      return {
+        stop: () => {
+          stopped = true;
+          handle?.stop();
+        },
+      };
+    },
+  };
+
+  // Atténuation avec la distance à la caméra, et position à l'écran (-1 à gauche, 1 à droite).
+  private placement(position: Vector3): { attenuation: number; pan: number } {
+    const listener = this.camera.camera.target;
+    const dx = position.x - listener.x;
+    const dz = position.z - listener.z;
+    const distance = Math.hypot(dx, dz);
+    const attenuation =
+      distance <= FULL_VOLUME_DISTANCE
+        ? 1
+        : Math.max(MIN_DISTANT_VOLUME, 1 - (distance - FULL_VOLUME_DISTANCE) / FADE_DISTANCE);
+    // Composante horizontale à l'écran : projection sur l'axe "droite" de la caméra.
+    const view = this.camera.camera.getViewMatrix().m;
+    const screenX = dx * view[0] + dz * view[8];
+    return { attenuation, pan: screenX / PAN_WIDTH };
   }
 
   // Son placé dans l'espace : à gauche ou à droite selon l'écran, plus faible au loin.
