@@ -2334,7 +2334,7 @@ function AnimationLab() {
                 <span className="lab-tabs">
                   {moments.map((m) => (
                     <button key={m} className={m === shownMoment ? "lab-tab-active" : ""} onClick={() => setMoment(m)}>
-                      {momentLabel(m, abilityId)}
+                      {m === "projectile" && !(entry.projectile ? entry.projectile.enabled : isProjectile(abilityId)) ? "Trajet (aucun)" : momentLabel(m, abilityId)}
                       {m !== "caster" && entry[m] !== undefined && " ●"}
                     </button>
                   ))}
@@ -2523,6 +2523,7 @@ function AnimationLab() {
                       />
                     </div>
                   )}
+                  {(shownMoment !== "projectile" || entry.projectile?.enabled) && (
                   <div className="lab-timeline lab-moment-axis">
                     <MomentAxis
                       length={momentAxis}
@@ -2537,6 +2538,7 @@ function AnimationLab() {
                       ]}
                     />
                   </div>
+                  )}
                   {(shownMoment !== "projectile" || entry.projectile?.enabled) && (
                   <EffectsPanel
                     kind={shownMoment}
