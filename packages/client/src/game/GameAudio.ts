@@ -11,12 +11,12 @@ import animationTuning from "./animationTuning.json";
 import type { SoundSink } from "./abilityEffects";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
-// Le moment (geste du lanceur, impact) de la compétence a ses sons réglés sur la page de réglage : ceux du code ne
-// sont plus joués pour ce moment.
+// Les sons du code d'un moment ne sont plus joués quand ce moment est réglé sur la page de réglage : un impact réglé
+// (comme ses visuels), ou un geste du lanceur qui a au moins une piste de son.
 const tunedSounds = (abilityId: string, moment: "caster" | "impact") => {
   const entry = tuningOf(TUNING, abilityId);
-  const effects = moment === "caster" ? entry?.effects : entry?.impact?.effects;
-  return !!effects?.some((effect) => effect.type === "sound");
+  if (moment === "impact") return entry?.impact !== undefined;
+  return !!entry?.effects?.some((effect) => effect.type === "sound");
 };
 
 // Attaques au corps à corps : le geste de l'arme chez l'attaquant, puis le coup qui porte chez la cible.

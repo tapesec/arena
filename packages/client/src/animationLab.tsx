@@ -746,7 +746,7 @@ class Stage {
       const code = ABILITY_SOUNDS[this.abilityId];
       const hasSound = (effects: AnimationEffect[] | undefined) => !!effects?.some((effect) => effect.type === "sound");
       if (code?.cast && !hasSound(entry.effects)) for (const cue of code.cast) playCue(cue, 0);
-      if (code?.impact && !hasSound(entry.impact?.effects)) {
+      if (code?.impact && entry.impact === undefined) {
         for (const cue of code.impact) playCue(cue, isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0);
       }
     };
@@ -1690,7 +1690,7 @@ function AnimationLab() {
     for (const [abilityId, sounds] of Object.entries(ABILITY_SOUNDS)) {
       const entry = tuningOf(draft, abilityId);
       if (!hasSound(entry?.effects)) for (const cue of sounds.cast ?? []) addGroup(cue.sound, `${abilityName(abilityId)} (lancement, code)`);
-      if (!hasSound(entry?.impact?.effects)) for (const cue of sounds.impact ?? []) addGroup(cue.sound, `${abilityName(abilityId)} (impact, code)`);
+      if (entry?.impact === undefined) for (const cue of sounds.impact ?? []) addGroup(cue.sound, `${abilityName(abilityId)} (impact, code)`);
     }
     for (const entries of Object.values(draft)) {
       for (const [abilityId, entry] of Object.entries(entries)) {
@@ -2539,6 +2539,7 @@ function AnimationLab() {
                   {(shownMoment !== "projectile" || entry.projectile?.enabled) && (
                   <EffectsPanel
                     kind={shownMoment}
+                    codeSounds={shownMoment === "impact" ? codeSoundTracks(abilityId, "impact", 0) : undefined}
                     length={momentAxis}
                     bounds={[0, shownMoment === "status" ? momentAxis : momentAxis]}
                     addSpan={[0, shownMoment === "status" ? statusShown : shownMoment === "projectile" ? PROJECTILE_TRAVEL_TIME : 0.6]}
@@ -2925,7 +2926,7 @@ function EffectsPanel(props: {
   bounds: [number, number];
   addSpan: [number, number];
   effects: AnimationEffect[];
-  // Geste du lanceur : sons du code au départ du sort, à reprendre en pistes.
+  // Sons du code du moment (départ du sort pour le geste, arrivée pour l'impact), à reprendre en pistes.
   codeSounds?: AnimationEffect[];
   // Un son peut dépasser la portion de tant (secondes) : après la fin du geste.
   soundTail?: number;
@@ -3068,7 +3069,7 @@ function EffectsPanel(props: {
         {codeSounds && codeSounds.length > 0 && !effects.some((effect) => effect.type === "sound") && (
           <button
             onClick={() => onChange([...effects, ...codeSounds])}
-            title="Ajoute en pistes les sons que le code joue au départ du sort (une piste de son réglée ici les remplace)"
+            title="Ajoute en pistes les sons que le code joue à ce moment (ils ne sont plus joués autrement une fois le moment réglé)"
           >
             + Sons du code ({codeSounds.map((effect) => soundLabel(effect.recipe)).join(", ")})
           </button>
