@@ -50,8 +50,8 @@
         {
           "type": "sound",
           "recipe": "jeu:spellFire",
-          "start": 1.8,
-          "end": 3.217,
+          "start": 1.417,
+          "end": 2.834,
           "anchor": "feet",
           "offset": [
             0,
@@ -229,34 +229,22 @@
       ]
     },
     "concentration": {
-      "animation": "Spell_Simple_Shoot",
+      "animation": "",
       "start": 0,
       "rate": 1,
-      "end": 0.5,
+      "end": 0.066,
       "effects": [
         {
-          "recipe": "chargeStreak",
-          "start": 0.017,
-          "end": 0.5,
-          "anchor": "hands",
-          "offset": [
-            0,
-            0.38,
-            1.33
-          ]
-        },
-        {
           "type": "sound",
-          "recipe": "jeu:hit33",
-          "start": 0.017,
-          "end": 2.017,
+          "recipe": "healspell1",
+          "start": 0,
+          "end": 3.066,
           "anchor": "feet",
           "offset": [
             0,
             1.1,
             0
-          ],
-          "full": true
+          ]
         }
       ]
     },

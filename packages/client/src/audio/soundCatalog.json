@@ -510,6 +510,204 @@
   "duration": 1.08
  },
  {
+  "name": "Crystallize_02",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/Crystallize_02.wav",
+  "duration": 2.21
+ },
+ {
+  "name": "Crystallize_06",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/Crystallize_06.wav",
+  "duration": 2.1
+ },
+ {
+  "name": "Crystallize_14",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/Crystallize_14.wav",
+  "duration": 1.86
+ },
+ {
+  "name": "Crystallize_loop_08",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/Crystallize_loop_08.wav",
+  "duration": 15.5
+ },
+ {
+  "name": "forst_nova_short_01",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/forst_nova_short_01.wav",
+  "duration": 1.53
+ },
+ {
+  "name": "forst_nova_short_05",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/forst_nova_short_05.wav",
+  "duration": 1.16
+ },
+ {
+  "name": "forst_nova_short_08",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/forst_nova_short_08.wav",
+  "duration": 1.37
+ },
+ {
+  "name": "freezing_gush_01",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/freezing_gush_01.wav",
+  "duration": 3.76
+ },
+ {
+  "name": "freezing_gush_08",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/freezing_gush_08.wav",
+  "duration": 4.68
+ },
+ {
+  "name": "freezing_gush_16",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/freezing_gush_16.wav",
+  "duration": 2.63
+ },
+ {
+  "name": "frozen_armor_03",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/frozen_armor_03.wav",
+  "duration": 3
+ },
+ {
+  "name": "frozen_armor_10",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/frozen_armor_10.wav",
+  "duration": 2.52
+ },
+ {
+  "name": "frozen_armor_12",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/frozen_armor_12.wav",
+  "duration": 2.51
+ },
+ {
+  "name": "frozen_wall_08",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/frozen_wall_08.wav",
+  "duration": 2.49
+ },
+ {
+  "name": "frozen_wall_09",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/frozen_wall_09.wav",
+  "duration": 1.98
+ },
+ {
+  "name": "glacial_spikes_08",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/glacial_spikes_08.wav",
+  "duration": 2.07
+ },
+ {
+  "name": "ice_blade_07",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_blade_07.wav",
+  "duration": 3.69
+ },
+ {
+  "name": "ice_blade_08",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_blade_08.wav",
+  "duration": 2.17
+ },
+ {
+  "name": "ice_blade_09",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_blade_09.wav",
+  "duration": 3.18
+ },
+ {
+  "name": "ice_blast_04",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_blast_04.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "ice_bolt_01",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_bolt_01.wav",
+  "duration": 2.68
+ },
+ {
+  "name": "ice_bolt_07",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_bolt_07.wav",
+  "duration": 1.59
+ },
+ {
+  "name": "ice_bolt_21",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_bolt_21.wav",
+  "duration": 1.87
+ },
+ {
+  "name": "ice_casting_14",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_casting_14.wav",
+  "duration": 3.43
+ },
+ {
+  "name": "Ice_casting_55",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/Ice_casting_55.wav",
+  "duration": 1.54
+ },
+ {
+  "name": "Ice_casting_58",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/Ice_casting_58.wav",
+  "duration": 1.36
+ },
+ {
+  "name": "ice_teleport_in_02",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_teleport_in_02.wav",
+  "duration": 1.51
+ },
+ {
+  "name": "ice_teleport_in_04",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_teleport_in_04.wav",
+  "duration": 1.23
+ },
+ {
+  "name": "ice_teleport_out_02",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_teleport_out_02.wav",
+  "duration": 1.91
+ },
+ {
+  "name": "ice_teleport_out_04",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_teleport_out_04.wav",
+  "duration": 1.59
+ },
+ {
+  "name": "ice_whoosh_09",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_whoosh_09.wav",
+  "duration": 3.17
+ },
+ {
+  "name": "ice_whoosh_16",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_whoosh_16.wav",
+  "duration": 2.55
+ },
+ {
+  "name": "ice_whoosh_22",
+  "pack": "Frost Mage SFX",
+  "file": "Frost Mage SFX/ice_whoosh_22.wav",
+  "duration": 2.49
+ },
+ {
   "name": "hit01",
   "pack": "hits",
   "file": "hits/hit01.mp3.flac",
