@@ -9,6 +9,43 @@ import { ABILITY_SOUNDS, type Cue } from "./codeSounds";
 import { tuningOf, type AnimationTuning } from "./abilityAnimations";
 import animationTuning from "./animationTuning.json";
 import type { SoundSink } from "./abilityEffects";
+import {
+  ABSORB_SOUND,
+  ALERTS,
+  BLOCK_SOUND,
+  CAST_SOUND_RANGE,
+  CAST_START_SOUND,
+  CAST_START_VOLUME_OTHERS,
+  CAST_START_VOLUME_SELF,
+  CONTROL_ALERTS,
+  EVADE_SOUND,
+  FADE_DISTANCE,
+  FULL_VOLUME_DISTANCE,
+  HEALED_INTERVAL,
+  HEALED_VOLUME,
+  HEARTBEAT_INTERVAL,
+  HEAVY_HIT,
+  HIT,
+  HIT_DELAY,
+  LOW_HEALTH_RATIO,
+  MELEE_ABILITIES,
+  MIN_DISTANT_VOLUME,
+  PAIN_CHANCE,
+  PAIN_INTERVAL,
+  PAN_WIDTH,
+  READY_SOUND_MIN_COOLDOWN,
+  RUN_SPEED,
+  RUN_STRIDE,
+  STEP_RANGE,
+  STEP_SOUNDS,
+  STEP_VOLUME_OTHERS,
+  STEP_VOLUME_SELF,
+  SWINGS,
+  SWING_VOLUME,
+  VOICES,
+  VOICE_VOLUME,
+  WALK_STRIDE,
+} from "./commonSounds";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
 // Les sons du code d'un moment ne sont plus joués quand ce moment est réglé sur la page de réglage : un impact réglé
@@ -18,71 +55,6 @@ const tunedSounds = (abilityId: string, moment: "caster" | "impact") => {
   if (moment === "impact") return entry?.impact !== undefined;
   return !!entry?.effects?.some((effect) => effect.type === "sound");
 };
-
-// Attaques au corps à corps : le geste de l'arme chez l'attaquant, puis le coup qui porte chez la cible.
-const MELEE_ABILITIES = new Set(["backstab", "flankStrike", "powerStrike", "cripplingStrike"]);
-// Le coup porte juste après le geste.
-const HIT_DELAY = 0.15;
-// Un critique (et une attaque dans le dos) sonne plus grave et plus fort.
-const HEAVY_HIT: Cue = { sound: "hit", rate: 0.8, volume: 1.3 };
-const HIT: Cue = { sound: "hit" };
-
-// Geste de l'arme, selon la classe : épée du Gardien, dagues et bâtons plus légers.
-const SWINGS: Record<string, SoundName> = {
-  gardien: "swingSword",
-  lame: "swingMelee",
-  arcaniste: "swingHeavy",
-  pretre: "swingHeavy",
-  barde: "swingMelee",
-};
-
-// Voix des personnages : trois hommes, et une voix de femme différente pour l'Arcaniste et la Prêtre.
-// Pas de cri de mort de femme dans les packs : leur cri de douleur, plus grave et plus fort.
-interface Voice {
-  pain: SoundName;
-  death: Cue;
-  healed?: SoundName;
-}
-const MALE: Voice = { pain: "malePain", death: { sound: "maleDeath" } };
-const VOICES: Record<string, Voice> = {
-  gardien: MALE,
-  lame: MALE,
-  barde: MALE,
-  arcaniste: { pain: "female1Pain", death: { sound: "female1Pain", rate: 0.85, volume: 1.3 }, healed: "female1Healed" },
-  pretre: { pain: "female2Pain", death: { sound: "female2Pain", rate: 0.85, volume: 1.3 }, healed: "female2Healed" },
-};
-const VOICE_VOLUME = 0.7;
-// En 8v8, un personnage touché ne crie pas à chaque coup : au plus une fois par intervalle, et pas toujours.
-const PAIN_INTERVAL = 1.5;
-const PAIN_CHANCE = 0.5;
-const HEALED_INTERVAL = 4;
-
-// Pas : longueur d'une foulée en course et en marche (une foulée = un bruit de pas), seuil entre les deux.
-const RUN_STRIDE = 2.5;
-const WALK_STRIDE = 1;
-const RUN_SPEED = 2.5;
-const STEP_VOLUME_SELF = 0.35;
-const STEP_VOLUME_OTHERS = 0.22;
-// Les pas des autres ne s'entendent qu'à proximité.
-const STEP_RANGE = 18;
-
-// Contrôles subis par le joueur local : alerte prioritaire.
-const CONTROL_ALERTS: Record<string, SoundName> = { mez: "mezzed", root: "rooted", stun: "hitSoftHeavy" };
-
-// Atténuation avec la distance à la caméra : plein volume jusqu'à FULL_VOLUME_DISTANCE, puis décroissance.
-const FULL_VOLUME_DISTANCE = 12;
-const FADE_DISTANCE = 45;
-const MIN_DISTANT_VOLUME = 0.15;
-// Écart horizontal (en mètres, vu de la caméra) qui donne un son entièrement à gauche ou à droite.
-const PAN_WIDTH = 25;
-
-// Les débuts d'incantation des autres joueurs ne s'entendent qu'à proximité.
-const CAST_SOUND_RANGE = 20;
-
-const LOW_HEALTH_RATIO = 0.3;
-const HEARTBEAT_INTERVAL = 1.4;
-// Seules les compétences à longue recharge signalent leur retour.
-const READY_SOUND_MIN_COOLDOWN = 20;
 
 // Suivi d'un joueur pour ses pas et sa voix.
 interface Tracked {
@@ -139,7 +111,7 @@ export class GameAudio {
         if (event.killed) {
           const voice = VOICES[target.state.classId];
           if (voice) this.playCues([{ ...voice.death, volume: (voice.death.volume ?? 1) * VOICE_VOLUME }], position, 0, isSelf);
-          if (isSelf) audio.play("death", { priority: true });
+          if (isSelf) audio.play(ALERTS.death, { priority: true });
         } else this.pain(target, isSelf);
         break;
       }
@@ -147,13 +119,13 @@ export class GameAudio {
         this.healed(target);
         break;
       case "blocked":
-        this.playCues([{ sound: "bouclier_blocage_sourd" }], position, melee ? HIT_DELAY : 0);
+        this.playCues([{ sound: BLOCK_SOUND }], position, melee ? HIT_DELAY : 0);
         break;
       case "evaded":
-        this.playAt("evade", position);
+        this.playAt(EVADE_SOUND, position);
         break;
       case "absorbed":
-        this.playAt("absorb", position);
+        this.playAt(ABSORB_SOUND, position);
         break;
       case "cc":
         if (isSelf && CONTROL_ALERTS[event.detail ?? ""]) audio.play(CONTROL_ALERTS[event.detail!], { priority: true });
@@ -162,13 +134,13 @@ export class GameAudio {
   }
 
   onInterrupt(event: InterruptEvent) {
-    if (event.casterId === this.selfId) audio.play("interrupted", { priority: true });
+    if (event.casterId === this.selfId) audio.play(ALERTS.interrupted, { priority: true });
   }
 
   // Signale le retour d'une compétence à longue recharge.
   onCooldown(duration: number) {
     if (duration < READY_SOUND_MIN_COOLDOWN) return;
-    this.later(() => audio.play("abilityReady", { priority: true }), duration);
+    this.later(() => audio.play(ALERTS.abilityReady, { priority: true }), duration);
   }
 
   update(dt: number, players: Iterable<PlayerVisual>, self: PlayerVisual | undefined, phase: MatchPhase, timeLeft: number, winner: number) {
@@ -178,8 +150,8 @@ export class GameAudio {
       const casting = player.isAlive ? player.state.castAbility : "";
       const previous = this.castingByPlayer.get(player.sessionId) ?? "";
       if (casting && casting !== previous) {
-        if (player === self) this.playAt("castStart", player.root.position, 0.6);
-        else if (this.distanceToListener(player.root.position) < CAST_SOUND_RANGE) this.playAt("castStart", player.root.position, 0.25);
+        if (player === self) this.playAt(CAST_START_SOUND, player.root.position, CAST_START_VOLUME_SELF);
+        else if (this.distanceToListener(player.root.position) < CAST_SOUND_RANGE) this.playAt(CAST_START_SOUND, player.root.position, CAST_START_VOLUME_OTHERS);
       }
       this.castingByPlayer.set(player.sessionId, casting);
       this.footsteps(player, player === self, dt);
@@ -189,7 +161,7 @@ export class GameAudio {
     this.heartbeatTimer -= dt;
     const lowHealth = self?.isAlive && self.state.hp / self.state.maxHp < LOW_HEALTH_RATIO;
     if (lowHealth && this.heartbeatTimer <= 0) {
-      audio.play("lowHealth", { priority: true });
+      audio.play(ALERTS.lowHealth, { priority: true });
       this.heartbeatTimer = HEARTBEAT_INTERVAL;
     }
 
@@ -212,7 +184,7 @@ export class GameAudio {
     tracked.stride = 0;
     if (!isSelf && this.distanceToListener(player.root.position) > STEP_RANGE) return;
     const onPlaza = Math.hypot(x - PLAZA.x, z - PLAZA.z) < PLAZA.radius;
-    const sound: SoundName = onPlaza ? "stepStone" : isGrass(x, z, 0) ? "stepGrass" : "stepDirt";
+    const sound: SoundName = onPlaza ? STEP_SOUNDS.stone : isGrass(x, z, 0) ? STEP_SOUNDS.grass : STEP_SOUNDS.dirt;
     this.playAt(sound, player.root.position, isSelf ? STEP_VOLUME_SELF : STEP_VOLUME_OTHERS);
   }
 
@@ -229,7 +201,7 @@ export class GameAudio {
   // Geste de l'arme de l'attaquant.
   private swing(attacker: PlayerVisual) {
     const sound = SWINGS[attacker.state.classId];
-    if (sound) this.playAt(sound, attacker.root.position, 0.8);
+    if (sound) this.playAt(sound, attacker.root.position, SWING_VOLUME);
   }
 
   // Cri de douleur, pas à chaque coup.
@@ -249,19 +221,19 @@ export class GameAudio {
     const now = performance.now() / 1000;
     if (!voice?.healed || now - tracked.lastHealed < HEALED_INTERVAL) return;
     tracked.lastHealed = now;
-    this.playAt(voice.healed, target.root.position, VOICE_VOLUME * 0.7);
+    this.playAt(voice.healed, target.root.position, VOICE_VOLUME * HEALED_VOLUME);
   }
 
   // Compte à rebours des 3 dernières secondes de préparation, début du combat, victoire ou défaite.
   private updatePhase(self: PlayerVisual | undefined, phase: MatchPhase, timeLeft: number, winner: number) {
     if (phase === "preparation") {
       const second = Math.ceil(timeLeft);
-      if (second <= 3 && second > 0 && second !== this.lastCountdown) audio.play("countdown", { priority: true });
+      if (second <= 3 && second > 0 && second !== this.lastCountdown) audio.play(ALERTS.countdown, { priority: true });
       this.lastCountdown = second;
     }
     if (phase !== this.lastPhase) {
-      if (phase === "fighting" && this.lastPhase === "preparation") audio.play("fightStart", { priority: true });
-      if (phase === "ended" && self) audio.play(winner === self.state.team ? "jingleWin" : "jingleLose", { priority: true });
+      if (phase === "fighting" && this.lastPhase === "preparation") audio.play(ALERTS.fightStart, { priority: true });
+      if (phase === "ended" && self) audio.play(winner === self.state.team ? ALERTS.win : ALERTS.lose, { priority: true });
       this.lastPhase = phase;
     }
   }

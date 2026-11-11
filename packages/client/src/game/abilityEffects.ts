@@ -138,7 +138,7 @@ export interface EffectTrack {
 }
 
 // Écart de vitesse tiré au hasard à chaque lecture d'un son (un même son ne sonne jamais deux fois pareil).
-const SOUND_RATE_JITTER = 0.05;
+export const SOUND_RATE_JITTER = 0.05;
 
 // Couleurs des camps, vues par le joueur : le sien en bleu, l'adversaire en rouge (comme les tenues et le Rempart).
 export const TEAM_COLORS = { ally: "#2878ff", enemy: "#eb2d14" };

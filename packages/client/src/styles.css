@@ -2018,3 +2018,34 @@ body,
   display: block;
   color: #9be37f;
 }
+
+.common-sounds section {
+  margin-bottom: 18px;
+}
+
+.common-sounds h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.common-sounds table {
+  border-collapse: collapse;
+}
+
+.common-sounds td {
+  padding: 3px 12px 3px 0;
+  vertical-align: top;
+}
+
+.common-sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+}
+
+.common-sounds ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  opacity: 0.85;
+}

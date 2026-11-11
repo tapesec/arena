@@ -4,6 +4,7 @@ import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { CLASS_BADGES } from "./game/classBadges";
+import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
 export function App() {
@@ -52,9 +53,9 @@ function useMusic(phase: string | undefined) {
   }, [unlocked]);
   useEffect(() => {
     if (!unlocked) return;
-    if (phase === "preparation" || phase === "ended") void audio.playMusic("lastEncounter", "soft");
-    else if (phase === "fighting") void audio.playMusic("lastEncounter", "normal");
-    else void audio.playMusic("woodlandFantasy", "normal");
+    if (phase === "preparation" || phase === "ended") void audio.playMusic(MUSIC.match, "soft");
+    else if (phase === "fighting") void audio.playMusic(MUSIC.match, "normal");
+    else void audio.playMusic(MUSIC.menu, "normal");
   }, [phase, unlocked]);
 }
 
@@ -69,7 +70,7 @@ function HomeScreen() {
         onClick={() => {
           // Premier clic : le navigateur autorise alors le son.
           audio.unlock();
-          audio.play("click");
+          audio.play(UI_SOUNDS.click);
           joinGame();
         }}
       >
@@ -202,7 +203,7 @@ function ClassSelectScreen() {
             key={c.id}
             className={`class-card ${myClass === c.id ? "class-card-selected" : ""}`}
             onClick={() => {
-              audio.play("classSelect");
+              audio.play(UI_SOUNDS.classSelect);
               actions?.selectClass(c.id);
             }}
           >
@@ -267,7 +268,7 @@ function EndScreen() {
       <button
         className="primary-button"
         onClick={() => {
-          audio.play("click");
+          audio.play(UI_SOUNDS.click);
           joinGame();
         }}
       >

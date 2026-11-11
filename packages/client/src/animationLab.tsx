@@ -87,6 +87,7 @@ import { OverlayEditor, OverlayList } from "./overlayLab";
 import soundCatalog from "./audio/soundCatalog.json";
 import { EMPTY_EDITS, GAME_SOUND, gameGroupIdsUsing, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
 import { SoundEditor, SoundList, SoundPending, soundPlayer } from "./soundLab";
+import { CommonSoundsPane } from "./commonSoundsLab";
 
 // L'éditeur a sa propre sourdine : celle du jeu (même adresse, donc même stockage) ne le coupe pas.
 audio.useMutedKey("arena.lab.muted");
@@ -128,7 +129,7 @@ const SOUNDS = soundCatalog as CatalogSound[];
 type OverlayDefs = Record<string, OverlayDef>;
 type MarkDefs = Record<string, GroundMarkDef>;
 type ObjectDefs = Record<string, ObjectDef>;
-type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons";
+type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons" | "communs";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -2071,6 +2072,9 @@ function AnimationLab() {
           <button className={tab === "sons" ? "lab-tab-active" : ""} onClick={() => setTab("sons")}>
             Sons
           </button>
+          <button className={tab === "communs" ? "lab-tab-active" : ""} onClick={() => setTab("communs")}>
+            Sons communs
+          </button>
         </span>
         <button onClick={toggleMuted} title={muted ? "Rétablir le son de l'éditeur" : "Couper le son de l'éditeur (le jeu garde son propre réglage)"}>
           {muted ? "🔇 Son coupé" : "🔊 Son"}
@@ -2204,8 +2208,9 @@ function AnimationLab() {
             <SoundPending catalog={SOUNDS} saved={soundsSaved} draft={soundsDraft} />
           </div>
         )}
-        {/* La scène reste montée (son moteur), cachée sur l'onglet des sons. */}
-        <div className="anim-stage" style={tab === "sons" ? { display: "none" } : undefined}>
+        {tab === "communs" && <CommonSoundsPane />}
+        {/* La scène reste montée (son moteur), cachée sur les onglets des sons. */}
+        <div className="anim-stage" style={tab === "sons" || tab === "communs" ? { display: "none" } : undefined}>
           <canvas ref={canvasRef} className="anim-canvas" />
           <div ref={labelsRef} className="anim-labels">
             <span className="lab-fx-tag" style={{ display: "none" }} />

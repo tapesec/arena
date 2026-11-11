@@ -9,9 +9,9 @@ export type SampleId = keyof typeof samples.groups;
 export type SoundName = SoundId | SampleId;
 
 // Au-delà de ce nombre de sons en cours, les sons ordinaires sont ignorés (les alertes passent toujours).
-const MAX_CONCURRENT_SOUNDS = 20;
+export const MAX_CONCURRENT_SOUNDS = 20;
 // Un même son n'est pas rejoué plus souvent que ça (en secondes) : évite l'effet "mitraillette" en 8v8.
-const MIN_REPEAT_INTERVAL = 0.06;
+export const MIN_REPEAT_INTERVAL = 0.06;
 
 const VOLUME_KEY = "arena.volume";
 const MUTED_KEY = "arena.muted";
@@ -19,7 +19,7 @@ const MUTED_KEY = "arena.muted";
 // Sons enregistrés (voir samples.json et scripts/build-sounds.mjs) : un groupe = plusieurs variantes.
 const SOUNDS_URL = "/sounds/";
 // Écart de vitesse de lecture tiré au hasard, pour qu'une même variante ne sonne jamais deux fois pareil.
-const RATE_JITTER = 0.06;
+export const RATE_JITTER = 0.06;
 // En dessous de ce niveau, le début d'un son est du silence (ajouté par l'encodeur AAC) : il est sauté.
 const SILENCE = 0.002;
 
@@ -27,7 +27,7 @@ const SILENCE = 0.002;
 const MUSIC_URL = "/music/";
 // Volume de la musique : doux pendant la préparation, normal en combat et dans les menus (sous les bruitages).
 export type MusicLevel = "soft" | "normal";
-const MUSIC_LEVELS: Record<MusicLevel, number> = { soft: 0.18, normal: 0.5 };
+export const MUSIC_LEVELS: Record<MusicLevel, number> = { soft: 0.18, normal: 0.5 };
 // Durée des fondus (changement de volume, ou d'un morceau à l'autre).
 const MUSIC_FADE = 2;
 
