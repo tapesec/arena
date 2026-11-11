@@ -1571,7 +1571,7 @@ function AnimationLab() {
     return [...Object.keys(BUILTIN_MARKS), ...created.sort()];
   }, [marksSaved, marksDraft]);
   const markBase = marksDraft[markId] ?? BUILTIN_MARKS[markId] ?? null;
-  const markDef = useMemo(() => (markBase ? { ...DEFAULT_MARK, ...markBase } : null), [markBase]);
+  const markDef = useMemo(() => (markBase ? { ...DEFAULT_MARK, ...BUILTIN_MARKS[markId], ...markBase } : null), [markBase, markId]);
   const markStatus = (id: string): EffectStatus => {
     const d = marksDraft[id];
     const s = marksSaved?.[id];
@@ -1604,7 +1604,10 @@ function AnimationLab() {
     return [...Object.keys(BUILTIN_OVERLAYS), ...created.sort()];
   }, [overlaysSaved, overlaysDraft]);
   const overlayBase = overlaysDraft[overlayId] ?? BUILTIN_OVERLAYS[overlayId] ?? null;
-  const overlayDefShown = useMemo(() => (overlayBase ? { ...DEFAULT_OVERLAY, ...overlayBase } : null), [overlayBase]);
+  const overlayDefShown = useMemo(
+    () => (overlayBase ? { ...DEFAULT_OVERLAY, ...BUILTIN_OVERLAYS[overlayId], ...overlayBase } : null),
+    [overlayBase, overlayId],
+  );
   const overlayStatus = (id: string): EffectStatus => {
     const d = overlaysDraft[id];
     const s = overlaysSaved?.[id];
@@ -1637,7 +1640,10 @@ function AnimationLab() {
     return [...Object.keys(BUILTIN_OBJECTS), ...created.sort()];
   }, [objectsSaved, objectsDraft]);
   const objectBase = objectsDraft[objectId] ?? BUILTIN_OBJECTS[objectId] ?? null;
-  const objectDefShown = useMemo(() => (objectBase ? { ...DEFAULT_OBJECT, ...objectBase } : null), [objectBase]);
+  const objectDefShown = useMemo(
+    () => (objectBase ? { ...DEFAULT_OBJECT, ...BUILTIN_OBJECTS[objectId], ...objectBase } : null),
+    [objectBase, objectId],
+  );
   const objectStatus = (id: string): EffectStatus => {
     const d = objectsDraft[id];
     const s = objectsSaved?.[id];

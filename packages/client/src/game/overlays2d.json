@@ -1,1 +1,32 @@
-{}
+{
+  "question": {
+    "label": "Point d'interrogation",
+    "text": "?",
+    "bold": true,
+    "color": "#ffffff",
+    "outline": "#000000",
+    "outlineWidth": 0.08,
+    "alpha": 1,
+    "glow": false,
+    "size": 24,
+    "screen": true,
+    "layout": "single",
+    "count": 3,
+    "radius": 0.45,
+    "speed": 4,
+    "interval": 0.5,
+    "life": 1.5,
+    "rise": 0.4,
+    "drift": 0.1,
+    "growth": 1.5,
+    "appear": 0.15,
+    "appearScale": 0.55,
+    "fadeIn": 0.1,
+    "fadeOut": 0.3,
+    "duration": 0,
+    "bob": 0.1,
+    "bobSpeed": 1.2,
+    "pulse": 0,
+    "pulseSpeed": 1
+  }
+}

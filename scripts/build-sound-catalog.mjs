@@ -104,7 +104,18 @@ const rejectedFiles = [];
 const samples = JSON.parse(readFileSync(path.join(ROOT, "packages/client/src/audio/samples.json"), "utf8"));
 const patterns = Object.values(samples.groups).flatMap((group) => group.files);
 const regexOf = (pattern) => new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*")}$`);
-const inGame = (file) => patterns.some((pattern) => regexOf(pattern).test(file.split(path.sep).join("/")));
+// …ni un son utilisé par une piste d'une compétence réglée (animationTuning.json).
+const tuning = JSON.parse(readFileSync(path.join(ROOT, "packages/client/src/game/animationTuning.json"), "utf8"));
+const tunedSounds = new Set();
+for (const entries of Object.values(tuning)) {
+  for (const entry of Object.values(entries)) {
+    const tracks = [entry.effects, entry.projectile?.effects, entry.impact?.effects, entry.status, entry.zone];
+    for (const effect of tracks.flat()) if (effect?.type === "sound") tunedSounds.add(effect.recipe);
+  }
+}
+const inGame = (file) =>
+  patterns.some((pattern) => regexOf(pattern).test(file.split(path.sep).join("/"))) ||
+  [...fileByName].some(([name, f]) => f === file && tunedSounds.has(name));
 for (const name of edits.rejected ?? []) {
   if (fileByName.has(name)) {
     if (inGame(fileByName.get(name))) console.log(`gardé (joué par le jeu) : ${fileByName.get(name)}`);

@@ -22,12 +22,12 @@
     "blast": {
       "animation": "Mixamo_2H_Area_Attack_02",
       "start": 0,
-      "rate": 0.9,
-      "end": 2.25,
+      "rate": 0.83,
+      "end": 2.147,
       "effects": [
         {
           "recipe": "fireTrail",
-          "start": 0.95,
+          "start": 0.783,
           "end": 1.8,
           "anchor": "hands",
           "offset": [
@@ -46,6 +46,90 @@
             0,
             0
           ]
+        },
+        {
+          "type": "sound",
+          "recipe": "jeu:spellFire",
+          "start": 1.8,
+          "end": 3.217,
+          "anchor": "feet",
+          "offset": [
+            0,
+            1.1,
+            0
+          ],
+          "volume": 0.8,
+          "rate": 0.7
+        },
+        {
+          "type": "sound",
+          "recipe": "EM_FIRE_HOLD_4s",
+          "start": 0.583,
+          "end": 1.8,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Chest",
+          "start": 0,
+          "rate": 1,
+          "end": 0.333
+        },
+        "effects": [
+          {
+            "recipe": "burning",
+            "start": 0,
+            "end": 1.2,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "recipe": "burningSmoke",
+            "start": 0,
+            "end": 1.2,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "zone": [
+        {
+          "recipe": "fireWave",
+          "start": 0,
+          "end": 1,
+          "anchor": "feet",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "fitZone": true
+        },
+        {
+          "recipe": "fireField",
+          "start": 0,
+          "end": 1,
+          "anchor": "feet",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "fitZone": true
         }
       ]
     },
@@ -160,6 +244,19 @@
             0.38,
             1.33
           ]
+        },
+        {
+          "type": "sound",
+          "recipe": "jeu:hit33",
+          "start": 0.017,
+          "end": 2.017,
+          "anchor": "feet",
+          "offset": [
+            0,
+            1.1,
+            0
+          ],
+          "full": true
         }
       ]
     },

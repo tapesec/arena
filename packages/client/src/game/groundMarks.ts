@@ -122,9 +122,10 @@ export function setGroundMarkDefs(defs: Record<string, GroundMarkDef>) {
 }
 
 // Marque par son nom : sa version réglée, sinon celle de départ.
+// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de la marque de départ.
 export function groundMarkDef(id: string): GroundMarkDef | null {
-  const def = savedMarks[id] ?? BUILTIN_MARKS[id];
-  return def ? { ...DEFAULT_MARK, ...def } : null;
+  if (!savedMarks[id] && !BUILTIN_MARKS[id]) return null;
+  return { ...DEFAULT_MARK, ...BUILTIN_MARKS[id], ...savedMarks[id] };
 }
 
 export function groundMarkChoices(): { id: string; label: string }[] {

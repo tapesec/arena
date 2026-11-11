@@ -270,7 +270,7 @@
     "optional": false
   },
   "effet6": {
-    "label": " ",
+    "label": " Bouillon froid",
     "texture": "glow",
     "blend": "add",
     "emission": "continuous",
@@ -278,6 +278,7 @@
     "count": 40,
     "duration": 0,
     "shape": "sphere",
+    "trail": false,
     "radius": 0.3,
     "innerRadius": 0,
     "y": 0,
@@ -317,6 +318,65 @@
       {
         "at": 1,
         "color": "#80c0ff",
+        "alpha": 0
+      }
+    ],
+    "optional": false
+  },
+  "fireField": {
+    "label": "Braises (pour une zone)",
+    "texture": "glow",
+    "blend": "add",
+    "emission": "burst",
+    "rate": 60,
+    "count": 108,
+    "duration": 0,
+    "shape": "wave",
+    "trail": false,
+    "radius": 6,
+    "innerRadius": 0,
+    "y": -0.1,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "outward",
+    "spread": 0,
+    "speed": [
+      2.25,
+      3
+    ],
+    "gravity": 0,
+    "life": [
+      0.3,
+      0.7
+    ],
+    "size": [
+      0.3,
+      0.7
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#ffe080",
+        "alpha": 1
+      },
+      {
+        "at": 0.4,
+        "color": "#ff7010",
+        "alpha": 1
+      },
+      {
+        "at": 1,
+        "color": "#500000",
         "alpha": 0
       }
     ],

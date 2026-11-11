@@ -274,9 +274,10 @@ export function setObjectDefs(defs: Record<string, ObjectDef>) {
   savedObjects = defs;
 }
 
+// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de l'objet de départ.
 export function objectDef(id: string): ObjectDef | null {
-  const def = savedObjects[id] ?? BUILTIN_OBJECTS[id];
-  return def ? { ...DEFAULT_OBJECT, ...def } : null;
+  if (!savedObjects[id] && !BUILTIN_OBJECTS[id]) return null;
+  return { ...DEFAULT_OBJECT, ...BUILTIN_OBJECTS[id], ...savedObjects[id] };
 }
 
 export function objectChoices(): { id: string; label: string }[] {

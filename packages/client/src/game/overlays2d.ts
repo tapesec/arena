@@ -187,9 +187,11 @@ export function setOverlayDefs(defs: Record<string, OverlayDef>) {
   savedOverlays = defs;
 }
 
+// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de l'affichage de départ, sinon ceux
+// par défaut.
 export function overlayDef(id: string): OverlayDef | null {
-  const def = savedOverlays[id] ?? BUILTIN_OVERLAYS[id];
-  return def ? { ...DEFAULT_OVERLAY, ...def } : null;
+  if (!savedOverlays[id] && !BUILTIN_OVERLAYS[id]) return null;
+  return { ...DEFAULT_OVERLAY, ...BUILTIN_OVERLAYS[id], ...savedOverlays[id] };
 }
 
 export function overlayChoices(): { id: string; label: string }[] {
