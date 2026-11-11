@@ -36,4 +36,9 @@ importées par `scripts/import-assets.sh`.
 - **Sons « Basic Spell Impacts », « Impacts » et « Sword Combat Sound Effects Pack » (version gratuite, Hove Audio)**
   — itch.io, CC0.
 - **Sons « Frost Mage SFX » (version gratuite)** — Sounds Good (Daniel Barros), CC0.
+- **Sons « Arcane Activations »** — Shapeforms Audio (itch.io), licence Shapeforms : usage commercial autorisé,
+  modification autorisée, crédit non obligatoire. Restrictions : licence personnelle non transférable ; interdit de
+  redistribuer les fichiers seuls (ni dans un dépôt public ni comme pack) ; le jeu doit empêcher raisonnablement
+  l'extraction des fichiers par les joueurs ; interdit pour entraîner une IA générative. Aucun de ces sons n'est utilisé
+  en jeu tant que leur protection n'est pas en place.
 - **Sons rétro** (alertes, interface) — générés par [ZzFX](https://github.com/KilledByAPixel/ZzFX).

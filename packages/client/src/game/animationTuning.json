@@ -345,9 +345,9 @@
         },
         {
           "type": "sound",
-          "recipe": "Ice_attack_2",
+          "recipe": "freezing_gush_01",
           "start": 3.5,
-          "end": 5.35,
+          "end": 7.26,
           "anchor": "chest",
           "offset": [
             0,
@@ -395,6 +395,18 @@
             ],
             "tint": "#73D9FF",
             "scale": 0.22
+          },
+          {
+            "type": "sound",
+            "recipe": "Ice_Spell_Impact_3",
+            "start": 0,
+            "end": 0.3,
+            "anchor": "chest",
+            "offset": [
+              0,
+              0,
+              0
+            ]
           }
         ]
       },
