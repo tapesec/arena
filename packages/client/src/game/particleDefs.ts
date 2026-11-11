@@ -25,7 +25,12 @@ export interface ParticleEffectDef {
   // « fingers » : doigts de lumière qui sortent du sol tout autour (arms doigts, sur un cercle de rayon radius,
   // longs de height) et se referment au-dessus du personnage en closeTime secondes, jusqu'à closeAmount (1 : les
   // bouts se rejoignent au centre) ; fingerWidth : épaisseur d'un doigt.
-  shape: "sphere" | "cylinder" | "fingers";
+  // « wave » : une vague qui part du centre (à la hauteur y) et s'étend à l'horizontale jusqu'au rayon radius,
+  // atteint à la fin de la vie des particules (vitesse = rayon / durée de vie ; speed n'est pas utilisé).
+  shape: "sphere" | "cylinder" | "fingers" | "wave";
+  // Traînée : les particules naissent tout le long du chemin parcouru depuis l'image précédente (dans la forme
+  // choisie autour), sinon un projectile rapide laisserait un chapelet de boules.
+  trail: boolean;
   closeTime: number;
   closeAmount: number;
   fingerWidth: number;
@@ -65,6 +70,7 @@ export const DEFAULT_DEF: ParticleEffectDef = {
   count: 40,
   duration: 0,
   shape: "sphere",
+  trail: false,
   radius: 0.3,
   innerRadius: 0,
   y: 0,
@@ -93,8 +99,210 @@ export const DEFAULT_DEF: ParticleEffectDef = {
 const def = (overrides: Partial<ParticleEffectDef>): ParticleEffectDef => ({ ...DEFAULT_DEF, ...overrides });
 const stops = (...list: [number, string, number][]) => list.map(([at, color, alpha]) => ({ at, color, alpha }));
 
-// Effets du code portés par les personnages, convertis en réglages (même rendu, à de petites approximations près).
+// Effets du code convertis en réglages (même rendu, à de petites approximations près) : traînées, impacts, zones,
+// et effets portés par les personnages.
 export const BUILTIN_DEFS: Record<string, ParticleEffectDef> = {
+  // ——— Traînées des projectiles ———
+  fireTrail: def({
+    label: "Traînée de feu",
+    trail: true,
+    rate: 1400,
+    radius: 0.15,
+    direction: "outward",
+    speed: [0.2, 0.8],
+    life: [0.12, 0.3],
+    size: [0.3, 0.65],
+    colors: stops([0, "#ffe080", 0.45], [0.3, "#ff8a20", 0.4], [0.7, "#c02808", 0.3], [1, "#400000", 0]),
+  }),
+  smokeTrail: def({
+    label: "Fumée",
+    blend: "normal",
+    trail: true,
+    rate: 60,
+    radius: 0.1,
+    direction: "outward",
+    speed: [0.1, 0.4],
+    gravity: 1.2,
+    life: [0.5, 0.9],
+    size: [0.35, 0.7],
+    colors: stops([0, "#9a8c80", 0.12], [1, "#6a6a6a", 0]),
+    optional: true,
+  }),
+  frostTrail: def({
+    label: "Traînée de givre",
+    trail: true,
+    rate: 1000,
+    radius: 0.12,
+    direction: "outward",
+    speed: [0.1, 0.5],
+    gravity: -1.5,
+    life: [0.2, 0.4],
+    size: [0.12, 0.4],
+    colors: stops([0, "#70c0ff", 0.35], [0.4, "#3080f0", 0.3], [1, "#1030a0", 0]),
+  }),
+  arcaneTrail: def({
+    label: "Traînée arcanique",
+    trail: true,
+    rate: 1000,
+    radius: 0.22,
+    direction: "outward",
+    speed: [0.3, 0.9],
+    life: [0.2, 0.4],
+    size: [0.15, 0.45],
+    colors: stops([0, "#e0a0ff", 0.35], [0.4, "#a050ff", 0.3], [1, "#4010a0", 0]),
+  }),
+  silenceTrail: def({
+    label: "Traînée de silence",
+    trail: true,
+    rate: 800,
+    radius: 0.06,
+    direction: "outward",
+    speed: [0, 0.2],
+    life: [0.12, 0.25],
+    size: [0.1, 0.2],
+    colors: stops([0, "#ffffff", 0.5], [1, "#8090a0", 0]),
+  }),
+  // ——— Impacts ———
+  fireBurst: def({
+    label: "Explosion de feu",
+    emission: "burst",
+    count: 90,
+    radius: 0.3,
+    direction: "outward",
+    speed: [2, 5],
+    life: [0.2, 0.5],
+    size: [0.3, 0.7],
+    colors: stops([0, "#ffe7a0", 0.7], [0.25, "#ff8a20", 0.6], [0.7, "#b02000", 0.35], [1, "#300000", 0]),
+  }),
+  frostBurst: def({
+    label: "Éclat de givre",
+    texture: "spark",
+    emission: "burst",
+    count: 70,
+    radius: 0.3,
+    direction: "outward",
+    speed: [2, 4.5],
+    gravity: -7,
+    life: [0.4, 0.8],
+    size: [0.15, 0.4],
+    rotation: [-4, 4],
+    colors: stops([0, "#ffffff", 1], [0.5, "#a0e8ff", 1], [1, "#3080d0", 0]),
+  }),
+  arcaneBurst: def({
+    label: "Éclat arcanique",
+    emission: "burst",
+    count: 70,
+    radius: 0.4,
+    direction: "outward",
+    speed: [0.6, 1.8],
+    gravity: 1.5,
+    life: [0.5, 0.9],
+    size: [0.15, 0.4],
+    colors: stops([0, "#d890ff", 0.55], [0.4, "#9040f0", 0.45], [1, "#4010a0", 0]),
+  }),
+  silencePuff: def({
+    label: "Bouffée de silence",
+    blend: "normal",
+    emission: "burst",
+    count: 40,
+    radius: 0.3,
+    direction: "outward",
+    speed: [0.5, 1.2],
+    life: [0.4, 0.7],
+    size: [0.25, 0.5],
+    colors: stops([0, "#e8eef4", 0.7], [1, "#606870", 0]),
+  }),
+  // ——— Zones (rayon de référence 6 m ; « à la taille de la zone » les étend) ———
+  fireWave: def({
+    label: "Vague de feu (pour une zone)",
+    emission: "burst",
+    count: 240,
+    shape: "wave",
+    radius: 6,
+    y: 0.15,
+    life: [0.45, 0.45],
+    size: [0.4, 0.8],
+    colors: stops([0, "#fff0a0", 1], [0.4, "#ff8020", 1], [1, "#801000", 0]),
+  }),
+  fireField: def({
+    label: "Braises (pour une zone)",
+    emission: "burst",
+    count: 108,
+    shape: "cylinder",
+    radius: 6,
+    y: 0.1,
+    direction: "up",
+    spread: 0.1,
+    speed: [1.8, 3],
+    life: [0.3, 0.7],
+    size: [0.3, 0.7],
+    colors: stops([0, "#ffe080", 1], [0.4, "#ff7010", 1], [1, "#500000", 0]),
+  }),
+  frostWave: def({
+    label: "Vague de givre (pour une zone)",
+    texture: "spark",
+    emission: "burst",
+    count: 240,
+    shape: "wave",
+    radius: 6,
+    y: 0.15,
+    life: [0.45, 0.45],
+    size: [0.4, 0.8],
+    colors: stops([0, "#b0e0ff", 0.8], [0.5, "#50a8ff", 0.6], [1, "#1040b0", 0]),
+  }),
+  frostField: def({
+    label: "Cristaux de givre (pour une zone)",
+    emission: "burst",
+    count: 72,
+    shape: "cylinder",
+    radius: 6,
+    y: 0.1,
+    direction: "up",
+    spread: 0.1,
+    speed: [1.2, 2],
+    life: [0.4, 0.8],
+    size: [0.15, 0.35],
+    colors: stops([0, "#90d0ff", 0.6], [0.5, "#4090f0", 0.5], [1, "#1040b0", 0]),
+  }),
+  arcaneMist: def({
+    label: "Brume arcanique (pour une zone)",
+    emission: "burst",
+    count: 90,
+    shape: "cylinder",
+    radius: 6,
+    y: 0.1,
+    direction: "up",
+    spread: 0.1,
+    speed: [0.42, 0.7],
+    life: [0.8, 1.4],
+    size: [0.6, 1.2],
+    colors: stops([0, "#9a6cff", 0.55], [0.5, "#5a30d0", 0.4], [1, "#201060", 0]),
+  }),
+  healField: def({
+    label: "Lueurs de soin (pour une zone)",
+    emission: "burst",
+    count: 180,
+    shape: "cylinder",
+    radius: 6,
+    y: 0.1,
+    direction: "up",
+    spread: 0.1,
+    speed: [1.5, 2.5],
+    life: [0.7, 1.2],
+    size: [0.25, 0.5],
+    colors: stops([0, "#a0ffb0", 0.6], [0.3, "#50e070", 0.5], [1, "#108030", 0]),
+  }),
+  rallyWave: def({
+    label: "Onde de ralliement (pour une zone)",
+    emission: "burst",
+    count: 240,
+    shape: "wave",
+    radius: 6,
+    y: 0.15,
+    life: [0.45, 0.45],
+    size: [0.4, 0.8],
+    colors: stops([0, "#fff4c0", 0.9], [0.5, "#ffc840", 0.7], [1, "#a07000", 0]),
+  }),
   fireCharge: def({
     label: "Formation de feu",
     rate: 180,
@@ -467,11 +675,17 @@ export function particleRecipe(id: string): Recipe | null {
 // Effet étendu à une zone de rayon radius (mètres) : un effet réglé y prend ce rayon (et plus de particules, pour
 // la même densité) ; un effet du code de zone reçoit le rayon.
 export function zoneRecipe(id: string, radius: number): ((fx: ParticleFactory, at: Vector3) => ParticleSystem | null) | null {
-  const def = savedDefs[id] ?? BUILTIN_DEFS[id];
-  if (def) return (fx, at) => createFromDef(fx, at, def, id, radius);
+  // Réglé et enregistré : sa version ; sinon un effet de zone du code reçoit le rayon ; sinon la version convertie
+  // d'un effet du code (qui, lui, ne connaît pas de rayon).
+  if (savedDefs[id]) return (fx, at) => createFromDef(fx, at, savedDefs[id], id, radius);
   const code = CODE_RECIPES[id];
+  if (code && ZONE_CODE.has(id)) return (fx, at) => code(fx, at, radius);
+  if (BUILTIN_DEFS[id]) return (fx, at) => createFromDef(fx, at, BUILTIN_DEFS[id], id, radius);
   return code ? (fx, at) => code(fx, at, radius) : null;
 }
+
+// Effets de zone du code, qui reçoivent le rayon de la zone.
+const ZONE_CODE = new Set(["fireWave", "fireField", "frostWave", "frostField", "arcaneMist", "healField", "rallyWave"]);
 
 // Plafond du nombre de particules multiplié pour remplir une zone.
 const MAX_ZONE_DENSITY = 40;
@@ -516,7 +730,8 @@ export function createFromDef(
   const d: ParticleEffectDef = { ...DEFAULT_DEF, ...saved };
   if (zoneRadius !== undefined && zoneRadius > 0) {
     const scale = zoneRadius / Math.max(d.radius, 0.05);
-    const density = Math.min(MAX_ZONE_DENSITY, Math.max(1, scale * scale));
+    // Une vague garde la même densité sur son pourtour (proportionnel au rayon), une zone remplie sur sa surface.
+    const density = Math.min(MAX_ZONE_DENSITY, Math.max(1, d.shape === "wave" ? scale : scale * scale));
     d.radius = zoneRadius;
     d.innerRadius *= scale;
     d.rate = Math.round(d.rate * density);
@@ -529,9 +744,18 @@ export function createFromDef(
   if (!s) return null;
   if (d.blend === "normal") s.blendMode = ParticleSystem.BLENDMODE_STANDARD;
   const start = performance.now();
+  // Traînée : chemin parcouru par le point d'accroche depuis l'image précédente.
+  const previous = at.clone();
+  const origin = new Vector3();
+  if (d.trail) s.onBeforeDrawParticlesObservable.add(() => previous.copyFrom(at));
   s.startPositionFunction = (_worldMatrix, position: Vector3) => {
+    const base = d.trail ? Vector3.LerpToRef(previous, at, Math.random(), origin) : at;
+    if (d.shape === "wave") {
+      position.set(at.x, at.y + d.y, at.z);
+      return;
+    }
     if (d.core > 0 && Math.random() < d.core) {
-      position.copyFrom(at);
+      position.copyFrom(base);
       return;
     }
     if (d.shape === "fingers") {
@@ -543,7 +767,7 @@ export function createFromDef(
       const u = Math.random() * Math.PI * 2;
       const v = Math.acos(2 * Math.random() - 1);
       const r = d.innerRadius + (d.radius - d.innerRadius) * Math.cbrt(Math.random());
-      position.set(at.x + r * Math.sin(v) * Math.cos(u), at.y + d.y + r * Math.cos(v), at.z + r * Math.sin(v) * Math.sin(u));
+      position.set(base.x + r * Math.sin(v) * Math.cos(u), base.y + d.y + r * Math.cos(v), base.z + r * Math.sin(v) * Math.sin(u));
       return;
     }
     const angle =
@@ -551,9 +775,14 @@ export function createFromDef(
         ? ((performance.now() - start) / 1000) * d.spin + Math.floor(Math.random() * d.arms) * ((Math.PI * 2) / d.arms)
         : Math.random() * Math.PI * 2;
     const r = d.arms > 0 ? d.radius : d.innerRadius + (d.radius - d.innerRadius) * Math.sqrt(Math.random());
-    position.set(at.x + Math.cos(angle) * r, at.y + d.y + Math.random() * d.height, at.z + Math.sin(angle) * r);
+    position.set(base.x + Math.cos(angle) * r, base.y + d.y + Math.random() * d.height, base.z + Math.sin(angle) * r);
   };
   s.startDirectionFunction = (_worldMatrix, direction: Vector3, particle) => {
+    if (d.shape === "wave") {
+      const angle = Math.random() * Math.PI * 2;
+      direction.set(Math.cos(angle), 0, Math.sin(angle));
+      return;
+    }
     switch (d.direction) {
       case "up":
         direction.set(0, 1, 0);
@@ -585,8 +814,9 @@ export function createFromDef(
   else s.emitRate = d.rate;
   s.minLifeTime = d.life[0];
   s.maxLifeTime = d.life[1];
-  s.minEmitPower = d.speed[0];
-  s.maxEmitPower = d.speed[1];
+  // Une vague atteint le bord de son rayon à la fin de sa vie.
+  s.minEmitPower = d.shape === "wave" ? d.radius / Math.max(d.life[1], 0.01) : d.speed[0];
+  s.maxEmitPower = d.shape === "wave" ? d.radius / Math.max(d.life[1], 0.01) : d.speed[1];
   s.gravity = new Vector3(0, d.gravity, 0);
   if (d.growth !== 1) {
     s.addSizeGradient(0, d.size[0], d.size[1]);

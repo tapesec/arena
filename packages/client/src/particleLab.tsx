@@ -266,8 +266,30 @@ export function EffectEditor(props: {
             <option value="sphere">Dans une boule</option>
             <option value="cylinder">Dans un cylindre vertical (anneau, colonne)</option>
             <option value="fingers">Doigts qui se referment (main)</option>
+            <option value="wave">Vague qui part du centre et s'étend à l'horizontale</option>
           </select>
         </label>
+        {def.shape === "wave" && (
+          <>
+            <Slider
+              label="Portée de la vague (atteinte en fin de vie)"
+              value={def.radius}
+              min={0.2}
+              max={15}
+              step={0.1}
+              unit=" m"
+              onChange={(v) => set("radius", v)}
+            />
+            <Slider label="Hauteur" value={def.y} min={-1} max={6} step={0.05} unit=" m" onChange={(v) => set("y", v)} />
+            <small className="lab-hint">Sur une zone, « À la taille de la zone » lui donne le rayon de la zone.</small>
+          </>
+        )}
+        {(def.shape === "sphere" || def.shape === "cylinder") && (
+          <label className="fx-check" title="Pour un projectile rapide : sans ça, il laisse un chapelet de boules">
+            <input type="checkbox" checked={def.trail} onChange={(e) => set("trail", e.target.checked)} />
+            Traînée (les particules naissent tout le long du chemin parcouru)
+          </label>
+        )}
         {def.shape === "fingers" && (
           <>
             <Slider label="Nombre de doigts" value={def.arms || 5} min={1} max={8} step={1} onChange={(v) => set("arms", v)} />
@@ -327,13 +349,13 @@ export function EffectEditor(props: {
             />
           </>
         )}
-        {def.shape !== "fingers" && (
+        {def.shape !== "fingers" && def.shape !== "wave" && (
           <>
             <Slider
               label="Rayon"
               value={def.radius}
               min={0}
-              max={3}
+              max={15}
               step={0.01}
               unit=" m"
               onChange={(v) => onChange({ ...def, radius: v, innerRadius: Math.min(def.innerRadius, v) })}
