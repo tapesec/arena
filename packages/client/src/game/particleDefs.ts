@@ -441,13 +441,13 @@ const CODE_LABELS: Record<string, string> = {
   frostBurst: "Éclat de givre",
   arcaneBurst: "Éclat arcanique",
   silencePuff: "Bouffée de silence",
-  fireWave: "Zone : vague de feu",
-  fireField: "Zone : braises",
-  frostWave: "Zone : vague de givre",
-  frostField: "Zone : cristaux de givre",
-  arcaneMist: "Zone : brume arcanique",
-  healField: "Zone : lueurs de soin",
-  rallyWave: "Zone : onde de ralliement",
+  fireWave: "Vague de feu (pour une zone)",
+  fireField: "Braises (pour une zone)",
+  frostWave: "Vague de givre (pour une zone)",
+  frostField: "Cristaux de givre (pour une zone)",
+  arcaneMist: "Brume arcanique (pour une zone)",
+  healField: "Lueurs de soin (pour une zone)",
+  rallyWave: "Onde de ralliement (pour une zone)",
 };
 
 // Effets réglés et enregistrés (particleEffects.json), donnés par le jeu ou par la page de réglage.
