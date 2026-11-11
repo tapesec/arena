@@ -110,7 +110,7 @@ Garde le groupe en vie, relève les morts et le renforce. La Purification et l'A
 | Soin | Rend 300 points de vie à un allié. | 2 s | 80 mana | — |
 | Soin instantané | Rend 200 points de vie à un allié. | Instantané | 60 mana | 3 min |
 | Résurrection | Relève un allié mort à 50 % de vie, sans aucun buff. Utilisable en combat. | 4 s | 300 mana | — |
-| Soin de groupe | Rend 900 points de vie répartis entre les membres du groupe à 30 m, Prêtre compris, au prorata des points de vie qui manquent à chacun ; personne n'est soigné au-delà de son maximum, le surplus est perdu. | 3 s | 300 mana | — |
+| Soin de groupe | Rend 900 points de vie répartis entre les membres du groupe à 30 m (même derrière un obstacle), Prêtre compris, au prorata des points de vie qui manquent à chacun ; personne n'est soigné au-delà de son maximum, le surplus est perdu. | 3 s | 300 mana | — |
 | Buff de vie | +200 points de vie maximum. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 50 mana | — |
 | Buff de puissance | +15 % de dégâts (mêlée et sorts, tics compris) et de soins. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 50 mana | — |
 | Renouveau | Soin sur la durée : 500 points de vie en 10 s, un tic de 50 par seconde. Relancé, il repart de zéro ; ceux de plusieurs Prêtres se cumulent. | 2 s | 100 mana | — |

@@ -483,9 +483,10 @@ export class CombatSystem {
     // Une compétence qui ressuscite (Intervention divine) touche les alliés morts de la zone.
     const dead = ability.effects.some((effect) => effect.type === "resurrect");
     const center = this.areaCenter(caster, ability, targetId);
-    // Une déflagration autour du lanceur touche tout ce qui est dans le rayon, obstacles compris ; l'Intervention
-    // divine relève tous les morts de la zone, même derrière un obstacle.
-    const needsSight = ability.target !== "enemiesAround" && !dead;
+    // Une déflagration autour du lanceur touche tout ce qui est dans le rayon, obstacles compris ; de même, le Soin de
+    // groupe soigne et l'Intervention divine relève tous les alliés de la zone, même derrière un obstacle.
+    const throughWalls = ability.target === "enemiesAround" || dead || ability.effects.some((effect) => effect.type === "splitHeal");
+    const needsSight = !throughWalls;
     return [...this.players.values()].filter(
       (p) =>
         p.alive !== dead &&

@@ -35,3 +35,5 @@ taunt ← lorc/shouting
 rallyCry ← lorc/horn-internal
 cripplingStrike ← lorc/back-pain
 rampart ← lorc/stone-tower
+renew ← delapouite/healing
+divineIntervention ← lorc/angel-outfit
