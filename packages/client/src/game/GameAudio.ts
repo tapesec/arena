@@ -1,5 +1,5 @@
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { PLAZA, type CombatEvent, type InterruptEvent, type MatchPhase } from "@arena/shared";
+import { PLAZA, type CombatEvent, type MatchPhase } from "@arena/shared";
 import { audio, type SoundName } from "../audio/AudioManager";
 import type { CameraController } from "./CameraController";
 import { isGrass } from "./environment";
@@ -13,10 +13,6 @@ import {
   ABSORB_SOUND,
   ALERTS,
   BLOCK_SOUND,
-  CAST_SOUND_RANGE,
-  CAST_START_SOUND,
-  CAST_START_VOLUME_OTHERS,
-  CAST_START_VOLUME_SELF,
   CONTROL_ALERTS,
   EVADE_SOUND,
   FADE_DISTANCE,
@@ -67,7 +63,6 @@ interface Tracked {
 
 // Traduit les événements de la partie en sons, spatialisés par rapport à la caméra.
 export class GameAudio {
-  private castingByPlayer = new Map<string, string>();
   private tracked = new Map<string, Tracked>();
   private heartbeatTimer = 0;
   private lastPhase: MatchPhase | null = null;
@@ -133,10 +128,6 @@ export class GameAudio {
     }
   }
 
-  onInterrupt(event: InterruptEvent) {
-    if (event.casterId === this.selfId) audio.play(ALERTS.interrupted, { priority: true });
-  }
-
   // Signale le retour d'une compétence à longue recharge.
   onCooldown(duration: number) {
     if (duration < READY_SOUND_MIN_COOLDOWN) return;
@@ -145,15 +136,6 @@ export class GameAudio {
 
   update(dt: number, players: Iterable<PlayerVisual>, self: PlayerVisual | undefined, phase: MatchPhase, timeLeft: number, winner: number) {
     for (const player of players) {
-      // Début d'une incantation : la sienne, et celles des autres joueurs proches, plus discrètes
-      // (c'est le son le plus fréquent d'un combat de groupe).
-      const casting = player.isAlive ? player.state.castAbility : "";
-      const previous = this.castingByPlayer.get(player.sessionId) ?? "";
-      if (casting && casting !== previous) {
-        if (player === self) this.playAt(CAST_START_SOUND, player.root.position, CAST_START_VOLUME_SELF);
-        else if (this.distanceToListener(player.root.position) < CAST_SOUND_RANGE) this.playAt(CAST_START_SOUND, player.root.position, CAST_START_VOLUME_OTHERS);
-      }
-      this.castingByPlayer.set(player.sessionId, casting);
       this.footsteps(player, player === self, dt);
     }
 

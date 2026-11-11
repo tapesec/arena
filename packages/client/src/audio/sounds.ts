@@ -54,11 +54,6 @@ export const SOUNDS = {
     category: "Magie",
     steps: one([0.8, 0.05, 1200, 0.01, 0.05, 0.15, 4, 1, -20]),
   },
-  castStart: {
-    label: "Début d'incantation",
-    category: "Magie",
-    steps: one([0.5, 0.05, 300, 0.1, 0.1, 0.2, 0, 1, 3]),
-  },
   // --- Mêlée ---
   swordHit: {
     label: "Coup d'épée",
@@ -122,11 +117,6 @@ export const SOUNDS = {
     steps: melody([523, 659, 523, 784], 0.1, [0.7, 0, 0, 0.01, 0.06, 0.15, 1, 1]),
   },
   // --- Alertes (ce qui t'arrive à toi) ---
-  interrupted: {
-    label: "Incantation interrompue",
-    category: "Alertes",
-    steps: one([1.2, 0.05, 400, 0, 0.08, 0.15, 2, 1, -25, , , , , , , , , 0.7]),
-  },
   mezzed: {
     label: "Vous êtes mezzé",
     category: "Alertes",

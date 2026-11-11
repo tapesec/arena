@@ -76,10 +76,8 @@ function sections(): Section[] {
       ],
     },
     {
-      title: "Incantation et alertes",
+      title: "Alertes",
       rows: [
-        { when: "Début d'une incantation", sounds: [{ sound: C.CAST_START_SOUND, volume: C.CAST_START_VOLUME_SELF }], detail: `la sienne ; celles des autres à ${percent(C.CAST_START_VOLUME_OTHERS)}, jusqu'à ${num(C.CAST_SOUND_RANGE)} m` },
-        { when: "Incantation interrompue (la sienne)", sounds: [{ sound: C.ALERTS.interrupted }] },
         ...Object.entries(C.CONTROL_ALERTS).map(([kind, sound]) => ({ when: `On subit un ${kind}`, sounds: [{ sound }] })),
         { when: "Vie basse", sounds: [{ sound: C.ALERTS.lowHealth }], detail: `sous ${percent(C.LOW_HEALTH_RATIO)} de vie, toutes les ${num(C.HEARTBEAT_INTERVAL)} s` },
         { when: "Compétence de nouveau prête", sounds: [{ sound: C.ALERTS.abilityReady }], detail: `recharge d'au moins ${num(C.READY_SOUND_MIN_COOLDOWN)} s` },
@@ -89,7 +87,7 @@ function sections(): Section[] {
         { when: "Victoire", sounds: [{ sound: C.ALERTS.win }] },
         { when: "Défaite", sounds: [{ sound: C.ALERTS.lose }] },
       ],
-      rules: ["Les alertes du joueur (toutes, sauf le début d'une incantation) passent toujours, même quand trop de sons jouent déjà."],
+      rules: ["Les alertes du joueur passent toujours, même quand trop de sons jouent déjà."],
     },
     {
       title: "Interface et musique",
@@ -109,7 +107,7 @@ function sections(): Section[] {
         `Distance : plein volume jusqu'à ${num(C.FULL_VOLUME_DISTANCE)} m de la caméra, puis plus faible sur ${num(C.FADE_DISTANCE)} m, jamais sous ${percent(C.MIN_DISTANT_VOLUME)}.`,
         `Gauche/droite : selon la place à l'écran, entièrement d'un côté à ${num(C.PAN_WIDTH)} m.`,
         `Au plus ${MAX_CONCURRENT_SOUNDS} sons en même temps ; un même son n'est pas rejoué à moins de ${num(MIN_REPEAT_INTERVAL)} s (un sort de zone ne joue son impact qu'une fois).`,
-        `Variation : un son enregistré du jeu tire une de ses variantes au hasard et varie de ±${percent(RATE_JITTER)} en vitesse ; un son généré (castStart, evade, alertes, clic…) est toujours le même, sans réglage de vitesse ; une piste de son d'une compétence varie de ±${percent(SOUND_RATE_JITTER)}.`,
+        `Variation : un son enregistré du jeu tire une de ses variantes au hasard et varie de ±${percent(RATE_JITTER)} en vitesse ; un son généré (evade, absorb, alertes, clic…) est toujours le même, sans réglage de vitesse ; une piste de son d'une compétence varie de ±${percent(SOUND_RATE_JITTER)}.`,
       ],
     },
   ];

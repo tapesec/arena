@@ -62,9 +62,6 @@ export const MIN_DISTANT_VOLUME = 0.15;
 // Écart horizontal (en mètres, vu de la caméra) qui donne un son entièrement à gauche ou à droite.
 export const PAN_WIDTH = 25;
 
-// Les débuts d'incantation des autres joueurs ne s'entendent qu'à proximité.
-export const CAST_SOUND_RANGE = 20;
-
 export const LOW_HEALTH_RATIO = 0.3;
 export const HEARTBEAT_INTERVAL = 1.4;
 // Seules les compétences à longue recharge signalent leur retour.
@@ -72,8 +69,6 @@ export const READY_SOUND_MIN_COOLDOWN = 20;
 
 // Volumes de quelques sons de GameAudio.
 export const SWING_VOLUME = 0.8;
-export const CAST_START_VOLUME_SELF = 0.6;
-export const CAST_START_VOLUME_OTHERS = 0.25;
 // Le soupir d'un personnage soigné, sous les autres sons de sa voix.
 export const HEALED_VOLUME = 0.7;
 
@@ -85,13 +80,9 @@ export const ABSORB_SOUND: SoundName = "absorb";
 // Pas selon le sol.
 export const STEP_SOUNDS = { stone: "stepStone", grass: "stepGrass", dirt: "stepDirt" } satisfies Record<string, SoundName>;
 
-// Début d'une incantation (la sienne et celles des autres proches) : un son ordinaire, pas une alerte.
-export const CAST_START_SOUND: SoundName = "castStart";
-
 // Alertes du joueur local (toujours jouées, même au-delà de la limite de sons simultanés).
 export const ALERTS = {
   death: "death",
-  interrupted: "interrupted",
   abilityReady: "abilityReady",
   lowHealth: "lowHealth",
   countdown: "countdown",
