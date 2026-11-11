@@ -1992,3 +1992,15 @@ body,
 .sound-pending {
   margin-top: 18px;
 }
+
+/* Bouton « Éditer » d'un élément de piste, et retour à la compétence */
+.lab-controls button.lab-edit {
+  background: #3a3f4c;
+  border-color: #ffd76a;
+  color: #ffd76a;
+}
+
+.anim-toolbar button.lab-back {
+  background: #2c4a6b;
+  border-color: #7fb4e3;
+}

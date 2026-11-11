@@ -1662,6 +1662,22 @@ function AnimationLab() {
     return `${base}${n}`;
   };
 
+  // Ouvre un élément d'une piste dans son onglet d'édition (et retient d'où l'on vient, pour y revenir).
+  const [returnToAbility, setReturnToAbility] = useState(false);
+  const open = (next: Tab, select: () => void) => () => {
+    select();
+    setTab(next);
+    setReturnToAbility(true);
+  };
+  const editElement = (effect: AnimationEffect): (() => void) | null => {
+    const id = effect.recipe;
+    if (effect.type === "ground") return markIds.includes(id) ? open("sol", () => setMarkId(id)) : null;
+    if (effect.type === "object") return objectIds.includes(id) ? open("objets", () => setObjectId(id)) : null;
+    if (effect.type === "overlay") return overlayIds.includes(id) ? open("2d", () => setOverlayId(id)) : null;
+    if (effect.type === "sound") return SOUNDS.some((sound) => sound.name === id) ? open("sons", () => setSoundName(id)) : null;
+    return fxIds.includes(id) ? open("effets", () => setFxId(id)) : null;
+  };
+
   const setFx = (id: string, def: ParticleEffectDef | null) =>
     setFxDraft((d) => {
       const next = { ...d };
@@ -1991,6 +2007,17 @@ function AnimationLab() {
             ))}
           </select>
         </label>
+        {returnToAbility && tab !== "animations" && (
+          <button
+            className="lab-back"
+            onClick={() => {
+              setTab("animations");
+              setReturnToAbility(false);
+            }}
+          >
+            ← Retour à {abilityName(abilityId)}
+          </button>
+        )}
         <span className="lab-hint">Souris : tourner autour · molette : zoom · espace : lecture</span>
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
@@ -2326,6 +2353,7 @@ function AnimationLab() {
                     playing={playing}
                     onChange={(effects) => update({ ...entry, effects })}
                     onScrub={scrub}
+                    onEdit={editElement}
                   />
                   <div className="lab-summary">
                     {castTime > 0 ? (
@@ -2446,6 +2474,7 @@ function AnimationLab() {
                     playing={playing}
                     onChange={setMomentEffects}
                     onScrub={scrub}
+                    onEdit={editElement}
                   />
                   )}
                 </>
@@ -2823,8 +2852,10 @@ function EffectsPanel(props: {
   playing: boolean;
   onChange: (effects: AnimationEffect[]) => void;
   onScrub: (time: number) => void;
+  // Ouvre l'élément (effet, marque, objet, affichage, son) dans son onglet d'édition ; null s'il n'y en a pas.
+  onEdit: (effect: AnimationEffect) => (() => void) | null;
 }) {
-  const { kind, length, bounds, addSpan, effects, codeSounds, selected, onSelect, cursor, playing, onChange, onScrub } = props;
+  const { kind, length, bounds, addSpan, effects, codeSounds, selected, onSelect, cursor, playing, onChange, onScrub, onEdit } = props;
   const [soundFilter, setSoundFilter] = useState("");
   const tracks = useRef<(HTMLDivElement | null)[]>([]);
   const [selectedKey, setSelectedKey] = useState(0);
@@ -2993,6 +3024,19 @@ function EffectsPanel(props: {
       ))}
       {current && place && (
         <div className="lab-controls lab-effect-controls">
+          {(() => {
+            const edit = onEdit(current);
+            return (
+              <button
+                className="lab-edit"
+                disabled={!edit}
+                onClick={() => edit?.()}
+                title={edit ? "Ouvrir dans son onglet d'édition" : "Élément du code, pas réglable dans un onglet (sons du jeu, effets du code non convertis)"}
+              >
+                ✎ Éditer
+              </button>
+            );
+          })()}
           {current.type === "sound" ? (
             <>
               <input type="search" placeholder="Chercher un son" value={soundFilter} onChange={(e) => setSoundFilter(e.target.value)} />
