@@ -15,6 +15,10 @@ export interface AbilityAnimation {
   rate: number;
   end: number;
   effects?: AnimationEffect[];
+  // Vol vers la cible (PROJECTILE_TRAVEL_TIME, 0,3 s), seulement pour une compétence qui vise un autre que son
+  // lanceur. Absent : le jeu garde son projectile du code (les « bolts ») ou son absence ; enabled false : pas de
+  // projectile, l'impact est immédiat.
+  projectile?: ProjectileVisual;
   // Ce que subit chaque cible touchée, à partir de l'impact (arrivée du projectile, sinon départ du sort).
   // Présent, il remplace les effets d'impact prévus dans le code.
   impact?: ImpactVisual;
@@ -24,6 +28,35 @@ export interface AbilityAnimation {
   // Effets sur la zone d'effet, une seule fois en son centre, en secondes depuis l'impact. Présents, ils remplacent
   // les particules de zone prévues dans le code (le disque qui montre la portée reste).
   zone?: AnimationEffect[];
+}
+
+// Trajet du projectile, du lanceur (point from, au départ du sort) à la cible (point to, qu'il suit) :
+// - straight : en ligne droite ; arc : en cloche, de hauteur height ; spiral : en vrille autour de la ligne, de
+//   rayon height et turns tours ; wave : en ondulant sur le côté, d'amplitude height et turns ondulations ;
+//   zigzag : en turns cassures au hasard, d'amplitude height ; curve : en partant
+//   sur le côté (height mètres ; négatif : de l'autre côté) puis en revenant.
+// - speed : vitesse constante, qui accélère ou qui ralentit.
+// - align : les objets 3D du projectile pointent (leur profondeur, axe z) dans le sens du trajet.
+// - effects : effets portés par le projectile (temps de 0 à 0,3 s ; leur décalage est autour du projectile).
+export interface ProjectileVisual {
+  enabled: boolean;
+  path: ProjectilePath;
+  height: number;
+  turns: number;
+  speed: "constant" | "accelerate" | "decelerate";
+  from: EffectAnchor;
+  fromOffset: [number, number, number];
+  to: EffectAnchor;
+  align: boolean;
+  effects: AnimationEffect[];
+}
+
+export type ProjectilePath = "straight" | "arc" | "spiral" | "wave" | "zigzag" | "curve";
+
+// La compétence peut avoir un projectile : elle vise quelqu'un d'autre que son lanceur (un ennemi, un allié…).
+export function canHaveProjectile(abilityId: string): boolean {
+  const target = getAbility(abilityId)?.target;
+  return target === "enemy" || target === "ally" || target === "otherAlly" || target === "deadAlly";
 }
 
 // Réaction de la cible à l'impact : la portion start → end (secondes dans l'animation) jouée à la vitesse rate.
@@ -60,6 +93,9 @@ export interface AnimationEffect {
   untilEnd?: boolean;
   // Sur une zone : l'effet prend le rayon de la zone.
   fitZone?: boolean;
+  // Marque au sol ou objet 3D : couleur imposée (sinon, celle de la marque ou de l'objet), et taille (× la sienne).
+  tint?: string;
+  scale?: number;
 }
 
 export interface EffectKey {
@@ -158,6 +194,7 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
   const end = Math.min(length, Math.max(entry.end, release + (castTime > 0 ? 0 : 0.05)));
   const clamped: AbilityAnimation = { animation: entry.animation, start, rate, end };
   // Les moments de la cible ne dépendent pas du geste du lanceur.
+  if (entry.projectile) clamped.projectile = entry.projectile;
   if (entry.impact) clamped.impact = entry.impact;
   if (entry.status) clamped.status = entry.status;
   if (entry.zone) clamped.zone = entry.zone;

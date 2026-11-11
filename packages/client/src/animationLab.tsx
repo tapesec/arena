@@ -25,6 +25,10 @@ import {
   statusKindsOf,
   targetsSelf,
   zoneCenterIsTarget,
+  canHaveProjectile,
+  tuningOf,
+  type ProjectileVisual,
+  type ProjectilePath,
   shiftEffect,
   releaseTime,
   suggestedAbilityAnimation,
@@ -37,13 +41,17 @@ import {
   type TargetReaction,
 } from "./game/abilityAnimations";
 import { CharacterAnimator, framesPerSecond, type AnimationInput } from "./game/CharacterAnimator";
-import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile } from "./game/spellFx";
+import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile, setProjectileLookup } from "./game/spellFx";
 import { SpellEffects } from "./game/SpellEffects";
-import { codeImpact, codeStatus, codeZone } from "./game/codeVisuals";
+import { codeImpact, codeProjectile, codeStatus, codeZone } from "./game/codeVisuals";
+import { projectileDirection, projectilePosition } from "./game/projectilePaths";
+import { CreateLines } from "@babylonjs/core/Meshes/Builders/linesBuilder";
+import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import {
   BUILTIN_MARKS,
   DEFAULT_MARK,
   groundMarkChoices,
+  groundMarkDef,
   groundMarkLabel,
   setGroundMarkDefs,
   type GroundMark,
@@ -53,6 +61,7 @@ import {
   BUILTIN_OBJECTS,
   DEFAULT_OBJECT,
   objectChoices,
+  objectDef,
   objectLabel,
   setObjectDefs,
   type ObjectDef,
@@ -115,7 +124,7 @@ interface FrameInfo {
 
 // Moments d'une compétence réglés sur la page : le geste du lanceur, puis ce que subit la cible (impact, état) et
 // la zone d'effet.
-type Moment = "caster" | "impact" | "status" | "zone";
+type Moment = "caster" | "projectile" | "impact" | "status" | "zone";
 
 // Disque de portée d'une zone dans le jeu (SpellEffects.spawnArea) : durée de son expansion et transparence
 // (seul, ou avec des particules).
@@ -139,7 +148,7 @@ class Stage {
   private mode: "play" | "scrub" = "scrub";
   // Instant montré en pose figée, pour chaque moment (secondes dans l'animation du lanceur, ou depuis l'impact,
   // le début de l'état, l'apparition de la zone).
-  private scrubTimes: Record<Moment, number> = { caster: 0, impact: 0, status: 0, zone: 0 };
+  private scrubTimes: Record<Moment, number> = { caster: 0, projectile: 0, impact: 0, status: 0, zone: 0 };
   private moment: Moment = "caster";
   private cycle: { phase: "idle" | "cast" | "after"; time: number } = { phase: "idle", time: 0 };
   // Animation figée pour la pose montrée (sans fondu), tant qu'on ne relance pas la lecture.
@@ -155,7 +164,13 @@ class Stage {
   private zoneFx: AbilityEffectPlayer;
   private statusShown = 4;
   // Lecture comme en jeu : temps depuis le départ du sort, et réaction de la cible déjà lancée.
-  private sequence: { time: number; reacted: boolean } | null = null;
+  private sequence: { time: number; reacted: boolean; from: Vector3 | null; seed: number } | null = null;
+  // Projectile réglé : ses effets en vol, et son trajet dessiné en pose figée.
+  private projectileFx: AbilityEffectPlayer;
+  private pathLine: LinesMesh | null = null;
+  private pathKey = "";
+  private flightAt = new Vector3();
+  private flightAim = new Vector3();
   // Visuels du code (projectile, impact, zone, état) joués comme en jeu pour les moments pas encore réglés.
   private codeFx: SpellEffects;
   // Mannequin vu par les visuels d'état du code (ce que StatusFx lit d'un joueur).
@@ -216,6 +231,7 @@ class Stage {
     this.effects = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
     this.targetFx = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
     this.zoneFx = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
+    this.projectileFx = new AbilityEffectPlayer(this.fx, this.codeFx.scenery);
     // Un état réglé dans le brouillon remplace les particules d'état du code.
     this.codeFx.statuses.isTuned = () => this.entry?.status !== undefined;
     this.zoneDisc = CreateDisc("zone", { radius: 1, tessellation: 64 }, this.scene);
@@ -429,6 +445,11 @@ class Stage {
       const radius = getAbility(this.abilityId)?.radius ?? 5;
       this.camera.setTarget(this.zoneCenter(new Vector3()).addInPlace(new Vector3(0, 1, 0)));
       this.camera.radius = Math.max(8, radius * 2.2);
+    } else if (moment === "projectile") {
+      // Tout le trajet, vu de côté.
+      const distance = this.targetHolder.position.z;
+      this.camera.setTarget(new Vector3(0, 1.4, distance / 2));
+      this.camera.radius = Math.max(6, distance * 1.3);
     } else if (moment === "caster" || targetsSelf(this.abilityId)) {
       this.camera.setTarget(new Vector3(0, 1.1, 0));
       this.camera.radius = 5.5;
@@ -504,6 +525,8 @@ class Stage {
     this.zoneFx.stopAll();
     this.sequence = null;
     this.codeFx.clearTransient();
+    this.projectileFx.stopAll();
+    this.drawPath(false);
     this.zoneDisc.isVisible = false;
     for (const group of instance.animations.values()) group.stop();
     this.frozen = null;
@@ -534,7 +557,9 @@ class Stage {
         group.pause();
         this.frozen = group;
       }
-      group.goToFrame(group.from + this.scrubTimes.caster * framesPerSecond(group));
+      // Sur le trajet, le lanceur est montré au départ du sort (d'où part le projectile, comme en jeu).
+      const casterTime = this.moment === "projectile" && this.entry ? releaseTime(this.entry, castTimeOf(this.abilityId)) : this.scrubTimes.caster;
+      group.goToFrame(group.from + casterTime * framesPerSecond(group));
       instance.setStowed(true);
     }
     this.showTargetFrame();
@@ -594,7 +619,15 @@ class Stage {
       const time = this.scrubTimes[this.moment];
       if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time });
       else this.effects.stopAll();
-      this.showMoments(this.moment === "caster" ? null : time, this.moment);
+      this.showMoments(this.moment === "caster" || this.moment === "projectile" ? null : time, this.moment);
+      // Trajet : le projectile à l'instant montré, et sa ligne.
+      if (this.moment === "projectile") {
+        this.showFlight(time, this.projectileStart(new Vector3()), PATH_SEED);
+        this.drawPath(true);
+      } else {
+        this.projectileFx.stopAll();
+        this.drawPath(false);
+      }
       return;
     }
     if (this.mode !== "play" || !instance || !animator || !entry) return;
@@ -604,10 +637,15 @@ class Stage {
     const release = () => {
       animator.ability(this.abilityId);
       cycle.phase = "after";
-      this.sequence = { time: 0, reacted: false };
+      this.sequence = { time: 0, reacted: false, from: entry.projectile?.enabled ? this.projectileStart(new Vector3()) : null, seed: Math.random() * 1000 };
       // Ce que le jeu joue lui-même : projectile, et impact et zone du code s'ils ne sont pas réglés.
       const target = targetsSelf(this.abilityId) ? this.holder : this.targetHolder;
-      const tuned = { impact: entry.impact !== undefined, zone: entry.zone !== undefined, zoneParticles: !!entry.zone?.length };
+      const tuned = {
+        projectile: !!entry.projectile?.enabled,
+        impact: entry.impact !== undefined,
+        zone: entry.zone !== undefined,
+        zoneParticles: !!entry.zone?.length,
+      };
       this.codeFx.play(this.abilityId, this.holder, target, tuned);
       if (getAbility(this.abilityId)?.effects.some((effect) => effect.type === "damage")) this.codeFx.magicHit(this.abilityId, target, tuned.impact);
       if (this.abilityId === "bubble") this.codeFx.statuses.bubbleWasApplied(CODE_DUMMY);
@@ -657,6 +695,8 @@ class Stage {
     sequence.time += dt;
     const travel = isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
     const time = sequence.time - travel;
+    if (sequence.from && time < 0) this.showFlight(sequence.time, sequence.from, sequence.seed);
+    else this.projectileFx.stopAll();
     if (time >= 0) {
       const reaction = this.entry?.impact?.reaction;
       if (!sequence.reacted && reaction && !targetsSelf(this.abilityId)) this.targetAnimator?.reactTuned(reaction);
@@ -685,6 +725,57 @@ class Stage {
       statusKindsOf(this.abilityId).length ? this.statusShown - (isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0) : 0,
       radius ? AREA_DURATION : 0,
     );
+  }
+
+  // Départ du projectile réglé : le point du lanceur choisi.
+  private projectileStart(out: Vector3): Vector3 {
+    const p = this.entry?.projectile;
+    if (!p || !this.instance) return out.set(0, 1.1, 0);
+    return effectPosition(this.instance, { recipe: "", start: 0, end: 0, anchor: p.from, offset: p.fromOffset }, 0, out);
+  }
+
+  // Arrivée : le point choisi de la cible.
+  private projectileEnd(out: Vector3): Vector3 {
+    const p = this.entry?.projectile;
+    const target = this.targetCharacter();
+    if (!p || !target) return out.set(0, 1.1, this.targetHolder.position.z);
+    return effectPosition(target, { recipe: "", start: 0, end: 0, anchor: p.to, offset: [0, 0, 0] }, 0, out);
+  }
+
+  // Le projectile réglé à un instant de son vol (secondes depuis le départ).
+  private showFlight(time: number, from: Vector3, seed: number) {
+    const p = this.entry?.projectile;
+    if (!p?.enabled) {
+      this.projectileFx.stopAll();
+      return;
+    }
+    const to = this.projectileEnd(new Vector3());
+    const t = Math.min(1, time / PROJECTILE_TRAVEL_TIME);
+    projectilePosition(p, from, to, t, seed, this.flightAt);
+    projectileDirection(p, from, to, t, seed, this.flightAim);
+    this.projectileFx.updateTracks(null, [
+      { id: "projectile", effects: p.effects, time, point: { center: this.flightAt, yaw: 0, aim: p.align ? this.flightAim : null } },
+    ]);
+  }
+
+  // Trajet dessiné en pose figée, sur l'onglet du trajet.
+  private drawPath(show: boolean) {
+    const p = this.entry?.projectile;
+    const from = this.projectileStart(new Vector3());
+    const to = this.projectileEnd(new Vector3());
+    // Redessiné seulement quand le trajet change.
+    const key = show && p?.enabled ? `${JSON.stringify(p)}|${from.toString()}|${to.toString()}` : "";
+    if (key === this.pathKey) return;
+    this.pathKey = key;
+    this.pathLine?.dispose();
+    this.pathLine = null;
+    if (!key || !p) return;
+    const points: Vector3[] = [];
+    for (let i = 0; i <= 60; i++) points.push(projectilePosition(p, from, to, i / 60, PATH_SEED, new Vector3()));
+    this.pathLine = CreateLines("projectilePath", { points }, this.scene);
+    this.pathLine.color = new Color3(1, 0.85, 0.4);
+    this.pathLine.alpha = 0.6;
+    this.pathLine.isPickable = false;
   }
 
   // Effets de chaque moment : ceux du réglage, sinon ceux du code convertis en effets.
@@ -777,6 +868,9 @@ class Stage {
   }
 }
 
+// Tirage du zigzag dessiné en pose figée (en lecture, chaque vol a le sien, comme en jeu).
+const PATH_SEED = 7;
+
 // Tenue d'une marque sans durée dans l'aperçu de l'atelier (secondes).
 const MARK_HOLD = 2.5;
 
@@ -827,6 +921,7 @@ function effectUses(tuning: AnimationTuning, recipe: string, type?: "ground" | "
 function momentEffects(entry: AbilityAnimation): [Moment, AnimationEffect[]][] {
   return [
     ["caster", entry.effects ?? []],
+    ["projectile", entry.projectile?.effects ?? []],
     ["impact", entry.impact?.effects ?? []],
     ["status", entry.status ?? []],
     ["zone", entry.zone ?? []],
@@ -836,6 +931,7 @@ function momentEffects(entry: AbilityAnimation): [Moment, AnimationEffect[]][] {
 // Nom d'un moment dans ses onglets.
 function momentLabel(moment: Moment, abilityId: string): string {
   if (moment === "caster") return "Lanceur";
+  if (moment === "projectile") return `Trajet (${seconds(PROJECTILE_TRAVEL_TIME)})`;
   if (moment === "impact") return targetsSelf(abilityId) ? "Impact (sur soi)" : "Impact sur la cible";
   if (moment === "zone") return `Zone (${getAbility(abilityId)?.radius ?? 0} m)`;
   const kinds = statusKindsOf(abilityId).map((kind) => EFFECTS[kind as EffectKind]?.label ?? kind);
@@ -845,6 +941,7 @@ function momentLabel(moment: Moment, abilityId: string): string {
 
 // Visuels du code d'un moment : effets à particules (convertibles) et le reste (objets, affichage 2D…).
 function codeOf(moment: Moment, abilityId: string): { effects: AnimationEffect[]; extras: string[] } {
+  if (moment === "projectile") return { effects: codeProjectile(abilityId).effects, extras: [] };
   if (moment === "impact") return codeImpact(abilityId);
   if (moment === "status") return codeStatus(abilityId);
   return { effects: codeZone(abilityId), extras: [] };
@@ -856,6 +953,10 @@ function listOf(effects: AnimationEffect[]): string {
 
 // Ce que fait le jeu pour un moment pas encore réglé.
 function momentCodeNote(moment: Moment, abilityId: string): string {
+  if (moment === "projectile") {
+    if (!codeProjectile(abilityId).enabled) return "Pas encore réglé : en jeu, pas de projectile, l'effet est immédiat. « Régler ce moment » permet d'en ajouter un.";
+    return `Pas encore réglé : en jeu, le code envoie un projectile en ligne droite en 0,3 s, avec les effets ${listOf(codeProjectile(abilityId).effects)} (montrés sur le mannequin). « Régler ce moment » part de ce projectile.`;
+  }
   const { effects, extras } = codeOf(moment, abilityId);
   if (!effects.length && !extras.length) return "Pas encore réglé : en jeu, rien de particulier pour ce moment.";
   const parts = [effects.length && `les effets ${listOf(effects)}`, ...extras].filter(Boolean).join(" ; ");
@@ -873,6 +974,7 @@ function momentExtrasNote(moment: Moment, abilityId: string): string | null {
 
 // Rappel du sens du temps 0 de chaque moment.
 function momentHint(moment: Moment, abilityId: string): string {
+  if (moment === "projectile") return "0 s : départ du sort · durée fixe de 0,3 s · les effets se placent autour du projectile";
   if (moment === "impact")
     return `0 s : ${isProjectile(abilityId) ? "arrivée du projectile" : "départ du sort"} · joué sur chaque cible touchée`;
   if (moment === "status") return "0 s : début de l'état (au départ du sort) · remplace les particules d'état du code";
@@ -900,6 +1002,8 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
     }),
     ...(effect.untilEnd && { untilEnd: true }),
     ...(effect.fitZone && { fitZone: true }),
+    ...(effect.tint && { tint: effect.tint }),
+    ...(effect.scale !== undefined && effect.scale !== 1 && { scale: round(effect.scale) }),
   };
 }
 
@@ -911,6 +1015,21 @@ function roundEntry(entry: AbilityAnimation): AbilityAnimation {
     end: round(entry.end),
   };
   if (entry.effects) rounded.effects = entry.effects.map(roundEffect);
+  if (entry.projectile) {
+    const p = entry.projectile;
+    rounded.projectile = {
+      enabled: p.enabled,
+      path: p.path,
+      height: round(p.height),
+      turns: p.turns,
+      speed: p.speed,
+      from: p.from,
+      fromOffset: p.fromOffset.map(round) as [number, number, number],
+      to: p.to,
+      align: p.align,
+      effects: (p.effects ?? []).map(roundEffect),
+    };
+  }
   if (entry.impact) {
     const reaction = entry.impact.reaction;
     rounded.impact = {
@@ -1042,7 +1161,7 @@ function AnimationLab() {
   // Moment réglé (geste du lanceur, impact, état, zone), et instant montré en pose figée pour chacun (secondes) :
   // là où se pose un nouveau point clé.
   const [moment, setMoment] = useState<Moment>(initial?.moment ?? "caster");
-  const [cursors, setCursors] = useState<Record<Moment, number>>({ caster: 0, impact: 0, status: 0, zone: 0 });
+  const [cursors, setCursors] = useState<Record<Moment, number>>({ caster: 0, projectile: 0, impact: 0, status: 0, zone: 0 });
   const cursor = cursors[moment];
   const [targetClass, setTargetClass] = useState<ClassId>(initial?.targetClass ?? "gardien");
   const [distance, setDistance] = useState(initial?.distance ?? 6);
@@ -1126,6 +1245,8 @@ function AnimationLab() {
   // Effets en cours de réglage : utilisés aussi par l'onglet des animations.
   useEffect(() => setParticleEffectDefs(fxDraft), [fxDraft]);
   useEffect(() => setGroundMarkDefs(marksDraft), [marksDraft]);
+  // Projectile réglé (ou retiré) dans le brouillon : durée du vol et impact dans la lecture.
+  useEffect(() => setProjectileLookup((id) => tuningOf(draft, id)?.projectile?.enabled), [draft]);
   useEffect(() => setObjectDefs(objectsDraft), [objectsDraft]);
   useEffect(() => {
     if (!objectsSaved) return;
@@ -1378,7 +1499,7 @@ function AnimationLab() {
   const ability = getAbility(abilityId);
   const statusKinds = statusKindsOf(abilityId);
   const statusDuration = statusDurationOf(abilityId);
-  const moments: Moment[] = ["caster", "impact", ...(statusKinds.length ? (["status"] as const) : []), ...(ability?.radius ? (["zone"] as const) : [])];
+  const moments: Moment[] = ["caster", ...(canHaveProjectile(abilityId) ? (["projectile"] as const) : []), "impact", ...(statusKinds.length ? (["status"] as const) : []), ...(ability?.radius ? (["zone"] as const) : [])];
   const shownMoment: Moment = moments.includes(moment) ? moment : "caster";
   const [statusShown, setStatusShown] = useState(4);
   // Durée montrée d'un état : la sienne, au plus 8 s (un buff permanent : 4 s).
@@ -1391,7 +1512,7 @@ function AnimationLab() {
   const impactLength = Math.max(3, momentLength(entry?.impact?.effects, entry?.impact?.reaction) + 1);
   const zoneLength = Math.max(3, momentLength(entry?.zone) + 1);
   const statusLength = Math.max(statusShown, momentLength(entry?.status?.filter((effect) => !effect.untilEnd)) + 0.5);
-  const momentAxis = shownMoment === "impact" ? impactLength : shownMoment === "status" ? statusLength : shownMoment === "zone" ? zoneLength : length;
+  const momentAxis = shownMoment === "projectile" ? PROJECTILE_TRAVEL_TIME : shownMoment === "impact" ? impactLength : shownMoment === "status" ? statusLength : shownMoment === "zone" ? zoneLength : length;
   const reaction = entry?.impact?.reaction;
   const reactionLength = reaction ? clipLength(reaction.animation) : 0;
   const reactionAnimations = useMemo(() => {
@@ -1462,14 +1583,19 @@ function AnimationLab() {
   const updateMoment = (patch: Partial<AbilityAnimation>) => {
     if (!entry) return;
     const next: AbilityAnimation = { ...entry, ...patch };
-    for (const key of ["impact", "status", "zone"] as const) if (key in patch && patch[key] === undefined) delete next[key];
+    for (const key of ["projectile", "impact", "status", "zone"] as const) if (key in patch && patch[key] === undefined) delete next[key];
     update(next);
   };
   const setMomentEffects = (effects: AnimationEffect[]) => {
     if (!entry) return;
-    if (shownMoment === "impact") updateMoment({ impact: { ...entry.impact, effects: clampMomentEffects(effects, impactLength) } });
+    if (shownMoment === "projectile" && entry.projectile)
+      updateMoment({ projectile: { ...entry.projectile, effects: clampMomentEffects(effects, PROJECTILE_TRAVEL_TIME) } });
+    else if (shownMoment === "impact") updateMoment({ impact: { ...entry.impact, effects: clampMomentEffects(effects, impactLength) } });
     else if (shownMoment === "status") updateMoment({ status: clampMomentEffects(effects, 600) });
     else if (shownMoment === "zone") updateMoment({ zone: clampMomentEffects(effects, zoneLength) });
+  };
+  const setProjectile = (patch: Partial<ProjectileVisual>) => {
+    if (entry?.projectile) updateMoment({ projectile: { ...entry.projectile, ...patch } });
   };
   const setReaction = (next: TargetReaction | undefined) => {
     if (!entry) return;
@@ -1884,7 +2010,8 @@ function AnimationLab() {
                     onClick={() => {
                       // Le moment part des effets du code, convertis.
                       const effects = codeOf(shownMoment, abilityId).effects;
-                      updateMoment(shownMoment === "impact" ? { impact: { effects } } : shownMoment === "status" ? { status: effects } : { zone: effects });
+                      if (shownMoment === "projectile") updateMoment({ projectile: codeProjectile(abilityId) });
+                      else updateMoment(shownMoment === "impact" ? { impact: { effects } } : shownMoment === "status" ? { status: effects } : { zone: effects });
                     }}
                   >
                     Régler ce moment
@@ -1893,6 +2020,9 @@ function AnimationLab() {
               ) : (
                 <>
                   <div className="lab-controls">
+                    {shownMoment === "projectile" && entry.projectile && (
+                      <ProjectileControls projectile={entry.projectile} onChange={setProjectile} />
+                    )}
                     {shownMoment === "impact" && (
                       <>
                         <label>
@@ -1964,12 +2094,13 @@ function AnimationLab() {
                       ]}
                     />
                   </div>
+                  {(shownMoment !== "projectile" || entry.projectile?.enabled) && (
                   <EffectsPanel
                     kind={shownMoment}
                     length={momentAxis}
                     bounds={[0, shownMoment === "status" ? momentAxis : momentAxis]}
-                    addSpan={[0, shownMoment === "status" ? statusShown : 0.6]}
-                    effects={(shownMoment === "impact" ? entry.impact?.effects : entry[shownMoment]) ?? []}
+                    addSpan={[0, shownMoment === "status" ? statusShown : shownMoment === "projectile" ? PROJECTILE_TRAVEL_TIME : 0.6]}
+                    effects={(shownMoment === "impact" ? entry.impact?.effects : shownMoment === "projectile" ? entry.projectile?.effects : entry[shownMoment]) ?? []}
                     selected={selectedEffect}
                     onSelect={setSelectedEffect}
                     cursor={cursor}
@@ -1977,6 +2108,7 @@ function AnimationLab() {
                     onChange={setMomentEffects}
                     onScrub={scrub}
                   />
+                  )}
                 </>
               )}
             </>
@@ -2119,6 +2251,106 @@ function Timeline(props: {
   );
 }
 
+const PATHS: Record<ProjectilePath, string> = {
+  straight: "En ligne droite",
+  arc: "En cloche",
+  spiral: "En vrille",
+  wave: "En ondulant",
+  zigzag: "En zigzag",
+  curve: "En courbe (part sur le côté)",
+};
+const HEIGHT_LABELS: Partial<Record<ProjectilePath, string>> = {
+  arc: "Hauteur de la cloche",
+  spiral: "Rayon de la vrille",
+  wave: "Amplitude",
+  zigzag: "Amplitude",
+  curve: "Écart sur le côté (négatif : à gauche)",
+};
+const TURNS_LABELS: Partial<Record<ProjectilePath, string>> = { spiral: "Tours", wave: "Ondulations", zigzag: "Cassures" };
+
+// Réglages du trajet : projectile ou pas, forme du trajet, vitesse, départ et arrivée.
+function ProjectileControls(props: { projectile: ProjectileVisual; onChange: (patch: Partial<ProjectileVisual>) => void }) {
+  const { projectile: p, onChange } = props;
+  const anchors = Object.entries(EFFECT_ANCHORS);
+  return (
+    <>
+      <label className="lab-check" title="Sans projectile, l'impact est immédiat (dégâts directs, débuff)">
+        <input type="checkbox" checked={p.enabled} onChange={(e) => onChange({ enabled: e.target.checked })} />
+        Projectile
+      </label>
+      {!p.enabled ? (
+        <span className="lab-hint">Pas de projectile : l'impact a lieu au départ du sort.</span>
+      ) : (
+        <>
+          <label>
+            Trajet
+            <select
+              value={p.path}
+              // Une hauteur négative n'a de sens que pour la courbe (de l'autre côté).
+              onChange={(e) => onChange({ path: e.target.value as ProjectilePath, height: e.target.value === "curve" ? p.height : Math.abs(p.height) })}
+            >
+              {Object.entries(PATHS).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {HEIGHT_LABELS[p.path] && (
+            <label className="lab-rate">
+              {HEIGHT_LABELS[p.path]} {p.height.toFixed(2).replace(".", ",")} m
+              <input type="range" min={p.path === "curve" ? -6 : 0} max={6} step={0.05} value={p.height} onChange={(e) => onChange({ height: Number(e.target.value) })} />
+            </label>
+          )}
+          {TURNS_LABELS[p.path] && (
+            <label className="lab-rate">
+              {TURNS_LABELS[p.path]} {p.turns}
+              <input type="range" min={1} max={12} step={1} value={p.turns} onChange={(e) => onChange({ turns: Number(e.target.value) })} />
+            </label>
+          )}
+          <label>
+            Vitesse
+            <select value={p.speed} onChange={(e) => onChange({ speed: e.target.value as ProjectileVisual["speed"] })}>
+              <option value="constant">Constante</option>
+              <option value="accelerate">Accélère</option>
+              <option value="decelerate">Ralentit</option>
+            </select>
+          </label>
+          <label>
+            Part de
+            <select
+              value={p.from}
+              // Le milieu du corps (pieds + 1,1 m) n'a de sens que depuis les pieds.
+              onChange={(e) => onChange({ from: e.target.value as EffectAnchor, fromOffset: e.target.value === "feet" ? [0, 1.1, 0] : [0, 0, 0] })}
+            >
+              {anchors.map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                  {id === "feet" && p.from === "feet" && p.fromOffset[1] ? ` (+${p.fromOffset[1].toFixed(1).replace(".", ",")} m)` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Arrive sur la cible
+            <select value={p.to} onChange={(e) => onChange({ to: e.target.value as EffectAnchor })}>
+              {anchors.map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="lab-check" title="Les objets 3D du projectile pointent (leur profondeur) dans le sens du trajet">
+            <input type="checkbox" checked={p.align} onChange={(e) => onChange({ align: e.target.checked })} />
+            Objets dans le sens du trajet
+          </label>
+        </>
+      )}
+    </>
+  );
+}
+
 // Axe du temps d'un moment de la cible (secondes depuis son début) : un clic ou un glissement montre la pose et
 // les effets à cet instant ; repères (réaction, disque de portée, état) en bandes grisées.
 function MomentAxis(props: {
@@ -2130,12 +2362,16 @@ function MomentAxis(props: {
   const { length, playheadRef, onScrub, spans } = props;
   const trackRef = useRef<HTMLDivElement>(null);
   const percent = (time: number) => `${(Math.min(time, length) / Math.max(length, 1e-3)) * 100}%`;
+  // Axe court (le trajet, 0,3 s) : repères tous les 0,05 s, chiffrés tous les 0,1 s.
+  const short = length < 1;
+  const step = short ? 0.05 : 0.25;
   const ticks = [];
-  for (let t = 0; t <= length + 1e-6; t += 0.25) {
-    const whole = Math.abs(t - Math.round(t)) < 1e-6;
+  for (let i = 0; i * step <= length + 1e-6; i++) {
+    const t = i * step;
+    const major = short ? i % 2 === 0 : Math.abs(t - Math.round(t)) < 1e-6;
     ticks.push(
-      <div key={t} className={`lab-tick ${whole ? "lab-tick-major" : ""}`} style={{ left: percent(t) }}>
-        {whole && <span>{t} s</span>}
+      <div key={i} className={`lab-tick ${major ? "lab-tick-major" : ""}`} style={{ left: percent(t) }}>
+        {major && <span>{short ? seconds(t) : `${t} s`}</span>}
       </div>,
     );
   }
@@ -2172,9 +2408,9 @@ function dragOnTrack(event: ReactPointerEvent, track: HTMLElement | null, length
 }
 
 // Effet proposé à l'ajout, selon le moment.
-const DEFAULT_RECIPES: Record<Moment, string> = { caster: "fireCharge", impact: "fireBurst", status: "mezHalo", zone: "frostField" };
-const DEFAULT_MARKS: Record<Moment, string> = { caster: "arcaneRunes", impact: "fireCracks", status: "frostCircle", zone: "frostCircle" };
-const DEFAULT_OBJECTS: Record<Moment, string> = { caster: "pulseSphere", impact: "slash", status: "iceCrystals", zone: "frostRing" };
+const DEFAULT_RECIPES: Record<Moment, string> = { caster: "fireCharge", projectile: "fireTrail", impact: "fireBurst", status: "mezHalo", zone: "frostField" };
+const DEFAULT_MARKS: Record<Moment, string> = { caster: "arcaneRunes", projectile: "frostCircle", impact: "fireCracks", status: "frostCircle", zone: "frostCircle" };
+const DEFAULT_OBJECTS: Record<Moment, string> = { caster: "pulseSphere", projectile: "orb", impact: "slash", status: "iceCrystals", zone: "frostRing" };
 
 // Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D.
 function effectLabel(effect: AnimationEffect): string {
@@ -2362,14 +2598,54 @@ function EffectsPanel(props: {
               ))}
             </select>
           </label>
+          {(current.type === "ground" || current.type === "object") && (
+            <>
+              <label title="Couleur imposée à cette marque ou cet objet sur cette compétence">
+                Teinte
+                <input
+                  type="color"
+                  value={current.tint ?? (current.type === "ground" ? groundMarkDef(current.recipe)?.color : objectDef(current.recipe)?.color) ?? "#ffffff"}
+                  onChange={(e) => replace(index, { ...current, tint: e.target.value })}
+                />
+              </label>
+              {current.tint && (
+                <button
+                  onClick={() => {
+                    const next: AnimationEffect = { ...current };
+                    delete next.tint;
+                    replace(index, next);
+                  }}
+                  title="Reprendre la couleur de la marque ou de l'objet"
+                >
+                  Couleur d'origine
+                </button>
+              )}
+              <label className="lab-offset" title="Double-clic : taille d'origine">
+                Taille ×{(current.scale ?? 1).toFixed(2).replace(".", ",")}
+                <input
+                  type="range"
+                  min={0.1}
+                  max={5}
+                  step={0.05}
+                  value={current.scale ?? 1}
+                  onChange={(e) => replace(index, { ...current, scale: Number(e.target.value) })}
+                  onDoubleClick={() => {
+                    const next: AnimationEffect = { ...current };
+                    delete next.scale;
+                    replace(index, next);
+                  }}
+                />
+              </label>
+            </>
+          )}
           <button onClick={addKey} disabled={playing} title="Ajoute un point clé à l'instant montré (mettre la lecture en pause)">
             + Point clé ici
           </button>
           <span className="lab-key-label">
             {key ? `Point clé ${keyIndex + 1}/${keys.length} à ${seconds(key.time)}` : "Position de tout l'effet"}
           </span>
-          {kind === "zone" ? (
-            <span className="lab-hint">Centre de la zone</span>
+          {kind === "zone" || kind === "projectile" ? (
+            <span className="lab-hint">{kind === "zone" ? "Centre de la zone" : "Sur le projectile"}</span>
           ) : (
             <label>
               Accroché

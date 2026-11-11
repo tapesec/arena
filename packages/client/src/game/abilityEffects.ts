@@ -113,11 +113,14 @@ function anchorPosition(character: CharacterInstance, anchor: EffectAnchor, offs
 
 // Effets d'un moment, à un instant donné (secondes depuis son début). Sur une zone, les effets se placent autour de
 // son centre (décalage dans le repère du lanceur, yaw) au lieu d'un personnage.
+// Sur un projectile (point), les effets se placent autour de lui, et ses objets pointent dans le sens du trajet
+// (aim, si demandé).
 export interface EffectTrack {
   id: string;
   effects: readonly AnimationEffect[];
   time: number;
   zone?: { center: Vector3; yaw: number; radius: number };
+  point?: { center: Vector3; yaw: number; aim: Vector3 | null };
 }
 
 // Un effet joue de start à end (ou jusqu'à la fin du moment, avec untilEnd).
@@ -128,7 +131,7 @@ function isActive(effect: AnimationEffect, time: number): boolean {
 // Position d'un effet de zone : son décalage (interpolé entre ses points clés) autour du centre.
 const zoneOffset = new Vector3();
 const nextOffset = new Vector3();
-function zonePosition(zone: NonNullable<EffectTrack["zone"]>, effect: AnimationEffect, time: number, out: Vector3): Vector3 {
+function zonePosition(zone: { center: Vector3; yaw: number }, effect: AnimationEffect, time: number, out: Vector3): Vector3 {
   const keys = effect.keys;
   if (!keys?.length) zoneOffset.fromArray(effect.offset);
   else {
@@ -175,20 +178,20 @@ export class AbilityEffectPlayer {
   updateTracks(character: CharacterInstance | null, tracks: readonly EffectTrack[]) {
     const active = new Set<string>();
     for (const track of tracks) {
-      if (!character && !track.zone) continue;
+      const frame = track.zone ?? track.point;
+      if (!character && !frame) continue;
       track.effects.forEach((effect, index) => {
         if (!isActive(effect, track.time)) return;
-        const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}`;
+        const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}:${effect.tint ?? ""}:${effect.scale ?? 1}`;
         active.add(key);
         let run = this.running.get(key);
-        const place = (out: Vector3) =>
-          track.zone ? zonePosition(track.zone, effect, track.time, out) : effectPosition(character!, effect, track.time, out);
+        const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
         if (!run) {
           run = { effect, at: new Vector3(), system: null, mark: null, object: null };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
-          if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius) ?? null;
-          else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius) ?? null;
+          if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
+          else if (effect.type === "object") run.object = this.scenery.objects?.create(effect.recipe, run.at, radius, effect.tint, effect.scale) ?? null;
           else {
             const recipe = radius !== undefined ? zoneRecipe(effect.recipe, radius) : particleRecipe(effect.recipe);
             run.system = recipe?.(this.particles, run.at) ?? null;
@@ -197,6 +200,13 @@ export class AbilityEffectPlayer {
         }
         run.effect = effect;
         place(run.at);
+        if (run.object) {
+          const aim = track.point?.aim ?? null;
+          // Un objet qui vient d'apparaître prend tout de suite sa direction (sinon une image sans).
+          const fresh = run.object.aim === null && aim !== null;
+          run.object.aim = aim;
+          if (fresh) run.object.refresh();
+        }
       });
     }
     for (const [key, run] of this.running) if (!active.has(key)) this.stop(key, run);

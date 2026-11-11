@@ -1,7 +1,7 @@
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import { CreateRibbon } from "@babylonjs/core/Meshes/Builders/ribbonBuilder";
@@ -226,6 +226,18 @@ export const BUILTIN_OBJECTS: Record<string, ObjectDef> = {
     duration: 1.5,
     fadeOut: 0.5,
   },
+  orb: {
+    ...DEFAULT_OBJECT,
+    label: "Cœur de projectile",
+    form: "sphere",
+    size: [1, 1, 1],
+    color: "#ffffff",
+    alpha: 1,
+    appear: 0,
+    appearScale: 1,
+    fadeIn: 0,
+    fadeOut: 0,
+  },
   frostRing: {
     ...DEFAULT_OBJECT,
     label: "Anneau de givre",
@@ -282,8 +294,12 @@ export function objectRadius(def: ObjectDef): number {
 }
 
 // Objet posé : at est partagé (le déplacer déplace l'objet), stop() lance sa disparition, remove() le retire.
+// aim : direction vers laquelle pointer sa profondeur (axe z) ; null, il garde sa propre orientation.
 export interface PlacedObject {
   at: Vector3;
+  aim: Vector3 | null;
+  // Recalcule sa pose tout de suite (après un changement de aim, avant la prochaine image).
+  refresh(): void;
   stop(): void;
   remove(): void;
 }
@@ -309,10 +325,12 @@ export class Objects3D {
 
   constructor(private scene: Scene) {}
 
-  // Pose un objet en at (radius : rayon de la zone à laquelle l'étendre).
-  create(id: string, at: Vector3, radius?: number): PlacedObject | null {
+  // Pose un objet en at (radius : rayon de la zone à laquelle l'étendre ; tint : couleur imposée).
+  create(id: string, at: Vector3, radius?: number, tint?: string, scale = 1): PlacedObject | null {
     const def = objectDef(id);
-    return def ? this.createFromDef(def, at, radius) : null;
+    if (!def) return null;
+    const size = def.size.map((v) => v * scale) as [number, number, number];
+    return this.createFromDef({ ...def, size, ring: def.ring * scale, ...(tint && { color: tint }) }, at, radius);
   }
 
   createFromDef(def: ObjectDef, at: Vector3, radius?: number): PlacedObject {
@@ -344,7 +362,13 @@ export class Objects3D {
     // Étendu à une zone : sa plus grande taille (en fin de vie s'il grandit) prend le rayon de la zone.
     const largest = Math.max(1, def.duration > 0 ? def.endScale : 1);
     const fit = radius !== undefined ? radius / Math.max(objectRadius(def) * largest, 0.05) : 1;
-    const object: PlacedObject = { at, stop: () => this.fadeOut(live), remove: () => this.remove(live) };
+    const object: PlacedObject = {
+      at,
+      aim: null,
+      refresh: () => this.animate(live),
+      stop: () => this.fadeOut(live),
+      remove: () => this.remove(live),
+    };
     const angles = def.billboard && count > 1 ? meshes.map((_, i) => (i / count) * Math.PI * 2) : null;
     const live: Live = { object, angles, def, root, meshes, material, fit, age: 0, fading: null };
     this.live.push(live);
@@ -395,7 +419,16 @@ export class Objects3D {
         const angle = live.angles![i] + age * def.spin;
         mesh.position.set(Math.cos(angle) * def.ring, 0, Math.sin(angle) * def.ring);
       });
-    } else live.root.rotation.y = age * def.spin;
+    } else if (live.object.aim && live.object.aim.lengthSquared() > 1e-8) {
+      // Pointé dans le sens du trajet (sa profondeur, axe z, vers aim), en tournant sur lui-même autour de cet axe.
+      const aim = live.object.aim;
+      const pitch = -Math.asin(Math.max(-1, Math.min(1, aim.y / aim.length())));
+      live.root.rotationQuaternion ??= new Quaternion();
+      Quaternion.RotationYawPitchRollToRef(Math.atan2(aim.x, aim.z), pitch, age * def.spin, live.root.rotationQuaternion);
+    } else {
+      live.root.rotationQuaternion = null;
+      live.root.rotation.y = age * def.spin;
+    }
     const fadeIn = def.fadeIn > 0 ? Math.min(1, age / def.fadeIn) : 1;
     const fadeOut = live.fading === null ? 1 : 1 - live.fading / Math.max(def.fadeOut, 1e-3);
     const pulse = 1 - def.pulse * (0.5 - 0.5 * Math.cos(age * Math.PI * 2));

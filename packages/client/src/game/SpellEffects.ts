@@ -16,12 +16,14 @@ import { getAbility, type AbilityDef } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { oneShot, recipeById } from "./particleDefs";
-import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
+import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile, setProjectileLookup, type AbilityFx } from "./spellFx";
 import { AFFLICTIONS, BODY_CENTER, OWN_AFFLICTION, VISUALS, type CodeVisual } from "./codeVisuals";
 
 // Moments réglés sur la page de réglage pour une compétence (par défaut, d'après animationTuning.json) : ils
 // remplacent l'impact et la zone du code.
 export interface TunedMoments {
+  // Projectile réglé : il est joué par TargetVisuals (le code n'en dessine pas).
+  projectile: boolean;
   impact: boolean;
   zone: boolean;
   zoneParticles: boolean;
@@ -29,7 +31,7 @@ export interface TunedMoments {
 
 function tunedMoments(abilityId: string): TunedMoments {
   const tuned = tuningOf(TUNING, abilityId);
-  return { impact: tuned?.impact !== undefined, zone: tuned?.zone !== undefined, zoneParticles: !!tuned?.zone?.length };
+  return { projectile: !!tuned?.projectile?.enabled, impact: tuned?.impact !== undefined, zone: tuned?.zone !== undefined, zoneParticles: !!tuned?.zone?.length };
 }
 
 const recipes = (ids: string[] | undefined): Recipe[] => (ids ?? []).map(recipeById);
@@ -41,13 +43,15 @@ import { Objects3D, setObjectDefs, type ObjectDef } from "./objects3d";
 import objects3d from "./objects3d.json";
 import type { Scenery } from "./abilityEffects";
 import { terrainHeight } from "@arena/shared";
-import { tuningOf, type AnimationTuning } from "./abilityAnimations";
+import { tuningOf, zoneCenterIsTarget, type AnimationTuning } from "./abilityAnimations";
 import animationTuning from "./animationTuning.json";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
 // Marques au sol réglées sur la page de réglage (elles remplacent celles de départ de même nom).
 setGroundMarkDefs(groundMarks as unknown as Record<string, GroundMarkDef>);
 setObjectDefs(objects3d as unknown as Record<string, ObjectDef>);
+// Projectile réglé (ou retiré) sur la page de réglage.
+setProjectileLookup((abilityId) => tuningOf(TUNING, abilityId)?.projectile?.enabled);
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 
 const SLASH_DURATION = 0.25;
@@ -117,11 +121,15 @@ export class SpellEffects {
     // Avec des effets de zone réglés, le disque de portée reste discret.
     const tunedZoneFx = tuned.zoneParticles;
 
-    if (fx.shape === "projectile" && caster && target) {
-      this.launchProjectile(fx, visual, caster, target, () => {
+    // Un sort lancé sur soi (soin) n'a pas de trajet.
+    if (isProjectile(abilityId) && caster && target && caster !== target) {
+      // Un projectile réglé est dessiné ailleurs : on n'attend ici que son arrivée.
+      const flight = tuned.projectile ? { core: 0, trail: [] } : visual;
+      this.launchProjectile(fx, flight, caster, target, () => {
         if (ownImpact) {
           // Rien de plus sur la cible.
         } else if (visual) this.burst(visual, target);
+        else if (fx.shape === "melee") this.spawnMelee(fx.color, target);
         else this.spawnPulse(fx.color, target, 0.6);
         if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, target.getAbsolutePosition(), areaRadius);
       });
@@ -130,7 +138,9 @@ export class SpellEffects {
     // Une zone centrée sur le lanceur (Déflagration, Soin de groupe) ou sur la cible.
     const anchor = target ?? caster;
     if (!anchor) return;
-    if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, (caster ?? anchor).getAbsolutePosition(), areaRadius);
+    // Centrée sur la cible d'un sort offensif (même sans projectile), sinon sur le lanceur.
+    const center = zoneCenterIsTarget(abilityId) && target ? target : (caster ?? anchor);
+    if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, center.getAbsolutePosition(), areaRadius);
     if (ownImpact) return;
     if (visual) this.burst(visual, anchor);
     else if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
@@ -151,7 +161,7 @@ export class SpellEffects {
         if (system) this.attached.push({ system, at, anchor: target, left: affliction.duration });
       }
     };
-    if (ABILITY_FX[abilityId]?.shape === "projectile") setTimeout(start, PROJECTILE_TRAVEL_TIME * 1000);
+    if (isProjectile(abilityId)) setTimeout(start, PROJECTILE_TRAVEL_TIME * 1000);
     else start();
   }
 

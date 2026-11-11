@@ -167,10 +167,11 @@ export class GroundMarks {
     private heightAt: (x: number, z: number) => number,
   ) {}
 
-  // Pose une marque au sol sous at (un rayon imposé remplace celui de la marque).
-  create(id: string, at: Vector3, radius?: number): GroundMark | null {
+  // Pose une marque au sol sous at (un rayon imposé remplace celui de la marque ; tint : couleur imposée).
+  create(id: string, at: Vector3, radius?: number, tint?: string, scale = 1): GroundMark | null {
     const def = groundMarkDef(id);
-    return def ? this.createFromDef(def, at, radius) : null;
+    if (!def) return null;
+    return this.createFromDef(tint ? { ...def, color: tint } : def, at, radius ?? def.radius * scale);
   }
 
   createFromDef(def: GroundMarkDef, at: Vector3, radius = def.radius): GroundMark {

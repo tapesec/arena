@@ -363,7 +363,7 @@ export class Game {
     if (!target) return;
     const anchor = target.root;
     // Le texte d'un sort à projectile attend que le projectile arrive.
-    const delay = isProjectile(event.abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
+    const delay = isProjectile(event.abilityId) && event.sourceId !== event.targetId ? PROJECTILE_TRAVEL_TIME : 0;
     switch (event.kind) {
       case "damage": {
         // Rouge quand ça touche son équipe, clair quand ça touche l'adversaire.

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { getAbility } from "@arena/shared";
-import { statusKindsOf, type AbilityAnimation, type AnimationEffect, type AnimationTuning } from "./abilityAnimations";
+import { canHaveProjectile, statusKindsOf, type AbilityAnimation, type AnimationEffect, type AnimationTuning } from "./abilityAnimations";
 import { BUILTIN_DEFS, CODE_RECIPES } from "./particleDefs";
 import { AFFLICTIONS, STATUS_CODE, VISUALS, codeImpact } from "./codeVisuals";
 import animationTuning from "./animationTuning.json";
@@ -22,6 +22,7 @@ const knownObjects = new Set([...Object.keys(BUILTIN_OBJECTS), ...Object.keys(ob
 function allEffects(entry: AbilityAnimation): [string, AnimationEffect[]][] {
   return [
     ["lanceur", entry.effects ?? []],
+    ["trajet", entry.projectile?.effects ?? []],
     ["impact", entry.impact?.effects ?? []],
     ["état", entry.status ?? []],
     ["zone", entry.zone ?? []],
@@ -49,6 +50,7 @@ test("les moments réglés correspondent à la compétence", () => {
       const ability = getAbility(abilityId);
       if (abilityId !== "chargeImpact") assert.ok(ability, `${classId}/${abilityId} : compétence inconnue`);
       if (entry.zone) assert.ok(ability?.radius, `${classId}/${abilityId} : zone réglée sur une compétence sans zone`);
+      if (entry.projectile?.enabled) assert.ok(canHaveProjectile(abilityId), `${classId}/${abilityId} : projectile sur une compétence sans autre cible que son lanceur`);
       if (entry.status) assert.ok(statusKindsOf(abilityId).length, `${classId}/${abilityId} : état réglé sur une compétence qui n'en laisse pas`);
       const reaction = entry.impact?.reaction;
       if (reaction) assert.ok(reaction.end > reaction.start && reaction.rate > 0, `${classId}/${abilityId} : réaction vide`);

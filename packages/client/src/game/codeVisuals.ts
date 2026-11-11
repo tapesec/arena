@@ -1,8 +1,8 @@
 import { getAbility, type AbilityDef } from "@arena/shared";
-import { statusKindsOf, type AnimationEffect } from "./abilityAnimations";
+import { statusKindsOf, type AnimationEffect, type ProjectileVisual } from "./abilityAnimations";
 import { ONE_SHOT_DURATION } from "./particleDefs";
 import { objectDef } from "./objects3d";
-import { ABILITY_FX } from "./spellFx";
+import { ABILITY_FX, PROJECTILE_TRAVEL_TIME } from "./spellFx";
 
 // Visuels de compétence prévus dans le code (avant la page de réglage), décrits par le nom de leurs effets à
 // particules. SpellEffects et StatusFx les jouent tant qu'un moment n'est pas réglé ; la page de réglage les montre
@@ -133,9 +133,10 @@ export function codeImpact(abilityId: string): { effects: AnimationEffect[]; ext
   if (visual?.beam) effects.push(object("lightBeam", 0));
   if (!visual) {
     const shape = ABILITY_FX[abilityId]?.shape;
-    if (shape === "melee") effects.push(object("meleeFlash", BODY_CENTER));
-    // Dans la couleur de la compétence : l'objet converti garde celle de « Sphère lumineuse ».
-    else if (shape) effects.push(object("pulseSphere", BODY_CENTER));
+    // Dans la couleur de la compétence, comme dans le code.
+    const tint = ABILITY_FX[abilityId]?.color.toHexString();
+    if (shape === "melee") effects.push({ ...object("meleeFlash", BODY_CENTER), tint });
+    else if (shape) effects.push({ ...object("pulseSphere", BODY_CENTER), tint });
   }
   // Sort de dégâts : la cible brûle ou se couvre de givre un instant.
   const school = ability?.school;
@@ -144,6 +145,33 @@ export function codeImpact(abilityId: string): { effects: AnimationEffect[]; ext
     for (const recipe of affliction.recipes) effects.push(placed(recipe, 0, 0, affliction.duration));
   }
   return { effects, extras };
+}
+
+// Projectile du code (un « bolt ») devenu réglable : en ligne droite, du milieu du corps du lanceur à la cible,
+// avec son cœur lumineux (dans la couleur du sort) et ses traînées. Sans projectile dans le code : réglage
+// « pas de projectile ».
+export function codeProjectile(abilityId: string): ProjectileVisual {
+  const fx = ABILITY_FX[abilityId];
+  const visual = VISUALS[abilityId];
+  const base: ProjectileVisual = {
+    enabled: false,
+    path: "straight",
+    height: 1.5,
+    turns: 2,
+    speed: "constant",
+    from: "feet",
+    fromOffset: [0, BODY_CENTER, 0],
+    to: "chest",
+    align: false,
+    effects: [],
+  };
+  if (fx?.shape !== "projectile") return base;
+  const effects: AnimationEffect[] = (visual?.trail ?? []).map((recipe) => ({ recipe, start: 0, end: PROJECTILE_TRAVEL_TIME, anchor: "feet", offset: [0, 0, 0] }));
+  const core = visual?.core ?? 0.45;
+  if (core > 0) {
+    effects.push({ type: "object", recipe: "orb", start: 0, end: PROJECTILE_TRAVEL_TIME, anchor: "feet", offset: [0, 0, 0], tint: fx.color.toHexString(), scale: core });
+  }
+  return { ...base, enabled: true, effects };
 }
 
 // Ce que le code joue sur la zone d'effet (à la taille de la zone).

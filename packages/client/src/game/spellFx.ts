@@ -69,6 +69,14 @@ export const ABILITY_FX: Record<string, AbilityFx> = {
 // Durée de vol d'un projectile, en secondes : les chiffres de dégâts attendent son arrivée.
 export const PROJECTILE_TRAVEL_TIME = 0.3;
 
+// Projectile réglé sur la page de réglage (true, false), sinon undefined : le jeu garde celui du code.
+let tunedProjectile: (abilityId: string) => boolean | undefined = () => undefined;
+
+export function setProjectileLookup(lookup: (abilityId: string) => boolean | undefined) {
+  tunedProjectile = lookup;
+}
+
+// La compétence envoie un projectile (son effet et ses dégâts attendent son arrivée).
 export function isProjectile(abilityId: string): boolean {
-  return ABILITY_FX[abilityId]?.shape === "projectile";
+  return tunedProjectile(abilityId) ?? ABILITY_FX[abilityId]?.shape === "projectile";
 }

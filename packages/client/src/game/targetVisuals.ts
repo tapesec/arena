@@ -2,7 +2,8 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CLASSES, getAbility, type ClassId, type CombatEvent, type EffectKind } from "@arena/shared";
 import { momentLength, statusKindsOf, tuningOf, zoneCenterIsTarget, type AbilityAnimation, type AnimationTuning } from "./abilityAnimations";
-import { AbilityEffectPlayer, type Scenery } from "./abilityEffects";
+import { AbilityEffectPlayer, effectPosition, type Scenery } from "./abilityEffects";
+import { projectileDirection, projectilePosition } from "./projectilePaths";
 import type { ParticleFactory } from "./particles";
 import type { PlayerVisual } from "./PlayerVisual";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
@@ -32,6 +33,20 @@ interface Impact {
   age: number;
   length: number;
   reacted: boolean;
+  player: AbilityEffectPlayer;
+}
+
+// Projectile réglé en vol : parti de from (relevé au départ du sort), il suit sa cible.
+interface Flight {
+  casterId: string;
+  targetId: string;
+  entry: AbilityAnimation;
+  age: number;
+  from: Vector3;
+  yaw: number;
+  seed: number;
+  at: Vector3;
+  aim: Vector3;
   player: AbilityEffectPlayer;
 }
 
@@ -67,6 +82,7 @@ interface AreaCast {
 export class TargetVisuals {
   private impacts: Impact[] = [];
   private zones: Zone[] = [];
+  private flights: Flight[] = [];
   private areaCasts: AreaCast[] = [];
   // États en cours sur chaque joueur : type d'état → compétence d'origine et ses effets.
   private statuses = new Map<string, Map<string, StatusRun>>();
@@ -93,8 +109,10 @@ export class TargetVisuals {
   onAbility(casterId: string, abilityId: string, targetId: string, players: Map<string, PlayerVisual>) {
     const ability = getAbility(abilityId);
     const entry = tuningOf(this.tuning, abilityId);
-    const projectile = isProjectile(abilityId);
+    // Un sort lancé sur soi (soin) n'a pas de trajet.
+    const projectile = isProjectile(abilityId) && !!targetId && targetId !== casterId;
     const delay = projectile ? PROJECTILE_TRAVEL_TIME : 0;
+    if (projectile && entry?.projectile?.enabled && targetId) this.launch(casterId, targetId, entry, players);
     // Compétence à cible unique (ou impact de la Charge, qui n'est pas une compétence de la barre).
     if (!ability?.radius) {
       this.reached(targetId || casterId, casterId, abilityId, entry, delay);
@@ -151,17 +169,69 @@ export class TargetVisuals {
     this.updateStatuses(dt, players);
     this.impacts = this.impacts.filter((impact) => this.updateImpact(impact, dt, players));
     this.zones = this.zones.filter((zone) => this.updateZone(zone, dt, players));
+    this.flights = this.flights.filter((flight) => this.updateFlight(flight, dt, players));
   }
 
   dispose() {
     for (const impact of this.impacts) impact.player.stopAll();
     for (const zone of this.zones) zone.player.stopAll();
+    for (const flight of this.flights) flight.player.stopAll();
+    this.flights = [];
     for (const runs of this.statuses.values()) for (const run of runs.values()) run.player.stopAll();
     this.impacts = [];
     this.zones = [];
     this.areaCasts = [];
     this.statuses.clear();
     this.origins.clear();
+  }
+
+  // Départ d'un projectile réglé, du point de départ du lanceur.
+  private launch(casterId: string, targetId: string, entry: AbilityAnimation, players: Map<string, PlayerVisual>) {
+    const caster = players.get(casterId);
+    const projectile = entry.projectile!;
+    const from = new Vector3();
+    if (caster?.character) {
+      effectPosition(caster.character, { recipe: "", start: 0, end: 0, anchor: projectile.from, offset: projectile.fromOffset }, 0, from);
+    } else if (caster) from.copyFrom(caster.root.getAbsolutePosition()).y += BODY_HEIGHT;
+    else return;
+    this.flights.push({
+      casterId,
+      targetId,
+      entry,
+      age: 0,
+      from,
+      yaw: yawOf(caster.root),
+      seed: Math.random() * 1000,
+      at: from.clone(),
+      aim: new Vector3(0, 0, 1),
+      player: new AbilityEffectPlayer(this.particles, this.scenery),
+    });
+  }
+
+  // false : le projectile est arrivé (ou sa cible a disparu).
+  private updateFlight(flight: Flight, dt: number, players: Map<string, PlayerVisual>): boolean {
+    flight.age += dt;
+    const target = players.get(flight.targetId);
+    const projectile = flight.entry.projectile!;
+    if (!target || flight.age >= PROJECTILE_TRAVEL_TIME) {
+      flight.player.stopAll();
+      return false;
+    }
+    const to = new Vector3();
+    if (target.character) effectPosition(target.character, { recipe: "", start: 0, end: 0, anchor: projectile.to, offset: [0, 0, 0] }, 0, to);
+    else to.copyFrom(target.root.getAbsolutePosition()).y += BODY_HEIGHT;
+    const t = flight.age / PROJECTILE_TRAVEL_TIME;
+    projectilePosition(projectile, flight.from, to, t, flight.seed, flight.at);
+    projectileDirection(projectile, flight.from, to, t, flight.seed, flight.aim);
+    flight.player.updateTracks(null, [
+      {
+        id: "projectile",
+        effects: projectile.effects,
+        time: flight.age,
+        point: { center: flight.at, yaw: flight.yaw, aim: projectile.align ? flight.aim : null },
+      },
+    ]);
+    return true;
   }
 
   // La compétence atteint un joueur (delay : temps avant l'impact) : on retient d'où viennent ses états, et on
@@ -266,6 +336,9 @@ export class TargetVisuals {
     return candidates.find((id) => statusKindsOf(id).includes(kind)) ?? "";
   }
 }
+
+// Hauteur du milieu du corps, pour un personnage pas encore chargé.
+const BODY_HEIGHT = 1.1;
 
 // Orientation d'un personnage autour de la verticale (radians).
 function yawOf(node: TransformNode): number {
