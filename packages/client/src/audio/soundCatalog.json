@@ -2492,1669 +2492,1947 @@
   "name": "Ambience_Dark_Aura_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Dark Aura Loop.wav",
-  "duration": 12.78
+  "duration": 12.78,
+  "protected": true
  },
  {
   "name": "Ambience_Dark_Chamber_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Dark Chamber Loop.wav",
-  "duration": 14.07
+  "duration": 14.07,
+  "protected": true
  },
  {
   "name": "Ambience_Dark_Chamber_Uneven_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Dark Chamber Uneven Loop.wav",
-  "duration": 21.83
+  "duration": 21.83,
+  "protected": true
  },
  {
   "name": "Ambience_Dark_Metallic_Aura_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Dark Metallic Aura Loop.wav",
-  "duration": 41.7
+  "duration": 41.7,
+  "protected": true
  },
  {
   "name": "Ambience_Dark_Rumble_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Dark Rumble Loop.wav",
-  "duration": 5.64
+  "duration": 5.64,
+  "protected": true
  },
  {
   "name": "Ambience_Dark_Swirling_Space_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Dark Swirling Space Loop.wav",
-  "duration": 15.92
+  "duration": 15.92,
+  "protected": true
  },
  {
   "name": "Ambience_Wind_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Ambience Wind Loop.wav",
-  "duration": 19.98
+  "duration": 19.98,
+  "protected": true
  },
  {
   "name": "Arcane_Oscillation_Ambience_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Arcane Oscillation Ambience Loop.wav",
-  "duration": 3.61
+  "duration": 3.61,
+  "protected": true
  },
  {
   "name": "Earth_Energy_Ambience_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Earth Energy Ambience Loop.wav",
-  "duration": 8.24
+  "duration": 8.24,
+  "protected": true
  },
  {
   "name": "Earthquake_Rumble_Loop_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Earthquake Rumble Loop 01.wav",
-  "duration": 21.75
+  "duration": 21.75,
+  "protected": true
  },
  {
   "name": "Earthquake_Rumble_Loop_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Earthquake Rumble Loop 02.wav",
-  "duration": 20.49
+  "duration": 20.49,
+  "protected": true
  },
  {
   "name": "Rolling_Metallic_Ambience_Loop",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Ambience/Rolling Metallic Ambience Loop.wav",
-  "duration": 25.76
+  "duration": 25.76,
+  "protected": true
  },
  {
   "name": "Activate_Beacon",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Beacon.wav",
-  "duration": 6.52
+  "duration": 6.52,
+  "protected": true
  },
  {
   "name": "Activate_Crystal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Crystal.wav",
-  "duration": 2.84
+  "duration": 2.84,
+  "protected": true
  },
  {
   "name": "Activate_Glyph_Forcefield",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Glyph Forcefield.wav",
-  "duration": 4.03
+  "duration": 4.03,
+  "protected": true
  },
  {
   "name": "Activate_Glyph",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Glyph.wav",
-  "duration": 5.61
+  "duration": 5.61,
+  "protected": true
  },
  {
   "name": "Activate_Octave_Delay",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Octave Delay.wav",
-  "duration": 2.29
+  "duration": 2.29,
+  "protected": true
  },
  {
   "name": "Activate_Plinth_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Plinth 01.wav",
-  "duration": 7.77
+  "duration": 7.77,
+  "protected": true
  },
  {
   "name": "Activate_Plinth_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Plinth 02.wav",
-  "duration": 3.7
+  "duration": 3.7,
+  "protected": true
  },
  {
   "name": "Activate_Plinth_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Plinth 03.wav",
-  "duration": 6.37
+  "duration": 6.37,
+  "protected": true
  },
  {
   "name": "Activate_Shrine_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Shrine 01.wav",
-  "duration": 3.99
+  "duration": 3.99,
+  "protected": true
  },
  {
   "name": "Activate_Shrine_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Shrine 02.wav",
-  "duration": 9.46
+  "duration": 9.46,
+  "protected": true
  },
  {
   "name": "Activate_Shrine_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Shrine 03.wav",
-  "duration": 3.51
+  "duration": 3.51,
+  "protected": true
  },
  {
   "name": "Activate_Shrine_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Shrine 04.wav",
-  "duration": 3.88
+  "duration": 3.88,
+  "protected": true
  },
  {
   "name": "Activate_Shrine_05",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Shrine 05.wav",
-  "duration": 5.82
+  "duration": 5.82,
+  "protected": true
  },
  {
   "name": "Activate_Stasis_Field",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Stasis Field.wav",
-  "duration": 2.03
+  "duration": 2.03,
+  "protected": true
  },
  {
   "name": "Activate_Tower_Beacon",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activate Tower Beacon.wav",
-  "duration": 2.89
+  "duration": 2.89,
+  "protected": true
  },
  {
   "name": "Activation_5th_Long_Tail",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation 5th Long Tail.wav",
-  "duration": 3.71
+  "duration": 3.71,
+  "protected": true
  },
  {
   "name": "Activation_Long_Tail_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Long Tail Bright.wav",
-  "duration": 3.56
+  "duration": 3.56,
+  "protected": true
  },
  {
   "name": "Activation_Long_Tail_Low",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Long Tail Low.wav",
-  "duration": 3.71
+  "duration": 3.71,
+  "protected": true
  },
  {
   "name": "Activation_Short_3rd",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Short 3rd.wav",
-  "duration": 1.25
+  "duration": 1.25,
+  "protected": true
  },
  {
   "name": "Activation_Short_5th",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Short 5th.wav",
-  "duration": 1.25
+  "duration": 1.25,
+  "protected": true
  },
  {
   "name": "Activation_Short_Noise_Burst_Sparkles",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Short Noise Burst Sparkles.wav",
-  "duration": 1.5
+  "duration": 1.5,
+  "protected": true
  },
  {
   "name": "Activation_Short_Sparkles",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Short Sparkles.wav",
-  "duration": 1.17
+  "duration": 1.17,
+  "protected": true
  },
  {
   "name": "Activation_Short",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Activation Short.wav",
-  "duration": 1.25
+  "duration": 1.25,
+  "protected": true
  },
  {
   "name": "Arcane_Activation_Long",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Activation Long.wav",
-  "duration": 5.12
+  "duration": 5.12,
+  "protected": true
  },
  {
   "name": "Arcane_Beacon",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Beacon.wav",
-  "duration": 2.19
+  "duration": 2.19,
+  "protected": true
  },
  {
   "name": "Arcane_Bright_Light_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Bright Light 01.wav",
-  "duration": 2.25
+  "duration": 2.25,
+  "protected": true
  },
  {
   "name": "Arcane_Bright_Light_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Bright Light 02.wav",
-  "duration": 2.27
+  "duration": 2.27,
+  "protected": true
  },
  {
   "name": "Arcane_Bright_Light_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Bright Light 03.wav",
-  "duration": 2.28
+  "duration": 2.28,
+  "protected": true
  },
  {
   "name": "Arcane_Energy_Aura_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Energy Aura 01.wav",
-  "duration": 2.28
+  "duration": 2.28,
+  "protected": true
  },
  {
   "name": "Arcane_Energy_Aura_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Energy Aura 02.wav",
-  "duration": 2.3
+  "duration": 2.3,
+  "protected": true
  },
  {
   "name": "Arcane_Energy_Aura_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Energy Aura 03.wav",
-  "duration": 2.09
+  "duration": 2.09,
+  "protected": true
  },
  {
   "name": "Arcane_Energy_Aura_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Energy Aura 04.wav",
-  "duration": 2.52
+  "duration": 2.52,
+  "protected": true
  },
  {
   "name": "Arcane_Energy_Release",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Energy Release.wav",
-  "duration": 4.66
+  "duration": 4.66,
+  "protected": true
  },
  {
   "name": "Arcane_Exhalation",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Exhalation.wav",
-  "duration": 4.93
+  "duration": 4.93,
+  "protected": true
  },
  {
   "name": "Arcane_Glyph_Transition",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Glyph Transition.wav",
-  "duration": 2.67
+  "duration": 2.67,
+  "protected": true
  },
  {
   "name": "Arcane_Heart_Beat_Twice_Fast",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Heart Beat Twice Fast.wav",
-  "duration": 0.83
+  "duration": 0.83,
+  "protected": true
  },
  {
   "name": "Arcane_Heart_Beat_Twice",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Heart Beat Twice.wav",
-  "duration": 1.67
+  "duration": 1.67,
+  "protected": true
  },
  {
   "name": "Arcane_Heart",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Heart.wav",
-  "duration": 0.97
+  "duration": 0.97,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Energy_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Light Energy 01.wav",
-  "duration": 1.54
+  "duration": 1.54,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Energy_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Light Energy 02.wav",
-  "duration": 3.36
+  "duration": 3.36,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Flash",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Light Flash.wav",
-  "duration": 1.47
+  "duration": 1.47,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Swirl_Long_Tail",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Light Swirl Long Tail.wav",
-  "duration": 11.94
+  "duration": 11.94,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Swirl_Tonal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Light Swirl Tonal.wav",
-  "duration": 14.54
+  "duration": 14.54,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Swirl",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Light Swirl.wav",
-  "duration": 6.71
+  "duration": 6.71,
+  "protected": true
  },
  {
   "name": "Arcane_Magic_Energy",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Magic Energy.wav",
-  "duration": 1.34
+  "duration": 1.34,
+  "protected": true
  },
  {
   "name": "Arcane_Reveal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Reveal.wav",
-  "duration": 1.22
+  "duration": 1.22,
+  "protected": true
  },
  {
   "name": "Arcane_Soft_Sparkles_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Soft Sparkles 01.wav",
-  "duration": 2.29
+  "duration": 2.29,
+  "protected": true
  },
  {
   "name": "Arcane_Soft_Sparkles_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Soft Sparkles 02.wav",
-  "duration": 2.35
+  "duration": 2.35,
+  "protected": true
  },
  {
   "name": "Arcane_Symbol_Activate_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Symbol Activate 01.wav",
-  "duration": 5.42
+  "duration": 5.42,
+  "protected": true
  },
  {
   "name": "Arcane_Symbol_Activate_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Symbol Activate 02.wav",
-  "duration": 4.4
+  "duration": 4.4,
+  "protected": true
  },
  {
   "name": "Arcane_Wind_Chime_Gust",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Wind Chime Gust.wav",
-  "duration": 7.91
+  "duration": 7.91,
+  "protected": true
  },
  {
   "name": "Arcane_Wind_Chimes",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Arcane Wind Chimes.wav",
-  "duration": 8.19
+  "duration": 8.19,
+  "protected": true
  },
  {
   "name": "Bright_Metallic_Taps",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Bright Metallic Taps.wav",
-  "duration": 1.01
+  "duration": 1.01,
+  "protected": true
  },
  {
   "name": "Bright_Noise_Echo",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Bright Noise Echo.wav",
-  "duration": 2.19
+  "duration": 2.19,
+  "protected": true
  },
  {
   "name": "Bright_Shimmering_Aura",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Bright Shimmering Aura.wav",
-  "duration": 5.59
+  "duration": 5.59,
+  "protected": true
  },
  {
   "name": "Celestial_Shimmer",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Celestial Shimmer.wav",
-  "duration": 11.39
+  "duration": 11.39,
+  "protected": true
  },
  {
   "name": "Collect_Item",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Collect Item.wav",
-  "duration": 2.72
+  "duration": 2.72,
+  "protected": true
  },
  {
   "name": "Dark_Activation_Distorted",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Activation Distorted.wav",
-  "duration": 4.24
+  "duration": 4.24,
+  "protected": true
  },
  {
   "name": "Dark_Arcane_Gong",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Arcane Gong.wav",
-  "duration": 10.57
+  "duration": 10.57,
+  "protected": true
  },
  {
   "name": "Dark_Gong_Ring_Out",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Gong Ring Out.wav",
-  "duration": 16.15
+  "duration": 16.15,
+  "protected": true
  },
  {
   "name": "Dark_Metallic_Impact_Echoes",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Metallic Impact Echoes.wav",
-  "duration": 4.97
+  "duration": 4.97,
+  "protected": true
  },
  {
   "name": "Dark_Metallic_Scrape_Long_Tail",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Metallic Scrape Long Tail.wav",
-  "duration": 7.49
+  "duration": 7.49,
+  "protected": true
  },
  {
   "name": "Dark_Metallic_Scrape_Reverb_Tail",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Metallic Scrape Reverb Tail.wav",
-  "duration": 9.06
+  "duration": 9.06,
+  "protected": true
  },
  {
   "name": "Dark_Metallic_Scrape",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Metallic Scrape.wav",
-  "duration": 4.68
+  "duration": 4.68,
+  "protected": true
  },
  {
   "name": "Dark_Tonal_Wash",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Tonal Wash.wav",
-  "duration": 7.91
+  "duration": 7.91,
+  "protected": true
  },
  {
   "name": "Dark_Wind_Rumble",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Dark Wind Rumble.wav",
-  "duration": 14.19
+  "duration": 14.19,
+  "protected": true
  },
  {
   "name": "Distortion_Arc_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Distortion Arc 01.wav",
-  "duration": 2.32
+  "duration": 2.32,
+  "protected": true
  },
  {
   "name": "Distortion_Arc_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Distortion Arc 02.wav",
-  "duration": 2.75
+  "duration": 2.75,
+  "protected": true
  },
  {
   "name": "Distortion_Arc_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Distortion Arc 03.wav",
-  "duration": 6.89
+  "duration": 6.89,
+  "protected": true
  },
  {
   "name": "Distortion_Arc_Short_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Distortion Arc Short 01.wav",
-  "duration": 1.15
+  "duration": 1.15,
+  "protected": true
  },
  {
   "name": "Distortion_Arc_Short_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Distortion Arc Short 02.wav",
-  "duration": 1.16
+  "duration": 1.16,
+  "protected": true
  },
  {
   "name": "Divine_Voice",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Divine Voice.wav",
-  "duration": 8.46
+  "duration": 8.46,
+  "protected": true
  },
  {
   "name": "Energy_Escape_Heavy",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Energy Escape Heavy.wav",
-  "duration": 2.42
+  "duration": 2.42,
+  "protected": true
  },
  {
   "name": "Energy_Escape_Long",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Energy Escape Long.wav",
-  "duration": 4.99
+  "duration": 4.99,
+  "protected": true
  },
  {
   "name": "Energy_Escape",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Energy Escape.wav",
-  "duration": 2.49
+  "duration": 2.49,
+  "protected": true
  },
  {
   "name": "Flutter_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Flutter Bright.wav",
-  "duration": 0.99
+  "duration": 0.99,
+  "protected": true
  },
  {
   "name": "Flutter_Dark_Reverberant",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Flutter Dark Reverberant.wav",
-  "duration": 5.37
+  "duration": 5.37,
+  "protected": true
  },
  {
   "name": "Flutter_Dark",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Flutter Dark.wav",
-  "duration": 2.69
+  "duration": 2.69,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation 01.wav",
-  "duration": 2.78
+  "duration": 2.78,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation 02.wav",
-  "duration": 3.5
+  "duration": 3.5,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation 03.wav",
-  "duration": 3.29
+  "duration": 3.29,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation 04.wav",
-  "duration": 3.28
+  "duration": 3.28,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_05",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation 05.wav",
-  "duration": 3.45
+  "duration": 3.45,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_06",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation 06.wav",
-  "duration": 6.24
+  "duration": 6.24,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Glow_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Glow 01.wav",
-  "duration": 2.9
+  "duration": 2.9,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Glow_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Glow 02.wav",
-  "duration": 2.9
+  "duration": 2.9,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Glow_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Glow 03.wav",
-  "duration": 2.21
+  "duration": 2.21,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Glow_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Glow 04.wav",
-  "duration": 2.48
+  "duration": 2.48,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Light_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Light 01.wav",
-  "duration": 3.59
+  "duration": 3.59,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Light_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Light 02.wav",
-  "duration": 3.07
+  "duration": 3.07,
+  "protected": true
  },
  {
   "name": "Glyph_Activation_Warm_Aura",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Activation Warm Aura.wav",
-  "duration": 10.92
+  "duration": 10.92,
+  "protected": true
  },
  {
   "name": "Glyph_Deactivate_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Deactivate 01.wav",
-  "duration": 2.14
+  "duration": 2.14,
+  "protected": true
  },
  {
   "name": "Glyph_Deactivate_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Deactivate 02.wav",
-  "duration": 2.15
+  "duration": 2.15,
+  "protected": true
  },
  {
   "name": "Glyph_Deactivate_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Deactivate 03.wav",
-  "duration": 2.24
+  "duration": 2.24,
+  "protected": true
  },
  {
   "name": "Glyph_Deactivate_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Glyph Deactivate 04.wav",
-  "duration": 2.33
+  "duration": 2.33,
+  "protected": true
  },
  {
   "name": "Gong_Long_Ring_Out",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Gong Long Ring Out.wav",
-  "duration": 9.37
+  "duration": 9.37,
+  "protected": true
  },
  {
   "name": "Gong_Warbly",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Gong Warbly.wav",
-  "duration": 1.82
+  "duration": 1.82,
+  "protected": true
  },
  {
   "name": "Magic_Materialize",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magic Materialize.wav",
-  "duration": 2.76
+  "duration": 2.76,
+  "protected": true
  },
  {
   "name": "Magic_Orb_Movement_Swell",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magic Orb Movement Swell.wav",
-  "duration": 5.81
+  "duration": 5.81,
+  "protected": true
  },
  {
   "name": "Magic_Reverse_Shimmer",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magic Reverse Shimmer.wav",
-  "duration": 8.11
+  "duration": 8.11,
+  "protected": true
  },
  {
   "name": "Magic_Sparkles",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magic Sparkles.wav",
-  "duration": 6.2
+  "duration": 6.2,
+  "protected": true
  },
  {
   "name": "Magic_Wind_Flurry",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magic Wind Flurry.wav",
-  "duration": 5.39
+  "duration": 5.39,
+  "protected": true
  },
  {
   "name": "Magical_Chimes_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Chimes 01.wav",
-  "duration": 3.82
+  "duration": 3.82,
+  "protected": true
  },
  {
   "name": "Magical_Chimes_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Chimes 02.wav",
-  "duration": 4.55
+  "duration": 4.55,
+  "protected": true
  },
  {
   "name": "Magical_Chimes_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Chimes 03.wav",
-  "duration": 3.61
+  "duration": 3.61,
+  "protected": true
  },
  {
   "name": "Magical_Chimes_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Chimes Bright.wav",
-  "duration": 4.72
+  "duration": 4.72,
+  "protected": true
  },
  {
   "name": "Magical_Droplet_Fall",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Droplet Fall.wav",
-  "duration": 0.75
+  "duration": 0.75,
+  "protected": true
  },
  {
   "name": "Magical_Droplet_Impact",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Droplet Impact.wav",
-  "duration": 3.07
+  "duration": 3.07,
+  "protected": true
  },
  {
   "name": "Magical_Sparkle_Loop_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Sparkle Loop 01.wav",
-  "duration": 14.69
+  "duration": 14.69,
+  "protected": true
  },
  {
   "name": "Magical_Sparkle_Loop_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Sparkle Loop 02.wav",
-  "duration": 13.81
+  "duration": 13.81,
+  "protected": true
  },
  {
   "name": "Magical_Sparkle_Loop_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Magical Sparkle Loop 03.wav",
-  "duration": 13.78
+  "duration": 13.78,
+  "protected": true
  },
  {
   "name": "Map_Reveal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Map Reveal.wav",
-  "duration": 8.46
+  "duration": 8.46,
+  "protected": true
  },
  {
   "name": "Metallic_Gong_Hand_Dampened_Low",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Metallic Gong Hand Dampened Low.wav",
-  "duration": 4.54
+  "duration": 4.54,
+  "protected": true
  },
  {
   "name": "Metallic_Gong_Ring_Out",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Metallic Gong Ring Out.wav",
-  "duration": 2.44
+  "duration": 2.44,
+  "protected": true
  },
  {
   "name": "Metallic_Gong_Rumble_Low_Short",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Metallic Gong Rumble Low Short.wav",
-  "duration": 3.18
+  "duration": 3.18,
+  "protected": true
  },
  {
   "name": "Metallic_Gong_Rumble",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Metallic Gong Rumble.wav",
-  "duration": 6.17
+  "duration": 6.17,
+  "protected": true
  },
  {
   "name": "Metallic_Rumble_Ring_Out",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Metallic Rumble Ring Out.wav",
-  "duration": 8.62
+  "duration": 8.62,
+  "protected": true
  },
  {
   "name": "Ominous_Eye_Activate_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Ominous Eye Activate 01.wav",
-  "duration": 1.53
+  "duration": 1.53,
+  "protected": true
  },
  {
   "name": "Ominous_Eye_Activate_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Ominous Eye Activate 02.wav",
-  "duration": 1.55
+  "duration": 1.55,
+  "protected": true
  },
  {
   "name": "Ominous_Eye_Activate_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Ominous Eye Activate 03.wav",
-  "duration": 1.77
+  "duration": 1.77,
+  "protected": true
  },
  {
   "name": "Ominous_Eye_Activate_Deep",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Ominous Eye Activate Deep.wav",
-  "duration": 7.98
+  "duration": 7.98,
+  "protected": true
  },
  {
   "name": "Ominous_Eye_Activate_Echoes",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Ominous Eye Activate Echoes.wav",
-  "duration": 3.54
+  "duration": 3.54,
+  "protected": true
  },
  {
   "name": "Out_Of_The_Gaping_Maw",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Out Of The Gaping Maw.wav",
-  "duration": 4.42
+  "duration": 4.42,
+  "protected": true
  },
  {
   "name": "Place_Item_In_Socket_Reverb",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Place Item In Socket Reverb.wav",
-  "duration": 3.9
+  "duration": 3.9,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Activation",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Activation.wav",
-  "duration": 4.1
+  "duration": 4.1,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Release_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Release Bright.wav",
-  "duration": 7.1
+  "duration": 7.1,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Release_Dark_Long",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Release Dark Long.wav",
-  "duration": 9.1
+  "duration": 9.1,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Release_Dark",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Release Dark.wav",
-  "duration": 6.74
+  "duration": 6.74,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Release_Resonant",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Release Resonant.wav",
-  "duration": 6.13
+  "duration": 6.13,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Release_Undulating",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Release Undulating.wav",
-  "duration": 4.05
+  "duration": 4.05,
+  "protected": true
  },
  {
   "name": "Pure_Energy_Release",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Pure Energy Release.wav",
-  "duration": 2.6
+  "duration": 2.6,
+  "protected": true
  },
  {
   "name": "Radiant_Sphere_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Radiant Sphere 01.wav",
-  "duration": 4.88
+  "duration": 4.88,
+  "protected": true
  },
  {
   "name": "Radiant_Sphere_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Radiant Sphere 02.wav",
-  "duration": 3.53
+  "duration": 3.53,
+  "protected": true
  },
  {
   "name": "Radiant_Sphere_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Radiant Sphere 03.wav",
-  "duration": 5.69
+  "duration": 5.69,
+  "protected": true
  },
  {
   "name": "Rising_Replenish_Repeats",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Rising Replenish Repeats.wav",
-  "duration": 4.68
+  "duration": 4.68,
+  "protected": true
  },
  {
   "name": "Shatter_Stasis_Field_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Shatter Stasis Field 01.wav",
-  "duration": 7.15
+  "duration": 7.15,
+  "protected": true
  },
  {
   "name": "Shatter_Stasis_Field_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Shatter Stasis Field 02.wav",
-  "duration": 5.56
+  "duration": 5.56,
+  "protected": true
  },
  {
   "name": "Shatter_Stasis_Field_Pitched_Fragments",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Shatter Stasis Field Pitched Fragments.wav",
-  "duration": 7.36
+  "duration": 7.36,
+  "protected": true
  },
  {
   "name": "Teleport_Beams_Combine",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Teleport Beams Combine.wav",
-  "duration": 9.53
+  "duration": 9.53,
+  "protected": true
  },
  {
   "name": "Teleport_Beams_Rise",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Teleport Beams Rise.wav",
-  "duration": 13.54
+  "duration": 13.54,
+  "protected": true
  },
  {
   "name": "White_Magic_Cast_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/White Magic Cast 01.wav",
-  "duration": 1.83
+  "duration": 1.83,
+  "protected": true
  },
  {
   "name": "White_Magic_Cast_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/White Magic Cast 02.wav",
-  "duration": 1.72
+  "duration": 1.72,
+  "protected": true
  },
  {
   "name": "White_Magic_Cast_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/White Magic Cast 03.wav",
-  "duration": 1.61
+  "duration": 1.61,
+  "protected": true
  },
  {
   "name": "White_Magic_Cast_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/White Magic Cast 04.wav",
-  "duration": 1.16
+  "duration": 1.16,
+  "protected": true
  },
  {
   "name": "Wind_Flurry",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane Magic/Wind Flurry.wav",
-  "duration": 13.51
+  "duration": 13.51,
+  "protected": true
  },
  {
   "name": "UI_Alert_Error",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Alert Error.wav",
-  "duration": 0.6
+  "duration": 0.6,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Alert_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Alert 01.wav",
-  "duration": 0.76
+  "duration": 0.76,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Alert_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Alert 02.wav",
-  "duration": 0.62
+  "duration": 0.62,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Alert_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Alert 03.wav",
-  "duration": 0.62
+  "duration": 0.62,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Chime_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Chime 01.wav",
-  "duration": 0.73
+  "duration": 0.73,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Chime_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Chime 02.wav",
-  "duration": 1.47
+  "duration": 1.47,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Chime_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Chime 03.wav",
-  "duration": 2.94
+  "duration": 2.94,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Click_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Click 01.wav",
-  "duration": 0.49
+  "duration": 0.49,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Click_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Click 02.wav",
-  "duration": 0.88
+  "duration": 0.88,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Cursor_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Cursor 01.wav",
-  "duration": 0.13
+  "duration": 0.13,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Cursor_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Cursor 02.wav",
-  "duration": 0.16
+  "duration": 0.16,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Popup_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Popup 01.wav",
-  "duration": 1.44
+  "duration": 1.44,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Popup_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Popup 02.wav",
-  "duration": 0.53
+  "duration": 0.53,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Popup_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Popup 03.wav",
-  "duration": 1.07
+  "duration": 1.07,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Popup_Dismiss",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Popup Dismiss.wav",
-  "duration": 1.27
+  "duration": 1.27,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Selection_Heavy",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Selection Heavy.wav",
-  "duration": 0.13
+  "duration": 0.13,
+  "protected": true
  },
  {
   "name": "UI_Arcane_Unlock",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Arcane Unlock.wav",
-  "duration": 2.32
+  "duration": 2.32,
+  "protected": true
  },
  {
   "name": "UI_Button_Click",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Button Click.wav",
-  "duration": 0.08
+  "duration": 0.08,
+  "protected": true
  },
  {
   "name": "UI_Click_Organic",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Click Organic.wav",
-  "duration": 0.13
+  "duration": 0.13,
+  "protected": true
  },
  {
   "name": "UI_Click_Taps",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Click Taps.wav",
-  "duration": 0.06
+  "duration": 0.06,
+  "protected": true
  },
  {
   "name": "UI_Click_Toggle",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Click Toggle.wav",
-  "duration": 0.13
+  "duration": 0.13,
+  "protected": true
  },
  {
   "name": "UI_Double_Click_Slow",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Double Click Slow.wav",
-  "duration": 0.29
+  "duration": 0.29,
+  "protected": true
  },
  {
   "name": "UI_Double_Click",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Double Click.wav",
-  "duration": 0.15
+  "duration": 0.15,
+  "protected": true
  },
  {
   "name": "UI_Droplet",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Droplet.wav",
-  "duration": 0.15
+  "duration": 0.15,
+  "protected": true
  },
  {
   "name": "UI_Enter_Menu",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Enter Menu.wav",
-  "duration": 0.16
+  "duration": 0.16,
+  "protected": true
  },
  {
   "name": "UI_Exit_Menu_Long",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Exit Menu Long.wav",
-  "duration": 0.43
+  "duration": 0.43,
+  "protected": true
  },
  {
   "name": "UI_Exit_Menu",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Exit Menu.wav",
-  "duration": 0.15
+  "duration": 0.15,
+  "protected": true
  },
  {
   "name": "UI_Item_Select_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Item Select 01.wav",
-  "duration": 0.21
+  "duration": 0.21,
+  "protected": true
  },
  {
   "name": "UI_Item_Select_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Item Select 02.wav",
-  "duration": 0.25
+  "duration": 0.25,
+  "protected": true
  },
  {
   "name": "UI_Item_Select_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Item Select 03.wav",
-  "duration": 0.29
+  "duration": 0.29,
+  "protected": true
  },
  {
   "name": "UI_Liquid_Click_Long",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Liquid Click Long.wav",
-  "duration": 0.28
+  "duration": 0.28,
+  "protected": true
  },
  {
   "name": "UI_Liquid_Click",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Liquid Click.wav",
-  "duration": 0.11
+  "duration": 0.11,
+  "protected": true
  },
  {
   "name": "UI_Map_Reveal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Map Reveal.wav",
-  "duration": 7.42
+  "duration": 7.42,
+  "protected": true
  },
  {
   "name": "UI_Message_Appear_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Message Appear 01.wav",
-  "duration": 0.71
+  "duration": 0.71,
+  "protected": true
  },
  {
   "name": "UI_Message_Appear_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Message Appear 02.wav",
-  "duration": 0.69
+  "duration": 0.69,
+  "protected": true
  },
  {
   "name": "UI_Message_Appear_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Message Appear 03.wav",
-  "duration": 0.21
+  "duration": 0.21,
+  "protected": true
  },
  {
   "name": "UI_Message",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Message.wav",
-  "duration": 0.43
+  "duration": 0.43,
+  "protected": true
  },
  {
   "name": "UI_Next_Item_Bright_Whoosh",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Next Item Bright Whoosh.wav",
-  "duration": 0.48
+  "duration": 0.48,
+  "protected": true
  },
  {
   "name": "UI_Next_Item_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Next Item Bright.wav",
-  "duration": 0.2
+  "duration": 0.2,
+  "protected": true
  },
  {
   "name": "UI_Percussive_Impact_Short",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Percussive Impact Short.wav",
-  "duration": 0.16
+  "duration": 0.16,
+  "protected": true
  },
  {
   "name": "UI_Percussive_Impact",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Percussive Impact.wav",
-  "duration": 0.17
+  "duration": 0.17,
+  "protected": true
  },
  {
   "name": "UI_Popup_Resonant_Tail_Taps",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Popup Resonant Tail Taps.wav",
-  "duration": 1.37
+  "duration": 1.37,
+  "protected": true
  },
  {
   "name": "UI_Popup_Resonant_Tail",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Popup Resonant Tail.wav",
-  "duration": 1.32
+  "duration": 1.32,
+  "protected": true
  },
  {
   "name": "UI_Rattly_Click",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Rattly Click.wav",
-  "duration": 0.14
+  "duration": 0.14,
+  "protected": true
  },
  {
   "name": "UI_Replenish_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Replenish 01.wav",
-  "duration": 0.88
+  "duration": 0.88,
+  "protected": true
  },
  {
   "name": "UI_Replenish_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Replenish 02.wav",
-  "duration": 0.89
+  "duration": 0.89,
+  "protected": true
  },
  {
   "name": "UI_Replenish_Fast",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Replenish Fast.wav",
-  "duration": 0.5
+  "duration": 0.5,
+  "protected": true
  },
  {
   "name": "UI_Replenish_Octave",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Replenish Octave.wav",
-  "duration": 0.89
+  "duration": 0.89,
+  "protected": true
  },
  {
   "name": "UI_Reveal_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Reveal 01.wav",
-  "duration": 1.22
+  "duration": 1.22,
+  "protected": true
  },
  {
   "name": "UI_Reveal_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Reveal 02.wav",
-  "duration": 1.14
+  "duration": 1.14,
+  "protected": true
  },
  {
   "name": "UI_Select_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Select Bright.wav",
-  "duration": 0.28
+  "duration": 0.28,
+  "protected": true
  },
  {
   "name": "UI_Select_Dark",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Select Dark.wav",
-  "duration": 0.57
+  "duration": 0.57,
+  "protected": true
  },
  {
   "name": "UI_Short_Chime",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Short Chime.wav",
-  "duration": 0.66
+  "duration": 0.66,
+  "protected": true
  },
  {
   "name": "UI_Short_Flutter",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Short Flutter.wav",
-  "duration": 0.08
+  "duration": 0.08,
+  "protected": true
  },
  {
   "name": "UI_Short_Tap_Bright",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Short Tap Bright.wav",
-  "duration": 0.08
+  "duration": 0.08,
+  "protected": true
  },
  {
   "name": "UI_Text_Appear_Ticker_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Text Appear Ticker 01.wav",
-  "duration": 0.55
+  "duration": 0.55,
+  "protected": true
  },
  {
   "name": "UI_Text_Appear_Ticker_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Text Appear Ticker 02.wav",
-  "duration": 0.53
+  "duration": 0.53,
+  "protected": true
  },
  {
   "name": "UI_Text_Reveal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Text Reveal.wav",
-  "duration": 0.32
+  "duration": 0.32,
+  "protected": true
  },
  {
   "name": "UI_Tongue_Drum_Palm_Hit_Dampened",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Tongue Drum Palm Hit Dampened.wav",
-  "duration": 0.32
+  "duration": 0.32,
+  "protected": true
  },
  {
   "name": "UI_Tongue_Drum_Palm_Hit",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Tongue Drum Palm Hit.wav",
-  "duration": 3.02
+  "duration": 3.02,
+  "protected": true
  },
  {
   "name": "UI_Wooden_Tap",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Arcane UI/UI Wooden Tap.wav",
-  "duration": 0.27
+  "duration": 0.27,
+  "protected": true
  },
  {
   "name": "Arcane_Light_Swirl_Reverse_Riser",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Arcane Light Swirl Reverse Riser.wav",
-  "duration": 8.1
+  "duration": 8.1,
+  "protected": true
  },
  {
   "name": "Arcane_Magic_Riser",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Arcane Magic Riser.wav",
-  "duration": 9.55
+  "duration": 9.55,
+  "protected": true
  },
  {
   "name": "Arcane_Reveal_Transition",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Arcane Reveal Transition.wav",
-  "duration": 2.16
+  "duration": 2.16,
+  "protected": true
  },
  {
   "name": "Arcane_Sparkle_Transition",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Arcane Sparkle Transition.wav",
-  "duration": 3.11
+  "duration": 3.11,
+  "protected": true
  },
  {
   "name": "Bright_Airy_Whoosh_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Airy Whoosh 01.wav",
-  "duration": 2.69
+  "duration": 2.69,
+  "protected": true
  },
  {
   "name": "Bright_Airy_Whoosh_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Airy Whoosh 02.wav",
-  "duration": 2.98
+  "duration": 2.98,
+  "protected": true
  },
  {
   "name": "Bright_Airy_Whoosh_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Airy Whoosh 03.wav",
-  "duration": 5.77
+  "duration": 5.77,
+  "protected": true
  },
  {
   "name": "Bright_Airy_Whoosh_Short_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Airy Whoosh Short 01.wav",
-  "duration": 1.49
+  "duration": 1.49,
+  "protected": true
  },
  {
   "name": "Bright_Airy_Whoosh_Short_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Airy Whoosh Short 02.wav",
-  "duration": 1.51
+  "duration": 1.51,
+  "protected": true
  },
  {
   "name": "Bright_Airy_Whoosh_Short_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Airy Whoosh Short 03.wav",
-  "duration": 1.63
+  "duration": 1.63,
+  "protected": true
  },
  {
   "name": "Bright_Turbulent_Whoosh",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Bright Turbulent Whoosh.wav",
-  "duration": 2.77
+  "duration": 2.77,
+  "protected": true
  },
  {
   "name": "Dark_Metallic_Transition",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Dark Metallic Transition.wav",
-  "duration": 2.11
+  "duration": 2.11,
+  "protected": true
  },
  {
   "name": "Dark_Reversed_Transition",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Dark Reversed Transition.wav",
-  "duration": 5.02
+  "duration": 5.02,
+  "protected": true
  },
  {
   "name": "Dark_Whirlwind_Whoosh",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Dark Whirlwind Whoosh.wav",
-  "duration": 2.4
+  "duration": 2.4,
+  "protected": true
  },
  {
   "name": "Energy_Charge",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Energy Charge.wav",
-  "duration": 8.25
+  "duration": 8.25,
+  "protected": true
  },
  {
   "name": "Hollow_Metallic_Transition",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Hollow Metallic Transition.wav",
-  "duration": 3.12
+  "duration": 3.12,
+  "protected": true
  },
  {
   "name": "Low_Reverse_Tonal_Riser_Short",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Low Reverse Tonal Riser Short.wav",
-  "duration": 0.64
+  "duration": 0.64,
+  "protected": true
  },
  {
   "name": "Metallic_Transition_Long_Tail",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Metallic Transition Long Tail.wav",
-  "duration": 10.77
+  "duration": 10.77,
+  "protected": true
  },
  {
   "name": "Reverse_Noise_Riser_Short",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reverse Noise Riser Short.wav",
-  "duration": 0.23
+  "duration": 0.23,
+  "protected": true
  },
  {
   "name": "Reverse_Riser_Chirp",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reverse Riser Chirp.wav",
-  "duration": 1.44
+  "duration": 1.44,
+  "protected": true
  },
  {
   "name": "Reverse_Tonal_Riser_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reverse Tonal Riser 01.wav",
-  "duration": 0.43
+  "duration": 0.43,
+  "protected": true
  },
  {
   "name": "Reverse_Tonal_Riser_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reverse Tonal Riser 02.wav",
-  "duration": 1.16
+  "duration": 1.16,
+  "protected": true
  },
  {
   "name": "Reversed_Riser_Delay_Taps_Dark_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reversed Riser Delay Taps Dark 01.wav",
-  "duration": 2.26
+  "duration": 2.26,
+  "protected": true
  },
  {
   "name": "Reversed_Riser_Delay_Taps_Dark_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reversed Riser Delay Taps Dark 02.wav",
-  "duration": 2.98
+  "duration": 2.98,
+  "protected": true
  },
  {
   "name": "Reversed_Riser_Tonal_Delay_Taps",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reversed Riser Tonal Delay Taps.wav",
-  "duration": 1.13
+  "duration": 1.13,
+  "protected": true
  },
  {
   "name": "Reversed_Riser_Tonal",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Reversed Riser Tonal.wav",
-  "duration": 0.79
+  "duration": 0.79,
+  "protected": true
  },
  {
   "name": "Spin_Whoosh_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Spin Whoosh 01.wav",
-  "duration": 0.65
+  "duration": 0.65,
+  "protected": true
  },
  {
   "name": "Transition_Whoosh_Reverberant_Tap",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Risers Transitions Whooshes/Transition Whoosh Reverberant Tap.wav",
-  "duration": 2.78
+  "duration": 2.78,
+  "protected": true
  },
  {
   "name": "Object_Impact_Thud",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Object Impact Thud.wav",
-  "duration": 0.48
+  "duration": 0.48,
+  "protected": true
  },
  {
   "name": "Place_Item_In_Socket_Short_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Item In Socket Short 01.wav",
-  "duration": 0.11
+  "duration": 0.11,
+  "protected": true
  },
  {
   "name": "Place_Item_In_Socket_Short_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Item In Socket Short 02.wav",
-  "duration": 0.22
+  "duration": 0.22,
+  "protected": true
  },
  {
   "name": "Place_Stone_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 01.wav",
-  "duration": 0.27
+  "duration": 0.27,
+  "protected": true
  },
  {
   "name": "Place_Stone_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 02.wav",
-  "duration": 0.2
+  "duration": 0.2,
+  "protected": true
  },
  {
   "name": "Place_Stone_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 03.wav",
-  "duration": 0.21
+  "duration": 0.21,
+  "protected": true
  },
  {
   "name": "Place_Stone_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 04.wav",
-  "duration": 0.25
+  "duration": 0.25,
+  "protected": true
  },
  {
   "name": "Place_Stone_05",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 05.wav",
-  "duration": 0.27
+  "duration": 0.27,
+  "protected": true
  },
  {
   "name": "Place_Stone_06",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 06.wav",
-  "duration": 0.28
+  "duration": 0.28,
+  "protected": true
  },
  {
   "name": "Place_Stone_07",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 07.wav",
-  "duration": 0.25
+  "duration": 0.25,
+  "protected": true
  },
  {
   "name": "Place_Stone_08",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 08.wav",
-  "duration": 0.25
+  "duration": 0.25,
+  "protected": true
  },
  {
   "name": "Place_Stone_09",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 09.wav",
-  "duration": 0.38
+  "duration": 0.38,
+  "protected": true
  },
  {
   "name": "Place_Stone_10",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Place Stone 10.wav",
-  "duration": 0.3
+  "duration": 0.3,
+  "protected": true
  },
  {
   "name": "Raise_Stone_Pillar_Long",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Raise Stone Pillar Long.wav",
-  "duration": 5.02
+  "duration": 5.02,
+  "protected": true
  },
  {
   "name": "Raise_Stone_Pillar_Short_Thud",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Raise Stone Pillar Short Thud.wav",
-  "duration": 1.49
+  "duration": 1.49,
+  "protected": true
  },
  {
   "name": "Raise_Stone_Pillar_Short",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Raise Stone Pillar Short.wav",
-  "duration": 1.77
+  "duration": 1.77,
+  "protected": true
  },
  {
   "name": "Raise_Stone_Pillar",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Raise Stone Pillar.wav",
-  "duration": 2.5
+  "duration": 2.5,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 01.wav",
-  "duration": 0.39
+  "duration": 0.39,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 02.wav",
-  "duration": 0.62
+  "duration": 0.62,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 03.wav",
-  "duration": 0.78
+  "duration": 0.78,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_04",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 04.wav",
-  "duration": 0.77
+  "duration": 0.77,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_05",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 05.wav",
-  "duration": 0.74
+  "duration": 0.74,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_06",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 06.wav",
-  "duration": 1.33
+  "duration": 1.33,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_07",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 07.wav",
-  "duration": 1.34
+  "duration": 1.34,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_08",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 08.wav",
-  "duration": 1.4
+  "duration": 1.4,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_09",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 09.wav",
-  "duration": 1.71
+  "duration": 1.71,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_10",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 10.wav",
-  "duration": 0.59
+  "duration": 0.59,
+  "protected": true
  },
  {
   "name": "Rotate_Stone_11",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Rotate Stone 11.wav",
-  "duration": 0.68
+  "duration": 0.68,
+  "protected": true
  },
  {
   "name": "Stone_Pillar_Descending",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Stone Pillar Descending.wav",
-  "duration": 4.76
+  "duration": 4.76,
+  "protected": true
  },
  {
   "name": "Stone_Slide_Loop_01",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Stone Slide Loop 01.wav",
-  "duration": 1.16
+  "duration": 1.16,
+  "protected": true
  },
  {
   "name": "Stone_Slide_Loop_02",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Stone Slide Loop 02.wav",
-  "duration": 1.32
+  "duration": 1.32,
+  "protected": true
  },
  {
   "name": "Stone_Slide_Loop_03",
   "pack": "Shapeforms Arcane Activations",
   "file": "Shapeforms Arcane Activations/Stone Interaction/Stone Slide Loop 03.wav",
-  "duration": 2.15
+  "duration": 2.15,
+  "protected": true
  },
  {
   "name": "AEROJet_Blast_Off_Clean",

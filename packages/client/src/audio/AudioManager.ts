@@ -66,6 +66,7 @@ export class AudioManager {
   private variantCounts: Promise<Record<string, number>> | null = null;
   private samples = new Map<string, Promise<Variant[]>>();
   private catalogSounds = new Map<string, Promise<AudioBuffer | null>>();
+  private protectedSounds: Promise<Map<string, ArrayBuffer>> | null = null;
   private lastVariant = new Map<string, number>();
   // Morceau en cours : chacun a son propre volume, pour les fondus enchaînés. Sous le volume général.
   private music: MusicTrack | null = null;
@@ -218,8 +219,14 @@ export class AudioManager {
     let loading = this.catalogSounds.get(name);
     if (!loading) {
       const url = import.meta.env.DEV ? `/dev-sounds/${encodeURIComponent(name)}.m4a` : `${SOUNDS_URL}tuned/${encodeURIComponent(name)}.m4a`;
-      loading = fetch(url)
-        .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(String(response.status)))))
+      // Jeu publié : un son protégé vient du conteneur brouillé, les autres de leur fichier.
+      const fromContainer = import.meta.env.DEV ? Promise.resolve(undefined) : this.loadProtected().then((sounds) => sounds.get(name));
+      loading = fromContainer
+        .then((data) =>
+          data
+            ? data.slice(0)
+            : fetch(url).then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(String(response.status))))),
+        )
         .then((data) => this.context.decodeAudioData(data))
         .catch(() => {
           // Un échec n'est pas gardé : on réessaiera.
@@ -229,6 +236,33 @@ export class AudioManager {
       this.catalogSounds.set(name, loading);
     }
     return loading;
+  }
+
+  // Conteneur des sons dont la licence demande d'empêcher l'extraction (scripts/build-sounds.mjs) : chargé une fois,
+  // débrouillé en mémoire. Appelé tôt (écran d'accueil) pour qu'il soit prêt au premier sort.
+  preloadProtected() {
+    if (!import.meta.env.DEV) void this.loadProtected();
+  }
+
+  private loadProtected(): Promise<Map<string, ArrayBuffer>> {
+    this.protectedSounds ??= fetch(`${SOUNDS_URL}tuned/protected.bin`)
+      .then((response) => (response.ok ? response.arrayBuffer() : null))
+      .then((buffer) => {
+        const sounds = new Map<string, ArrayBuffer>();
+        if (!buffer || buffer.byteLength < 8) return sounds;
+        const head = new DataView(buffer);
+        if (String.fromCharCode(head.getUint8(0), head.getUint8(1), head.getUint8(2), head.getUint8(3)) !== "ARSP") return sounds;
+        const indexLength = head.getUint32(4, true);
+        const body = new Uint8Array(buffer.slice(8));
+        unscramble(body);
+        const index = JSON.parse(new TextDecoder().decode(body.subarray(0, indexLength))) as Record<string, [number, number]>;
+        for (const [name, [start, length]] of Object.entries(index)) {
+          sounds.set(name, body.slice(indexLength + start, indexLength + start + length).buffer);
+        }
+        return sounds;
+      })
+      .catch(() => new Map());
+    return this.protectedSounds;
   }
 
   // Charge toutes les variantes d'un groupe (une seule fois).
@@ -316,6 +350,18 @@ export class AudioManager {
 }
 
 // Instant où le son commence vraiment, après le silence de tête (un peu avant, pour garder l'attaque).
+// Débrouille le conteneur des sons protégés : même suite que scramble() de scripts/build-sounds.mjs.
+function unscramble(bytes: Uint8Array) {
+  let state = 0x5eed1234;
+  for (let i = 0; i < bytes.length; i++) {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    state >>>= 0;
+    bytes[i] ^= state & 0xff;
+  }
+}
+
 function soundStart(buffer: AudioBuffer): number {
   const data = buffer.getChannelData(0);
   let i = 0;

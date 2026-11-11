@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { getAbility } from "@arena/shared";
 import { canHaveProjectile, statusKindsOf, type AbilityAnimation, type AnimationEffect, type AnimationTuning } from "./abilityAnimations";
@@ -93,6 +93,25 @@ test("les visuels du code nomment des effets qui existent", () => {
   }
 });
 
+// Sons protégés (licence), et index du conteneur brouillé public/sounds/tuned/protected.bin (voir build-sounds.mjs).
+const protectedNames = new Set((soundCatalog as { name: string; protected?: boolean }[]).filter((s) => s.protected).map((s) => s.name));
+function containerIndex(): Record<string, [number, number]> {
+  const file = fileURLToPath(new URL("../../public/sounds/tuned/protected.bin", import.meta.url));
+  if (!existsSync(file)) return {};
+  const data = readFileSync(file);
+  const indexLength = data.readUInt32LE(4);
+  const body = Uint8Array.from(data.subarray(8, 8 + indexLength));
+  let state = 0x5eed1234;
+  for (let i = 0; i < body.length; i++) {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    state >>>= 0;
+    body[i] ^= state & 0xff;
+  }
+  return JSON.parse(new TextDecoder().decode(body)) as Record<string, [number, number]>;
+}
+
 test("chaque son du catalogue utilisé par une compétence est prêt pour le jeu publié", () => {
   // public/sounds/tuned/<nom>.m4a : produit par « node scripts/build-sounds.mjs --tuned ».
   const tuned = fileURLToPath(new URL("../../public/sounds/tuned/", import.meta.url));
@@ -101,6 +120,12 @@ test("chaque son du catalogue utilisé par une compétence est prêt pour le jeu
       for (const [moment, effects] of allEffects(entry)) {
         for (const effect of effects) {
           if (effect.type !== "sound" || effect.recipe.startsWith("jeu:")) continue;
+          // Un son protégé (licence) n'existe jamais en fichier séparé, seulement dans le conteneur brouillé.
+          if (protectedNames.has(effect.recipe)) {
+            assert.ok(!existsSync(`${tuned}${effect.recipe}.m4a`), `« ${effect.recipe} » est protégé : il ne doit pas exister en fichier séparé`);
+            assert.ok(containerIndex()[effect.recipe], `${classId}/${abilityId} (${moment}) : « ${effect.recipe} » n'est pas dans le conteneur protégé (node scripts/build-sounds.mjs --tuned)`);
+            continue;
+          }
           assert.ok(
             existsSync(`${tuned}${effect.recipe}.m4a`),
             `${classId}/${abilityId} (${moment}) : « ${effect.recipe} » n'est pas converti pour le jeu (node scripts/build-sounds.mjs --tuned)`,

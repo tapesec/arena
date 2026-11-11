@@ -39,6 +39,8 @@ function useMusic(phase: string | undefined) {
     if (unlocked) return;
     const unlock = () => {
       audio.unlock();
+      // Sons protégés des compétences : prêts avant le premier sort.
+      audio.preloadProtected();
       setUnlocked(true);
     };
     window.addEventListener("pointerdown", unlock, { once: true });

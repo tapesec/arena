@@ -37,6 +37,8 @@ export interface CatalogSound {
   duration: number;
   // Licence qui interdit toute modification (CC BY-ND) : ni découpe, ni retouche.
   intact?: boolean;
+  // Licence qui demande d'empêcher l'extraction des fichiers : livré au jeu dans un conteneur brouillé.
+  protected?: boolean;
   parent?: string;
   start?: number;
   end?: number;

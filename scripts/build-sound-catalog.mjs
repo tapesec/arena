@@ -23,6 +23,9 @@ const EXTENSIONS = new Set([".wav", ".ogg", ".mp3", ".flac", ".aif", ".aiff"]);
 // Packs dont la licence interdit toute modification (CC BY-ND) : ni découpe, ni passage en mono, ni volume
 // harmonisé ; marqués « intact » dans le catalogue.
 const INTACT_PACKS = new Set(["LDD - Elemental Magic - Fire Attacks"]);
+// Packs dont la licence demande d'empêcher l'extraction des fichiers par les joueurs : marqués « protected » ; ceux
+// utilisés par les compétences partent dans un conteneur brouillé (scripts/build-sounds.mjs), jamais en fichiers.
+const PROTECTED_PACKS = new Set(["Shapeforms Arcane Activations"]);
 // Mono et léger : la page sert à choisir un son, pas à juger finement sa qualité.
 const BITRATE = 64000;
 
@@ -228,6 +231,7 @@ for (const file of files) {
   const entry = { name, pack, file: file.split(path.sep).join("/"), duration: Math.round(duration * 100) / 100 };
   const intact = INTACT_PACKS.has(file.split(path.sep)[0]);
   if (intact) entry.intact = true;
+  if (PROTECTED_PACKS.has(file.split(path.sep)[0])) entry.protected = true;
   const cuts = intact ? null : cutsByFile.get(file);
   if (!cuts) {
     catalog.push(entry);

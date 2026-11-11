@@ -82,10 +82,13 @@ for (const [id, group] of TUNED_ONLY ? [] : Object.entries(groups)) {
 const TUNED_OUT = path.join(OUT, "tuned");
 rmSync(TUNED_OUT, { recursive: true, force: true });
 mkdirSync(TUNED_OUT, { recursive: true });
+// Sons dont la licence demande d'empêcher leur extraction : réunis dans un seul conteneur brouillé
+// (tuned/protected.bin), décodé en mémoire par AudioManager, au lieu de fichiers séparés.
+const protectedParts = [];
 for (const name of used) {
   const sound = soundCatalog.find((s) => s.name === name);
   const input = path.join(SOURCE, sound.file);
-  const target = path.join(TUNED_OUT, `${name}.m4a`);
+  const target = sound.protected ? path.join(work, "protected.m4a") : path.join(TUNED_OUT, `${name}.m4a`);
   if (sound.intact) {
     execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", "128000", input, target]);
   } else {
@@ -97,7 +100,25 @@ for (const name of used) {
   }
   total += statSync(target).size;
   count++;
-  console.log(`son de compétence ${name}`);
+  if (sound.protected) protectedParts.push({ name, data: readFileSync(target) });
+  console.log(`son de compétence ${name}${sound.protected ? " (protégé)" : ""}`);
+}
+if (protectedParts.length) {
+  // En-tête « ARSP », taille de l'index, puis index { nom: [début, longueur] } et sons, le tout brouillé.
+  let offset = 0;
+  const index = {};
+  for (const part of protectedParts) {
+    index[part.name] = [offset, part.data.length];
+    offset += part.data.length;
+  }
+  const indexBytes = Buffer.from(JSON.stringify(index), "utf8");
+  const body = Buffer.concat([indexBytes, ...protectedParts.map((part) => part.data)]);
+  scramble(body);
+  const head = Buffer.alloc(8);
+  head.write("ARSP", 0, "ascii");
+  head.writeUInt32LE(indexBytes.length, 4);
+  writeFileSync(path.join(TUNED_OUT, "protected.bin"), Buffer.concat([head, body]));
+  console.log(`conteneur protégé : ${protectedParts.length} son(s)`);
 }
 
 rmSync(work, { recursive: true, force: true });
@@ -133,6 +154,19 @@ function soundEnd(input) {
   for (let i = offset; i < offset + length; i += 2) if (Math.abs(buffer.readInt16LE(i)) > SILENCE * 32768) last = i;
   rmSync(work, { recursive: true, force: true });
   return (last - offset) / 2 / SAMPLE_RATE + 0.05;
+}
+
+// Brouille (ou débrouille : même opération) les octets, par une suite pseudo-aléatoire fixe — identique à
+// unscramble() de packages/client/src/audio/AudioManager.ts.
+function scramble(bytes) {
+  let state = 0x5eed1234;
+  for (let i = 0; i < bytes.length; i++) {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    state >>>= 0;
+    bytes[i] ^= state & 0xff;
+  }
 }
 
 // Garde la portion start → end (secondes) d'un WAV 16 bits mono (morceau d'une piste découpée).
