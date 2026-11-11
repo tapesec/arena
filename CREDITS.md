@@ -15,6 +15,13 @@ importées par `scripts/import-assets.sh`.
   Zeromancer, Sbed, Felbrigg et Skoll. Fond retiré et couleur adaptée. Détail par compétence dans
   `packages/client/src/icons/SOURCES.txt`. Crédit affiché sur l'écran d'accueil du jeu.
 
+- **Sons « Elemental Magic: Fire Attacks »** — © 2024 Last Day Dreaming ([lastdaydreaming.uwu.ai](https://lastdaydreaming.uwu.ai)),
+  licence [CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/) : utilisés **sans aucune modification**
+  (ni découpe, ni mono, ni volume retouché ; seul le format de fichier change). Crédit affiché sur l'écran d'accueil.
+- **Voix « Combat Female Voice Pack » (version gratuite)** — Marti Topmade (topmademarti), libre pour un usage commercial,
+  montage autorisé, crédit demandé ; interdit de revendre ou redistribuer les sons seuls. Crédit affiché sur l'écran
+  d'accueil.
+
 ## Sans obligation de crédit
 
 - **Modèles 3D** (personnages, tenues, armes, village, nature, accessoires) et **animations** — [Quaternius](https://quaternius.com), CC0.
@@ -26,4 +33,6 @@ importées par `scripts/import-assets.sh`.
   de soin et de feu, Fantasy Sound Library) — licences vérifiées par l'auteur du jeu, sans obligation de crédit.
 - **Sons des sorts de l'Arcaniste** (Trait de givre, Nova de givre, Brûlure) — Sonniss, GDC 2026 Game Audio Bundle
   (Epic Stock Media), libres de droits, sans obligation de crédit.
+- **Sons « Basic Spell Impacts », « Impacts » et « Sword Combat Sound Effects Pack » (version gratuite, Hove Audio)**
+  — itch.io, CC0.
 - **Sons rétro** (alertes, interface) — générés par [ZzFX](https://github.com/KilledByAPixel/ZzFX).

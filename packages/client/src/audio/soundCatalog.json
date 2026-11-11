@@ -66,6 +66,174 @@
   "duration": 0.84
  },
  {
+  "name": "Fire_Spell_Impact_1",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Fire Spell Impacts/Fire Spell Impact 1.wav",
+  "duration": 3
+ },
+ {
+  "name": "Fire_Spell_Impact_2",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Fire Spell Impacts/Fire Spell Impact 2.wav",
+  "duration": 3.01
+ },
+ {
+  "name": "Fire_Spell_Impact_3",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Fire Spell Impacts/Fire Spell Impact 3.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "Fire_Spell_Impact_4",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Fire Spell Impacts/Fire Spell Impact 4.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "Fire_Spell_Impact_5",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Fire Spell Impacts/Fire Spell Impact 5.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "Ice_Spell_Impact_1",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Ice Spell Impacts/Ice Spell Impact 1.wav",
+  "duration": 2.43
+ },
+ {
+  "name": "Ice_Spell_Impact_2",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Ice Spell Impacts/Ice Spell Impact 2.wav",
+  "duration": 2.58
+ },
+ {
+  "name": "Ice_Spell_Impact_3",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Ice Spell Impacts/Ice Spell Impact 3.wav",
+  "duration": 1.95
+ },
+ {
+  "name": "Ice_Spell_Impact_4",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Ice Spell Impacts/Ice Spell Impact 4.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "Ice_Spell_Impact_5",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Ice Spell Impacts/Ice Spell Impact 5.wav",
+  "duration": 1.8
+ },
+ {
+  "name": "Lightning_Spell_Impact_1",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Lightning Spell Impacts/Lightning Spell Impact 1.wav",
+  "duration": 3.68
+ },
+ {
+  "name": "Lightning_Spell_Impact_2",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Lightning Spell Impacts/Lightning Spell Impact 2.wav",
+  "duration": 4.69
+ },
+ {
+  "name": "Lightning_Spell_Impact_3",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Lightning Spell Impacts/Lightning Spell Impact 3.wav",
+  "duration": 3.75
+ },
+ {
+  "name": "Lightning_Spell_Impact_4",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Lightning Spell Impacts/Lightning Spell Impact 4.wav",
+  "duration": 3.73
+ },
+ {
+  "name": "Lightning_Spell_Impact_5",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Lightning Spell Impacts/Lightning Spell Impact 5.wav",
+  "duration": 3.75
+ },
+ {
+  "name": "Water_Spell_Impact_1",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Water Spell Impacts/Water Spell Impact 1.wav",
+  "duration": 2.11
+ },
+ {
+  "name": "Water_Spell_Impact_2",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Water Spell Impacts/Water Spell Impact 2.wav",
+  "duration": 2.57
+ },
+ {
+  "name": "Water_Spell_Impact_3",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Water Spell Impacts/Water Spell Impact 3.wav",
+  "duration": 3.06
+ },
+ {
+  "name": "Water_Spell_Impact_4",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Water Spell Impacts/Water Spell Impact 4.wav",
+  "duration": 1.88
+ },
+ {
+  "name": "Water_Spell_Impact_5",
+  "pack": "Basic Spell Impacts",
+  "file": "Basic Spell Impacts/Water Spell Impacts/Water Spell Impact 5.wav",
+  "duration": 2.58
+ },
+ {
+  "name": "combat_attack_02",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_attack_02_.wav",
+  "duration": 0.76
+ },
+ {
+  "name": "combat_grunt_01",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_grunt_01_.wav",
+  "duration": 0.47
+ },
+ {
+  "name": "combat_grunt_03",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_grunt_03_.wav",
+  "duration": 0.5
+ },
+ {
+  "name": "combat_pain_01",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_pain_01_.wav",
+  "duration": 0.77
+ },
+ {
+  "name": "combat_pain_02",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_pain_02_.wav",
+  "duration": 0.47
+ },
+ {
+  "name": "combat_pain_light_02",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_pain_light_02_.wav",
+  "duration": 0.36
+ },
+ {
+  "name": "combat_swing_01",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_swing_01_.wav",
+  "duration": 0.49
+ },
+ {
+  "name": "combat_swing_04",
+  "pack": "Combat_Female_Voice_Pack_FREE_",
+  "file": "Combat_Female_Voice_Pack_FREE_/WAV/combat_swing_04_.wav",
+  "duration": 0.64
+ },
+ {
   "name": "bouclier_blocage_sourd",
   "pack": "ElevenLabs",
   "file": "ElevenLabs/bouclier_blocage_sourd.mp3",
@@ -592,6 +760,96 @@
   "pack": "icespells",
   "file": "icespells/ice.wav",
   "duration": 1.16
+ },
+ {
+  "name": "Healing_Spell_Impact_1",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 1.wav",
+  "duration": 3.27
+ },
+ {
+  "name": "Healing_Spell_Impact_2",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 2.wav",
+  "duration": 2.47
+ },
+ {
+  "name": "Healing_Spell_Impact_3",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 3.wav",
+  "duration": 2.5
+ },
+ {
+  "name": "Healing_Spell_Impact_4",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 4.wav",
+  "duration": 2
+ },
+ {
+  "name": "Healing_Spell_Impact_5",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 5.wav",
+  "duration": 2.62
+ },
+ {
+  "name": "Healing_Spell_Impact_6",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 6.wav",
+  "duration": 3.06
+ },
+ {
+  "name": "Healing_Spell_Impact_7",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 7.wav",
+  "duration": 2.46
+ },
+ {
+  "name": "Healing_Spell_impact_8",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell impact 8.wav",
+  "duration": 2.27
+ },
+ {
+  "name": "Healing_Spell_Impact_9",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 9.wav",
+  "duration": 1.83
+ },
+ {
+  "name": "Healing_Spell_Impact_10",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 10.wav",
+  "duration": 2
+ },
+ {
+  "name": "Healing_Spell_Impact_11",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 11.wav",
+  "duration": 3.34
+ },
+ {
+  "name": "Healing_Spell_Impact_12",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 12.wav",
+  "duration": 1.98
+ },
+ {
+  "name": "Healing_Spell_Impact_13",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 13.wav",
+  "duration": 2.39
+ },
+ {
+  "name": "Healing_Spell_Impact_14",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 14.wav",
+  "duration": 2
+ },
+ {
+  "name": "Healing_Spell_Impact_15",
+  "pack": "Impacts",
+  "file": "Impacts/Healing Spell Impact 15.wav",
+  "duration": 2
  },
  {
   "name": "footstep_carpet_000",
@@ -1372,6 +1630,41 @@
   "pack": "kenney_impact-sounds",
   "file": "kenney_impact-sounds/Audio/impactWood_medium_004.ogg",
   "duration": 0.33
+ },
+ {
+  "name": "EM_FIRE_CAST_01",
+  "pack": "LDD - Elemental Magic - Fire Attacks",
+  "file": "LDD - Elemental Magic - Fire Attacks/EM_FIRE_CAST_01.wav",
+  "duration": 2,
+  "intact": true
+ },
+ {
+  "name": "EM_FIRE_CAST_02",
+  "pack": "LDD - Elemental Magic - Fire Attacks",
+  "file": "LDD - Elemental Magic - Fire Attacks/EM_FIRE_CAST_02.wav",
+  "duration": 2.5,
+  "intact": true
+ },
+ {
+  "name": "EM_FIRE_HOLD_4s",
+  "pack": "LDD - Elemental Magic - Fire Attacks",
+  "file": "LDD - Elemental Magic - Fire Attacks/EM_FIRE_HOLD_4s.wav",
+  "duration": 4,
+  "intact": true
+ },
+ {
+  "name": "EM_FIRE_IMPACT_01",
+  "pack": "LDD - Elemental Magic - Fire Attacks",
+  "file": "LDD - Elemental Magic - Fire Attacks/EM_FIRE_IMPACT_01.wav",
+  "duration": 1.88,
+  "intact": true
+ },
+ {
+  "name": "EM_FIRE_LAUNCH_01",
+  "pack": "LDD - Elemental Magic - Fire Attacks",
+  "file": "LDD - Elemental Magic - Fire Attacks/EM_FIRE_LAUNCH_01.wav",
+  "duration": 2.63,
+  "intact": true
  },
  {
   "name": "Fire_impact_1",
@@ -3034,6 +3327,246 @@
   "pack": "spells",
   "file": "spells/Spell1.aif",
   "duration": 0.7
+ },
+ {
+  "name": "WEAPSwrd_BaseMetal_HoveAud_SwordCombat_03",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Base Metal/WEAPSwrd_BaseMetal_HoveAud_SwordCombat_03.wav",
+  "duration": 1.02
+ },
+ {
+  "name": "WEAPSwrd_BaseMetal_HoveAud_SwordCombat_06",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Base Metal/WEAPSwrd_BaseMetal_HoveAud_SwordCombat_06.wav",
+  "duration": 0.98
+ },
+ {
+  "name": "WEAPSwrd_BaseWood_HoveAud_SwordCombat_03",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Base Wood/WEAPSwrd_BaseWood_HoveAud_SwordCombat_03.wav",
+  "duration": 1.02
+ },
+ {
+  "name": "WEAPSwrd_BaseWood_HoveAud_SwordCombat_06",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Base Wood/WEAPSwrd_BaseWood_HoveAud_SwordCombat_06.wav",
+  "duration": 0.97
+ },
+ {
+  "name": "WEAPSwrd_MetalwWhoosh_HoveAud_SwordCombat_03",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Metal Combo/WEAPSwrd_MetalwWhoosh_HoveAud_SwordCombat_03.wav",
+  "duration": 1.42
+ },
+ {
+  "name": "WEAPSwrd_MetalwWhoosh_HoveAud_SwordCombat_06",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Metal Combo/WEAPSwrd_MetalwWhoosh_HoveAud_SwordCombat_06.wav",
+  "duration": 1.37
+ },
+ {
+  "name": "WEAPSwrd_WoodwWhoosh_HoveAud_SwordCombat_03",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Wood Combo/WEAPSwrd_WoodwWhoosh_HoveAud_SwordCombat_03.wav",
+  "duration": 1.42
+ },
+ {
+  "name": "WEAPSwrd_WoodwWhoosh_HoveAud_SwordCombat_06",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Collisions/Wood Combo/WEAPSwrd_WoodwWhoosh_HoveAud_SwordCombat_06.wav",
+  "duration": 1.38
+ },
+ {
+  "name": "WEAPSwrd_SwordStab_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Base Stabs/WEAPSwrd_SwordStab_HoveAud_SwordCombat_01.wav",
+  "duration": 1.45
+ },
+ {
+  "name": "WEAPSwrd_SwordStab_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Base Stabs/WEAPSwrd_SwordStab_HoveAud_SwordCombat_11.wav",
+  "duration": 1.51
+ },
+ {
+  "name": "WEAPSwrd_SwordStab_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Base Stabs/WEAPSwrd_SwordStab_HoveAud_SwordCombat_17.wav",
+  "duration": 1.53
+ },
+ {
+  "name": "WEAPSwrd_SwordStabCombowRing_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Full Stab Combo w:Ring/WEAPSwrd_SwordStabCombowRing_HoveAud_SwordCombat_01.wav",
+  "duration": 3.75
+ },
+ {
+  "name": "WEAPSwrd_SwordStabCombowRing_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Full Stab Combo w:Ring/WEAPSwrd_SwordStabCombowRing_HoveAud_SwordCombat_11.wav",
+  "duration": 4.08
+ },
+ {
+  "name": "WEAPSwrd_SwordStabCombowRing_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Full Stab Combo w:Ring/WEAPSwrd_SwordStabCombowRing_HoveAud_SwordCombat_17.wav",
+  "duration": 3.81
+ },
+ {
+  "name": "WEAPSwrd_SwordStabCombo_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Full Stab Combo/WEAPSwrd_SwordStabCombo_HoveAud_SwordCombat_01.wav",
+  "duration": 3.2
+ },
+ {
+  "name": "WEAPSwrd_SwordStabCombo_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Full Stab Combo/WEAPSwrd_SwordStabCombo_HoveAud_SwordCombat_11.wav",
+  "duration": 1.77
+ },
+ {
+  "name": "WEAPSwrd_SwordStabCombo_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Full Stab Combo/WEAPSwrd_SwordStabCombo_HoveAud_SwordCombat_17.wav",
+  "duration": 2.49
+ },
+ {
+  "name": "WEAPSwrd_SwordStabwRing_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Stab w:Ring/WEAPSwrd_SwordStabwRing_HoveAud_SwordCombat_01.wav",
+  "duration": 3.93
+ },
+ {
+  "name": "WEAPSwrd_SwordStabwRing_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Stab w:Ring/WEAPSwrd_SwordStabwRing_HoveAud_SwordCombat_11.wav",
+  "duration": 4.24
+ },
+ {
+  "name": "WEAPSwrd_SwordStabwRing_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/Stab w:Ring/WEAPSwrd_SwordStabwRing_HoveAud_SwordCombat_17.wav",
+  "duration": 4.06
+ },
+ {
+  "name": "GOREStab_SwordStabGore_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/w:Gore/GOREStab_SwordStabGore_HoveAud_SwordCombat_01.wav",
+  "duration": 2.43
+ },
+ {
+  "name": "GOREStab_SwordStabGore_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/w:Gore/GOREStab_SwordStabGore_HoveAud_SwordCombat_11.wav",
+  "duration": 2.74
+ },
+ {
+  "name": "GOREStab_SwordStabGore_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/w:Gore/GOREStab_SwordStabGore_HoveAud_SwordCombat_17.wav",
+  "duration": 2.42
+ },
+ {
+  "name": "WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/w:Whoosh/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_01.wav",
+  "duration": 1.47
+ },
+ {
+  "name": "WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/w:Whoosh/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_11.wav",
+  "duration": 1.55
+ },
+ {
+  "name": "WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Main Sounds/Sword Stabs/w:Whoosh/WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_17.wav",
+  "duration": 1.59
+ },
+ {
+  "name": "MAGShim_Ring_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Ring FX/MAGShim_Ring_HoveAud_SwordCombat_01.wav",
+  "duration": 3.77
+ },
+ {
+  "name": "MAGShim_Ring_HoveAud_SwordCombat_11",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Ring FX/MAGShim_Ring_HoveAud_SwordCombat_11.wav",
+  "duration": 3.92
+ },
+ {
+  "name": "MAGShim_Ring_HoveAud_SwordCombat_17",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Ring FX/MAGShim_Ring_HoveAud_SwordCombat_17.wav",
+  "duration": 4.23
+ },
+ {
+  "name": "VOXEfrt_ActionGrunt_HoveAud_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Action Grunts/VOXEfrt_ActionGrunt_HoveAud_SwordCombat_01.wav",
+  "duration": 1.27
+ },
+ {
+  "name": "VOXEfrt_ActionGrunt_HoveAud_SwordCombat_07",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Action Grunts/VOXEfrt_ActionGrunt_HoveAud_SwordCombat_07.wav",
+  "duration": 0.8
+ },
+ {
+  "name": "VOXEfrt_ActionGrunt_HoveAud_SwordCombat_23",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Action Grunts/VOXEfrt_ActionGrunt_HoveAud_SwordCombat_23.wav",
+  "duration": 0.84
+ },
+ {
+  "name": "VOXEfrt_ActionGrunt_HoveAud_SwordCombat_29",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Action Grunts/VOXEfrt_ActionGrunt_HoveAud_SwordCombat_29.wav",
+  "duration": 0.77
+ },
+ {
+  "name": "VOXEfrt_ActionGrunt_HoveAud_SwordCombat_54",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Action Grunts/VOXEfrt_ActionGrunt_HoveAud_SwordCombat_54.wav",
+  "duration": 0.87
+ },
+ {
+  "name": "VOXScrm_DamageGrunt_HoveAudio_SwordCombat_01",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Damage Grunts/VOXScrm_DamageGrunt_HoveAudio_SwordCombat_01.wav",
+  "duration": 0.7
+ },
+ {
+  "name": "VOXScrm_DamageGrunt_HoveAudio_SwordCombat_13",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Damage Grunts/VOXScrm_DamageGrunt_HoveAudio_SwordCombat_13.wav",
+  "duration": 1.18
+ },
+ {
+  "name": "VOXScrm_DamageGrunt_HoveAudio_SwordCombat_22",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Damage Grunts/VOXScrm_DamageGrunt_HoveAudio_SwordCombat_22.wav",
+  "duration": 0.78
+ },
+ {
+  "name": "VOXScrm_DamageGrunt_HoveAudio_SwordCombat_27",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Voicelines/Damage Grunts/VOXScrm_DamageGrunt_HoveAudio_SwordCombat_27.wav",
+  "duration": 1.36
+ },
+ {
+  "name": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Whooshes/WHSH_Whoosh_HoveAud_SwordCombat_07.wav",
+  "duration": 1.28
+ },
+ {
+  "name": "WHSH_Whoosh_HoveAud_SwordCombat_26",
+  "pack": "Sword Combat Sound Effects Pack FREE VERSION",
+  "file": "Sword Combat Sound Effects Pack FREE VERSION/Whooshes/WHSH_Whoosh_HoveAud_SwordCombat_26.wav",
+  "duration": 0.82
  },
  {
   "name": "22",

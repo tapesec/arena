@@ -88,6 +88,16 @@ function HomeScreen() {
           game-icons.net
         </a>{" "}
         (CC BY 3.0)
+        <br />
+        Sons : « Elemental Magic: Fire Attacks », Last Day Dreaming,{" "}
+        <a href="https://lastdaydreaming.uwu.ai" target="_blank" rel="noreferrer">
+          lastdaydreaming.uwu.ai
+        </a>{" "}
+        (
+        <a href="https://creativecommons.org/licenses/by-nd/4.0/" target="_blank" rel="noreferrer">
+          CC BY-ND 4.0
+        </a>
+        ) · voix de combat, Marti Topmade
       </p>
     </div>
   );

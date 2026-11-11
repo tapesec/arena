@@ -16,6 +16,9 @@ const SOURCE = path.join(ROOT, "assets-source/sounds");
 const OUT = path.join(ROOT, "packages/client/public/dev-sounds");
 const CATALOG = path.join(ROOT, "packages/client/src/audio/soundCatalog.json");
 const EXTENSIONS = new Set([".wav", ".ogg", ".mp3", ".flac", ".aif", ".aiff"]);
+// Packs dont la licence interdit toute modification (CC BY-ND) : ni découpe, ni passage en mono, ni volume
+// harmonisé ; marqués « intact » dans le catalogue.
+const INTACT_PACKS = new Set(["LDD - Elemental Magic - Fire Attacks"]);
 // Mono et léger : la page sert à choisir un son, pas à juger finement sa qualité.
 const BITRATE = 64000;
 
@@ -84,7 +87,9 @@ for (const file of files) {
   const info = execFileSync("afinfo", [input]).toString();
   const duration = Number(/estimated duration: ([\d.]+)/.exec(info)?.[1] ?? 0);
   const pack = packOf(file);
-  catalog.push({ name, pack, file: file.split(path.sep).join("/"), duration: Math.round(duration * 100) / 100 });
+  const entry = { name, pack, file: file.split(path.sep).join("/"), duration: Math.round(duration * 100) / 100 };
+  if (INTACT_PACKS.has(file.split(path.sep)[0])) entry.intact = true;
+  catalog.push(entry);
 }
 rmSync(work, { recursive: true, force: true });
 writeFileSync(CATALOG, JSON.stringify(catalog, null, 1) + "\n");
