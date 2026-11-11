@@ -99,6 +99,9 @@ export class CharacterAnimator {
   } | null = null;
   // Geste de compétence en cours (incantation ou compétence réglée), pour ses effets.
   private abilityClip: { abilityId: string; entry: AbilityAnimation; group: AnimationGroup } | null = null;
+  // Compétence réglée sans animation (page de réglage) : ses effets suivent une horloge au lieu d'une animation —
+  // l'incantation (time), puis le temps réel après le départ du sort (à partir de releasedAt), jusqu'à sa fin.
+  private virtual: { abilityId: string; entry: AbilityAnimation; time: number; releasedAt: number | null; endedAt?: number } | null = null;
   // Incantation vue à la mise à jour précédente, pour reconnaître une nouvelle incantation du même sort.
   private lastCast = { abilityId: "", elapsed: 0 };
 
@@ -125,6 +128,13 @@ export class CharacterAnimator {
 
   // Compétence réglée dont le geste est en cours, et où il en est dans l'animation (pour ses effets).
   playingAbility(): PlayingAbility | null {
+    const virtual = this.virtual;
+    if (virtual) {
+      const time =
+        virtual.releasedAt === null ? virtual.time : virtual.time + (performance.now() / 1000 - virtual.releasedAt) * virtual.entry.rate;
+      if (time < virtual.entry.end) return { abilityId: virtual.abilityId, entry: virtual.entry, time };
+      this.virtual = null;
+    }
     const clip = this.abilityClip;
     if (!clip || this.action !== clip.group || !clip.group.isPlaying) return null;
     const frame = clip.group.animatables[0]?.masterFrame;
@@ -139,6 +149,13 @@ export class CharacterAnimator {
 
   ability(abilityId: string) {
     const gesture = this.castGesture(abilityId);
+    // Sans animation : l'horloge part du départ du sort (sort incanté) ou du début (compétence instantanée).
+    const bare = gesture ?? this.tuning[abilityId];
+    if (bare && !bare.animation) {
+      const castTime = castTimeOf(abilityId);
+      this.virtual = { abilityId, entry: bare, time: castTime > 0 ? releaseTime(bare, castTime) : bare.start, releasedAt: performance.now() / 1000 };
+      return;
+    }
     if (gesture) {
       this.releaseGesture(abilityId, gesture);
       return;
@@ -190,6 +207,7 @@ export class CharacterAnimator {
   // Incantation interrompue (déplacement, Silence, dégâts…) : le geste s'arrête aussitôt.
   interruptCast() {
     this.stopGesture();
+    if (this.virtual?.releasedAt === null) this.virtual = null;
   }
 
   update(input: AnimationInput) {
@@ -263,6 +281,18 @@ export class CharacterAnimator {
     // Nouvelle incantation : un autre sort, ou le même relancé (son temps écoulé repart de zéro).
     const fresh = casting !== this.lastCast.abilityId || input.castElapsed + 0.05 < this.lastCast.elapsed;
     this.lastCast = { abilityId: casting, elapsed: input.castElapsed };
+    // Sans animation : l'horloge suit la progression de l'incantation ; une incantation finie sans départ du sort
+    // (interrompue) l'arrête.
+    if (entry && !entry.animation) {
+      const release = releaseTime(entry, castTimeOf(casting));
+      const castRate = (release - entry.start) / Math.max(input.castDuration, 0.1);
+      this.virtual = { abilityId: casting, entry, time: Math.min(release, entry.start + input.castElapsed * castRate), releasedAt: null };
+      return;
+    }
+    if (!casting && this.virtual && this.virtual.releasedAt === null) {
+      this.virtual.endedAt ??= now;
+      if (now - this.virtual.endedAt > GESTURE_RELEASE_GRACE) this.virtual = null;
+    }
     if (entry && fresh) this.startGesture(casting, entry, input.castDuration);
 
     const gesture = this.gesture;

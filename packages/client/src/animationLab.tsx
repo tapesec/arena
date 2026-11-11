@@ -975,6 +975,9 @@ class Stage {
   }
 }
 
+// Sans animation : jusqu'où la timeline du lanceur s'étend après l'incantation (secondes).
+const NO_ANIMATION_AFTER = 5;
+
 // Réglage d'une posture tenue : pas d'animation (le jeu garde la posture), seulement des moments de la cible.
 const STANCE_ENTRY: AbilityAnimation = { animation: "", start: 0, rate: 1, end: 0 };
 
@@ -1793,9 +1796,13 @@ function AnimationLab() {
     if (!base) return null;
     // Effets montrés tels que le jeu les jouera : ceux du réglage, sinon ceux prévus dans le code.
     const withEffects = { ...base, effects: effectsOf(base, abilityId) };
-    return clampAbilityAnimation(withEffects, castTime, stageRef.current?.clipLength(base.animation) ?? 0);
+    // Sans animation, la timeline couvre l'incantation et jusqu'à NO_ANIMATION_AFTER secondes après.
+    const span = base.animation ? (stageRef.current?.clipLength(base.animation) ?? 0) : castTime + NO_ANIMATION_AFTER;
+    return clampAbilityAnimation(withEffects, castTime, span);
   }, [instance, stance, tuned, abilityId, castTime]);
-  const length = entry ? clipLength(entry.animation) : 0;
+  // Longueur de la timeline du lanceur : l'animation, ou sans animation l'incantation et ce qui peut la suivre.
+  const axisOf = (animation: string) => (animation ? clipLength(animation) : castTime + NO_ANIMATION_AFTER);
+  const length = entry ? axisOf(entry.animation) : 0;
   // Timeline du lanceur : l'animation, prolongée après la fin du geste si un son peut la dépasser.
   const casterAxis = entry?.effects?.some((effect) => effect.type === "sound") ? Math.max(length, entry.end + SOUND_TAIL) : length;
 
@@ -1848,7 +1855,7 @@ function AnimationLab() {
   }, [instance, filter, entry?.animation]);
 
   const update = (next: AbilityAnimation) => {
-    const clamped = roundEntry(clampAbilityAnimation(next, castTime, clipLength(next.animation)));
+    const clamped = roundEntry(clampAbilityAnimation(next, castTime, axisOf(next.animation)));
     setDraft((d) => ({ ...d, [classId]: { ...d[classId], [abilityId]: clamped } }));
   };
 
@@ -1874,6 +1881,13 @@ function AnimationLab() {
   };
 
   const chooseAnimation = (name: string) => {
+    // Sans animation : l'incantation, puis 1 s après le départ du sort pour les effets (réglable).
+    if (!name) {
+      const shift = -(entry?.start ?? 0);
+      const effects = entry?.effects?.map((effect) => shiftEffect(effect, shift));
+      update({ animation: "", start: 0, rate: 1, end: castTime + 1, effects, impact: entry?.impact, status: entry?.status, zone: entry?.zone });
+      return;
+    }
     const clip = clipLength(name);
     const rate = castTime > 0 ? Math.min(1, clip / castTime) : 1;
     const end = castTime > 0 ? Math.min(clip, castTime * rate + 0.5) : clip;
@@ -2354,6 +2368,7 @@ function AnimationLab() {
                     <label>
                       Animation
                       <select value={entry.animation} onChange={(e) => chooseAnimation(e.target.value)}>
+                        <option value="">— Aucune animation —</option>
                         {animations.map((name) => (
                           <option key={name} value={name}>
                             {name}
