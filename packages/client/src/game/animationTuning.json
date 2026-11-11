@@ -342,8 +342,107 @@
               ]
             }
           ]
+        },
+        {
+          "type": "sound",
+          "recipe": "Ice_attack_2",
+          "start": 3.5,
+          "end": 5.35,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
         }
-      ]
+      ],
+      "projectile": {
+        "enabled": true,
+        "path": "straight",
+        "height": 1.5,
+        "turns": 2,
+        "speed": "constant",
+        "from": "feet",
+        "fromOffset": [
+          0,
+          1.1,
+          0
+        ],
+        "to": "chest",
+        "align": false,
+        "effects": [
+          {
+            "recipe": "frostTrail",
+            "start": 0,
+            "end": 0.3,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "object",
+            "recipe": "orb",
+            "start": 0,
+            "end": 0.3,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "tint": "#73D9FF",
+            "scale": 0.22
+          }
+        ]
+      },
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Chest",
+          "start": 0,
+          "rate": 1,
+          "end": 0.333
+        },
+        "effects": [
+          {
+            "recipe": "frostBurst",
+            "start": 0.283,
+            "end": 1.283,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "jeu:ICEBrk_Skill_Freeze_Whoosh_Break_Impact_Layered_Movement_Shatter_03",
+            "start": 0.1,
+            "end": 1.317,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "full": true
+          },
+          {
+            "recipe": "frostCoat",
+            "start": 0.75,
+            "end": 4,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      }
     },
     "nearSight": {
       "animation": "Mixamo_2H_Magic_Attack_05",

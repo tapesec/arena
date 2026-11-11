@@ -35,4 +35,5 @@ importées par `scripts/import-assets.sh`.
   (Epic Stock Media), libres de droits, sans obligation de crédit.
 - **Sons « Basic Spell Impacts », « Impacts » et « Sword Combat Sound Effects Pack » (version gratuite, Hove Audio)**
   — itch.io, CC0.
+- **Sons « Frost Mage SFX » (version gratuite)** — Sounds Good (Daniel Barros), CC0.
 - **Sons rétro** (alertes, interface) — générés par [ZzFX](https://github.com/KilledByAPixel/ZzFX).
