@@ -28,6 +28,10 @@ export interface OverlayDef {
   // Hauteur des lettres : en mètres, ou en pixels à l'écran (screen : même taille quelle que soit la distance).
   size: number;
   screen: boolean;
+  // Hauteur au-dessus du point d'accroche (mètres), et dessiné par-dessus le décor et les personnages (une
+  // information de jeu ne disparaît pas derrière un mur ou une tête).
+  lift: number;
+  onTop: boolean;
   layout: OverlayLayout;
   // Ronde : nombre d'exemplaires, rayon (mètres), vitesse (radians par seconde).
   count: number;
@@ -63,6 +67,8 @@ export const DEFAULT_OVERLAY: OverlayDef = {
   glow: false,
   size: 0.35,
   screen: false,
+  lift: 0,
+  onTop: true,
   layout: "single",
   count: 3,
   radius: 0.45,
@@ -163,6 +169,7 @@ export const BUILTIN_OVERLAYS: Record<string, OverlayDef> = {
     color: "#ffffff",
     size: 16,
     screen: true,
+    lift: 0.5,
     bob: 0.06,
     bobSpeed: 1.2,
   },
@@ -289,6 +296,8 @@ export class Overlays2D {
     mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
     mesh.isPickable = false;
     mesh.visibility = 0;
+    // Groupe de rendu dessiné après la scène, sur un tampon de profondeur vidé : toujours visible.
+    if (def.onTop) mesh.renderingGroupId = 1;
     return { mesh, aspect: shared.aspect, box: shared.box, age: 0, phase, key };
   }
 
@@ -300,7 +309,7 @@ export class Overlays2D {
     const fadeIn = def.fadeIn > 0 ? Math.min(1, age / def.fadeIn) : 1;
     const fadeOut = live.fading === null ? 1 : Math.max(0, 1 - live.fading / Math.max(def.fadeOut, 1e-3));
     const pulse = 1 - def.pulse * (0.5 - 0.5 * Math.cos(age * def.pulseSpeed * Math.PI * 2));
-    const bob = def.bob * Math.sin(age * def.bobSpeed * Math.PI * 2);
+    const bob = def.bob * Math.sin(age * def.bobSpeed * Math.PI * 2) + def.lift;
     const visibility = Math.min(fadeIn, def.layout === "rise" ? 1 : fadeOut) * pulse;
     const at = live.overlay.at;
 

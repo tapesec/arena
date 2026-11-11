@@ -119,6 +119,11 @@ export function OverlayEditor(props: {
           />
           Taille fixe à l'écran
         </label>
+        <Slider label="Au-dessus du point d'accroche" value={def.lift} min={-1} max={3} step={0.05} unit=" m" onChange={(v) => set("lift", v)} />
+        <label className="fx-check" title="Dessiné par-dessus le décor et les personnages, comme les indicateurs du jeu">
+          <input type="checkbox" checked={def.onTop} onChange={(e) => set("onTop", e.target.checked)} />
+          Toujours visible
+        </label>
         {def.screen ? (
           <Slider label="Hauteur à l'écran" value={def.size} min={6} max={80} step={1} unit=" px" onChange={(v) => set("size", v)} />
         ) : (
