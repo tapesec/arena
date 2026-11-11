@@ -480,18 +480,6 @@
               0,
               0
             ]
-          },
-          {
-            "type": "sound",
-            "recipe": "Type_3_damaged1",
-            "start": 0,
-            "end": 0.46,
-            "anchor": "chest",
-            "offset": [
-              0,
-              0,
-              0
-            ]
           }
         ]
       }
