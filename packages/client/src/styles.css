@@ -1861,3 +1861,13 @@ body,
 .lab-range-open {
   border-right-style: dashed;
 }
+
+.lab-extras {
+  margin: 6px 0 0;
+  color: #e6c27a;
+}
+
+.lab-moment-empty button.lab-save {
+  background: #3d6b2c;
+  border: 1px solid #9be37f;
+}

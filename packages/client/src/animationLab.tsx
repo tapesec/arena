@@ -8,7 +8,6 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
-import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
@@ -39,6 +38,9 @@ import {
 } from "./game/abilityAnimations";
 import { CharacterAnimator, framesPerSecond, type AnimationInput } from "./game/CharacterAnimator";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile } from "./game/spellFx";
+import { SpellEffects } from "./game/SpellEffects";
+import { codeImpact, codeStatus, codeZone } from "./game/codeVisuals";
+import type { PlayerVisual } from "./game/PlayerVisual";
 import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
 import {
@@ -128,8 +130,20 @@ class Stage {
   private zoneFx: AbilityEffectPlayer;
   private statusShown = 4;
   // Lecture comme en jeu : temps depuis le départ du sort, et réaction de la cible déjà lancée.
-  private sequence: { time: number; from: Vector3; reacted: boolean } | null = null;
-  private projectile: Mesh;
+  private sequence: { time: number; reacted: boolean } | null = null;
+  // Visuels du code (projectile, impact, zone, état) joués comme en jeu pour les moments pas encore réglés.
+  private codeFx: SpellEffects;
+  // Mannequin vu par les visuels d'état du code (ce que StatusFx lit d'un joueur).
+  private codeDummy = {
+    sessionId: CODE_DUMMY,
+    isAlive: true,
+    root: null as TransformNode | null,
+    character: null as CharacterInstance | null,
+    state: { effects: [] as { kind: string; remaining: number; source: string }[], castAbility: "", songActive: false, charging: false, team: 1 },
+    hasEffect: (_kind: string) => false,
+    playingAbility: () => null,
+    handsPosition: () => false,
+  };
   private zoneDisc: Mesh;
   private zoneMaterial: StandardMaterial;
   // Onglet des effets à particules : effet réglé (et version du code à comparer, à droite du personnage), joué en
@@ -170,12 +184,9 @@ class Stage {
     this.effects = new AbilityEffectPlayer(this.fx);
     this.targetFx = new AbilityEffectPlayer(this.fx);
     this.zoneFx = new AbilityEffectPlayer(this.fx);
-    this.projectile = CreateSphere("projectile", { diameter: 0.3, segments: 8 }, this.scene);
-    const glow = new StandardMaterial("projectile", this.scene);
-    glow.disableLighting = true;
-    glow.emissiveColor = new Color3(1, 0.85, 0.5);
-    this.projectile.material = glow;
-    this.projectile.isVisible = false;
+    this.codeFx = new SpellEffects(this.scene);
+    // Un état réglé dans le brouillon remplace les particules d'état du code.
+    this.codeFx.statuses.isTuned = () => this.entry?.status !== undefined;
     this.zoneDisc = CreateDisc("zone", { radius: 1, tessellation: 64 }, this.scene);
     this.zoneDisc.rotation.x = Math.PI / 2;
     this.zoneMaterial = new StandardMaterial("zone", this.scene);
@@ -398,7 +409,7 @@ class Stage {
     this.targetFx.stopAll();
     this.zoneFx.stopAll();
     this.sequence = null;
-    this.projectile.isVisible = false;
+    this.codeFx.clearTransient();
     this.zoneDisc.isVisible = false;
     for (const group of instance.animations.values()) group.stop();
     this.frozen = null;
@@ -467,6 +478,8 @@ class Stage {
 
   private tick(dt: number) {
     this.fx.update();
+    this.codeFx.update(dt);
+    this.tickCodeStatus(dt, this.mode === "play" && !this.fxPreview && this.sequence ? this.sequence.time : null);
     this.clock += dt;
     const instance = this.instance;
     const animator = this.animator;
@@ -495,9 +508,13 @@ class Stage {
     const release = () => {
       animator.ability(this.abilityId);
       cycle.phase = "after";
-      const from = new Vector3();
-      effectPosition(instance, { recipe: "", start: 0, end: 0, anchor: "hands", offset: [0, 0, 0] }, 0, from);
-      this.sequence = { time: 0, from, reacted: false };
+      this.sequence = { time: 0, reacted: false };
+      // Ce que le jeu joue lui-même : projectile, et impact et zone du code s'ils ne sont pas réglés.
+      const target = targetsSelf(this.abilityId) ? this.holder : this.targetHolder;
+      const tuned = { impact: entry.impact !== undefined, zone: entry.zone !== undefined, zoneParticles: !!entry.zone?.length };
+      this.codeFx.play(this.abilityId, this.holder, target, tuned);
+      if (getAbility(this.abilityId)?.effects.some((effect) => effect.type === "damage")) this.codeFx.magicHit(this.abilityId, target, tuned.impact);
+      if (this.abilityId === "bubble") this.codeFx.statuses.bubbleWasApplied(CODE_DUMMY);
     };
     if (cycle.phase === "idle" && cycle.time >= IDLE_PAUSE) {
       cycle.time = 0;
@@ -544,13 +561,6 @@ class Stage {
     sequence.time += dt;
     const travel = isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0;
     const time = sequence.time - travel;
-    const target = this.targetCharacter();
-    this.projectile.isVisible = time < 0 && !!target && !targetsSelf(this.abilityId);
-    if (this.projectile.isVisible && target) {
-      const to = new Vector3();
-      effectPosition(target, { recipe: "", start: 0, end: 0, anchor: "chest", offset: [0, 0, 0] }, 0, to);
-      Vector3.LerpToRef(sequence.from, to, sequence.time / travel, this.projectile.position);
-    }
     if (time >= 0) {
       const reaction = this.entry?.impact?.reaction;
       if (!sequence.reacted && reaction && !targetsSelf(this.abilityId)) this.targetAnimator?.reactTuned(reaction);
@@ -573,12 +583,48 @@ class Stage {
     const entry = this.entry;
     const radius = getAbility(this.abilityId)?.radius ?? 0;
     return Math.max(
-      momentLength(entry?.impact?.effects, entry?.impact?.reaction),
-      momentLength(entry?.zone),
+      momentLength(this.impactEffects(), entry?.impact?.reaction),
+      momentLength(this.zoneEffects()),
       // L'état part du départ du sort, avant l'impact.
-      entry?.status?.length ? this.statusShown - (isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0) : 0,
+      statusKindsOf(this.abilityId).length ? this.statusShown - (isProjectile(this.abilityId) ? PROJECTILE_TRAVEL_TIME : 0) : 0,
       radius ? AREA_DURATION : 0,
     );
+  }
+
+  // Effets de chaque moment : ceux du réglage, sinon ceux du code convertis en effets.
+  private impactEffects(): AnimationEffect[] {
+    return this.entry?.impact?.effects ?? codeImpact(this.abilityId).effects;
+  }
+
+  private statusEffects(): AnimationEffect[] {
+    return this.entry?.status ?? codeStatus(this.abilityId).effects;
+  }
+
+  private zoneEffects(): AnimationEffect[] {
+    return this.entry?.zone ?? codeZone(this.abilityId);
+  }
+
+  // Visuels d'état du code (particules non réglées, étoiles, cristaux, bulle…) sur la cible, tant que l'état dure
+  // dans la lecture (statusTime : depuis son début, null hors état).
+  private tickCodeStatus(dt: number, statusTime: number | null) {
+    const kinds = statusKindsOf(this.abilityId);
+    const self = targetsSelf(this.abilityId);
+    const target = self ? this.instance : this.target;
+    const root = self ? this.holder : this.targetHolder;
+    if (statusTime === null || statusTime < 0 || statusTime >= this.statusShown || !kinds.length || !target) {
+      this.codeFx.statuses.update(dt, [], 0);
+      return;
+    }
+    // Toujours le même objet : StatusFx suit chaque joueur par identité (sinon tout repartirait à chaque image).
+    const left = this.statusShown - statusTime;
+    const dummy = this.codeDummy;
+    dummy.root = root;
+    dummy.character = target;
+    // Un buff sur soi (Rempart) est dans le camp du lanceur.
+    dummy.state.team = self ? 0 : 1;
+    dummy.state.effects = kinds.map((kind) => ({ kind, remaining: left, source: "" }));
+    dummy.hasEffect = (kind: string) => kinds.includes(kind);
+    this.codeFx.statuses.update(dt, [dummy as unknown as PlayerVisual], 0);
   }
 
   // Effets de la cible et de la zone à un instant après l'impact (time, négatif pendant le vol du projectile) et
@@ -591,22 +637,26 @@ class Stage {
     const radius = getAbility(this.abilityId)?.radius ?? 0;
     let disc = 0;
     if (time !== null && entry) {
-      if ((!only || only === "impact") && time >= 0 && time <= momentLength(entry.impact?.effects, entry.impact?.reaction)) {
-        tracks.push({ id: "impact", effects: entry.impact?.effects ?? [], time });
+      // En lecture, les moments pas encore réglés sont joués par le code lui-même (codeFx) ; en pose figée, ils sont
+      // montrés convertis en effets.
+      const impact = only ? this.impactEffects() : (entry.impact?.effects ?? []);
+      const status = only ? this.statusEffects() : (entry.status ?? []);
+      const zoneEffects = only ? this.zoneEffects() : (entry.zone ?? []);
+      if ((!only || only === "impact") && time >= 0 && time <= momentLength(impact, entry.impact?.reaction)) {
+        tracks.push({ id: "impact", effects: impact, time });
       }
-      if ((!only || only === "status") && entry.status?.length && statusTime !== null && (only || statusTime < this.statusShown)) {
-        tracks.push({ id: "status", effects: entry.status, time: statusTime });
+      if ((!only || only === "status") && status.length && statusTime !== null && (only || statusTime < this.statusShown)) {
+        tracks.push({ id: "status", effects: status, time: statusTime });
       }
       if ((!only || only === "zone") && radius && time >= 0) {
         const zone = { center: this.zoneCenter(new Vector3()), yaw: 0, radius };
-        if (entry.zone?.length && (only || time <= momentLength(entry.zone))) zoneTracks.push({ id: "zone", effects: entry.zone, time, zone });
-        // Le disque de portée, comme en jeu (il s'étend puis s'efface) ; en pose figée, toujours visible.
-        // Comme en jeu : plus discret quand des particules remplissent la zone.
-        const alpha = entry.zone ? (entry.zone.length ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA) : AREA_ALPHA_WITH_PARTICLES;
-        disc = only ? alpha : time < AREA_DURATION ? alpha * (1 - time / AREA_DURATION) : 0;
-        const grow = only ? 1 : Math.min(1, 0.3 + (time / AREA_DURATION) * 2);
-        this.zoneDisc.scaling.setAll(radius * grow);
-        this.zoneDisc.position.copyFrom(zone.center).y += 0.03;
+        if (zoneEffects.length && (only || time <= momentLength(zoneEffects))) zoneTracks.push({ id: "zone", effects: zoneEffects, time, zone });
+        // Le disque de portée en pose figée (en lecture, c'est celui du jeu), plus discret avec des particules.
+        if (only) {
+          disc = zoneEffects.length ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA;
+          this.zoneDisc.scaling.setAll(radius);
+          this.zoneDisc.position.copyFrom(zone.center).y += 0.03;
+        }
       }
     }
     this.targetFx.updateTracks(target, tracks);
@@ -625,10 +675,14 @@ class Stage {
     window.removeEventListener("resize", this.resize);
     this.instance?.dispose();
     this.target?.dispose();
+    this.codeFx.dispose();
     this.fx.dispose();
     this.engine.dispose();
   }
 }
+
+// Identifiant du mannequin pour les visuels d'état du code.
+const CODE_DUMMY = "lab-target";
 
 // Instant de l'animation de réaction (secondes dans l'animation) à un instant après l'impact.
 function reactionClipTime(reaction: TargetReaction, time: number): number {
@@ -690,20 +744,39 @@ function momentLabel(moment: Moment, abilityId: string): string {
   return `Pendant l'état : ${kinds.join(", ")}${Number.isFinite(duration) ? `, ${seconds(duration)}` : ", permanent"}`;
 }
 
+// Visuels du code d'un moment : effets à particules (convertibles) et le reste (objets, affichage 2D…).
+function codeOf(moment: Moment, abilityId: string): { effects: AnimationEffect[]; extras: string[] } {
+  if (moment === "impact") return codeImpact(abilityId);
+  if (moment === "status") return codeStatus(abilityId);
+  return { effects: codeZone(abilityId), extras: [] };
+}
+
+function listOf(effects: AnimationEffect[]): string {
+  return [...new Set(effects.map((effect) => `« ${particleEffectLabel(effect.recipe)} »`))].join(", ");
+}
+
 // Ce que fait le jeu pour un moment pas encore réglé.
 function momentCodeNote(moment: Moment, abilityId: string): string {
-  if (moment === "impact")
-    return `Pas encore réglé : en jeu, ${targetsSelf(abilityId) ? "le lanceur reçoit" : "chaque cible reçoit"} les effets d'impact prévus dans le code (éclat, flash, estafilade, brûlure…) et sa réaction habituelle aux coups. Une fois réglé, ce moment les remplace.`;
-  if (moment === "status")
-    return "Pas encore réglé : en jeu, l'état garde ses visuels du code (volutes et « Zzz » du mez, étoiles du stun, cristaux du root…). Les effets réglés ici s'y ajoutent.";
-  return "Pas encore réglé : en jeu, la zone garde ses particules du code. Une fois réglé, ce moment les remplace (le disque qui montre la portée reste).";
+  const { effects, extras } = codeOf(moment, abilityId);
+  if (!effects.length && !extras.length) return "Pas encore réglé : en jeu, rien de particulier pour ce moment.";
+  const parts = [effects.length && `les effets ${listOf(effects)}`, ...extras].filter(Boolean).join(" ; ");
+  const reaction = moment === "impact" ? " La cible a sa réaction habituelle aux coups." : "";
+  return `Pas encore réglé : en jeu, le code joue ${parts} (montrés sur le mannequin).${reaction} « Régler ce moment » part de ces effets.`;
+}
+
+// Ce que le code joue encore (ou ne joue plus) quand le moment est réglé : ce qui n'est pas fait de particules.
+function momentExtrasNote(moment: Moment, abilityId: string): string | null {
+  const { extras } = codeOf(moment, abilityId);
+  if (!extras.length) return null;
+  if (moment === "status") return `S'ajoutent en jeu (pas encore réglables) : ${extras.join(" ; ")}.`;
+  return `Remplacés par ce réglage et pas encore réglables : ${extras.join(" ; ")}.`;
 }
 
 // Rappel du sens du temps 0 de chaque moment.
 function momentHint(moment: Moment, abilityId: string): string {
   if (moment === "impact")
     return `0 s : ${isProjectile(abilityId) ? "arrivée du projectile" : "départ du sort"} · joué sur chaque cible touchée`;
-  if (moment === "status") return "0 s : début de l'état · s'ajoute aux visuels du code";
+  if (moment === "status") return "0 s : début de l'état (au départ du sort) · remplace les particules d'état du code";
   return `Centre : ${zoneCenterIsTarget(abilityId) ? "la cible" : "le lanceur"} · joué une fois par lancement`;
 }
 
@@ -1454,9 +1527,11 @@ function AnimationLab() {
                   <p className="lab-note">{momentCodeNote(shownMoment, abilityId)}</p>
                   <button
                     className="lab-save"
-                    onClick={() =>
-                      updateMoment(shownMoment === "impact" ? { impact: { effects: [] } } : shownMoment === "status" ? { status: [] } : { zone: [] })
-                    }
+                    onClick={() => {
+                      // Le moment part des effets du code, convertis.
+                      const effects = codeOf(shownMoment, abilityId).effects;
+                      updateMoment(shownMoment === "impact" ? { impact: { effects } } : shownMoment === "status" ? { status: effects } : { zone: effects });
+                    }}
                   >
                     Régler ce moment
                   </button>
@@ -1507,6 +1582,7 @@ function AnimationLab() {
                     </button>
                     <span className="lab-hint">{momentHint(shownMoment, abilityId)}</span>
                   </div>
+                  {momentExtrasNote(shownMoment, abilityId) && <p className="lab-note lab-extras">{momentExtrasNote(shownMoment, abilityId)}</p>}
                   {shownMoment === "impact" && reaction && (
                     <div className="lab-reaction">
                       <span className="lab-hint">Portion jouée de « {reaction.animation} »</span>

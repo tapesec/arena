@@ -83,6 +83,11 @@ export class TargetVisuals {
     return this.impacts.some((impact) => impact.targetId === targetId && sameAbility(impact.abilityId, abilityId) && !!impact.entry.impact?.reaction);
   }
 
+  // Les effets de l'état en cours sur ce joueur sont réglés (ils remplacent les particules d'état du code).
+  hasTunedStatus(playerId: string, kind: string): boolean {
+    return this.statuses.get(playerId)?.get(kind)?.entry?.status !== undefined;
+  }
+
   // Une compétence part (fin d'incantation, ou compétence instantanée).
   onAbility(casterId: string, abilityId: string, targetId: string, players: Map<string, PlayerVisual>) {
     const ability = getAbility(abilityId);

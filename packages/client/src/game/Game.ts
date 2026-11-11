@@ -509,8 +509,9 @@ export class Game {
     }
     this.overlay.update(dt);
     this.spellEffects.update(dt);
-    this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
+    // Les effets d'état réglés d'abord : ils décident si les particules d'état du code sont jouées.
     this.spellEffects.targets.update(dt, this.players);
+    this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);

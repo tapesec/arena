@@ -17,6 +17,22 @@ import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { oneShot, recipeById } from "./particleDefs";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
+import { AFFLICTIONS, BODY_CENTER, OWN_AFFLICTION, VISUALS, type CodeVisual } from "./codeVisuals";
+
+// Moments réglés sur la page de réglage pour une compétence (par défaut, d'après animationTuning.json) : ils
+// remplacent l'impact et la zone du code.
+export interface TunedMoments {
+  impact: boolean;
+  zone: boolean;
+  zoneParticles: boolean;
+}
+
+function tunedMoments(abilityId: string): TunedMoments {
+  const tuned = tuningOf(TUNING, abilityId);
+  return { impact: tuned?.impact !== undefined, zone: tuned?.zone !== undefined, zoneParticles: !!tuned?.zone?.length };
+}
+
+const recipes = (ids: string[] | undefined): Recipe[] => (ids ?? []).map(recipeById);
 import { StatusFx } from "./statusFx";
 import { TargetVisuals } from "./targetVisuals";
 import { tuningOf, type AnimationTuning } from "./abilityAnimations";
@@ -24,57 +40,6 @@ import animationTuning from "./animationTuning.json";
 
 const TUNING = animationTuning as unknown as AnimationTuning;
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
-
-// Effets à particules par compétence : pendant le vol d'un projectile (trail), à son arrivée ou sur la cible
-// (impact, à hauteur du corps ; ground, aux pieds), et sur la zone d'effet (area, avec son rayon).
-// Une compétence sans entrée garde les formes simples (impulsion, éclair) de ABILITY_FX.
-interface Visual {
-  trail?: Recipe[];
-  impact?: Recipe[];
-  ground?: Recipe[];
-  area?: Recipe[];
-  // Projectile : diamètre du cœur lumineux (0 = particules seules).
-  core?: number;
-  // Estafilade lumineuse sur la cible (coups spéciaux de mêlée).
-  slash?: boolean;
-  // Rayon de lumière qui descend sur la cible (résurrection).
-  beam?: boolean;
-}
-const VISUALS: Record<string, Visual> = {
-  firebolt: { trail: [P.fireTrail, P.smokeTrail], impact: [P.fireBurst], core: 0.3 },
-  freeze: { trail: [P.frostTrail], impact: [P.frostBurst], core: 0.22 },
-  frostbolt: { trail: [P.frostTrail], impact: [P.frostBurst], core: 0.22 },
-  nearSight: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], core: 0.15 },
-  burn: { impact: [P.fireBurst] },
-  frostNova: { area: [P.frostWave, P.frostField] },
-  mez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], core: 0.2 },
-  silence: { trail: [P.silenceTrail], impact: [P.silencePuff], core: 0 },
-  aoeMez: { trail: [P.arcaneTrail], impact: [P.arcaneBurst], area: [P.arcaneMist], core: 0.25 },
-  aoeRoot: { trail: [P.frostTrail], impact: [P.frostBurst], area: [P.frostWave, P.frostField], core: 0.25 },
-  blast: { area: [P.fireWave, P.fireField] },
-  heal: { ground: [recipeById("healColumn")] },
-  instantHeal: { impact: [recipeById("healFlash")] },
-  groupHeal: { area: [P.healField] },
-  backstab: { slash: true },
-  powerStrike: { slash: true },
-  cripplingStrike: { slash: true },
-  chargeImpact: { slash: true, impact: [recipeById("critSparks")] },
-  rallyCry: { area: [P.rallyWave] },
-  flankStrike: { slash: true },
-  buffHp: { ground: [recipeById("buffSpiral")] },
-  buffStrength: { ground: [recipeById("buffSpiral")] },
-  resurrect: { ground: [recipeById("resurrectRain")], beam: true },
-  speedSong: { impact: [recipeById("noteBurst")] },
-};
-// Effet sur la cible touchée par un sort de dégâts, selon son type (AbilityDef.school) : elle brûle un instant, ou
-// se couvre de givre le temps du ralentissement du Trait de givre. La Brûlure (un dot) a son effet à part, qui
-// dure autant qu'elle (voir StatusFx).
-type School = NonNullable<AbilityDef["school"]>;
-const AFFLICTIONS: Record<School, { recipes: Recipe[]; duration: number }> = {
-  fire: { recipes: [recipeById("burning"), recipeById("burningSmoke")], duration: 1.2 },
-  frost: { recipes: [recipeById("frostCoat")], duration: 4 },
-};
-const OWN_AFFLICTION = new Set(["burn"]);
 
 const SLASH_DURATION = 0.25;
 const BUBBLE_POP_DURATION = 0.3;
@@ -84,8 +49,6 @@ const BEAM_HEIGHT = 9;
 const AREA_ALPHA = 0.45;
 const AREA_ALPHA_WITH_PARTICLES = 0.22;
 
-// Hauteur (au-dessus des pieds) à laquelle voyagent les projectiles et apparaissent les impulsions.
-const BODY_CENTER = 1.1;
 const PULSE_DURATION = 0.5;
 const MELEE_DURATION = 0.25;
 const AREA_DURATION = 0.7;
@@ -118,20 +81,22 @@ export class SpellEffects {
     this.particles.prewarm(P.RECIPES);
     this.statuses = new StatusFx(scene, this.particles);
     this.targets = new TargetVisuals(this.particles, TUNING);
+    // Un état dont les effets sont réglés ne joue plus les particules du code (ses objets restent).
+    this.statuses.isTuned = (playerId, kind) => this.targets.hasTunedStatus(playerId, kind);
   }
 
   // caster et target : les ancres des personnages (absentes si hors de vue).
-  play(abilityId: string, caster: TransformNode | undefined, target: TransformNode | undefined) {
+  // tuned : moments réglés (la page de réglage donne ceux de son brouillon).
+  play(abilityId: string, caster: TransformNode | undefined, target: TransformNode | undefined, tuned = tunedMoments(abilityId)) {
     const fx = ABILITY_FX[abilityId];
     if (!fx) return;
     const visual = VISUALS[abilityId];
     const areaRadius = fx.area ? (getAbility(abilityId)?.radius ?? 0) : 0;
     // Impact et zone réglés sur la page de réglage : ils remplacent ceux du code (voir TargetVisuals).
-    const tuned = tuningOf(TUNING, abilityId);
-    const ownImpact = tuned?.impact !== undefined;
-    const zoneRecipes = tuned?.zone !== undefined ? [] : (visual?.area ?? []);
+    const ownImpact = tuned.impact;
+    const zoneRecipes = tuned.zone ? [] : recipes(visual?.area);
     // Avec des effets de zone réglés, le disque de portée reste discret.
-    const tunedZoneFx = !!tuned?.zone?.length;
+    const tunedZoneFx = tuned.zoneParticles;
 
     if (fx.shape === "projectile" && caster && target) {
       this.launchProjectile(fx, visual, caster, target, () => {
@@ -155,13 +120,13 @@ export class SpellEffects {
 
   // Dégâts magiques subis : la cible brûle (ou gèle…) un instant, selon le type du sort.
   // Un projectile n'a d'effet qu'à son arrivée.
-  magicHit(abilityId: string, target: TransformNode) {
+  magicHit(abilityId: string, target: TransformNode, tunedImpact = tunedMoments(abilityId).impact) {
     const school = getAbility(abilityId)?.school;
-    if (!school || OWN_AFFLICTION.has(abilityId) || tuningOf(TUNING, abilityId)?.impact !== undefined) return;
+    if (!school || OWN_AFFLICTION.has(abilityId) || tunedImpact) return;
     const affliction = AFFLICTIONS[school];
     const start = () => {
       if (target.isDisposed()) return;
-      for (const recipe of affliction.recipes) {
+      for (const recipe of recipes(affliction.recipes)) {
         const at = target.getAbsolutePosition().clone();
         const system = recipe(this.particles, at);
         if (system) this.attached.push({ system, at, anchor: target, left: affliction.duration });
@@ -201,11 +166,11 @@ export class SpellEffects {
   }
 
   // Particules d'impact sur un personnage : à hauteur du corps, ou aux pieds.
-  private burst(visual: Visual, anchor: TransformNode) {
+  private burst(visual: CodeVisual, anchor: TransformNode) {
     const feet = anchor.getAbsolutePosition();
     const body = feet.add(new Vector3(0, BODY_CENTER, 0));
-    for (const recipe of visual.impact ?? []) oneShot(recipe(this.particles, body.clone()));
-    for (const recipe of visual.ground ?? []) oneShot(recipe(this.particles, feet.clone()));
+    for (const recipe of recipes(visual.impact)) oneShot(recipe(this.particles, body.clone()));
+    for (const recipe of recipes(visual.ground)) oneShot(recipe(this.particles, feet.clone()));
     if (visual.slash) {
       this.spawnSlash(body);
       oneShot(recipeById("critSparks")(this.particles, body.clone(), 0.6));
@@ -321,6 +286,14 @@ export class SpellEffects {
     }
   }
 
+  // Efface les effets passagers en cours (projectiles, impulsions, brûlures…) : la page de réglage relance sa lecture.
+  clearTransient() {
+    for (const effect of this.effects) effect.mesh.dispose(false, true);
+    this.effects = [];
+    for (const item of this.attached) item.system.stop();
+    this.attached = [];
+  }
+
   dispose() {
     for (const effect of this.effects) effect.mesh.dispose(false, true);
     for (const line of this.guardLinks.values()) line.dispose();
@@ -332,7 +305,7 @@ export class SpellEffects {
   }
 
   // Projectile qui suit la cible même si elle bouge pendant le vol : un cœur lumineux, et sa traînée de particules.
-  private launchProjectile(fx: AbilityFx, visual: Visual | undefined, caster: TransformNode, target: TransformNode, onArrive: () => void) {
+  private launchProjectile(fx: AbilityFx, visual: CodeVisual | undefined, caster: TransformNode, target: TransformNode, onArrive: () => void) {
     const from = caster.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
     const mesh = CreateSphere("projectile", { diameter: visual?.core ?? 0.45, segments: 8 }, this.scene);
     mesh.material = this.glowMaterial(fx.color, 1);
@@ -340,7 +313,7 @@ export class SpellEffects {
     mesh.isVisible = (visual?.core ?? 0.45) > 0;
     mesh.position.copyFrom(from);
     // Les traînées suivent la position du projectile (même vecteur) ; arrêtées à l'arrivée, elles s'éteignent seules.
-    const trails = (visual?.trail ?? []).map((recipe) => recipe(this.particles, mesh.position));
+    const trails = recipes(visual?.trail).map((recipe) => recipe(this.particles, mesh.position));
     this.effects.push({
       mesh,
       age: 0,

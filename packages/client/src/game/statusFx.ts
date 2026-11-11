@@ -81,24 +81,26 @@ interface PlayerStatus {
 // Auras continues : recette, point d'attache (pieds, corps, tête) et condition d'affichage.
 interface Aura {
   recipe: Recipe;
+  // État dont l'aura est le visuel : elle cède la place aux effets réglés pour cet état (voir StatusFx.isTuned).
+  kind?: string;
   at: "feet" | "body" | "head" | "hands";
   active: (player: PlayerVisual, speed: number) => boolean;
 }
 // En dessous de cette vitesse (m/s), un personnage accéléré ne soulève pas de poussière.
 const DUST_SPEED = 3;
 const AURAS: Record<string, Aura> = {
-  rage: { recipe: recipeById("rageFlames"), at: "feet", active: (p) => p.hasEffect("rage") },
+  rage: { kind: "rage", recipe: recipeById("rageFlames"), at: "feet", active: (p) => p.hasEffect("rage") },
   dust: { recipe: recipeById("speedDust"), at: "feet", active: (p, speed) => p.hasEffect("speed") && speed > DUST_SPEED },
   notes: { recipe: recipeById("notesAura"), at: "head", active: (p) => p.state.songActive },
   // Gardien : flammes du Rempart, traînée de la Charge, couronne dorée des alliés du Cri de ralliement.
-  rampart: { recipe: recipeById("rampartFlames"), at: "feet", active: (p) => p.hasEffect("rampart") },
+  rampart: { kind: "rampart", recipe: recipeById("rampartFlames"), at: "feet", active: (p) => p.hasEffect("rampart") },
   charge: { recipe: recipeById("chargeStreak"), at: "body", active: (p) => p.state.charging },
-  rally: { recipe: recipeById("rallyHalo"), at: "head", active: (p) => p.hasEffect("magicImmune") },
+  rally: { kind: "magicImmune", recipe: recipeById("rallyHalo"), at: "head", active: (p) => p.hasEffect("magicImmune") },
   // Arcaniste : la cible de la Brûlure brûle tant que dure le dot ; colonne et éclairs de la Puissance arcanique.
-  burn: { recipe: recipeById("burning"), at: "feet", active: (p) => p.hasEffect("burning") },
-  burnSmoke: { recipe: recipeById("burningSmoke"), at: "feet", active: (p) => p.hasEffect("burning") },
-  arcaneColumn: { recipe: recipeById("arcaneColumn"), at: "feet", active: (p) => p.hasEffect("arcanePower") },
-  arcaneSparks: { recipe: recipeById("arcaneSparks"), at: "feet", active: (p) => p.hasEffect("arcanePower") },
+  burn: { kind: "burning", recipe: recipeById("burning"), at: "feet", active: (p) => p.hasEffect("burning") },
+  burnSmoke: { kind: "burning", recipe: recipeById("burningSmoke"), at: "feet", active: (p) => p.hasEffect("burning") },
+  arcaneColumn: { kind: "arcanePower", recipe: recipeById("arcaneColumn"), at: "feet", active: (p) => p.hasEffect("arcanePower") },
+  arcaneSparks: { kind: "arcanePower", recipe: recipeById("arcaneSparks"), at: "feet", active: (p) => p.hasEffect("arcanePower") },
   // Trait de feu et Trait de givre en incantation : le trait se forme entre les mains.
   fireCharge: { recipe: recipeById("fireCharge"), at: "hands", active: (p) => codeCharge(p, "firebolt") },
   frostCharge: { recipe: recipeById("frostCharge"), at: "hands", active: (p) => codeCharge(p, "frostbolt") },
@@ -132,6 +134,9 @@ export class StatusFx {
   private rimMaterial: StandardMaterial;
   private novaMaterial: StandardMaterial;
   private novaRadius = getAbility("frostNova")?.radius ?? 15;
+  // Les effets de l'état (kind) du joueur sont réglés sur la page de réglage : ses particules du code ne sont plus
+  // jouées (ses objets, étoiles, cristaux, bulle, restent).
+  isTuned: ((playerId: string, kind: string) => boolean) | null = null;
   private time = 0;
 
   constructor(
@@ -174,7 +179,7 @@ export class StatusFx {
       if (!player.handsPosition(status.hands)) status.hands.copyFrom(status.body);
       this.updateAuras(status, alive, player, speed);
       status.abilityFx.update(player.character, playing);
-      this.updateMez(status, mez);
+      this.updateMez(status, mez && !this.tuned(player, "mez"));
       this.updateStars(status, stun, player);
       this.updateRoot(status, root, player);
       this.updateBubble(status, bubble, this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
@@ -234,10 +239,14 @@ export class StatusFx {
     return status;
   }
 
+  private tuned(player: PlayerVisual, kind: string): boolean {
+    return this.isTuned?.(player.sessionId, kind) ?? false;
+  }
+
   // Démarre ou arrête chaque aura continue selon l'état du personnage.
   private updateAuras(status: PlayerStatus, alive: boolean, player: PlayerVisual, speed: number) {
     for (const [name, aura] of Object.entries(AURAS)) {
-      const active = alive && aura.active(player, speed);
+      const active = alive && aura.active(player, speed) && !(aura.kind && this.tuned(player, aura.kind));
       const system = status.auras.get(name);
       if (active && !system) {
         const created = aura.recipe(this.particles, status[aura.at]);
@@ -292,7 +301,7 @@ export class StatusFx {
     if (left > 0 && !status.crystals) {
       status.crystals = crystalCrown(this.scene, this.iceMaterial);
       status.crystals.parent = status.anchor;
-      status.mist = recipeById("frostMist")(this.particles, status.feet);
+      if (!this.tuned(player, "root")) status.mist = recipeById("frostMist")(this.particles, status.feet);
       status.rootDuration = left;
     }
     if (left <= 0 && status.crystals) {

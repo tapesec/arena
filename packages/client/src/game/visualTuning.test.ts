@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { getAbility } from "@arena/shared";
 import { statusKindsOf, type AbilityAnimation, type AnimationEffect, type AnimationTuning } from "./abilityAnimations";
 import { BUILTIN_DEFS, CODE_RECIPES } from "./particleDefs";
+import { AFFLICTIONS, STATUS_CODE, VISUALS } from "./codeVisuals";
 import animationTuning from "./animationTuning.json";
 import particleEffects from "./particleEffects.json";
 
@@ -45,4 +46,13 @@ test("les moments réglés correspondent à la compétence", () => {
       if (reaction) assert.ok(reaction.end > reaction.start && reaction.rate > 0, `${classId}/${abilityId} : réaction vide`);
     }
   }
+});
+
+test("les visuels du code nomment des effets qui existent", () => {
+  const names = [
+    ...Object.values(VISUALS).flatMap((v) => [...(v.trail ?? []), ...(v.impact ?? []), ...(v.ground ?? []), ...(v.area ?? [])]),
+    ...Object.values(AFFLICTIONS).flatMap((a) => a.recipes),
+    ...Object.values(STATUS_CODE).flatMap((s) => s.particles.map((p) => p.recipe)),
+  ];
+  for (const name of names) assert.ok(name in CODE_RECIPES, `effet du code introuvable : « ${name} »`);
 });
