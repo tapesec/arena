@@ -96,11 +96,13 @@ export interface AnimationEffect {
   // Marque au sol ou objet 3D : couleur imposée (sinon, celle de la marque ou de l'objet), et taille (× la sienne).
   tint?: string;
   scale?: number;
-  // Son : volume (1 : normal), vitesse de lecture (plus lente = plus grave ; un léger écart au hasard s'y ajoute),
-  // et en boucle jusqu'à la fin de sa barre (sinon joué une fois en entier).
+  // Son : volume (1 : normal), vitesse de lecture (plus lente = plus grave ; un léger écart au hasard s'y ajoute).
+  // Coupé à la fin de sa barre (par défaut), joué jusqu'au bout même après sa barre (full), ou en boucle jusqu'à la
+  // fin de sa barre (loop).
   volume?: number;
   rate?: number;
   loop?: boolean;
+  full?: boolean;
   // Marque, objet ou affichage 2D : couleur du camp de celui qui le porte (bleu dans le camp du joueur, rouge chez
   // l'adversaire), à la place de tint.
   teamColor?: boolean;

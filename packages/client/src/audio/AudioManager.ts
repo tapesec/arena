@@ -205,9 +205,9 @@ export class AudioManager {
     source.start(this.context.currentTime, start);
     return {
       stop: () => {
-        // Fondu bref plutôt qu'une coupure sèche.
-        gain.gain.setTargetAtTime(0, this.context.currentTime, 0.05);
-        source.stop(this.context.currentTime + 0.25);
+        // Fondu très bref plutôt qu'une coupure sèche (qui ferait un « clic »).
+        gain.gain.setTargetAtTime(0, this.context.currentTime, 0.02);
+        source.stop(this.context.currentTime + 0.1);
       },
     };
   }

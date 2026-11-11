@@ -204,6 +204,8 @@ export function codeSoundTracks(abilityId: string, moment: "cast" | "impact", at
     offset: [0, BODY_CENTER, 0] as [number, number, number],
     ...(cue.volume !== undefined && { volume: cue.volume }),
     ...(cue.rate !== undefined && { rate: cue.rate }),
+    // Comme dans le code : joué en entier.
+    full: true,
   }));
 }
 

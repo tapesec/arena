@@ -178,8 +178,9 @@ interface Run {
   object: PlacedObject | null;
   overlay: PlacedOverlay | null;
   sound: { stop(): void } | null;
-  // Son lancé en boucle (relevé au départ : décocher la boucle ensuite ne doit pas l'empêcher de s'arrêter).
-  looping: boolean;
+  // Son à arrêter avec sa barre (coupé ou en boucle), relevé au départ : changer de mode ensuite ne doit pas
+  // l'empêcher de s'arrêter.
+  cutAtEnd: boolean;
 }
 
 // Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
@@ -214,7 +215,7 @@ export class AbilityEffectPlayer {
         let run = this.running.get(key);
         const place = (out: Vector3) => (frame ? zonePosition(frame, effect, track.time, out) : effectPosition(character!, effect, track.time, out));
         if (!run) {
-          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, looping: false };
+          run = { effect, at: new Vector3(), system: null, mark: null, object: null, overlay: null, sound: null, cutAtEnd: false };
           place(run.at);
           const radius = track.zone && effect.fitZone ? track.zone.radius : undefined;
           if (effect.type === "sound") {
@@ -222,7 +223,7 @@ export class AbilityEffectPlayer {
             if (!track.silent) {
               const rate = (effect.rate ?? 1) * (1 + (Math.random() * 2 - 1) * SOUND_RATE_JITTER);
               run.sound = this.scenery.sounds?.play(effect.recipe, run.at, { volume: effect.volume ?? 1, rate, loop: !!effect.loop }) ?? null;
-              run.looping = !!effect.loop;
+              run.cutAtEnd = !!effect.loop || !effect.full;
             }
           } else if (effect.type === "ground") run.mark = this.scenery.marks?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
           else if (effect.type === "overlay") run.overlay = this.scenery.overlays?.create(effect.recipe, run.at, radius, tint, effect.scale) ?? null;
@@ -259,8 +260,8 @@ export class AbilityEffectPlayer {
     run.mark?.stop();
     run.object?.stop();
     run.overlay?.stop();
-    // Un son joué une fois va jusqu'au bout ; un son en boucle s'arrête avec sa barre.
-    if (run.looping) run.sound?.stop();
+    // Un son s'arrête avec sa barre, sauf s'il doit être joué jusqu'au bout.
+    if (run.cutAtEnd) run.sound?.stop();
     if (run.system) {
       // Les dernières particules restent où elles sont, au lieu de suivre le personnage.
       run.system.emitter = run.at.clone();

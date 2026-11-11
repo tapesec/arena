@@ -1140,6 +1140,7 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
     ...(effect.volume !== undefined && { volume: round(effect.volume) }),
     ...(effect.rate !== undefined && { rate: round(effect.rate) }),
     ...(effect.loop && { loop: true }),
+    ...(effect.full && { full: true }),
     ...(effect.scale !== undefined && effect.scale !== 1 && { scale: round(effect.scale) }),
   };
 }
@@ -2812,9 +2813,9 @@ function isSynthSound(recipe: string): boolean {
   return recipe.startsWith(GAME_SOUND) && recipe.slice(GAME_SOUND.length) in SYNTH_SOUNDS;
 }
 
-// Durée d'un son (secondes), pour la longueur de sa barre ; 1 s si inconnue (sons du jeu).
+// Durée d'un son (secondes), pour la longueur de sa barre (qui le coupe) ; 2 s si inconnue (sons du jeu).
 function soundDuration(recipe: string): number {
-  return SOUNDS.find((sound) => sound.name === recipe)?.duration ?? 1;
+  return SOUNDS.find((sound) => sound.name === recipe)?.duration ?? 2;
 }
 
 // Nom d'un effet sur sa barre : ◎ marque au sol, ◆ objet 3D, ✦ affichage 2D, ♪ son.
@@ -3092,21 +3093,29 @@ function EffectsPanel(props: {
                   }}
                 />
               </label>
-              <label className="lab-check" title="Rejoué en boucle jusqu'à la fin de sa barre (sinon joué une fois en entier)">
-                <input
-                  type="checkbox"
-                  checked={!!current.loop}
+              <label title="Ce qui se passe à la fin de la barre">
+                Lecture
+                <select
+                  value={current.loop ? "loop" : current.full ? "full" : "cut"}
                   onChange={(e) => {
-                    const next: AnimationEffect = { ...current, loop: e.target.checked };
-                    if (!e.target.checked) delete next.loop;
+                    const next: AnimationEffect = { ...current };
+                    delete next.loop;
+                    delete next.full;
+                    if (e.target.value === "loop") next.loop = true;
+                    if (e.target.value === "full") next.full = true;
                     replace(index, next);
                   }}
-                />
-                En boucle jusqu'à la fin de la barre
+                >
+                  <option value="cut">Coupé à la fin de la barre</option>
+                  <option value="full">Jusqu'au bout du son</option>
+                  <option value="loop">En boucle jusqu'à la fin de la barre</option>
+                </select>
               </label>
               </>
               )}
-              <span className="lab-hint">{seconds(current.start)} → {current.loop ? (current.untilEnd ? "fin de l'état" : seconds(current.end)) : "fin du son"}</span>
+              <span className="lab-hint">
+                {seconds(current.start)} → {current.full ? "fin du son" : current.untilEnd ? "fin de l'état" : seconds(current.end)}
+              </span>
               <button onClick={() => onChange(effects.filter((_, j) => j !== index))}>Supprimer le son</button>
             </>
           ) : (
