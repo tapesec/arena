@@ -121,5 +121,14 @@
     "status": "fait",
     "result": "images « Cœur » et « Lune »",
     "note": "Ajoutées au choix « Image » du rendu. Au passage : l'accroche « Tête » est corrigée (elle tombait aux pieds)."
+  },
+  {
+    "id": "mwcdf3py",
+    "date": "2026-11-11T17:06:18.646Z",
+    "kind": "particules",
+    "prompt": "ajoute dans les images de rendu une croix de santé",
+    "status": "fait",
+    "result": "image « Croix de santé »",
+    "note": "Ajoutée au choix « Image » du rendu : croix pleine aux bouts arrondis, plus lumineuse au centre (elle prend la couleur de l'effet)."
   }
 ]

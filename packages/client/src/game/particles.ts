@@ -11,7 +11,7 @@ import type { Scene } from "@babylonjs/core/scene";
 // Au-delà de ce nombre de systèmes actifs, les nouveaux effets secondaires (fumée…) sont ignorés.
 const MAX_ACTIVE = 40;
 
-export type ParticleTexture = "glow" | "spark" | "note" | "smoke" | "star" | "flake" | "ring" | "feather" | "heart" | "moon";
+export type ParticleTexture = "glow" | "spark" | "note" | "smoke" | "star" | "flake" | "ring" | "feather" | "heart" | "moon" | "cross";
 
 // Une recette : à partir d'un point (déplaçable, pour suivre un projectile ou un personnage), crée et démarre
 // un système de particules. Un système "continu" émet tant qu'on ne l'arrête pas ; une "gerbe" émet tout d'un
@@ -36,6 +36,7 @@ export class ParticleFactory {
       feather: featherTexture(scene),
       heart: heartTexture(scene),
       moon: moonTexture(scene),
+      cross: crossTexture(scene),
     };
   }
 
@@ -299,6 +300,25 @@ function moonTexture(scene: Scene): DynamicTexture {
     ctx.arc(c + size * 0.2, c - size * 0.1, size * 0.36, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalCompositeOperation = "source-over";
+  });
+}
+
+// Croix de santé : croix grecque pleine aux coins arrondis, plus lumineuse au centre.
+function crossTexture(scene: Scene): DynamicTexture {
+  return drawnTexture(scene, "cross", (ctx, size) => {
+    const c = size / 2;
+    const arm = size * 0.42;
+    const half = size * 0.15;
+    const r = size * 0.05;
+    const g = ctx.createRadialGradient(c, c, 0, c, c, arm);
+    g.addColorStop(0, "rgba(255,255,255,1)");
+    g.addColorStop(1, "rgba(255,255,255,0.8)");
+    ctx.fillStyle = g;
+    // Les deux barres dans un même tracé, remplies une seule fois : le centre n'est pas plus opaque.
+    ctx.beginPath();
+    ctx.roundRect(c - half, c - arm, half * 2, arm * 2, r);
+    ctx.roundRect(c - arm, c - half, arm * 2, half * 2, r);
+    ctx.fill("nonzero");
   });
 }
 

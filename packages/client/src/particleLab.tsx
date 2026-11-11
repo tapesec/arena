@@ -38,6 +38,7 @@ const TEXTURES: Record<ParticleTexture, string> = {
   feather: "Plume",
   heart: "Cœur",
   moon: "Lune",
+  cross: "Croix de santé",
 };
 
 const DIRECTIONS: Record<ParticleEffectDef["direction"], string> = {
