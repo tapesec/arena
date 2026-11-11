@@ -10,11 +10,14 @@ import type { ParticleTexture } from "./game/particles";
 export interface ParticleRequest {
   id: string;
   date: string;
+  // Type d'élément demandé (pour l'instant, les effets à particules).
+  kind?: "particules";
   prompt: string;
-  // Effet affiché au moment de la demande (point de départ éventuel), et son accroche.
-  effect: string;
-  def: ParticleEffectDef;
-  anchor: EffectAnchor;
+  // Variante d'un effet existant : l'effet sélectionné (point de départ), ses réglages et son accroche. Absents,
+  // la demande porte sur un effet entièrement nouveau.
+  effect?: string;
+  def?: ParticleEffectDef;
+  anchor?: EffectAnchor;
   status: "en attente" | "fait";
   // Nom de l'effet créé, et mot de Claude.
   result?: string;
@@ -161,6 +164,8 @@ export function EffectEditor(props: {
   onDuplicate: () => void;
   canDelete: boolean;
   onDelete: () => void;
+  // Compétences qui utilisent l'effet (il ne peut pas être supprimé tant qu'il y en a).
+  usedBy: string[];
 }) {
   const { id, def, onChange, anchor, onAnchor, compare, onCompare, canCompare } = props;
   const set = <K extends keyof ParticleEffectDef>(key: K, value: ParticleEffectDef[K]) => onChange({ ...def, [key]: value });
@@ -435,8 +440,17 @@ export function EffectEditor(props: {
           Annuler les modifications
         </button>
         {props.canBackToCode && <button onClick={props.onBackToCode}>Revenir à la version du code</button>}
-        {props.canDelete && <button onClick={props.onDelete}>Supprimer l'effet</button>}
+        {props.canDelete && (
+          <button
+            disabled={props.usedBy.length > 0}
+            onClick={props.onDelete}
+            title={props.usedBy.length ? "Retirez d'abord l'effet des compétences qui l'utilisent" : undefined}
+          >
+            Supprimer l'effet
+          </button>
+        )}
       </div>
+      {props.usedBy.length > 0 && <small className="lab-hint">Utilisé par : {props.usedBy.join(" · ")}</small>}
     </div>
   );
 }
@@ -505,40 +519,61 @@ function ColorStops(props: { def: ParticleEffectDef; onChange: (colors: Particle
 }
 
 // Demandes d'effets à Claude : envoyées dans particle-requests.json, traitées quand on le lui dit dans le chat.
-export function RequestsPanel(props: { requests: ParticleRequest[]; onSend: (prompt: string) => void }) {
+// Demande d'un nouvel effet à Claude, en haut de l'onglet : indépendante de l'effet réglé, sauf pour en demander une
+// variante.
+export function RequestsPanel(props: {
+  requests: ParticleRequest[];
+  selectedLabel: string;
+  onSend: (prompt: string, variant: boolean) => void;
+}) {
   const [prompt, setPrompt] = useState("");
-  const { requests, onSend } = props;
+  const [variant, setVariant] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const { requests, selectedLabel, onSend } = props;
+  const listed = [...requests].reverse();
+  const shown = showAll ? listed : listed.slice(0, 3);
   return (
     <div className="fx-requests">
-      <h4>Demander un effet à Claude</h4>
+      <h4>Demander un nouvel effet à Claude</h4>
       <textarea
         placeholder="Ex. : des plumes dorées qui tombent en tournoyant autour du personnage"
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         rows={3}
       />
+      <label className="fx-check" title="Joint l'effet sélectionné à la demande, comme point de départ">
+        <input type="checkbox" checked={variant} onChange={(e) => setVariant(e.target.checked)} />
+        Partir de l'effet sélectionné (« {selectedLabel} »)
+      </label>
       <button
         disabled={!prompt.trim()}
         onClick={() => {
-          onSend(prompt.trim());
+          onSend(prompt.trim(), variant);
           setPrompt("");
+          setVariant(false);
         }}
       >
         Envoyer la demande
       </button>
       <small className="lab-hint">
-        L'effet affiché et son accroche sont joints à la demande. Dites ensuite à Claude, dans le chat : « regarde les demandes de l'atelier
-        ».
+        Claude crée un nouvel effet dans la liste, que vous réglez ensuite. Dites-lui dans le chat : « regarde les demandes de l'atelier ».
       </small>
-      {requests.length > 0 && (
+      {listed.length > 0 && (
         <ul>
-          {[...requests].reverse().map((request) => (
+          {shown.map((request) => (
             <li key={request.id} className={request.status === "fait" ? "fx-request-done" : ""}>
               <b>{request.status === "fait" ? "✓ Fait" : "En attente"}</b> — {request.prompt}
               {request.result && <em> → {request.result}</em>}
               {request.note && <div className="lab-hint">{request.note}</div>}
             </li>
           ))}
+          {listed.length > 3 && (
+            <li>
+              <button className="fx-link" onClick={() => setShowAll(!showAll)}>
+                {showAll ? "Voir moins" : `Voir les ${listed.length} demandes`}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>

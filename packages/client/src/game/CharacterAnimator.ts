@@ -1,5 +1,5 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
-import { castTimeOf, legacyCastGesture, releaseTime, type AbilityAnimation, type ClassAnimationTuning } from "./abilityAnimations";
+import { castTimeOf, legacyCastGesture, releaseTime, type AbilityAnimation, type ClassAnimationTuning, type TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import type { CharacterAnimationSet } from "./characterAssets";
 
@@ -174,6 +174,17 @@ export class CharacterAnimator {
     // Le « non » de la tête suit la projection, quel que soit l'ordre d'arrivée du stun et de son coup.
     if (reaction === "stun") this.stunStage = "none";
     this.playAction(REACTIONS[reaction], "reaction");
+  }
+
+  // Réaction réglée sur la page de réglage pour l'impact d'une compétence : mêmes règles qu'un coup reçu, sauf
+  // qu'un personnage stun garde sa posture.
+  reactTuned(reaction: TargetReaction) {
+    const now = performance.now() / 1000;
+    if (this.stunned) return;
+    if (this.action?.isPlaying && this.actionKind !== "reaction") return;
+    if (now - this.lastReaction < REACTION_INTERVAL) return;
+    this.lastReaction = now;
+    this.playAction(reaction.animation, "reaction", reaction.rate, reaction.start, reaction.end);
   }
 
   // Incantation interrompue (déplacement, Silence, dégâts…) : le geste s'arrête aussitôt.

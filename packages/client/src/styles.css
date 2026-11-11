@@ -1734,7 +1734,29 @@ body,
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-top: 8px;
+  padding: 4px 0 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.fx-requests h4 {
+  margin: 4px 0 2px;
+}
+
+.fx-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.fx-link {
+  background: none;
+  border: none;
+  color: #7fb4e3;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .fx-requests textarea {
@@ -1764,4 +1786,78 @@ body,
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 3px;
   white-space: nowrap;
+}
+
+/* Moments d'une compétence (lanceur, impact, état, zone) */
+.lab-moments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lab-moments label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lab-moments select,
+.lab-moments button {
+  font: inherit;
+  color: inherit;
+  background: #232833;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 3px 8px;
+}
+
+.lab-moments button.lab-play {
+  min-width: 170px;
+  background: #2c4a6b;
+  border-color: #7fb4e3;
+}
+
+.lab-moments .lab-tabs button.lab-tab-active {
+  background: #3a3f4c;
+  border-color: #ffd76a;
+  color: #ffd76a;
+}
+
+.lab-moment-empty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lab-moment-empty .lab-note {
+  max-width: 760px;
+}
+
+.lab-moment-empty button {
+  font: inherit;
+  color: inherit;
+  border-radius: 3px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.lab-reaction {
+  margin-top: 10px;
+}
+
+.lab-reaction .lab-timeline {
+  margin-top: 4px;
+}
+
+.lab-check {
+  cursor: pointer;
+}
+
+/* Effet d'un état qui dure jusqu'à sa fin : bord droit ouvert */
+.lab-range-open {
+  border-right-style: dashed;
 }

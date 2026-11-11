@@ -3,11 +3,12 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import type { AbilityAnimation, AnimationEffect, EffectAnchor } from "./abilityAnimations";
 import type { CharacterInstance } from "./characterAssets";
-import { particleRecipe } from "./particleDefs";
+import { particleRecipe, zoneRecipe } from "./particleDefs";
 import type { ParticleFactory } from "./particles";
 
-// Effets à particules portés par le personnage pendant le geste d'une compétence (réglés sur animation-lab.html) :
-// chacun démarre et s'arrête à un instant du geste, accroché à une partie du corps, avec un décalage.
+// Effets à particules d'une compétence (réglés sur animation-lab.html) : portés par le lanceur pendant son geste,
+// par chaque cible à l'impact et pendant l'état laissé, ou posés sur la zone d'effet. Chacun démarre et s'arrête
+// à un instant du moment, accroché à une partie du corps (ou au centre de la zone), avec un décalage.
 
 export const EFFECT_ANCHORS: Record<EffectAnchor, string> = {
   hands: "Entre les mains",
@@ -102,38 +103,96 @@ function anchorPosition(character: CharacterInstance, anchor: EffectAnchor, offs
   return out;
 }
 
-// Démarre et arrête les effets du geste en cours d'un personnage, et les garde accrochés à lui.
+// Effets d'un moment, à un instant donné (secondes depuis son début). Sur une zone, les effets se placent autour de
+// son centre (décalage dans le repère du lanceur, yaw) au lieu d'un personnage.
+export interface EffectTrack {
+  id: string;
+  effects: readonly AnimationEffect[];
+  time: number;
+  zone?: { center: Vector3; yaw: number; radius: number };
+}
+
+// Un effet joue de start à end (ou jusqu'à la fin du moment, avec untilEnd).
+function isActive(effect: AnimationEffect, time: number): boolean {
+  return time >= effect.start && (time < effect.end || !!effect.untilEnd);
+}
+
+// Position d'un effet de zone : son décalage (interpolé entre ses points clés) autour du centre.
+const zoneOffset = new Vector3();
+const nextOffset = new Vector3();
+function zonePosition(zone: NonNullable<EffectTrack["zone"]>, effect: AnimationEffect, time: number, out: Vector3): Vector3 {
+  const keys = effect.keys;
+  if (!keys?.length) zoneOffset.fromArray(effect.offset);
+  else {
+    let next = keys.findIndex((key) => key.time > time);
+    if (next === -1) next = keys.length;
+    if (next === 0 || next === keys.length) zoneOffset.fromArray(keys[Math.min(next, keys.length - 1)].offset);
+    else {
+      const a = keys[next - 1];
+      const b = keys[next];
+      zoneOffset.fromArray(a.offset);
+      nextOffset.fromArray(b.offset);
+      Vector3.LerpToRef(zoneOffset, nextOffset, b.time > a.time ? (time - a.time) / (b.time - a.time) : 1, zoneOffset);
+    }
+  }
+  const [right, up, forward] = [zoneOffset.x, zoneOffset.y, zoneOffset.z];
+  const cos = Math.cos(zone.yaw);
+  const sin = Math.sin(zone.yaw);
+  return out.set(zone.center.x + right * cos + forward * sin, zone.center.y + up, zone.center.z - right * sin + forward * cos);
+}
+
+interface Run {
+  effect: AnimationEffect;
+  at: Vector3;
+  system: ParticleSystem | null;
+}
+
+// Démarre et arrête les effets d'un ou plusieurs moments (geste du lanceur, impact, état, zone), et les garde
+// accrochés au personnage ou à la zone.
 export class AbilityEffectPlayer {
-  private running = new Map<string, { effect: AnimationEffect; at: Vector3; system: ParticleSystem | null }>();
+  private running = new Map<string, Run>();
 
   constructor(private particles: ParticleFactory) {}
 
+  // Geste de compétence en cours du personnage.
   update(character: CharacterInstance | null, playing: PlayingAbility | null) {
+    this.updateTracks(character, playing ? [{ id: playing.abilityId, effects: playing.entry.effects ?? [], time: playing.time }] : []);
+  }
+
+  updateTracks(character: CharacterInstance | null, tracks: readonly EffectTrack[]) {
     const active = new Set<string>();
-    if (character && playing) {
-      (playing.entry.effects ?? []).forEach((effect, index) => {
-        if (playing.time < effect.start || playing.time >= effect.end) return;
-        const key = `${playing.abilityId}:${index}:${effect.recipe}`;
+    for (const track of tracks) {
+      if (!character && !track.zone) continue;
+      track.effects.forEach((effect, index) => {
+        if (!isActive(effect, track.time)) return;
+        const key = `${track.id}:${index}:${effect.recipe}`;
         active.add(key);
         let run = this.running.get(key);
+        const place = (out: Vector3) =>
+          track.zone ? zonePosition(track.zone, effect, track.time, out) : effectPosition(character!, effect, track.time, out);
         if (!run) {
           run = { effect, at: new Vector3(), system: null };
-          effectPosition(character, effect, playing.time, run.at);
-          run.system = particleRecipe(effect.recipe)?.(this.particles, run.at) ?? null;
+          place(run.at);
+          const recipe = track.zone && effect.fitZone ? zoneRecipe(effect.recipe, track.zone.radius) : particleRecipe(effect.recipe);
+          run.system = recipe?.(this.particles, run.at) ?? null;
           this.running.set(key, run);
         }
         run.effect = effect;
-        effectPosition(character, effect, playing.time, run.at);
+        place(run.at);
       });
     }
     for (const [key, run] of this.running) if (!active.has(key)) this.stop(key, run);
+  }
+
+  get idle(): boolean {
+    return this.running.size === 0;
   }
 
   stopAll() {
     for (const [key, run] of this.running) this.stop(key, run);
   }
 
-  private stop(key: string, run: { at: Vector3; system: ParticleSystem | null }) {
+  private stop(key: string, run: Run) {
     if (run.system) {
       // Les dernières particules restent où elles sont, au lieu de suivre le personnage.
       run.system.emitter = run.at.clone();

@@ -15,6 +15,28 @@ export interface AbilityAnimation {
   rate: number;
   end: number;
   effects?: AnimationEffect[];
+  // Ce que subit chaque cible touchée, à partir de l'impact (arrivée du projectile, sinon départ du sort).
+  // Présent, il remplace les effets d'impact prévus dans le code.
+  impact?: ImpactVisual;
+  // Effets sur la cible tant que dure l'état laissé par la compétence (mez, root, buff…), en secondes depuis le
+  // début de l'état. Ils s'ajoutent aux visuels d'état prévus dans le code.
+  status?: AnimationEffect[];
+  // Effets sur la zone d'effet, une seule fois en son centre, en secondes depuis l'impact. Présents, ils remplacent
+  // les particules de zone prévues dans le code (le disque qui montre la portée reste).
+  zone?: AnimationEffect[];
+}
+
+// Réaction de la cible à l'impact : la portion start → end (secondes dans l'animation) jouée à la vitesse rate.
+export interface TargetReaction {
+  animation: string;
+  start: number;
+  rate: number;
+  end: number;
+}
+
+export interface ImpactVisual {
+  reaction?: TargetReaction;
+  effects: AnimationEffect[];
 }
 
 // Point du personnage où s'accroche un effet.
@@ -31,6 +53,10 @@ export interface AnimationEffect {
   anchor: EffectAnchor;
   offset: [number, number, number];
   keys?: EffectKey[];
+  // Pendant un état : l'effet dure jusqu'à la fin de l'état (end ne compte plus).
+  untilEnd?: boolean;
+  // Sur une zone : l'effet prend le rayon de la zone.
+  fitZone?: boolean;
 }
 
 export interface EffectKey {
@@ -128,6 +154,10 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
   const release = start + castTime * rate;
   const end = Math.min(length, Math.max(entry.end, release + (castTime > 0 ? 0 : 0.05)));
   const clamped: AbilityAnimation = { animation: entry.animation, start, rate, end };
+  // Les moments de la cible ne dépendent pas du geste du lanceur.
+  if (entry.impact) clamped.impact = entry.impact;
+  if (entry.status) clamped.status = entry.status;
+  if (entry.zone) clamped.zone = entry.zone;
   // Les effets restent dans la portion jouée.
   if (entry.effects) {
     clamped.effects = entry.effects.map((effect) => {
@@ -144,3 +174,69 @@ export function clampAbilityAnimation(entry: AbilityAnimation, castTime: number,
 
 // Durée minimale d'un effet (secondes dans l'animation).
 const MIN_EFFECT = 0.02;
+
+// Effets d'un moment de la cible (impact, état, zone) gardés entre 0 et length secondes.
+export function clampMomentEffects(effects: AnimationEffect[], length: number): AnimationEffect[] {
+  return effects.map((effect) => {
+    const start = Math.min(Math.max(0, effect.start), length - MIN_EFFECT);
+    const end = Math.min(length, Math.max(effect.end, start + MIN_EFFECT));
+    const clamped: AnimationEffect = { ...effect, start, end };
+    if (effect.keys) clamped.keys = effect.keys.map((key) => ({ ...key, time: Math.min(end, Math.max(start, key.time)) }));
+    return clamped;
+  });
+}
+
+// Réglage d'une compétence, quelle que soit la classe qui l'a (les identifiants de compétence sont uniques).
+export function tuningOf(tuning: AnimationTuning, abilityId: string): AbilityAnimation | undefined {
+  for (const entries of Object.values(tuning)) if (entries[abilityId]) return entries[abilityId];
+  return undefined;
+}
+
+// Durée d'un moment de la cible : jusqu'à la fin de son dernier effet (et de la réaction, pour l'impact).
+export function momentLength(effects: readonly AnimationEffect[] | undefined, reaction?: TargetReaction): number {
+  let length = reaction ? (reaction.end - reaction.start) / reaction.rate : 0;
+  for (const effect of effects ?? []) length = Math.max(length, effect.end);
+  return length;
+}
+
+// États (EffectKind) que laisse une compétence sur ses cibles, pour reconnaître ceux qu'elle a posés.
+export function statusKindsOf(abilityId: string): string[] {
+  const kinds: string[] = [];
+  for (const effect of getAbility(abilityId)?.effects ?? []) {
+    if (effect.type === "cc") kinds.push(effect.cc);
+    else if (effect.type === "snare") kinds.push("snare");
+    else if (effect.type === "dot") kinds.push("burning");
+    else if (effect.type === "nearSight") kinds.push("nearSight");
+    else if (effect.type === "buff") kinds.push(effect.buff);
+    else if (effect.type === "status") kinds.push(effect.status);
+    else if (effect.type === "intercept") kinds.push("intercept");
+    else if (effect.type === "taunt") kinds.push("taunted");
+    else if (effect.type === "rallyCry") kinds.push("magicImmune");
+    else if (effect.type === "rampart") kinds.push("rampart");
+    else if (effect.type === "charge") kinds.push("stun");
+    else if (effect.type === "guard") kinds.push("guarded");
+  }
+  return kinds;
+}
+
+// Durée de l'état le plus long laissé par une compétence (secondes ; Infinity pour un buff permanent, 0 sans état).
+export function statusDurationOf(abilityId: string): number {
+  let longest = 0;
+  for (const effect of getAbility(abilityId)?.effects ?? []) {
+    if (effect.type === "buff") longest = Infinity;
+    else if (effect.type === "charge") longest = Math.max(longest, effect.stun);
+    else if ("duration" in effect) longest = Math.max(longest, effect.duration);
+  }
+  return longest;
+}
+
+// Une zone d'effet est centrée sur la cible d'un sort offensif à cible unique, sinon sur le lanceur (comme sur le
+// serveur, CombatSystem.areaCenter).
+export function zoneCenterIsTarget(abilityId: string): boolean {
+  return getAbility(abilityId)?.target === "enemy";
+}
+
+// La compétence agit sur son lanceur (buff personnel) : il est sa propre cible.
+export function targetsSelf(abilityId: string): boolean {
+  return getAbility(abilityId)?.target === "self" && !getAbility(abilityId)?.radius;
+}

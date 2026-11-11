@@ -421,6 +421,14 @@ export const CODE_RECIPES: Record<string, Recipe> = {
   arcaneSparks: P.arcaneSparks,
   chargeStreak: P.chargeStreak,
   speedDust: P.speedDust,
+  // Effets de zone (ils prennent le rayon de la zone).
+  fireWave: P.fireWave,
+  fireField: P.fireField,
+  frostWave: P.frostWave,
+  frostField: P.frostField,
+  arcaneMist: P.arcaneMist,
+  healField: P.healField,
+  rallyWave: P.rallyWave,
 };
 
 const CODE_LABELS: Record<string, string> = {
@@ -433,6 +441,13 @@ const CODE_LABELS: Record<string, string> = {
   frostBurst: "Éclat de givre",
   arcaneBurst: "Éclat arcanique",
   silencePuff: "Bouffée de silence",
+  fireWave: "Zone : vague de feu",
+  fireField: "Zone : braises",
+  frostWave: "Zone : vague de givre",
+  frostField: "Zone : cristaux de givre",
+  arcaneMist: "Zone : brume arcanique",
+  healField: "Zone : lueurs de soin",
+  rallyWave: "Zone : onde de ralliement",
 };
 
 // Effets réglés et enregistrés (particleEffects.json), donnés par le jeu ou par la page de réglage.
@@ -448,6 +463,18 @@ export function particleRecipe(id: string): Recipe | null {
   if (saved) return (fx, at) => createFromDef(fx, at, saved, id);
   return CODE_RECIPES[id] ?? null;
 }
+
+// Effet étendu à une zone de rayon radius (mètres) : un effet réglé y prend ce rayon (et plus de particules, pour
+// la même densité) ; un effet du code de zone reçoit le rayon.
+export function zoneRecipe(id: string, radius: number): ((fx: ParticleFactory, at: Vector3) => ParticleSystem | null) | null {
+  const def = savedDefs[id] ?? BUILTIN_DEFS[id];
+  if (def) return (fx, at) => createFromDef(fx, at, def, id, radius);
+  const code = CODE_RECIPES[id];
+  return code ? (fx, at) => code(fx, at, radius) : null;
+}
+
+// Plafond du nombre de particules multiplié pour remplir une zone.
+const MAX_ZONE_DENSITY = 40;
 
 // Recette qui cherche l'effet au moment de le jouer (une modification enregistrée s'applique sans recharger le code).
 export function recipeById(id: string): Recipe {
@@ -477,9 +504,24 @@ export function particleEffectLabel(id: string): string {
 const scratch = new Vector3();
 
 // Crée et démarre un système de particules d'après ses réglages, au point at (partagé : le déplacer déplace l'effet).
-export function createFromDef(fx: ParticleFactory, at: Vector3, saved: ParticleEffectDef, name = "effect"): ParticleSystem | null {
+// zoneRadius : rayon imposé (effet étendu à une zone), le nombre de particules suit la surface.
+export function createFromDef(
+  fx: ParticleFactory,
+  at: Vector3,
+  saved: ParticleEffectDef,
+  name = "effect",
+  zoneRadius?: number,
+): ParticleSystem | null {
   // Les réglages enregistrés avant l'ajout d'un réglage le prennent à sa valeur par défaut.
   const d: ParticleEffectDef = { ...DEFAULT_DEF, ...saved };
+  if (zoneRadius !== undefined && zoneRadius > 0) {
+    const scale = zoneRadius / Math.max(d.radius, 0.05);
+    const density = Math.min(MAX_ZONE_DENSITY, Math.max(1, scale * scale));
+    d.radius = zoneRadius;
+    d.innerRadius *= scale;
+    d.rate = Math.round(d.rate * density);
+    d.count = Math.round(d.count * density);
+  }
   const bend = d.shape === "fingers" ? fingerBend(d.radius, d.height) : 0;
   const burst = d.emission === "burst";
   const capacity = Math.max(10, Math.ceil(burst ? d.count * 1.2 : d.rate * d.life[1] * 1.3 + 10));

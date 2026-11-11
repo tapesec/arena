@@ -291,6 +291,7 @@ export class Game {
       if (event.abilityId === AUTO_ATTACK_ID && SWING_EVENTS.has(event.kind)) {
         this.players.get(event.sourceId)?.playAttack();
       }
+      this.spellEffects.targets.onCombat(event);
       this.playReaction(event);
       // La bulle de l'Arcaniste absorbe un coup : elle éclate.
       if (event.kind === "absorbed") {
@@ -316,6 +317,7 @@ export class Game {
       // L'Arcaniste lance sa bulle : elle se montre un instant.
       if (event.abilityId === "bubble") this.spellEffects.statuses.bubbleWasApplied(event.casterId);
       this.spellEffects.play(event.abilityId, this.players.get(event.casterId)?.root, this.players.get(event.targetId)?.root);
+      this.spellEffects.targets.onAbility(event.casterId, event.abilityId, event.targetId, this.players);
       this.gameAudio.onAbility(event.abilityId, this.players.get(event.casterId), this.players.get(event.targetId));
     });
     this.room.onMessage("cooldown", (event: CooldownEvent) => {
@@ -343,6 +345,8 @@ export class Game {
   // Texte flottant au-dessus de la cible d'un événement de combat.
   // Le personnage touché réagit : léger recul, coup marqué, projection quand il est stun, parade quand il bloque.
   private playReaction(event: CombatEvent) {
+    // Réaction réglée pour l'impact de la compétence (jouée à l'impact par TargetVisuals).
+    if (event.kind === "damage" && this.spellEffects.targets.handlesReaction(event.targetId, event.abilityId)) return;
     if (event.kind === "damage" && event.amount) {
       const heavy = event.crit || event.amount >= HEAVY_HIT;
       this.players.get(event.targetId)?.playReaction(heavy ? "heavy" : "light");
@@ -506,6 +510,7 @@ export class Game {
     this.overlay.update(dt);
     this.spellEffects.update(dt);
     this.spellEffects.statuses.update(dt, this.players.values(), this.self?.state.team ?? null);
+    this.spellEffects.targets.update(dt, this.players);
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);

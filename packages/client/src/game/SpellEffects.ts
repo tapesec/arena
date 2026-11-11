@@ -18,6 +18,11 @@ import { ParticleFactory, type Recipe } from "./particles";
 import { oneShot, recipeById } from "./particleDefs";
 import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, type AbilityFx } from "./spellFx";
 import { StatusFx } from "./statusFx";
+import { TargetVisuals } from "./targetVisuals";
+import { tuningOf, type AnimationTuning } from "./abilityAnimations";
+import animationTuning from "./animationTuning.json";
+
+const TUNING = animationTuning as unknown as AnimationTuning;
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 
 // Effets à particules par compétence : pendant le vol d'un projectile (trail), à son arrivée ou sur la cible
@@ -105,11 +110,14 @@ export class SpellEffects {
   private attached: { system: ParticleSystem; at: Vector3; anchor: TransformNode; left: number }[] = [];
   // États qui durent (mez, stun, root, bulle), mis à jour à chaque image par le jeu.
   readonly statuses: StatusFx;
+  // Impact, état et zone réglés sur la page de réglage.
+  readonly targets: TargetVisuals;
 
   constructor(private scene: Scene) {
     this.particles = new ParticleFactory(scene);
     this.particles.prewarm(P.RECIPES);
     this.statuses = new StatusFx(scene, this.particles);
+    this.targets = new TargetVisuals(this.particles, TUNING);
   }
 
   // caster et target : les ancres des personnages (absentes si hors de vue).
@@ -118,19 +126,28 @@ export class SpellEffects {
     if (!fx) return;
     const visual = VISUALS[abilityId];
     const areaRadius = fx.area ? (getAbility(abilityId)?.radius ?? 0) : 0;
+    // Impact et zone réglés sur la page de réglage : ils remplacent ceux du code (voir TargetVisuals).
+    const tuned = tuningOf(TUNING, abilityId);
+    const ownImpact = tuned?.impact !== undefined;
+    const zoneRecipes = tuned?.zone !== undefined ? [] : (visual?.area ?? []);
+    // Avec des effets de zone réglés, le disque de portée reste discret.
+    const tunedZoneFx = !!tuned?.zone?.length;
 
     if (fx.shape === "projectile" && caster && target) {
       this.launchProjectile(fx, visual, caster, target, () => {
-        if (visual) this.burst(visual, target);
+        if (ownImpact) {
+          // Rien de plus sur la cible.
+        } else if (visual) this.burst(visual, target);
         else this.spawnPulse(fx.color, target, 0.6);
-        if (areaRadius) this.zone(fx, visual, target.getAbsolutePosition(), areaRadius);
+        if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, target.getAbsolutePosition(), areaRadius);
       });
       return;
     }
     // Une zone centrée sur le lanceur (Déflagration, Soin de groupe) ou sur la cible.
     const anchor = target ?? caster;
     if (!anchor) return;
-    if (areaRadius) this.zone(fx, visual, (caster ?? anchor).getAbsolutePosition(), areaRadius);
+    if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, (caster ?? anchor).getAbsolutePosition(), areaRadius);
+    if (ownImpact) return;
     if (visual) this.burst(visual, anchor);
     else if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
     else this.spawnPulse(fx.color, anchor, 1);
@@ -140,7 +157,7 @@ export class SpellEffects {
   // Un projectile n'a d'effet qu'à son arrivée.
   magicHit(abilityId: string, target: TransformNode) {
     const school = getAbility(abilityId)?.school;
-    if (!school || OWN_AFFLICTION.has(abilityId)) return;
+    if (!school || OWN_AFFLICTION.has(abilityId) || tuningOf(TUNING, abilityId)?.impact !== undefined) return;
     const affliction = AFFLICTIONS[school];
     const start = () => {
       if (target.isDisposed()) return;
@@ -251,9 +268,8 @@ export class SpellEffects {
   }
 
   // Zone d'effet : le disque de portée, et les particules qui la remplissent.
-  private zone(fx: AbilityFx, visual: Visual | undefined, center: Vector3, radius: number) {
-    const recipes = visual?.area ?? [];
-    this.spawnArea(fx.color, center, radius, recipes.length ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA);
+  private zone(fx: AbilityFx, recipes: Recipe[], tunedParticles: boolean, center: Vector3, radius: number) {
+    this.spawnArea(fx.color, center, radius, recipes.length || tunedParticles ? AREA_ALPHA_WITH_PARTICLES : AREA_ALPHA);
     for (const recipe of recipes) recipe(this.particles, center.clone(), radius);
   }
 
@@ -309,6 +325,7 @@ export class SpellEffects {
     for (const effect of this.effects) effect.mesh.dispose(false, true);
     for (const line of this.guardLinks.values()) line.dispose();
     this.statuses.dispose();
+    this.targets.dispose();
     this.particles.dispose();
     this.effects = [];
     this.guardLinks.clear();
