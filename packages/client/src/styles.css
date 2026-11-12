@@ -739,17 +739,6 @@ body,
   will-change: transform;
 }
 
-.class-badge {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
 .nameplate-label {
   font-size: 13px;
   font-weight: 700;
@@ -992,16 +981,6 @@ body,
   gap: 4px;
   font-size: 11px;
   line-height: 14px;
-}
-
-.group-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .group-name {

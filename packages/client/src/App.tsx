@@ -3,7 +3,6 @@ import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/sh
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
-import { CLASS_BADGES } from "./game/classBadges";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
@@ -382,7 +381,6 @@ function GroupPanel() {
 }
 
 function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; hotkey: string; onSelect: () => void }) {
-  const badge = member.classId ? CLASS_BADGES[member.classId] : undefined;
   const dead = member.hp <= 0;
   const classes = [
     "group-member",
@@ -393,11 +391,6 @@ function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; h
   return (
     <div className={classes.filter(Boolean).join(" ")} onClick={onSelect} title={`${member.name} (${hotkey})`}>
       <div className="group-member-header">
-        {badge && (
-          <span className="group-badge" style={{ background: badge.color }}>
-            <svg viewBox="0 0 24 24" width="11" height="11" dangerouslySetInnerHTML={{ __html: badge.icon }} />
-          </span>
-        )}
         <span className="group-name">{member.name}</span>
         {member.casting && <span className="group-casting">{member.casting}</span>}
         <span className="group-hotkey">{hotkey}</span>

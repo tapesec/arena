@@ -2,7 +2,6 @@ import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import type { ClassId } from "@arena/shared";
-import { CLASS_BADGES } from "./classBadges";
 import RAMPART_ICON from "../icons/rampart.svg?raw";
 
 // Durée de vie d'un texte flottant et distance parcourue vers le haut, en pixels.
@@ -109,27 +108,21 @@ export class WorldOverlay {
     this.indicators.set(playerId, { element, anchor, kind });
   }
 
-  // Au-dessus de la tête : pictogramme de la classe (sur la couleur du rôle), suivi d'un texte coloré selon le camp
-  // (le pseudo d'un allié, la classe d'un ennemi).
+  // Au-dessus de la tête : un texte coloré selon le camp (le pseudo d'un allié, la classe d'un ennemi).
   setBadge(playerId: string, anchor: TransformNode, classId: ClassId | "", label: string, side: Side, alive: boolean) {
     const key = `${classId}|${label}|${side}|${alive}`;
     const current = this.badges.get(playerId);
     if (current?.key === key) return;
     current?.element.remove();
     this.badges.delete(playerId);
-    const badge = classId ? CLASS_BADGES[classId] : undefined;
-    if (!badge) return;
+    if (!classId) return;
 
     const element = document.createElement("div");
     element.className = `nameplate nameplate-${side}${alive ? "" : " nameplate-dead"}`;
-    const icon = document.createElement("span");
-    icon.className = "class-badge";
-    icon.style.background = badge.color;
-    icon.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14">${badge.icon}</svg>`;
     const text = document.createElement("span");
     text.className = "nameplate-label";
     text.textContent = label;
-    element.append(icon, text);
+    element.append(text);
     this.container.appendChild(element);
     this.badges.set(playerId, { element, anchor, key });
   }
