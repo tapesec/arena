@@ -314,6 +314,8 @@ export function statusKindsOf(abilityId: string): string[] {
     else if (effect.type === "snare") kinds.push("snare");
     else if (effect.type === "dot") kinds.push(effect.effect ?? "burning");
     else if (effect.type === "silence") kinds.push("silenced");
+    else if (effect.type === "oblivion") kinds.push("oblivion");
+    else if (effect.type === "ballad") kinds.push("ballad");
     else if (effect.type === "debuff") kinds.push(effect.debuff);
     else if (effect.type === "hot") kinds.push("renew");
     else if (effect.type === "nearSight") kinds.push("nearSight");

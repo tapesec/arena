@@ -86,8 +86,8 @@ interface Aura {
 const DUST_SPEED = 3;
 const AURAS: Record<string, Aura> = {
   rage: { kind: "rage", recipe: recipeById("rageFlames"), at: "feet", active: (p) => p.hasEffect("rage") },
-  dust: { recipe: recipeById("speedDust"), at: "feet", active: (p, speed) => p.hasEffect("speed") && speed > DUST_SPEED },
-  notes: { recipe: recipeById("notesAura"), at: "head", active: (p) => p.state.songActive },
+  dust: { recipe: recipeById("speedDust"), at: "feet", active: (p, speed) => (p.hasEffect("speed") || p.hasEffect("ballad")) && speed > DUST_SPEED },
+  notes: { recipe: recipeById("notesAura"), at: "head", active: (p) => p.state.song !== "" },
   // Gardien : flammes du Rempart, traînée de la Charge, couronne dorée des alliés du Cri de ralliement.
   rampart: { kind: "rampart", recipe: recipeById("rampartFlames"), at: "feet", active: (p) => p.hasEffect("rampart") },
   charge: { recipe: recipeById("chargeStreak"), at: "body", active: (p) => p.state.charging },

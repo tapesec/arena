@@ -156,13 +156,12 @@ describe("Bots : Gardien", () => {
     const gardien = sim.spawn("g", "gardien", 0, 5, -10, 0, true);
     const a1 = sim.spawn("a1", "pretre", 0, 7, -10);
     const a2 = sim.spawn("a2", "arcaniste", 0, 3, -10);
-    // À 9 m : trop près pour que le Gardien charge le Barde.
-    const barde = sim.spawn("b", "barde", 1, 5, -1, Math.PI);
-    sim.combat.setTarget(barde.id, a1.id);
-    sim.combat.useAbility(barde.id, "aoeRoot");
+    // À 9 m : trop près pour que le Gardien charge l'Arcaniste.
+    const arcaniste = sim.spawn("e", "arcaniste", 1, 5, -1, Math.PI);
+    sim.combat.useAbility(arcaniste.id, "frostNova");
     sim.run(4, () => gardien.has("magicImmune"));
     // Le root a bien été posé (immunité au root), puis retiré par le cri.
-    assert.ok(a1.has("immuneRoot") && a2.has("immuneRoot"), "le Barde devait rooter les deux alliés");
+    assert.ok(a1.has("immuneRoot") && a2.has("immuneRoot"), "la Nova de givre devait rooter les deux alliés");
     assert.ok(gardien.has("magicImmune"), "pas de Cri de ralliement");
     assert.ok(!a1.has("root") && !a2.has("root") && a1.has("magicImmune"));
   });
@@ -210,7 +209,8 @@ describe("Bots : erreur humaine", () => {
       const e1 = sim.spawn("e1", "arcaniste", 1, 5, 0);
       sim.spawn("e2", "pretre", 1, 7, 0);
       sim.run(HUMAN_ERRORS.reactionMin - 0.1);
-      assert.equal(barde.state.castAbility, "", "le bot a réagi instantanément");
+      // Le Barde peut se buffer en attendant, mais pas encore viser l'ennemi.
+      assert.ok(!["aoeMez", "mez", "silence"].includes(barde.state.castAbility), "le bot a réagi instantanément");
       sim.run(5);
       assert.ok(e1.has("mez"), "le bot n'a jamais réagi");
     } finally {

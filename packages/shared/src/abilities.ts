@@ -25,20 +25,26 @@ export type AbilityEffect =
   | { type: "hot"; amount: number; duration: number }
   | { type: "cc"; cc: CrowdControl; duration: number }
   | { type: "snare"; slow: number; duration: number }
-  | { type: "interrupt" }
   | { type: "cleanse" }
   | { type: "resurrect"; hpRatio: number }
-  | { type: "buff"; buff: "buffHp" | "buffStrength" }
+  // Buff permanent, jusqu'à la mort du lanceur ou de la cible ; sans cumul.
+  | { type: "buff"; buff: "buffHp" | "buffStrength" | "buffDexterity" }
   | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble" | "arcanePower" | "sprint"; duration: number }
   // Silence : la cible ne peut plus lancer de sort (compétences à mana) ; son incantation est interrompue (sauf
-  // Concentration). Ni cassé par les dégâts, ni retiré par la Purification, pas d'immunité ensuite.
+  // Concentration). Ni cassé par les dégâts, ni retiré par le Réveil, pas d'immunité ensuite.
   | { type: "silence"; duration: number }
   // Affaiblissement de la cible : soins reçus réduits (Gangrène), dégâts de mêlée reçus augmentés (Brise armure).
   | { type: "debuff"; debuff: "gangrene" | "armorBroken"; duration: number }
   // Vision réduite : portée des sorts de la cible réduite (voir NEAR_SIGHT_FACTOR).
   | { type: "nearSight"; duration: number }
+  // Oubli : le prochain sort de la cible (fini pendant l'effet) n'a aucun effet ; mana dépensé, recharge lancée.
+  | { type: "oblivion"; duration: number }
+  // Ballade rythmée : tous les alliés, quelle que soit leur distance, courent plus vite et sont immunisés aux effets
+  // de mobilité (root, snare), retirés au passage ; chacun la perd dès qu'il agit (se déplacer ne compte pas).
+  | { type: "ballad"; duration: number }
   | { type: "guard" }
   | { type: "intercept"; duration: number }
+  // Active ou coupe le chant (un seul à la fois par Barde : en lancer un coupe l'autre).
   | { type: "toggleSong" }
   // Le lanceur fonce sur la cible ; à l'arrivée, dégâts et stun, sans esquive ni blocage possibles.
   | { type: "charge"; damage: number; stun: number }
@@ -365,19 +371,6 @@ const list: AbilityDef[] = [
     target: "ally",
     effects: [{ type: "heal", amount: 200 }],
   },
-  // TODO Barde : passe au Barde (étape suivante)
-  {
-    id: "purify",
-    name: "Purification",
-    description: "Retire le mez d'un allié (pas le stun).",
-    castTime: 0,
-    resource: "mana",
-    cost: 30,
-    range: SPELL_RANGE,
-    cooldown: 5,
-    target: "otherAlly",
-    effects: [{ type: "cleanse" }],
-  },
   {
     id: "groupHeal",
     name: "Soin de groupe",
@@ -456,66 +449,102 @@ const list: AbilityDef[] = [
   },
   // --- Barde ---
   {
-    id: "aoeMez",
-    name: "Mez de zone",
-    description: "Endort 20 s les ennemis à 6 m de la cible. Les dégâts les réveillent.",
-    castTime: 3,
-    resource: "mana",
-    cost: 200,
-    range: SPELL_RANGE,
-    cooldown: 0,
-    target: "enemy",
-    radius: 6,
-    effects: [{ type: "cc", cc: "mez", duration: 20 }],
-  },
-  {
     id: "mez",
     name: "Mez ciblé",
-    description: "Endort la cible 20 s. Les dégâts la réveillent.",
+    description: "Endort la cible 10 s. Les dégâts la réveillent.",
     castTime: 2,
     resource: "mana",
     cost: 100,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "enemy",
-    effects: [{ type: "cc", cc: "mez", duration: 20 }],
+    effects: [{ type: "cc", cc: "mez", duration: 10 }],
   },
   {
-    id: "aoeRoot",
-    name: "Root de zone",
-    description: "Enracine 12 s les ennemis à 6 m de la cible. Les dégâts les libèrent.",
-    castTime: 2.5,
+    id: "awaken",
+    name: "Réveil",
+    description: "Retire le mez d'un allié (pas le stun).",
+    castTime: 1,
     resource: "mana",
-    cost: 120,
+    cost: 50,
+    range: SPELL_RANGE,
+    cooldown: 0,
+    target: "otherAlly",
+    effects: [{ type: "cleanse" }],
+  },
+  {
+    id: "aoeMez",
+    name: "Mez de zone",
+    description: "Endort 10 s la cible et les ennemis à 10 m d'elle. Les dégâts les réveillent.",
+    castTime: 2,
+    resource: "mana",
+    cost: 100,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "enemy",
-    radius: 6,
-    effects: [{ type: "cc", cc: "root", duration: 12 }],
+    radius: 10,
+    effects: [{ type: "cc", cc: "mez", duration: 10 }],
   },
   {
     id: "silence",
     name: "Oubli",
-    description: "Interrompt l'incantation en cours de la cible.",
+    description: "Pendant 10 s, le prochain sort de la cible n'a aucun effet (mana dépensé, recharge lancée).",
     castTime: 1,
     resource: "mana",
     cost: 40,
     range: SPELL_RANGE,
     cooldown: 0,
     target: "enemy",
-    effects: [{ type: "interrupt" }],
+    effects: [{ type: "oblivion", duration: 10 }],
   },
   {
     id: "speedSong",
     name: "Chant de vitesse",
-    description: "Active ou coupe le chant : +40 % de vitesse aux alliés à 30 m. Se tait 5 s quand le Barde attaque ou est attaqué.",
+    description: "Active ou coupe le chant : +100 % de vitesse de course aux alliés à 30 m. Un seul chant à la fois.",
     castTime: 0,
     resource: "mana",
-    cost: 0,
+    cost: 50,
     range: 0,
     cooldown: 0,
     target: "self",
     effects: [{ type: "toggleSong" }],
+  },
+  {
+    id: "secondWind",
+    name: "Chant de second souffle",
+    description: "Active ou coupe le chant : +50 mana et +5 endurance par seconde aux alliés à 30 m. Un seul chant à la fois.",
+    castTime: 0,
+    resource: "mana",
+    cost: 50,
+    range: 0,
+    cooldown: 0,
+    target: "self",
+    effects: [{ type: "toggleSong" }],
+  },
+  {
+    id: "buffDexterity",
+    name: "Buff dextérité",
+    description: "Coups de mêlée et incantations 15 % plus rapides, jusqu'à la mort du Barde ou de la cible.",
+    castTime: 2,
+    resource: "mana",
+    cost: 50,
+    range: SPELL_RANGE,
+    cooldown: 0,
+    target: "ally",
+    effects: [{ type: "buff", buff: "buffDexterity" }],
+  },
+  {
+    id: "ballad",
+    name: "Ballade rythmée",
+    description:
+      "Pendant 10 s, tous les alliés courent 100 % plus vite et sont immunisés aux root et snares (ceux en place sont retirés). Chacun la perd dès qu'il agit.",
+    castTime: 0,
+    resource: "mana",
+    cost: 200,
+    range: 0,
+    cooldown: 180,
+    target: "self",
+    effects: [{ type: "ballad", duration: 10 }],
   },
   // --- Lame ---
   {
@@ -671,7 +700,7 @@ export function isMagic(ability: AbilityDef): boolean {
 // Rayon autour du Gardien protégé par le Rempart.
 export const RAMPART_RADIUS = 30;
 
-// Compétence dirigée contre un ennemi : soumise au cône de vision, interrompt le chant du Barde.
+// Compétence dirigée contre un ennemi : soumise au cône de vision.
 export function isOffensive(ability: AbilityDef): boolean {
   return ability.target === "enemy" || ability.target === "enemiesAround";
 }

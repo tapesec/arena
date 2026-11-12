@@ -34,7 +34,8 @@ export interface SelfFrame extends UnitFrame {
   attacking: boolean;
   // Verrou sur la cible : "face" (F), "stick" (C) ou "".
   lock: string;
-  songActive: boolean;
+  // Chant du Barde en cours (id de la compétence, "" si aucun).
+  song: string;
   // Technique de mêlée en attente du prochain coup d'arme ("" si aucune).
   queuedAbility: string;
   // Technique qui a porté au dernier coup d'arme : le combo qui la suit peut partir ("" si aucune).

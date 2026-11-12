@@ -1,6 +1,6 @@
 import { getAbility, type CombatEvent, type InterruptEvent } from "@arena/shared";
 
-const CONTROL_NAMES: Record<string, string> = { mez: "mez", stun: "stun", root: "root", silenced: "silence" };
+const CONTROL_NAMES: Record<string, string> = { mez: "mez", stun: "stun", root: "root", silenced: "silence", oblivion: "oubli" };
 const DEBUFF_NAMES: Record<string, string> = { nearSight: "vision réduite", poisoned: "poison", gangrene: "soins reçus réduits", armorBroken: "armure brisée" };
 const INTERRUPT_CAUSES: Record<InterruptEvent["reason"], string> = {
   damage: "dégâts",
@@ -10,7 +10,7 @@ const INTERRUPT_CAUSES: Record<InterruptEvent["reason"], string> = {
   taunt: "provocation",
 };
 // Ce contre quoi une cible est immunisée (detail de l'événement "immune").
-const IMMUNITY_NAMES: Record<string, string> = { ...CONTROL_NAMES, magic: "magie", melee: "Rempart" };
+const IMMUNITY_NAMES: Record<string, string> = { ...CONTROL_NAMES, magic: "magie", melee: "Rempart", mobility: "Ballade rythmée" };
 
 function abilityName(id: string): string {
   return id === "auto" ? "attaque" : (getAbility(id)?.name ?? id);
@@ -52,7 +52,7 @@ export function formatCombatEvent(event: CombatEvent, nameOf: (id: string) => st
     case "taunt":
       return [`${source} ${sourceIsSelf ? "provoquez" : "provoque"} ${target}`];
     case "cleanse":
-      return [`${source} ${sourceIsSelf ? "purifiez" : "purifie"} ${target}`];
+      return [`${source} ${sourceIsSelf ? "réveillez" : "réveille"} ${target}`];
     case "resurrect":
       return [`${source} ${sourceIsSelf ? "ressuscitez" : "ressuscite"} ${target}`];
     case "debuff":

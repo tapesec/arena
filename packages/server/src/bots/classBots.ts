@@ -20,6 +20,9 @@ const CHARGE_MIN = getAbility("charge")?.minRange ?? 10;
 const RALLY_RADIUS = getAbility("rallyCry")?.radius ?? 20;
 const RALLY_CONTROLS: EffectKind[] = ["mez", "root"];
 
+// Barde : rayon du Mez de zone.
+const AOE_MEZ_RADIUS = getAbility("aoeMez")?.radius ?? 10;
+
 // Prêtre : rayons de l'Intervention divine et du Soin de groupe.
 const DIVINE_INTERVENTION_RADIUS = getAbility("divineIntervention")?.radius ?? 30;
 const GROUP_HEAL_RADIUS = getAbility("groupHeal")?.radius ?? 30;
@@ -243,41 +246,56 @@ class PretreBot extends CasterBot {
   }
 }
 
-// Barde : Mez de zone, puis Root de zone, puis Silence ; Chant de vitesse toujours actif.
+// Barde : Réveil d'un allié mezzé, Ballade rythmée quand le groupe est entravé, Mez de zone, Oubli, Mez ciblé, Buff
+// dextérité ; Chant de vitesse toujours actif.
 class BardeBot extends CasterBot {
   protected prepare() {
     this.stop();
     this.ensureSong();
+    this.buffAllies();
   }
 
   protected think() {
     this.ensureSong();
     if (this.evadeMelee()) return;
     if (this.isCasting) return;
+    const allies = this.allies();
 
-    // 1. Mez de zone sur au moins deux ennemis non immunisés (un ennemi mezzé est aussi immunisé).
-    const mezGroup = this.bestGroup(6, (e) => !e.has("immuneMez"));
+    // 1. Réveiller un allié mezzé (pas soi-même : on ne peut rien faire sous mez).
+    const mezzed = allies.find((a) => a !== this.self && a.has("mez") && this.distanceTo(a) <= 28);
+    if (mezzed && this.tryUse("awaken", mezzed)) return;
+
+    // 2. Ballade rythmée : au moins trois alliés rootés ou ralentis.
+    if (allies.filter((a) => a.has("root") || a.has("snare")).length >= 3 && this.tryUse("ballad")) return;
+
+    // 3. Mez de zone sur au moins deux ennemis non immunisés (un ennemi mezzé est aussi immunisé).
+    const mezGroup = this.bestGroup(AOE_MEZ_RADIUS, (e) => !e.has("immuneMez"));
     if (mezGroup.size >= 2 && this.tryUse("aoeMez", mezGroup.center)) return;
 
-    // 2. Root de zone sur au moins deux ennemis non mezzés et non immunisés au root.
-    const rootGroup = this.bestGroup(6, (e) => !e.has("immuneRoot") && !e.has("mez"));
-    if (rootGroup.size >= 2 && this.tryUse("aoeRoot", rootGroup.center)) return;
-
-    // 3. Silence sur un ennemi en train d'incanter.
-    const caster = this.enemies().find((e) => e.state.castAbility !== "");
+    // 4. Oubli sur un ennemi en train d'incanter : son sort n'aura aucun effet.
+    const caster = this.enemies().find((e) => e.state.castAbility !== "" && !e.has("oblivion"));
     if (caster && this.tryUse("silence", caster)) return;
 
-    // 4. Mez ciblé sur un ennemi de mêlée qui approche.
+    // 5. Mez ciblé sur un ennemi de mêlée qui approche.
     const approaching = this.enemies().find(
       (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneMez"),
     );
     if (approaching && this.tryUse("mez", approaching)) return;
 
+    // 6. Buff dextérité, en gardant de quoi contrôler.
+    if (this.self.state.mana > 500 && this.buffAllies()) return;
+
     this.holdPosition();
   }
 
+  // Buff dextérité sur un allié qui ne l'a pas encore. Retourne vrai si un buff est lancé.
+  private buffAllies(): boolean {
+    const ally = this.allies().find((a) => !a.has("buffDexterity") && this.distanceTo(a) <= 28);
+    return !!ally && this.tryUse("buffDexterity", ally);
+  }
+
   private ensureSong() {
-    if (!this.self.state.songActive) this.tryUse("speedSong");
+    if (!this.self.state.song) this.tryUse("speedSong");
   }
 }
 

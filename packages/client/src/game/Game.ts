@@ -409,9 +409,12 @@ export class Game {
         this.overlay.addText(anchor, "Ressuscité", "heal");
         break;
       case "cc":
-      case "debuff":
-        this.overlay.addText(anchor, CONTROL_LABELS[event.detail ?? ""] ?? "", "control", false, delay);
+      case "debuff": {
+        // Pas de texte pour l'Oubli : la cible ne doit pas le voir venir.
+        const label = CONTROL_LABELS[event.detail ?? ""];
+        if (label) this.overlay.addText(anchor, label, "control", false, delay);
         break;
+      }
       default:
         if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, INFO_LABELS[event.kind]!, "info", false, delay);
     }
@@ -576,7 +579,7 @@ export class Game {
           maxEndurance: self.state.maxEndurance,
           attacking: self.state.attacking,
           lock: self.state.lock,
-          songActive: self.state.songActive,
+          song: self.state.song,
           queuedAbility: self.state.queuedAbility,
           // Le combo ne part que sur la cible de son ouverture.
           comboAbility: target && self.state.comboTarget === target.sessionId ? self.state.comboAbility : "",

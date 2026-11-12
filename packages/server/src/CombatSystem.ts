@@ -1,12 +1,11 @@
 import {
-  AURA_ENDURANCE_REGEN,
-  AURA_MANA_REGEN,
-  AURA_RANGE,
   ARMOR_BREAK_BONUS,
+  BALLAD_SPEED_MULTIPLIER,
   CHARGE_MAX_DURATION,
   CHARGE_SPEED_MULTIPLIER,
   CRIT_CHANCE,
   CRIT_MULTIPLIER,
+  DEXTERITY_FACTOR,
   DOT_INTERVAL,
   ENDURANCE_REGEN,
   EVASION_CHANCE,
@@ -23,10 +22,11 @@ import {
   NEAR_SIGHT_FACTOR,
   NO_INPUT,
   PERMANENT,
+  SECOND_WIND_ENDURANCE_REGEN,
+  SECOND_WIND_MANA_REGEN,
   SHIELD_BLOCK_CHANCE,
   SONG_RANGE,
   SONG_SPEED_MULTIPLIER,
-  SONG_SUPPRESS_DURATION,
   SPRINT_SPEED_MULTIPLIER,
   STICK_DISTANCE,
   STRENGTH_BUFF_BONUS,
@@ -76,7 +76,7 @@ export interface CombatOutput {
 const IMMUNITY_EFFECTS: Record<CrowdControl, EffectKind> = { mez: "immuneMez", stun: "immuneStun", root: "immuneRoot" };
 
 // Effets posés par un joueur sur d'autres, qui disparaissent à sa mort ou à son départ.
-const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "guarded", "intercept", "taunted"];
+const LINKED_EFFECTS: EffectKind[] = ["buffHp", "buffStrength", "buffDexterity", "guarded", "intercept", "taunted"];
 
 // Un combo se perd si le coup d'arme suivant part plus de COMBO_GRACE secondes après l'heure prévue (cible hors de
 // portée, de face…) : c'est un round d'attaque manqué.
@@ -86,7 +86,10 @@ const COMBO_GRACE = 0.5;
 const CHARGE_STOP_DISTANCE = 1.5;
 
 // Contrôles que le Cri de ralliement retire quand ils viennent d'un sort.
-const MAGIC_CONTROLS: EffectKind[] = ["mez", "stun", "root", "snare"];
+const MAGIC_CONTROLS: EffectKind[] = ["mez", "stun", "root", "snare", "oblivion"];
+
+// Effets de mobilité dont la Ballade rythmée protège (et qu'elle retire).
+const MOBILITY_EFFECTS: EffectKind[] = ["root", "snare"];
 
 // Toutes les règles de combat. La salle Colyseus ne fait que lui transmettre les commandes.
 // Comment une attaque de mêlée a été évitée (null : elle porte).
@@ -151,6 +154,7 @@ export class CombatSystem {
     const player = this.players.get(id);
     if (!player?.alive) return;
     player.state.attacking = !player.state.attacking;
+    if (player.state.attacking) this.endBallad(player);
     // Couper l'attaque annule la technique en attente et l'enchaînement d'un combo.
     if (!player.state.attacking) {
       player.state.queuedAbility = "";
@@ -198,6 +202,7 @@ export class CombatSystem {
       if (!this.areEnemies(caster, target)) return this.sendError(caster, "Cible non hostile");
       const comboError = this.comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
       if (comboError) return this.sendError(caster, comboError);
+      this.endBallad(caster);
       caster.state.queuedAbility = ability.id;
       caster.state.attacking = true;
       this.updateAutoAttack(caster, 0);
@@ -206,6 +211,8 @@ export class CombatSystem {
 
     const targetError = this.validateTarget(caster, ability, targetId);
     if (targetError) return this.sendError(caster, targetError);
+    // Ballade rythmée : agir (autre chose que se déplacer) la fait perdre ; couper son chant ne compte pas.
+    if (!this.stopsSong(caster, ability)) this.endBallad(caster);
 
     if (ability.castTime === 0) {
       this.resolveAbility(caster, ability, targetId);
@@ -218,7 +225,8 @@ export class CombatSystem {
 
     caster.state.castAbility = ability.id;
     caster.state.castElapsed = 0;
-    caster.state.castDuration = ability.castTime;
+    // Buff dextérité : incantation plus rapide.
+    caster.state.castDuration = ability.castTime * this.dexterityFactor(caster);
     caster.castTargetId = targetId;
   }
 
@@ -271,8 +279,12 @@ export class CombatSystem {
 
     const snare = player.getEffect("snare");
     const speed =
-      // Chant du Barde et Sprint ne se cumulent pas : le plus fort compte.
-      Math.max(player.has("speed") ? SONG_SPEED_MULTIPLIER : 1, player.has("sprint") ? SPRINT_SPEED_MULTIPLIER : 1) *
+      // Chant de vitesse, Ballade rythmée et Sprint ne se cumulent pas : le plus fort compte.
+      Math.max(
+        player.has("speed") ? SONG_SPEED_MULTIPLIER : 1,
+        player.has("ballad") ? BALLAD_SPEED_MULTIPLIER : 1,
+        player.has("sprint") ? SPRINT_SPEED_MULTIPLIER : 1,
+      ) *
       (snare ? 1 - snare.value : 1) *
       rootFactor *
       inputSpeedFactor(input);
@@ -303,12 +315,13 @@ export class CombatSystem {
 
   private updateRegen(player: PlayerRuntime, dt: number) {
     const state = player.state;
-    const aura = player.has("regenAura");
+    // Chant de second souffle d'un Barde proche : régénération en plus.
+    const song = player.has("secondWind");
     if (state.maxMana > 0) {
-      state.mana = Math.min(state.maxMana, state.mana + (MANA_REGEN + (aura ? AURA_MANA_REGEN : 0)) * dt);
+      state.mana = Math.min(state.maxMana, state.mana + (MANA_REGEN + (song ? SECOND_WIND_MANA_REGEN : 0)) * dt);
     }
     if (state.maxEndurance > 0) {
-      const regen = ENDURANCE_REGEN + (aura ? AURA_ENDURANCE_REGEN : 0);
+      const regen = ENDURANCE_REGEN + (song ? SECOND_WIND_ENDURANCE_REGEN : 0);
       state.endurance = Math.min(state.maxEndurance, state.endurance + regen * dt);
     }
   }
@@ -325,8 +338,10 @@ export class CombatSystem {
 
     // Les conditions sont revérifiées à la fin : la cible a pu s'éloigner ou se cacher.
     const error =
-      state[ability.resource] < ability.cost ? "Ressource insuffisante" : this.validateTarget(caster, ability, targetId);
+      state[ability.resource] < this.costOf(caster, ability) ? "Ressource insuffisante" : this.validateTarget(caster, ability, targetId);
     if (error) return this.sendError(caster, error);
+    // Un sort commencé avant la Ballade rythmée la fait perdre en partant.
+    this.endBallad(caster);
     this.resolveAbility(caster, ability, targetId);
   }
 
@@ -345,8 +360,10 @@ export class CombatSystem {
     if (!isInMeleeRange(attacker.state, target.state) || !hasLineOfSight(attacker.state, target.state)) return;
     if (!isFacing(attacker.state, target.state)) return;
 
-    const auto = attacker.classDef.autoAttack;
-    attacker.swingTimer = auto.interval;
+    // Buff dextérité : coups d'arme plus rapprochés.
+    const interval = attacker.classDef.autoAttack.interval * this.dexterityFactor(attacker);
+    attacker.swingTimer = interval;
+    this.endBallad(attacker);
     this.sendSwing(attacker, true);
     // Une technique en attente remplace le coup normal ; si ses conditions ne sont pas remplies, le coup reste normal.
     const queued = attacker.state.queuedAbility ? getAbility(attacker.state.queuedAbility) : undefined;
@@ -364,13 +381,13 @@ export class CombatSystem {
         if (this.resolveAbility(attacker, queued, target.id)) {
           attacker.state.comboAbility = queued.id;
           attacker.state.comboTarget = target.id;
-          attacker.comboExpiresAt = this.time + auto.interval + COMBO_GRACE;
+          attacker.comboExpiresAt = this.time + interval + COMBO_GRACE;
         }
         return;
       }
       this.sendError(attacker, error);
     }
-    this.dealDamage(attacker, target, auto.damage, "auto", true);
+    this.dealDamage(attacker, target, attacker.classDef.autoAttack.damage, "auto", true);
   }
 
   // --- Compétences ---
@@ -382,11 +399,30 @@ export class CombatSystem {
     if (caster.state.castAbility) return "Incantation déjà en cours";
     if (caster.has("silenced") && isMagic(ability)) return "Vous êtes réduit au silence";
     if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "Compétence en recharge";
-    if (caster.state[ability.resource] < ability.cost) {
+    if (caster.state[ability.resource] < this.costOf(caster, ability)) {
       return ability.resource === "mana" ? "Pas assez de mana" : "Pas assez d'endurance";
     }
     if (ability.castTime > 0 && caster.isMoving && !ignoreMovement) return "Impossible d'incanter en mouvement";
     return null;
+  }
+
+  // Couper son chant ne coûte rien : seule l'activation se paie.
+  private costOf(caster: PlayerRuntime, ability: AbilityDef): number {
+    return this.stopsSong(caster, ability) ? 0 : ability.cost;
+  }
+
+  private stopsSong(caster: PlayerRuntime, ability: AbilityDef): boolean {
+    return caster.state.song === ability.id && ability.effects.some((e) => e.type === "toggleSong");
+  }
+
+  private dexterityFactor(player: PlayerRuntime): number {
+    return player.has("buffDexterity") ? DEXTERITY_FACTOR : 1;
+  }
+
+  // Ballade rythmée : elle se perd dès qu'on agit (attaquer, lancer une compétence) ; se déplacer ne compte pas.
+  private endBallad(player: PlayerRuntime) {
+    const ballad = player.getEffect("ballad");
+    if (ballad) this.removeEffect(player, ballad);
   }
 
   private clearCombo(player: PlayerRuntime) {
@@ -448,15 +484,21 @@ export class CombatSystem {
 
   // Retourne vrai si une attaque de mêlée a porté sur sa cible (ni évitée ni interceptée) : elle ouvre un combo.
   private resolveAbility(caster: PlayerRuntime, ability: AbilityDef, targetId: string): boolean {
-    caster.state[ability.resource] -= ability.cost;
-    const used: AbilityUsedEvent = { casterId: caster.id, abilityId: ability.id, targetId };
-    this.out.broadcast("ability", used, [caster.id, targetId]);
+    caster.state[ability.resource] -= this.costOf(caster, ability);
     if (ability.cooldown > 0) {
       caster.cooldowns.set(ability.id, this.time + ability.cooldown);
       const event: CooldownEvent = { abilityId: ability.id, duration: ability.cooldown };
       this.out.sendTo(caster.id, "cooldown", event);
     }
-    if (isOffensive(ability)) this.noteHostileAction(caster);
+    // Oubli : le premier sort fini pendant l'effet n'a aucun effet (mana dépensé, recharge lancée) et le consomme.
+    // Couper son chant n'est pas un sort lancé.
+    const oblivion = isMagic(ability) && !this.stopsSong(caster, ability) ? caster.getEffect("oblivion") : undefined;
+    if (oblivion) {
+      this.removeEffect(caster, oblivion);
+      return false;
+    }
+    const used: AbilityUsedEvent = { casterId: caster.id, abilityId: ability.id, targetId };
+    this.out.broadcast("ability", used, [caster.id, targetId]);
 
     const center = this.areaCenter(caster, ability, targetId);
     const affected = this.affectedBy(caster, ability, targetId);
@@ -518,8 +560,6 @@ export class CombatSystem {
 
   // Évitement d'une attaque spéciale de mêlée (cible déjà remplacée par son intercepteur), avant ses effets.
   private meleeAvoidance(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): Avoidance {
-    this.noteHostileAction(source);
-    this.noteHostileAction(target);
     target.lastMeleeHitAt = this.time;
     target.lastMeleeAttackerId = source.id;
     return this.avoidMelee(source, target, abilityId);
@@ -571,29 +611,44 @@ export class CombatSystem {
         const ticks = Math.round(effect.duration / DOT_INTERVAL);
         const dot = this.addEffect(target, effect.effect ?? "burning", effect.duration, caster.id, effect.amount / ticks);
         dot.ticks = { abilityId: ability.id, done: 0, total: ticks, kind: "damage" };
-        this.noteHostileAction(target);
         if (effect.effect === "poisoned") this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "poisoned" });
         break;
       }
       case "silence":
         // Contrôle physique quand il vient d'une compétence d'endurance (Coup de pied) : le Cri de ralliement n'en
         // protège pas. Ni immunité ensuite, ni cassé par les dégâts ; relancé, il repart de sa durée.
-        this.noteHostileAction(target);
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
         this.addEffect(target, "silenced", effect.duration, caster.id, 0, magic);
-        // Le chant du Barde se tait : il ne peut pas le relancer tant que dure le silence (c'est une compétence à mana).
-        target.state.songActive = false;
+        // Le chant du Barde se tait : il ne peut pas le relancer tant que dure le silence (c'est une compétence à mana),
+        // et devra repayer son activation ensuite.
+        target.state.song = "";
         if (target.state.castAbility && !target.castProtected) this.interrupt(target, "silence");
         this.emit({ kind: "cc", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "silenced" });
         break;
       case "debuff":
-        this.noteHostileAction(target);
         this.addEffect(target, effect.debuff, effect.duration, caster.id);
         this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: effect.debuff });
         break;
+      case "oblivion":
+        // Contrôle magique (le Cri de ralliement en protège et le retire). Il n'interrompt pas : une incantation en
+        // cours qui se termine pendant l'effet est le sort oublié. Relancé, il repart de sa durée.
+        if (magic && this.resistsMagic(caster, target, ability.id)) break;
+        this.addEffect(target, "oblivion", effect.duration, caster.id, 0, magic);
+        this.emit({ kind: "cc", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "oblivion" });
+        break;
+      case "ballad":
+        // Tous les alliés vivants, quelle que soit leur distance : root et snares retirés, puis immunité.
+        for (const ally of this.players.values()) {
+          if (!ally.alive || this.areEnemies(caster, ally)) continue;
+          for (const active of [...ally.effects]) {
+            if (MOBILITY_EFFECTS.includes(active.kind)) this.removeEffect(ally, active);
+          }
+          this.addEffect(ally, "ballad", effect.duration, caster.id);
+          this.emit({ kind: "buff", sourceId: caster.id, targetId: ally.id, abilityId: ability.id, detail: "ballad" });
+        }
+        break;
       case "nearSight":
         // Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire.
-        this.noteHostileAction(target);
         this.addEffect(target, "nearSight", effect.duration, caster.id);
         this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "nearSight" });
         break;
@@ -617,12 +672,7 @@ export class CombatSystem {
         break;
       case "snare":
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
-        this.applySnare(caster, target, effect.slow, effect.duration, magic);
-        break;
-      case "interrupt":
-        this.noteHostileAction(target);
-        if (magic && this.resistsMagic(caster, target, ability.id)) break;
-        if (target.state.castAbility && !target.castProtected) this.interrupt(target, "silence");
+        this.applySnare(caster, target, effect.slow, effect.duration, ability.id, magic);
         break;
       case "charge":
         this.startCharge(caster, target, effect.damage, effect.stun);
@@ -644,7 +694,7 @@ export class CombatSystem {
         caster.state.lock = "";
         break;
       case "cleanse": {
-        // La Purification retire le mez, pas le stun.
+        // Le Réveil retire le mez, pas le stun.
         const control = target.getEffect("mez");
         if (control) this.removeEffect(target, control);
         this.emit({ kind: "cleanse", sourceId: caster.id, targetId: target.id, abilityId: ability.id });
@@ -669,7 +719,8 @@ export class CombatSystem {
         this.addEffect(target, "intercept", effect.duration, caster.id);
         break;
       case "toggleSong":
-        caster.state.songActive = !caster.state.songActive;
+        // Un seul chant à la fois : en lancer un autre remplace le premier.
+        caster.state.song = caster.state.song === ability.id ? "" : ability.id;
         break;
     }
   }
@@ -705,8 +756,6 @@ export class CombatSystem {
     dot = false,
   ) {
     if (!target.alive) return;
-    this.noteHostileAction(source);
-    this.noteHostileAction(target);
 
     // Interception : le Gardien prend le coup s'il est assez proche (une attaque spéciale l'a déjà tranchée).
     const interceptor = dot || avoidanceDone ? undefined : this.interceptorOf(target);
@@ -824,8 +873,8 @@ export class CombatSystem {
     abilityId: string,
     options: { magic?: boolean; ignoreImmunity?: boolean } = {},
   ) {
-    this.noteHostileAction(target);
     if (options.magic && this.resistsMagic(source, target, abilityId)) return;
+    if (cc === "root" && this.resistsMobility(source, target, abilityId)) return;
     const immunity = IMMUNITY_EFFECTS[cc];
     if (target.has(immunity) && !options.ignoreImmunity) {
       this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
@@ -846,7 +895,7 @@ export class CombatSystem {
   private handleDeath(player: PlayerRuntime) {
     const state = player.state;
     state.attacking = false;
-    state.songActive = false;
+    state.song = "";
     state.lock = "";
     player.input = NO_INPUT;
     state.queuedAbility = "";
@@ -864,11 +913,6 @@ export class CombatSystem {
         if (effect.sourceId === source.id && LINKED_EFFECTS.includes(effect.kind)) this.removeEffect(p, effect);
       }
     }
-  }
-
-  // Le chant du Barde se coupe un moment quand il attaque ou est attaqué.
-  private noteHostileAction(player: PlayerRuntime) {
-    if (player.classDef.id === "barde") player.songSuppressedUntil = this.time + SONG_SUPPRESS_DURATION;
   }
 
   // --- Effets ---
@@ -900,29 +944,19 @@ export class CombatSystem {
     }
   }
 
-  // Effets qui dépendent de la situation : chant du Barde, Rempart du Gardien, aura de régénération.
+  // Effets qui dépendent de la situation : chants du Barde, Rempart du Gardien.
   private updateDerivedEffects(player: PlayerRuntime) {
     const allies = [...this.players.values()].filter((p) => p.alive && !this.areEnemies(p, player));
     const near = (p: PlayerRuntime, range: number) => distance(p.state, player.state) <= range;
 
-    this.setDerivedEffect(
-      player,
-      "speed",
-      allies.some(
-        (p) => p.classDef.id === "barde" && p.state.songActive && this.time >= p.songSuppressedUntil && near(p, SONG_RANGE),
-      ),
-    );
+    const singing = (song: string) => allies.some((p) => p.state.song === song && near(p, SONG_RANGE));
+    this.setDerivedEffect(player, "speed", singing("speedSong"));
+    this.setDerivedEffect(player, "secondWind", singing("secondWind"));
     // Rempart : le Gardien et ses alliés à RAMPART_RADIUS de lui, y compris ceux qui entrent dans la zone.
     this.setDerivedEffect(
       player,
       "meleeImmune",
       allies.some((p) => p.has("rampart") && near(p, RAMPART_RADIUS)),
-    );
-    // TODO Barde : passe au Barde (étape suivante) — le passif regenAura n'est plus sur aucune classe.
-    this.setDerivedEffect(
-      player,
-      "regenAura",
-      allies.some((p) => p.classDef.passives.includes("regenAura") && near(p, AURA_RANGE)),
     );
   }
 
@@ -935,10 +969,18 @@ export class CombatSystem {
   // Un effet déjà présent est rafraîchi plutôt que cumulé.
   // Un seul snare à la fois, et le plus puissant reste jusqu'à la fin de son effet : un snare plus faible est ignoré.
   // À puissance égale, on garde celui qui dure le plus longtemps.
-  private applySnare(source: PlayerRuntime, target: PlayerRuntime, slow: number, duration: number, magic = false) {
+  private applySnare(source: PlayerRuntime, target: PlayerRuntime, slow: number, duration: number, abilityId: string, magic = false) {
+    if (this.resistsMobility(source, target, abilityId)) return;
     const current = target.getEffect("snare");
     if (current && (current.value > slow || (current.value === slow && current.remaining >= duration))) return;
     this.addEffect(target, "snare", duration, source.id, slow, magic);
+  }
+
+  // Ballade rythmée : root et snares sont sans effet. Retourne vrai s'il est résisté.
+  private resistsMobility(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
+    if (!target.has("ballad")) return false;
+    this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: "mobility" });
+    return true;
   }
 
   // Cri de ralliement : un contrôle magique est sans effet. Retourne vrai s'il est résisté.
@@ -1007,7 +1049,6 @@ export class CombatSystem {
   // Provocation : la cible s'arrête net, son incantation est interrompue, son attaque s'arrête et elle se tourne vers
   // le Gardien ; pendant la durée, elle inflige moins de dégâts à tout autre que lui (voir dealDamage).
   private applyTaunt(caster: PlayerRuntime, target: PlayerRuntime, duration: number, abilityId: string) {
-    this.noteHostileAction(target);
     this.addEffect(target, "taunted", duration, caster.id);
     this.addEffect(target, "halted", TAUNT_HALT_DURATION, caster.id);
     if (target.state.castAbility && !target.castProtected) this.interrupt(target, "taunt");

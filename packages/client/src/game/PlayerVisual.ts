@@ -39,7 +39,7 @@ export interface PlayerView {
   maxEndurance: number;
   attacking: boolean;
   lock: string;
-  songActive: boolean;
+  song: string;
   queuedAbility: string;
   comboAbility: string;
   comboTarget: string;

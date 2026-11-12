@@ -350,7 +350,10 @@ const SHORT_EFFECT_LABELS: Record<string, string> = {
   gangrene: "Gang",
   armorBroken: "Arm",
   speed: "Vit",
-  regenAura: "Aura",
+  secondWind: "Souf",
+  buffDexterity: "Dex",
+  oblivion: "Oubl",
+  ballad: "Bal",
   bubble: "Bul",
   taunted: "Prov",
   halted: "Arrêt",
@@ -488,7 +491,7 @@ function Hotbar() {
         if (!ability) return null;
         const remaining = Math.max(0, ((cooldownEnds[abilityId] ?? 0) - now) / 1000);
         const status = abilityStatus(ability, self, target);
-        const active = abilityId === "speedSong" && self.songActive;
+        const active = abilityId === self.song;
         // Technique de mêlée en attente du prochain coup d'arme.
         const queued = abilityId === self.queuedAbility;
         // Part du cadran déjà découverte (recharge écoulée), en degrés : elle grandit dans le sens des aiguilles
@@ -508,7 +511,7 @@ function Hotbar() {
           >
             <span className="slot-icon" dangerouslySetInnerHTML={{ __html: abilityIcon(abilityId) ?? "" }} />
             <span className="slot-key">{(index + 1) % 10}</span>
-            {ability.cost > 0 && <span className="slot-cost">{ability.cost}</span>}
+            {ability.cost > 0 && self.song !== abilityId && <span className="slot-cost">{ability.cost}</span>}
             {ability.position && <PositionBadge position={ability.position} wrong={status.state === "position"} />}
             {remaining > 0 && (
               <span className="slot-cooldown" style={{ background: `conic-gradient(transparent ${elapsed}deg, rgba(0, 0, 0, 0.72) 0)` }}>
@@ -520,7 +523,7 @@ function Hotbar() {
                 <div className="tooltip-name" style={{ color: abilityColor(abilityId) }}>
                   {ability.name}
                 </div>
-                <div className="tooltip-details">{abilityDetails(ability).join(" · ")}</div>
+                <div className="tooltip-details">{abilityDetails(ability, self).join(" · ")}</div>
                 <div className="tooltip-description">{ability.description}</div>
                 {status.reason && <div className="tooltip-reason">{status.reason}</div>}
               </div>

@@ -46,8 +46,8 @@ export const PlayerState = schema(
     comboTarget: t.string().default(""),
     // Le Gardien fonce sur sa cible (Charge).
     charging: t.boolean().default(false),
-    // Chant de vitesse du Barde activé.
-    songActive: t.boolean().default(false),
+    // Chant du Barde en cours (id de la compétence : speedSong, secondWind ; "" si aucun).
+    song: t.string().default(""),
     // Incantation en cours ("" si aucune), visible de tous pour pouvoir l'interrompre.
     castAbility: t.string().default(""),
     castElapsed: t.float32().default(0),

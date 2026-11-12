@@ -215,7 +215,7 @@ class Stage {
     isAlive: true,
     root: null as TransformNode | null,
     character: null as CharacterInstance | null,
-    state: { effects: [] as { kind: string; remaining: number; source: string }[], castAbility: "", songActive: false, charging: false, team: 1 },
+    state: { effects: [] as { kind: string; remaining: number; source: string }[], castAbility: "", song: "", charging: false, team: 1 },
     hasEffect: (_kind: string) => false,
     playingAbility: () => null,
     handsPosition: () => false,

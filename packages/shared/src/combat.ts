@@ -51,20 +51,21 @@ export const HP_BUFF_AMOUNT = 200;
 export const STRENGTH_BUFF_BONUS = 0.15;
 // Soin sur la durée (Renouveau) : un tic de soin toutes les HOT_INTERVAL secondes.
 export const HOT_INTERVAL = 1;
-export const AURA_RANGE = 30;
-export const AURA_MANA_REGEN = 5;
-export const AURA_ENDURANCE_REGEN = 2;
 
-// Barde
+// Barde : portée des chants, vitesse du Chant de vitesse (et de la Ballade rythmée), régénération en plus sous le
+// Chant de second souffle, durées multipliées par le Buff dextérité (intervalle d'attaque, incantation).
 export const SONG_RANGE = 30;
-export const SONG_SPEED_MULTIPLIER = 1.4;
-// Sprint de la Lame : vitesse doublée (ne se cumule pas avec le chant du Barde : le plus fort compte).
+export const SONG_SPEED_MULTIPLIER = 2;
+export const BALLAD_SPEED_MULTIPLIER = 2;
+export const SECOND_WIND_MANA_REGEN = 50;
+export const SECOND_WIND_ENDURANCE_REGEN = 5;
+export const DEXTERITY_FACTOR = 0.85;
+// Sprint de la Lame : vitesse doublée (ne se cumule pas avec le chant ni la Ballade du Barde : le plus fort compte).
 export const SPRINT_SPEED_MULTIPLIER = 2;
 // Gangrène : soins reçus multipliés par ce facteur.
 export const GANGRENE_HEAL_FACTOR = 0.5;
 // Brise armure : dégâts de mêlée reçus augmentés de ce bonus.
 export const ARMOR_BREAK_BONUS = 0.25;
-export const SONG_SUPPRESS_DURATION = 5;
 
 // Lame
 export const EVASION_CHANCE = 0.75;

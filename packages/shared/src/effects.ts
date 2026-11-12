@@ -14,8 +14,12 @@ export type EffectKind =
   | "intercept"
   | "buffHp"
   | "buffStrength"
+  // Barde : chants (vitesse, régénération), buff dextérité, Oubli (prochain sort sans effet), Ballade rythmée.
   | "speed"
-  | "regenAura"
+  | "secondWind"
+  | "buffDexterity"
+  | "oblivion"
+  | "ballad"
   | "bubble"
   // Provoqué par un Gardien : moins de dégâts sur tout autre que lui.
   | "taunted"
@@ -58,7 +62,10 @@ export const EFFECTS: Record<EffectKind, { label: string; category: EffectCatego
   buffHp: { label: "Buff vie", category: "buff" },
   buffStrength: { label: "Buff puissance", category: "buff" },
   speed: { label: "Vitesse", category: "buff" },
-  regenAura: { label: "Aura régén.", category: "buff" },
+  secondWind: { label: "Second souffle", category: "buff" },
+  buffDexterity: { label: "Buff dextérité", category: "buff" },
+  oblivion: { label: "Oubli", category: "control" },
+  ballad: { label: "Ballade rythmée", category: "buff" },
   bubble: { label: "Bulle", category: "buff" },
   taunted: { label: "Provoqué", category: "debuff" },
   halted: { label: "Arrêté", category: "control" },

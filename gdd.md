@@ -43,14 +43,16 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Portées** : mêlée 3 m, sorts 30 m.
 - **Contrôle de foule** :
   - **Mez** : la cible ne peut plus rien faire. Cassé par le moindre dégât.
-  - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts, ni retiré par la Purification.
+  - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts, ni retiré par le Réveil.
   - Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas au bouclier ; la bulle et la Garde d'un autre Gardien le protègent toujours.
   - **Techniques de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc), comme les styles de DAoC : la technique part au prochain coup d'arme, à la place du coup normal (aussitôt si l'arme est prête). Elle est mise en attente et s'allume sur la barre ; une autre technique la remplace ; couper l'attaque l'annule ; la lancer active l'attaque. Ses conditions (portée, position, face à la cible, endurance) sont vérifiées au moment du coup : si elles manquent, le coup reste normal et un message l'indique. Une technique au plus par coup d'arme (toutes les 2 s pour la Lame et le Gardien).
   - **Combos** (Lame) : une technique de combo ne part que juste après sa technique d'ouverture, au coup d'arme suivant, sur la même cible : l'ouverture doit avoir porté (ni esquivée, ni bloquée, ni absorbée, ni interceptée), et aucun coup normal ni round d'attaque manqué entre les deux (le coup suivant doit partir à l'heure, à 0,5 s près). La case du combo s'allume sur la barre quand il est possible. Enchaînements : Attaque dans le dos → Lame empoisonnée → Gangrène ; Attaque de flanc → Brise armure (à débloquer).
-  - **Silence** : la cible ne peut plus lancer de sort (compétences à mana) ; son incantation en cours est interrompue (sauf sous Concentration). Ni cassé par les dégâts, ni retiré par la Purification, pas d'immunité ensuite ; relancé, il repart de sa durée. Le chant d'un Barde réduit au silence se coupe, et il ne peut pas le relancer pendant l'effet. Celui du Coup de pied est un contrôle physique (le Cri de ralliement n'en protège pas).
+  - **Silence** : la cible ne peut plus lancer de sort (compétences à mana) ; son incantation en cours est interrompue (sauf sous Concentration). Ni cassé par les dégâts, ni retiré par le Réveil, pas d'immunité ensuite ; relancé, il repart de sa durée. Le chant d'un Barde réduit au silence se coupe, et il ne peut pas le relancer pendant l'effet. Celui du Coup de pied est un contrôle physique (le Cri de ralliement n'en protège pas).
+  - **Oubli** : pendant l'effet, le prochain sort de la cible (compétence à mana) n'a aucun effet : mana dépensé, recharge lancée, et l'effet est consommé. Il n'interrompt pas : une incantation en cours qui se termine pendant l'effet est le sort oublié. Les techniques et compétences d'endurance ne sont pas touchées ; couper son chant n'est pas un sort. Aucun texte flottant. Contrôle magique : le Cri de ralliement en protège et le retire. Relancé, il repart de sa durée.
   - **Attaques spéciales de mêlée** (techniques et Coup de pied) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
   - **Snare** : ralentissement de 40 % (tous les snares). Un seul snare à la fois : le plus puissant reste jusqu'à la fin de son effet, un snare plus faible reçu entre-temps est ignoré (pas mis en attente) ; à puissance égale, on garde celui qui dure le plus longtemps. Pas d'immunité.
+- **Ballade rythmée** : immunité aux effets de mobilité (root, snare) ; ceux en place sont retirés. Les autres contrôles (stun, mez, silence…) passent.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
 
 ## Classes
@@ -105,7 +107,7 @@ Gros dégâts à distance, à condition d'être protégé.
 
 ### 3. Prêtre — healer
 
-Garde le groupe en vie, relève les morts et le renforce. La Purification et l'Aura de régénération passent au Barde (à programmer à l'étape suivante : en attendant, aucune classe ne les a).
+Garde le groupe en vie, relève les morts et le renforce.
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
@@ -124,11 +126,16 @@ Neutralise le groupe adverse et contrôle le rythme du combat.
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
-| Mez de zone | Mez de 20 s sur les ennemis dans une zone de 6 m de rayon. | 3 s | 200 mana | — |
-| Mez ciblé | Mez de 20 s sur une cible. | 2 s | 100 mana | — |
-| Root de zone | Root de 12 s sur les ennemis dans une zone de 6 m de rayon. | 2,5 s | 120 mana | — |
-| Oubli | Façon amnésie : interrompt l'incantation en cours de la cible. | 1 s | 40 mana | — |
-| Chant de vitesse | +40 % de vitesse pour le groupe à 30 m. Coupé pendant 5 s quand le Barde attaque ou est attaqué. | Permanent | — | — |
+| Mez ciblé | Mez de 10 s sur une cible. | 2 s | 100 mana | — |
+| Réveil | Retire le mez d'un autre allié (pas le stun ; l'immunité reste). | 1 s | 50 mana | — |
+| Mez de zone | Mez de 10 s sur la cible et les ennemis à 10 m d'elle. | 2 s | 100 mana | — |
+| Oubli | Pendant 10 s, le prochain sort de la cible n'a aucun effet (voir Oubli). | 1 s | 40 mana | — |
+| Chant de vitesse | Active ou coupe le chant : +100 % de vitesse de course aux alliés à 30 m (ne se cumule ni avec le Sprint ni avec la Ballade : le plus fort compte). | Instantané | 50 mana à l'activation | — |
+| Chant de second souffle | Active ou coupe le chant : +50 mana et +5 endurance par seconde aux alliés à 30 m, Barde compris. | Instantané | 50 mana à l'activation | — |
+| Buff dextérité | Intervalle d'attaque et temps d'incantation × 0,85. Dure jusqu'à la mort du Barde ou de la cible ; sans cumul. | 2 s | 50 mana | — |
+| Ballade rythmée (ultime) | Pendant 10 s, tous les alliés, quelle que soit leur distance, Barde compris : vitesse de course +100 % et immunité aux root et snares (ceux en place sont retirés). Chacun la perd dès qu'il agit (attaque, sort, compétence) ; se déplacer ne compte pas. Comme le Speed of Sound de DAoC. | Instantané | 200 mana | 3 min |
+
+Chants : un seul à la fois par Barde (en lancer un coupe l'autre) ; seule l'activation coûte du mana, couper le chant est gratuit. Ils ne se coupent plus quand le Barde attaque ou est attaqué ; le silence les coupe. À débloquer, pas encore programmés : Chant de résistance, Dissonance, Mélodie apaisante, Charme ou peur.
 
 ### 5. Lame — dégâts au corps à corps
 
@@ -161,18 +168,18 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Incantation** : bouger interrompt l'incantation, et on ne peut pas commencer à incanter en bougeant (comme dans DAoC).
 - **Orientation** : pour attaquer ou lancer un sort offensif, la cible doit être dans un cône de 180° devant soi.
 - **Positions** (Lame) : devant = ±60° face à la cible, dans le dos = ±60° derrière, flanc = entre les deux.
-- **Zones d'effet** : Mez de zone et Root de zone sont centrés sur la cible (et non sur un point du sol choisi à la souris) ; Déflagration est centrée sur le lanceur.
+- **Zones d'effet** : le Mez de zone est centré sur la cible (et non sur un point du sol choisi à la souris) ; Déflagration est centrée sur le lanceur.
 - **Attaque automatique** : Gardien 55 dégâts / 2 s, Lame 70 / 2 s, Arcaniste, Prêtre et Barde 30 / 2,5 s.
 - **Critiques** : 10 % de chances en mêlée, dégâts × 1,5 (la Rage rend tous les coups critiques).
 - **Interception** : dure 10 s ou jusqu'au premier coup, le Gardien doit être à 4 m maximum de l'allié. Le Gardien prend le coup en entier : dégâts et effets d'une attaque spéciale de mêlée (snare, silence du Coup de pied, poison, Gangrène, Brise armure) ; un coup intercepté n'ouvre pas de combo.
 - **Garde** : utiliser Garde sur l'allié déjà protégé retire la protection.
-- **Chant de vitesse** : s'active et se désactive avec sa touche.
+- **Chants du Barde** : s'activent et se désactivent avec leur touche.
 - **Soins et buffs** : sans allié ciblé, ils s'appliquent au lanceur.
 - **Équipes provisoires** : attribuées automatiquement à l'arrivée (l'équipe la moins nombreuse), en attendant le matchmaking.
 
 ## Bots
 - Ils jouent avec les mêmes commandes que les joueurs et ne voient que ce que leur équipe voit. Un bouton permet de compléter la partie avec des bots.
-- Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes cherchent le mez de zone, puis le root de zone, puis l'Oubli. Les Lames enchaînent leurs combos, donnent un Coup de pied à un lanceur qui incante et sprintent vers une cible lointaine. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
+- Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes réveillent un allié mezzé, lancent la Ballade quand au moins trois alliés sont entravés, cherchent le mez de zone, puis l'Oubli sur un lanceur qui incante, et posent le Buff dextérité quand ils ont du mana. Les Lames enchaînent leurs combos, donnent un Coup de pied à un lanceur qui incante et sprintent vers une cible lointaine. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
 - **Erreur humaine** : un ennemi qui apparaît n'est remarqué qu'après 0,3 à 0,8 s. Une décision sur sept environ est sautée (hésitation), ce qui retarde aussi soins, fuites et interruptions. En changeant de cible, un bot prend parfois (15 %) un ennemi au hasard.
 - Pas de niveau de difficulté pour le moment.
 
@@ -227,6 +234,6 @@ Traque et élimine les cibles fragiles, en priorité les casters.
   - Coups : geste de l'arme (épée pour le Gardien, plus léger pour les autres) puis le coup qui porte, 0,15 s après ; un critique ou une attaque dans le dos sonne plus grave et plus fort. Blocage : bois ; coup de bouclier : bois lourd et choc sourd.
   - Voix : cris d'homme pour Gardien, Lame et Barde, une voix de femme différente pour l'Arcaniste et la Prêtre. Cri de douleur au plus une fois toutes les 1,5 s par personnage et une fois sur deux ; cri de mort ; soupir quand une femme est soignée. Pas de cri de mort de femme dans les packs : son cri de douleur, plus grave. Ces sons communs (voix, coups, pas, alertes, interface, musique) et leurs règles sont réunis dans game/commonSounds.ts et affichés en lecture seule, avec écoute, dans l'onglet « Sons communs » de l'éditeur (un onglet pour les régler est à discuter). Une technique de mêlée (ou le Coup de pied) qui a une piste de son réglée dans l'éditeur ne joue plus les sons communs du coup : une piste au geste du lanceur remplace le geste de l'arme, une piste à l'impact remplace le bruit du coup qui porte.
   - Pas : à chaque foulée (2,5 m en course, 1 m en marche), selon le sol (pavés de la place, herbe, terre des chemins).
-  - Sorts : feu, glace, soins enregistrés ; sons Fantasy pour mez, silence, buffs, purification et résurrection (attribution provisoire, à valider à l'écoute). Victoire et défaite : jingles. Alertes, bulle, esquive, Chant de vitesse, interface : sons rétro générés (ZzFX). Le son de début d'incantation (de chaque joueur) et l'alerte « incantation interrompue » ont été supprimés le 2026-11-11 (le début d'incantation doublait les pistes de sons des compétences réglées).
+  - Sorts : feu, glace, soins enregistrés ; sons Fantasy pour mez, Oubli, buffs, Réveil et résurrection (attribution provisoire, à valider à l'écoute). Victoire et défaite : jingles. Alertes, bulle, esquive, Chant de vitesse, interface : sons rétro générés (ZzFX). Le son de début d'incantation (de chaque joueur) et l'alerte « incantation interrompue » ont été supprimés le 2026-11-11 (le début d'incantation doublait les pistes de sons des compétences réglées).
 - **Taille** : personnages agrandis de 20 % (2,2 m) pour la lisibilité, purement visuel. Caméra à 26 m par défaut, de 10 à 55 m à la molette.
 - Fait : les 5 classes. Bâtons en FBX, lus directement par Babylon (couleurs appliquées par le jeu).

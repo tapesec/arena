@@ -284,28 +284,6 @@ describe("Arcaniste", () => {
     assert.ok(!ally.has("bubble"));
   });
 
-  it("Concentration protège l'incantation suivante du Silence", () => {
-    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
-    const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
-    world.cast(arcaniste, "concentration");
-    world.cast(arcaniste, "firebolt", barde);
-    world.cast(barde, "silence", arcaniste);
-    world.run(1.1);
-    assert.equal(arcaniste.state.castAbility, "firebolt");
-    world.run(1.5);
-    assert.equal(barde.state.hp, barde.state.maxHp - 250);
-  });
-
-  it("sans Concentration, le Silence interrompt l'incantation", () => {
-    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
-    const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
-    world.cast(arcaniste, "firebolt", barde);
-    world.cast(barde, "silence", arcaniste);
-    world.run(1.1);
-    assert.equal(arcaniste.state.castAbility, "");
-    assert.equal(world.interrupts[0]?.reason, "silence");
-  });
-
   it("Trait de givre : 150 dégâts et snare magique de 4 s", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const lame = world.spawn("l", "lame", 1, 0, 10, Math.PI);
@@ -419,31 +397,6 @@ describe("Prêtre", () => {
     world.run(4.1);
     assert.equal(ally.state.hp, 650);
     assert.ok(!ally.has("buffStrength"));
-  });
-
-  it("la Purification retire le mez et laisse l'immunité", () => {
-    const pretre = world.spawn("p", "pretre", 0, 0, 0);
-    // La Purification passe au Barde (prochaine étape) : le Prêtre de test la reçoit en attendant.
-    pretre.classDef.abilities.push("purify");
-    const ally = world.spawn("x", "lame", 0, 3, 0);
-    const barde = world.spawn("b", "barde", 1, 3, 15, Math.PI);
-    world.cast(barde, "mez", ally);
-    world.run(2.1);
-    assert.ok(ally.has("mez"));
-    world.cast(pretre, "purify", ally);
-    assert.ok(!ally.has("mez"));
-    assert.ok(ally.has("immuneMez"));
-  });
-
-  it("la Purification ne retire pas le stun", () => {
-    const pretre = world.spawn("p", "pretre", 0, 0, 0);
-    pretre.classDef.abilities.push("purify");
-    const ally = world.spawn("x", "lame", 0, 3, 0);
-    const gardien = world.spawn("g", "gardien", 1, 3, 2, Math.PI);
-    world.cast(gardien, "shieldBash", ally);
-    assert.ok(ally.has("stun"));
-    world.cast(pretre, "purify", ally);
-    assert.ok(ally.has("stun"));
   });
 
   it("le Soin sans allié ciblé soigne le Prêtre lui-même", () => {
@@ -571,9 +524,9 @@ describe("Barde", () => {
     const barde = world.spawn("b", "barde", 0, 0, 0, 0);
     const near1 = world.spawn("n1", "lame", 1, 0, 15);
     const near2 = world.spawn("n2", "lame", 1, 3, 15);
-    const far = world.spawn("f", "lame", 1, 0, 25);
+    const far = world.spawn("f", "lame", 1, 0, 25.5);
     world.cast(barde, "aoeMez", near1);
-    world.run(3.1);
+    world.run(2.1);
     assert.ok(near1.has("mez") && near2.has("mez"));
     assert.ok(!far.has("mez"));
 
@@ -582,6 +535,74 @@ describe("Barde", () => {
     world.run(2.6);
     assert.ok(!near1.has("mez") && near1.has("immuneMez"));
     assert.ok(near2.has("mez"));
+    world.run(7.4);
+    assert.ok(!near2.has("mez"), "mez de 10 s");
+  });
+
+  it("le Réveil retire le mez d'un allié et laisse l'immunité, pas le stun", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0);
+    const ally = world.spawn("x", "lame", 0, 3, 0);
+    const enemy = world.spawn("e", "barde", 1, 3, 15, Math.PI);
+    world.cast(enemy, "mez", ally);
+    world.run(2.1);
+    assert.ok(ally.has("mez"));
+    world.cast(barde, "awaken", ally);
+    world.run(1.05);
+    assert.ok(!ally.has("mez"));
+    assert.ok(ally.has("immuneMez"));
+    assert.ok(Math.abs(barde.state.mana - (barde.state.maxMana - 50)) < 1, "50 mana");
+
+    const gardien = world.spawn("g", "gardien", 1, 3, 2, Math.PI);
+    world.cast(gardien, "shieldBash", ally);
+    assert.ok(ally.has("stun"));
+    world.cast(barde, "awaken", ally);
+    world.run(1.05);
+    assert.ok(ally.has("stun"));
+  });
+
+  it("Oubli : n'interrompt pas, mais le sort qui finit pendant l'effet n'a aucun effet (mana et recharge dépensés)", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "firebolt", barde);
+    world.cast(barde, "silence", arcaniste);
+    world.run(1.05);
+    assert.ok(arcaniste.has("oblivion"));
+    assert.equal(arcaniste.state.castAbility, "firebolt", "pas d'interruption");
+    assert.equal(world.interrupts.length, 0);
+    world.run(1);
+    assert.equal(barde.state.hp, barde.state.maxHp, "le sort oublié ne fait rien");
+    assert.ok(arcaniste.state.mana < arcaniste.state.maxMana - 99, "mana dépensé");
+    assert.ok(!arcaniste.has("oblivion"), "consommé au premier sort");
+    world.cast(arcaniste, "firebolt", barde);
+    world.run(2.05);
+    assert.equal(barde.state.hp, barde.state.maxHp - 250, "le sort suivant part");
+  });
+
+  it("Oubli : une compétence instantanée est aussi oubliée (recharge lancée), pas une technique", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
+    const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
+    world.cast(barde, "silence", arcaniste);
+    world.run(1.05);
+    world.cast(arcaniste, "arcanePower");
+    assert.ok(!arcaniste.has("arcanePower"));
+    assert.ok(arcaniste.cooldowns.has("arcanePower"));
+    assert.ok(!arcaniste.has("oblivion"));
+
+    const lame = world.spawn("l", "lame", 0, 0, 8, 0);
+    world.cast(barde, "silence", lame);
+    world.run(1.05);
+    world.cast(lame, "sprint");
+    assert.ok(lame.has("sprint"), "compétence d'endurance non touchée");
+    assert.ok(lame.has("oblivion"));
+  });
+
+  it("Oubli : le Cri de ralliement en protège", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
+    world.cast(gardien, "rallyCry");
+    world.cast(barde, "silence", gardien);
+    world.run(1.05);
+    assert.ok(!gardien.has("oblivion"));
   });
 
   it("un personnage mezzé ne peut ni bouger ni agir", () => {
@@ -596,18 +617,116 @@ describe("Barde", () => {
     assert.equal(world.errors.at(-1)?.message, "Vous êtes neutralisé");
   });
 
-  it("le Chant de vitesse accélère les alliés et se coupe quand le Barde est attaqué", () => {
+  it("chants : 50 mana à l'activation, un seul à la fois, couper est gratuit, pas coupés par les attaques", () => {
     const barde = world.spawn("b", "barde", 0, 0, 0, 0);
     const ally = world.spawn("x", "lame", 0, 5, 0);
     world.cast(barde, "speedSong");
+    assert.equal(barde.state.mana, barde.state.maxMana - 50);
     world.run(DT);
     assert.ok(ally.has("speed"));
     const enemy = world.spawn("e", "arcaniste", 1, 0, 10, Math.PI);
     world.cast(enemy, "firebolt", barde);
-    world.run(2.6);
-    assert.ok(!ally.has("speed"));
-    world.run(5.1);
-    assert.ok(ally.has("speed"));
+    world.run(2.1);
+    assert.ok(barde.state.hp < barde.state.maxHp);
+    assert.ok(ally.has("speed"), "le chant ne se tait plus quand le Barde est attaqué");
+
+    world.cast(barde, "secondWind");
+    world.run(DT);
+    assert.equal(barde.state.song, "secondWind");
+    assert.ok(!ally.has("speed") && ally.has("secondWind") && barde.has("secondWind"));
+    const mana = barde.state.mana;
+    world.cast(barde, "secondWind");
+    assert.equal(barde.state.song, "");
+    assert.equal(barde.state.mana, mana, "couper le chant est gratuit");
+  });
+
+  it("Chant de second souffle : +50 mana et +5 endurance par seconde aux alliés à 30 m", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 5, 0);
+    const far = world.spawn("f", "lame", 0, 0, 31);
+    world.cast(barde, "secondWind");
+    barde.state.mana = 0;
+    lame.state.endurance = far.state.endurance = 0;
+    world.run(1);
+    assert.ok(Math.abs(barde.state.mana - 55) < 1, `mana ${barde.state.mana}`);
+    assert.ok(Math.abs(lame.state.endurance - 7) < 0.2, `endurance ${lame.state.endurance}`);
+    assert.ok(Math.abs(far.state.endurance - 2) < 0.2, "hors de portée : régénération de base");
+  });
+
+  it("Buff dextérité : coups et incantations 15 % plus rapides, permanent, retiré à la mort du Barde", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 0, 5, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 0, 3, 0, 0);
+    world.cast(barde, "buffDexterity", lame);
+    world.run(2.05);
+    world.cast(barde, "buffDexterity", arcaniste);
+    world.run(2.05);
+    assert.ok(lame.has("buffDexterity") && arcaniste.has("buffDexterity"));
+    assert.equal(lame.getEffect("buffDexterity")?.remaining, Infinity);
+
+    const enemy = world.spawn("e", "gardien", 1, 0, 7, Math.PI);
+    world.cast(lame, "evasion");
+    world.combat.setTarget(lame.id, enemy.id);
+    world.combat.toggleAttack(lame.id);
+    world.run(DT);
+    assert.ok(Math.abs(lame.swingTimer - 2 * 0.85) < DT + 1e-6, `intervalle ${lame.swingTimer}`);
+
+    world.cast(arcaniste, "firebolt", enemy);
+    assert.ok(Math.abs(arcaniste.state.castDuration - 2 * 0.85) < 1e-6);
+
+    world.combat.setTarget(enemy.id, barde.id);
+    barde.state.hp = 1;
+    world.cast(world.spawn("k", "lame", 1, 0, -2, 0), "kick", barde);
+    assert.ok(!barde.alive);
+    assert.ok(!lame.has("buffDexterity"));
+  });
+
+  it("Ballade rythmée : tous les alliés, root et snares retirés puis résistés, perdue en agissant", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0, 0);
+    const far = world.spawn("f", "lame", 0, 0, 60);
+    const rooted = world.spawn("r", "pretre", 0, 4, 0);
+    const enemy = world.spawn("e", "arcaniste", 1, 4, 10, Math.PI);
+    world.cast(enemy, "freeze", rooted);
+    world.run(1.55);
+    assert.ok(rooted.has("root"));
+    world.cast(barde, "ballad");
+    assert.ok(barde.has("ballad") && far.has("ballad") && rooted.has("ballad"), "quelle que soit la distance");
+    assert.ok(!rooted.has("root"));
+    assert.ok(!enemy.has("ballad"));
+
+    world.cast(enemy, "frostbolt", rooted);
+    world.run(2.05);
+    assert.ok(!rooted.has("snare"), "snare résisté");
+    assert.ok(world.eventsOf("immune").some((e) => e.detail === "mobility"));
+    assert.ok(rooted.has("ballad"), "les dégâts ne la retirent pas");
+
+    world.combat.setInput(barde.id, { ...NO_INPUT, up: true });
+    const z = barde.state.z;
+    world.run(1);
+    world.combat.setInput(barde.id, NO_INPUT);
+    assert.ok(Math.abs(barde.state.z - z - 2 * MOVE_SPEED) < 0.2, `vitesse × 2 (${barde.state.z - z})`);
+    assert.ok(barde.has("ballad"), "se déplacer ne la retire pas");
+    world.cast(far, "sprint");
+    assert.ok(!far.has("ballad"), "agir la retire");
+    world.cast(rooted, "heal");
+    assert.ok(!rooted.has("ballad"));
+    world.run(8);
+    assert.ok(!barde.has("ballad"), "10 s au plus");
+  });
+
+  it("Ballade rythmée : perdue quand un sort commencé avant elle part ; couper son chant ne la retire pas", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 0, 3, 0);
+    world.cast(barde, "speedSong");
+    world.cast(pretre, "heal");
+    world.run(0.5);
+    world.cast(barde, "ballad");
+    assert.ok(pretre.has("ballad"));
+    world.run(1.6);
+    assert.ok(!pretre.has("ballad"), "le soin est parti");
+    world.cast(barde, "speedSong");
+    assert.equal(barde.state.song, "");
+    assert.ok(barde.has("ballad"));
   });
 });
 
@@ -906,14 +1025,14 @@ describe("Lame", () => {
     const lame = world.spawn("l", "lame", 0, 0, -2, 0);
     const barde = world.spawn("b", "barde", 1, 0, 0, Math.PI);
     world.cast(barde, "speedSong");
-    assert.ok(barde.state.songActive);
+    assert.equal(barde.state.song, "speedSong");
     world.cast(lame, "kick", barde);
-    assert.ok(!barde.state.songActive);
+    assert.equal(barde.state.song, "");
     world.cast(barde, "speedSong");
-    assert.ok(!barde.state.songActive);
+    assert.equal(barde.state.song, "");
     world.run(10.1);
     world.cast(barde, "speedSong");
-    assert.ok(barde.state.songActive);
+    assert.equal(barde.state.song, "speedSong");
   });
 
   it("Sprint sous snare : vitesse × 2 × 0,6", () => {

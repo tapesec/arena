@@ -1,4 +1,4 @@
-import { getAbility, isMagic, type AbilityDef } from "@arena/shared";
+import { DEXTERITY_FACTOR, getAbility, isMagic, type AbilityDef } from "@arena/shared";
 import { ABILITY_FX } from "./game/spellFx";
 import type { SelfFrame, TargetFrame } from "./store";
 
@@ -48,7 +48,8 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
   if (ability.after && self.comboAbility !== ability.after) {
     return { state: "combo", reason: `Combo : juste après « ${getAbility(ability.after)?.name ?? ability.after} »` };
   }
-  if (self[ability.resource] < ability.cost) {
+  // Couper son chant ne coûte rien.
+  if (self.song !== ability.id && self[ability.resource] < ability.cost) {
     return { state: "unaffordable", reason: ability.resource === "mana" ? "Pas assez de mana" : "Pas assez d'endurance" };
   }
 
@@ -87,10 +88,13 @@ function reach(ability: AbilityDef, target: TargetFrame): AbilityStatus {
 }
 
 // Lignes de détail de l'infobulle : coût, temps d'incantation, portée, recharge.
-export function abilityDetails(ability: AbilityDef): string[] {
+// self : pour le chant en cours (couper est gratuit) et le Buff dextérité (incantation plus rapide).
+export function abilityDetails(ability: AbilityDef, self?: SelfFrame): string[] {
   const details: string[] = [];
-  if (ability.cost > 0) details.push(`${ability.cost} ${ability.resource === "mana" ? "mana" : "endurance"}`);
-  details.push(ability.melee ? "Prochain coup d'arme" : ability.castTime > 0 ? `Incantation ${format(ability.castTime)} s` : "Instantané");
+  if (self?.song === ability.id) details.push("Couper le chant : gratuit");
+  else if (ability.cost > 0) details.push(`${ability.cost} ${ability.resource === "mana" ? "mana" : "endurance"}`);
+  const dexterity = self?.effects.some((e) => e.kind === "buffDexterity") ? DEXTERITY_FACTOR : 1;
+  details.push(ability.melee ? "Prochain coup d'arme" : ability.castTime > 0 ? `Incantation ${format(Math.round(ability.castTime * dexterity * 100) / 100)} s` : "Instantané");
   if (ability.target === "self") details.push("Sur soi");
   else if (ability.target === "enemiesAround") details.push(`Autour de soi (${ability.radius} m)`);
   else if (ability.minRange) details.push(`Portée ${ability.minRange} à ${ability.range} m`);

@@ -37,7 +37,6 @@ export const VISUALS: Record<string, CodeVisual> = {
   mez: { trail: ["arcaneTrail"], impact: ["arcaneBurst"], core: 0.2 },
   silence: { trail: ["silenceTrail"], impact: ["silencePuff"], core: 0 },
   aoeMez: { trail: ["arcaneTrail"], impact: ["arcaneBurst"], area: ["arcaneMist"], core: 0.25 },
-  aoeRoot: { trail: ["frostTrail"], impact: ["frostBurst"], area: ["frostWave", "frostField"], core: 0.25 },
   blast: { area: ["fireWave", "fireField"] },
   heal: { ground: ["healColumn"] },
   instantHeal: { impact: ["healFlash"] },
@@ -58,6 +57,9 @@ export const VISUALS: Record<string, CodeVisual> = {
   // Les alliés relevés ont leurs propres effets : voir AREA_REVIVE.
   divineIntervention: { area: ["healField"] },
   speedSong: { impact: ["noteBurst"] },
+  secondWind: { impact: ["noteBurst"] },
+  buffDexterity: { ground: ["buffSpiral"] },
+  ballad: { impact: ["noteBurst"] },
 };
 
 // Résurrection de zone (Intervention divine) : ce que le code joue sur chaque allié relevé, à la réception de son
