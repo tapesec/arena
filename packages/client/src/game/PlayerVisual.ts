@@ -308,7 +308,8 @@ export class PlayerVisual {
     this.model?.setStowed(this.isAlive && (casting || (this.animator?.performingAbility ?? false)));
     // Le Barde joue du luth : il le tient entre ses mains.
     const animator = this.animator;
-    this.model?.setPlaying(this.isAlive && !!animator?.performingAbility && INSTRUMENT_ANIMATIONS.has(animator.currentAnimation));
+    // Mort : le luth retourne aussitôt dans le dos.
+    this.model?.setPlaying(this.isAlive && !!animator?.performingAbility && INSTRUMENT_ANIMATIONS.has(animator.currentAnimation), !this.isAlive);
   }
 
   // La lueur d'incantation pulse, et prend la couleur du sort en cours.

@@ -638,7 +638,7 @@ class Stage {
     this.frozen = null;
     this.frozenPlaying = false;
     instance.setStowed(false);
-    instance.setPlaying(false);
+    instance.setPlaying(false, true);
     // Nouvel animateur : il remet les fondus que la pose figée retire.
     this.animator = new CharacterAnimator(instance.animations, instance.set, this.tuning);
     this.unfreezeTarget();
@@ -675,11 +675,12 @@ class Stage {
       }
       instance.setStowed(!!at);
       this.frozenPlaying = !!at && INSTRUMENT_ANIMATIONS.has(at.clip.animation);
-      instance.setPlaying(this.frozenPlaying);
+      // Pose figée : le luth est aussitôt à sa place (pas de retour en douceur).
+      instance.setPlaying(this.frozenPlaying, true);
     } else {
       this.frozenPlaying = false;
       instance.setStowed(false);
-      instance.setPlaying(false);
+      instance.setPlaying(false, true);
     }
     this.showTargetFrame();
     const time = this.scrubTimes[this.moment];
@@ -738,7 +739,8 @@ class Stage {
     }
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
     if (this.mode === "scrub" && instance && entry) {
-      instance.setPlaying(this.frozenPlaying);
+      // Pose figée : le luth est aussitôt à sa place (pas de retour en douceur).
+      instance.setPlaying(this.frozenPlaying, true);
       const time = this.scrubTimes[this.moment];
       if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time }, true, true);
       else this.effects.stopAll();

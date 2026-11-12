@@ -64,6 +64,10 @@ export const INSTRUMENT_ANIMATIONS = new Set(["Mixamo_Guitar_Playing"]);
 // cordes derrière la paume, vers le ventre.
 const LUTE_STRUM_POINT = new Vector3(0, 0.55, 0.03);
 const LUTE_BEHIND_HAND = 0.05;
+// Fin du jeu : le luth suit encore les mains le temps que les bras finissent leur mouvement, puis glisse jusqu'à
+// sa place en bandoulière (secondes).
+const INSTRUMENT_FOLLOW = 0.2;
+const INSTRUMENT_RETURN = 0.35;
 
 // Placement d'une arme sur un os du squelette.
 type Placement = Pick<WeaponMount, "bone" | "position" | "rotation">;
@@ -386,8 +390,8 @@ export interface CharacterInstance {
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
   setStowed(stowed: boolean): void;
   // Joue de son instrument (luth entre les mains, dague cachée) ou le remet en bandoulière. À appeler à chaque image :
-  // le luth suit les mains.
-  setPlaying(playing: boolean): void;
+  // le luth suit les mains, puis revient en douceur (aussitôt avec instant).
+  setPlaying(playing: boolean, instant?: boolean): void;
   dispose(): void;
 }
 
@@ -506,7 +510,15 @@ export class CharacterAssets {
     // Armes qui se rangent : leur attache, et où la mettre en main ou rangée.
     const stowable: { attach: TransformNode; held: Placement; stowed: Placement }[] = [];
     // Instrument (et sa place en bandoulière), armes cachées pendant qu'on en joue.
-    const instruments: { attach: TransformNode; rest: Placement }[] = [];
+    // releasedAt : instant (s) où l'on a cessé de jouer ; from : position tenue au début du retour en bandoulière.
+    const instruments: {
+      attach: TransformNode;
+      rest: Placement;
+      restPosition: Vector3;
+      restRotation: Quaternion;
+      releasedAt: number | null;
+      from: { position: Vector3; rotation: Quaternion } | null;
+    }[] = [];
     const hiddenWhilePlaying: TransformNode[] = [];
     const teamPainted: { mesh: AbstractMesh; base: PBRMaterial }[] = [];
     def.weapons.forEach((mount, i) => {
@@ -528,7 +540,16 @@ export class CharacterAssets {
       }
       if (mount.colors) paintWeapon(attach, mount.colors, mount.glow ?? []);
       if (mount.stow) stowable.push({ attach, held: mount, stowed: mount.stow });
-      if (mount.instrument) instruments.push({ attach, rest: mount });
+      if (mount.instrument) {
+        instruments.push({
+          attach,
+          rest: mount,
+          restPosition: new Vector3(...mount.position),
+          restRotation: Quaternion.FromEulerAngles(...mount.rotation),
+          releasedAt: null,
+          from: null,
+        });
+      }
       if (mount.hiddenWhilePlaying) hiddenWhilePlaying.push(attach);
       const paintable = mount.teamPaint ?? [];
       for (const mesh of attach.getChildMeshes(false)) {
@@ -577,16 +598,43 @@ export class CharacterAssets {
           weapon.attach.rotation.set(...placement.rotation);
         }
       },
-      setPlaying: (playing) => {
-        for (const attach of hiddenWhilePlaying) attach.setEnabled(!playing);
-        for (const { attach, rest } of instruments) {
-          if (playing) holdInstrument(attach, bones);
-          else if (attach.rotationQuaternion) {
+      setPlaying: (playing, instant = false) => {
+        const now = performance.now() / 1000;
+        let busy = playing;
+        for (const instrument of instruments) {
+          const { attach, rest } = instrument;
+          if (playing) {
+            instrument.releasedAt = null;
+            instrument.from = null;
+            holdInstrument(attach, bones);
+            continue;
+          }
+          // Déjà en bandoulière.
+          if (!attach.rotationQuaternion) continue;
+          instrument.releasedAt ??= now;
+          const elapsed = now - instrument.releasedAt;
+          if (!instant && elapsed < INSTRUMENT_FOLLOW) {
+            holdInstrument(attach, bones);
+            busy = true;
+            continue;
+          }
+          instrument.from ??= { position: attach.position.clone(), rotation: attach.rotationQuaternion.clone() };
+          const progress = instant ? 1 : Math.min(1, (elapsed - INSTRUMENT_FOLLOW) / INSTRUMENT_RETURN);
+          if (progress >= 1) {
             attach.rotationQuaternion = null;
             attach.position.set(...rest.position);
             attach.rotation.set(...rest.rotation);
+            instrument.releasedAt = null;
+            instrument.from = null;
+            continue;
           }
+          const eased = progress * progress * (3 - 2 * progress);
+          Vector3.LerpToRef(instrument.from.position, instrument.restPosition, eased, attach.position);
+          Quaternion.SlerpToRef(instrument.from.rotation, instrument.restRotation, eased, attach.rotationQuaternion);
+          busy = true;
         }
+        // La dague revient en main une fois le luth rangé.
+        for (const attach of hiddenWhilePlaying) attach.setEnabled(!busy);
       },
       // Matériaux et textures sont partagés par tous les personnages de la classe : on ne les libère pas.
       dispose() {
