@@ -37,3 +37,8 @@ cripplingStrike ← lorc/back-pain
 rampart ← lorc/stone-tower
 renew ← delapouite/healing
 divineIntervention ← lorc/angel-outfit
+kick ← delapouite/high-kick
+sprint ← lorc/sprint
+poisonBlade ← lorc/dripping-blade
+gangrene ← lorc/shadow-follower
+armorBreak ← delapouite/armor-downgrade

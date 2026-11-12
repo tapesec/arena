@@ -63,7 +63,16 @@ import { CharacterAssets } from "./characterAssets";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
 // Textes flottants des événements de combat.
-const CONTROL_LABELS: Record<string, string> = { mez: "Mez", stun: "Stun", root: "Root", nearSight: "Vision réduite" };
+const CONTROL_LABELS: Record<string, string> = {
+  mez: "Mez",
+  stun: "Stun",
+  root: "Root",
+  nearSight: "Vision réduite",
+  silenced: "Silence",
+  poisoned: "Poison",
+  gangrene: "Gangrène",
+  armorBroken: "Armure brisée",
+};
 const INFO_LABELS: Partial<Record<CombatEvent["kind"], string>> = {
   blocked: "Bloqué",
   evaded: "Esquivé",
@@ -569,6 +578,8 @@ export class Game {
           lock: self.state.lock,
           songActive: self.state.songActive,
           queuedAbility: self.state.queuedAbility,
+          // Le combo ne part que sur la cible de son ouverture.
+          comboAbility: target && self.state.comboTarget === target.sessionId ? self.state.comboAbility : "",
           charging: self.state.charging,
         }
       : null;

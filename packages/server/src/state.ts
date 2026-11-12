@@ -40,6 +40,10 @@ export const PlayerState = schema(
     attacking: t.boolean().default(false),
     // Technique de mêlée en attente du prochain coup d'arme ("" si aucune).
     queuedAbility: t.string().default(""),
+    // Technique qui a porté au dernier coup d'arme : un combo qui la suit peut partir au coup suivant ("" si aucune).
+    comboAbility: t.string().default(""),
+    // Sa cible : le combo ne part que sur elle.
+    comboTarget: t.string().default(""),
     // Le Gardien fonce sur sa cible (Charge).
     charging: t.boolean().default(false),
     // Chant de vitesse du Barde activé.

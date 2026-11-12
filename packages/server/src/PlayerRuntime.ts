@@ -30,6 +30,8 @@ export class PlayerRuntime {
   castTargetId: string | null = null;
   // Incantation protégée par Concentration : ni les dégâts ni le Silence ne l'interrompent.
   castProtected = false;
+  // Le combo se perd si le coup d'arme suivant ne part pas à temps (un round d'attaque manqué).
+  comboExpiresAt = 0;
   // Instant (temps de la partie, en secondes) où chaque compétence redevient disponible.
   cooldowns = new Map<string, number>();
   effects: ActiveEffect[] = [];

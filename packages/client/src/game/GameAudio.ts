@@ -96,7 +96,8 @@ export class GameAudio {
     if (!target) return;
     const position = target.root.position;
     const isSelf = event.targetId === this.selfId;
-    const melee = event.abilityId === "auto" || MELEE_ABILITIES.has(event.abilityId);
+    // Coup qui porte : attaque automatique, technique ou Coup de pied (pas un tic de poison).
+    const melee = !event.dot && (event.abilityId === "auto" || event.abilityId === "kick" || MELEE_ABILITIES.has(event.abilityId));
     // Auto-attaque : le geste de l'arme, quel que soit le résultat (les compétences le jouent à leur lancement).
     if (event.abilityId === "auto" && source && event.kind !== "heal") this.swing(source);
     switch (event.kind) {

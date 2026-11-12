@@ -56,12 +56,20 @@ class LameBot extends BotBrain {
     if (!target) return this.advance();
 
     this.meleeAttack(target);
+    // Sprint pour rejoindre une cible lointaine.
+    if (this.distanceTo(target) > 15) this.tryUse("sprint");
     if (this.distanceTo(target) > 6) return;
 
     // Évasion quand on se fait frapper et que la vie baisse ; Rage pour achever.
     const underAttack = this.combat.now - this.self.lastMeleeHitAt < 2;
     if (underAttack && this.hpRatio(this.self) < 0.6) this.tryUse("evasion");
     if (this.distanceTo(target) <= MELEE_RANGE && this.hpRatio(target) < 0.7) this.tryUse("rage");
+    // Coup de pied sur un lanceur qui incante : interruption et silence.
+    if (target.state.castAbility && !target.castProtected && this.tryUse("kick", target)) return;
+
+    // Combos d'abord : ils ne partent que juste après leur ouverture.
+    const combo = { backstab: "poisonBlade", poisonBlade: "gangrene", flankStrike: "armorBreak" }[this.self.state.comboAbility];
+    if (combo && this.tryUse(combo, target)) return;
 
     const position = positionRelativeTo(target.state, this.self.state);
     if (position === "back" && this.tryUse("backstab", target)) return;

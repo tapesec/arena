@@ -1,7 +1,7 @@
 import { getAbility, type CombatEvent, type InterruptEvent } from "@arena/shared";
 
-const CONTROL_NAMES: Record<string, string> = { mez: "mez", stun: "stun", root: "root" };
-const DEBUFF_NAMES: Record<string, string> = { nearSight: "vision réduite" };
+const CONTROL_NAMES: Record<string, string> = { mez: "mez", stun: "stun", root: "root", silenced: "silence" };
+const DEBUFF_NAMES: Record<string, string> = { nearSight: "vision réduite", poisoned: "poison", gangrene: "soins reçus réduits", armorBroken: "armure brisée" };
 const INTERRUPT_CAUSES: Record<InterruptEvent["reason"], string> = {
   damage: "dégâts",
   move: "mouvement",

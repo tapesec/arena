@@ -65,6 +65,11 @@ export const ABILITY_FX: Record<string, AbilityFx> = {
   backstab: { color: PHYSICAL, shape: "melee" },
   flankStrike: { color: PHYSICAL, shape: "melee" },
   evasion: { color: PHYSICAL, shape: "pulse" },
+  kick: { color: PHYSICAL, shape: "melee" },
+  sprint: { color: PHYSICAL, shape: "pulse" },
+  poisonBlade: { color: NATURE, shape: "melee" },
+  gangrene: { color: NATURE, shape: "melee" },
+  armorBreak: { color: PHYSICAL, shape: "melee" },
   rage: { color: RAGE, shape: "pulse" },
 };
 

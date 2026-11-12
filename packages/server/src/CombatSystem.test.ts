@@ -694,6 +694,225 @@ describe("Lame", () => {
     assert.equal(world.eventsOf("evaded").length, 1);
     assert.equal(lame.state.hp, lame.state.maxHp);
   });
+
+  it("Coup de pied : dégâts, silence 10 s qui interrompt et empêche les sorts, sans casser par les dégâts", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "arcaniste", 1, 0, 0, Math.PI);
+    const ally = world.spawn("a", "lame", 0, 1, -2, 0);
+    world.cast(enemy, "firebolt", lame);
+    world.run(0.5);
+    world.cast(lame, "kick", enemy);
+    assert.equal(enemy.state.hp, enemy.state.maxHp - 50);
+    assert.ok(enemy.has("silenced"));
+    assert.equal(enemy.state.castAbility, "", "l'incantation est interrompue");
+    world.cast(enemy, "concentration");
+    assert.ok(world.errors.some((e) => e.id === "e" && e.message === "Vous êtes réduit au silence"));
+    world.cast(ally, "backstab", enemy);
+    assert.ok(enemy.has("silenced"), "les dégâts ne cassent pas le silence");
+    world.run(10.1);
+    assert.ok(!enemy.has("silenced"));
+    assert.ok(!enemy.has("immuneMez") && !enemy.effects.some((e) => e.kind.startsWith("immune")), "pas d'immunité");
+  });
+
+  it("Coup de pied : une attaque de mêlée qui peut être esquivée (ni dégâts ni silence)", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 0, Math.PI);
+    world.cast(enemy, "evasion");
+    world.rolls = [0.1];
+    world.cast(lame, "kick", enemy);
+    assert.equal(world.eventsOf("evaded").length, 1);
+    assert.equal(enemy.state.hp, enemy.state.maxHp);
+    assert.ok(!enemy.has("silenced"));
+  });
+
+  it("Sprint double la vitesse, sans se cumuler avec le chant du Barde", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    world.cast(lame, "sprint");
+    assert.ok(lame.has("sprint"));
+    world.combat.setInput(lame.id, { ...NO_INPUT, up: true });
+    const z = lame.state.z;
+    world.run(1);
+    assert.ok(Math.abs(lame.state.z - z - 2 * MOVE_SPEED) < 0.2, `distance ${lame.state.z - z}`);
+    const barde = world.spawn("b", "barde", 0, 0, lame.state.z - OFFSET_X * 0, 0);
+    barde.state.x = lame.state.x;
+    world.cast(barde, "speedSong");
+    world.run(0.1);
+    assert.ok(lame.has("speed"));
+    const z2 = lame.state.z;
+    world.run(1);
+    assert.ok(Math.abs(lame.state.z - z2 - 2 * MOVE_SPEED) < 0.2, "le plus fort compte, pas le cumul");
+  });
+
+  it("combo : Lame empoisonnée juste après une Attaque dans le dos qui a porté, puis Gangrène", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "poisonBlade", enemy);
+    assert.ok(world.errors.some((e) => e.message.startsWith("Combo")), "pas de combo sans ouverture");
+    world.cast(lame, "backstab", enemy);
+    assert.equal(lame.state.comboAbility, "backstab");
+    world.cast(lame, "poisonBlade", enemy);
+    world.run(2.05);
+    assert.ok(enemy.has("poisoned"));
+    assert.equal(lame.state.comboAbility, "poisonBlade");
+    world.cast(lame, "gangrene", enemy);
+    world.run(2.05);
+    assert.ok(enemy.has("gangrene"));
+    // La Lame arrête de frapper, et la cible tient jusqu'au bout du poison.
+    world.combat.toggleAttack(lame.id);
+    enemy.state.hp = enemy.state.maxHp = 5000;
+    assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "gangrene")[0]?.amount, 350);
+    // Le poison : 300 en 10 s.
+    world.run(8);
+    const poison = world.eventsOf("damage").filter((e) => e.abilityId === "poisonBlade");
+    assert.equal(poison.reduce((sum, e) => sum + (e.amount ?? 0), 0), 300);
+  });
+
+  it("combo : un coup normal entre les deux casse l'enchaînement", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "backstab", enemy);
+    world.run(2.05); // coup normal
+    assert.equal(lame.state.comboAbility, "");
+    world.cast(lame, "poisonBlade", enemy);
+    assert.ok(world.errors.some((e) => e.message.startsWith("Combo")));
+    assert.equal(lame.state.queuedAbility, "");
+  });
+
+  it("combo : une ouverture esquivée n'ouvre pas le combo", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 0, 0);
+    world.cast(enemy, "evasion");
+    world.rolls = [0.1];
+    world.cast(lame, "backstab", enemy);
+    assert.equal(world.eventsOf("evaded").length, 1);
+    assert.equal(lame.state.comboAbility, "");
+  });
+
+  it("combo : perdu si le coup suivant ne part pas à temps (round manqué)", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "backstab", enemy);
+    enemy.state.z += 10; // hors de portée
+    world.run(3);
+    assert.equal(lame.state.comboAbility, "");
+  });
+
+  it("Brise armure : après une Attaque de flanc, +25 % de dégâts de mêlée reçus", () => {
+    const lame = world.spawn("l", "lame", 0, 2, 0, -Math.PI / 2);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    world.cast(lame, "flankStrike", enemy);
+    world.cast(lame, "armorBreak", enemy);
+    world.run(2.05);
+    assert.ok(enemy.has("armorBroken"));
+    assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "armorBreak")[0]?.amount, 250);
+    world.run(2); // coup normal : 70 × 1,25
+    assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "auto").at(-1)?.amount, Math.round(70 * 1.25));
+  });
+
+  it("Gangrène : les soins reçus sont réduits de moitié", () => {
+    const pretre = world.spawn("p", "pretre", 1, 0, 5, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    enemy.state.hp = 500;
+    lame.effects.length = 0;
+    // Pose la Gangrène directement (le combo est testé plus haut).
+    (world.combat as unknown as { applyEffect: (...args: unknown[]) => void }).applyEffect(
+      lame,
+      { id: "gangrene", melee: true, resource: "endurance", effects: [] },
+      enemy,
+      { type: "debuff", debuff: "gangrene", duration: 10 },
+    );
+    world.cast(pretre, "instantHeal", enemy);
+    assert.equal(world.eventsOf("heal").at(-1)?.amount, 100);
+  });
+
+  it("Gangrène : le Renouveau et le Soin de groupe sont réduits aussi", () => {
+    const pretre = world.spawn("p", "pretre", 1, 0, 5, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    enemy.state.hp = 300;
+    (world.combat as unknown as { applyEffect: (...args: unknown[]) => void }).applyEffect(
+      lame,
+      { id: "gangrene", melee: true, resource: "endurance", effects: [] },
+      enemy,
+      { type: "debuff", debuff: "gangrene", duration: 30 },
+    );
+    world.cast(pretre, "renew", enemy);
+    world.run(3.05);
+    const ticks = world.eventsOf("heal").filter((e) => e.abilityId === "renew" && e.targetId === "e");
+    assert.ok(ticks.length >= 1 && ticks.every((e) => e.amount === 25), `tics ${ticks.map((e) => e.amount)}`);
+    world.run(10);
+    enemy.state.hp = 300;
+    world.cast(pretre, "groupHeal");
+    world.run(3.05);
+    const share = world.eventsOf("heal").filter((e) => e.abilityId === "groupHeal" && e.targetId === "e").at(-1);
+    // Seule la cible est blessée (le Prêtre est plein) : sa part est de 900, plafonnée à ce qui lui manque, puis /2.
+    assert.equal(share?.amount, Math.round(Math.min(900, enemy.state.maxHp - 300) / 2));
+  });
+
+  it("Coup de pied intercepté : le Gardien prend les dégâts et le silence, pas sa cible", () => {
+    const gardien = world.spawn("g", "gardien", 1, 1, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 0, Math.PI);
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    world.cast(gardien, "intercept", arcaniste);
+    world.cast(arcaniste, "firebolt", lame);
+    world.run(0.5);
+    world.cast(lame, "kick", arcaniste);
+    assert.equal(world.eventsOf("intercepted").length, 1);
+    assert.ok(!arcaniste.has("silenced"));
+    assert.equal(arcaniste.state.hp, arcaniste.state.maxHp);
+    assert.ok(gardien.has("silenced"));
+    assert.equal(gardien.state.hp, gardien.state.maxHp - 50);
+    assert.equal(arcaniste.state.castAbility, "firebolt", "l'incantation de la cible protégée continue");
+  });
+
+  it("combo : une ouverture interceptée n'ouvre pas le combo", () => {
+    const gardien = world.spawn("g", "gardien", 1, 1, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    world.cast(gardien, "intercept", enemy);
+    world.cast(lame, "backstab", enemy);
+    assert.equal(world.eventsOf("intercepted").length, 1);
+    assert.equal(lame.state.comboAbility, "");
+  });
+
+  it("combo : refusé sur une autre cible que celle de l'ouverture", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
+    const other = world.spawn("o", "barde", 1, 0.5, -1, 0);
+    world.cast(lame, "backstab", enemy);
+    assert.equal(lame.state.comboTarget, "e");
+    world.cast(lame, "poisonBlade", other);
+    assert.ok(world.errors.some((e) => e.message.startsWith("Combo")));
+    assert.equal(lame.state.queuedAbility, "");
+  });
+
+  it("silence : une incantation sous Concentration va au bout, mais le sort suivant est impossible", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const enemy = world.spawn("e", "arcaniste", 1, 0, 0, Math.PI);
+    world.cast(enemy, "concentration");
+    world.cast(enemy, "firebolt", lame);
+    world.run(0.5);
+    world.cast(lame, "kick", enemy);
+    assert.ok(enemy.has("silenced"));
+    assert.equal(enemy.state.castAbility, "firebolt");
+    world.run(1.6);
+    assert.ok(world.eventsOf("damage").some((e) => e.abilityId === "firebolt"), "le sort part");
+    world.cast(enemy, "firebolt", lame);
+    assert.equal(enemy.state.castAbility, "");
+  });
+
+  it("Sprint sous snare : vitesse × 2 × 0,6", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 2, 0, -Math.PI / 2);
+    world.cast(enemy, "flankStrike", lame);
+    assert.ok(lame.has("snare"));
+    world.cast(lame, "sprint");
+    world.combat.setInput(lame.id, { ...NO_INPUT, up: true });
+    const z = lame.state.z;
+    world.run(1);
+    assert.ok(Math.abs(lame.state.z - z - 1.2 * MOVE_SPEED) < 0.2, `distance ${lame.state.z - z}`);
+  });
 });
 
 describe("Immunités aux contrôles", () => {

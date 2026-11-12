@@ -58,6 +58,12 @@ export const AURA_ENDURANCE_REGEN = 2;
 // Barde
 export const SONG_RANGE = 30;
 export const SONG_SPEED_MULTIPLIER = 1.4;
+// Sprint de la Lame : vitesse doublée (ne se cumule pas avec le chant du Barde : le plus fort compte).
+export const SPRINT_SPEED_MULTIPLIER = 2;
+// Gangrène : soins reçus multipliés par ce facteur.
+export const GANGRENE_HEAL_FACTOR = 0.5;
+// Brise armure : dégâts de mêlée reçus augmentés de ce bonus.
+export const ARMOR_BREAK_BONUS = 0.25;
 export const SONG_SUPPRESS_DURATION = 5;
 
 // Lame
@@ -135,6 +141,8 @@ export interface CombatEvent {
   amount?: number;
   crit?: boolean;
   killed?: boolean;
+  // Tic d'un dégât sur la durée (Brûlure, poison) : pas un coup.
+  dot?: boolean;
   detail?: string;
 }
 

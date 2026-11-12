@@ -37,6 +37,8 @@ const ANIMATIONS = {
     "Hit_Head",
     "Death01",
     "Roll",
+    // Coup de pied de la Lame.
+    "Kick",
     "Dance_Loop",
   ],
   "UAL2.glb": [

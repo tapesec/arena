@@ -14,8 +14,9 @@ export type CrowdControl = "mez" | "stun" | "root";
 export type AbilityEffect =
   // edgeAmount : dégâts en bordure d'une zone d'effet, qui décroissent depuis amount au centre.
   | { type: "damage"; amount: number; edgeAmount?: number }
-  // Dégâts sur la durée (dot) : amount au total, en tics d'une seconde pendant duration.
-  | { type: "dot"; amount: number; duration: number }
+  // Dégâts sur la durée (dot) : amount au total, en tics d'une seconde pendant duration. effect : l'état posé
+  // (Brûlure par défaut, Poison de la Lame empoisonnée). Relancé, il repart de zéro.
+  | { type: "dot"; amount: number; duration: number; effect?: "burning" | "poisoned" }
   | { type: "heal"; amount: number }
   // Soin réparti entre les personnes touchées au prorata des points de vie qui leur manquent (le surplus est perdu).
   | { type: "splitHeal"; amount: number }
@@ -28,7 +29,12 @@ export type AbilityEffect =
   | { type: "cleanse" }
   | { type: "resurrect"; hpRatio: number }
   | { type: "buff"; buff: "buffHp" | "buffStrength" }
-  | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble" | "arcanePower"; duration: number }
+  | { type: "status"; status: "evasion" | "rage" | "concentration" | "bubble" | "arcanePower" | "sprint"; duration: number }
+  // Silence : la cible ne peut plus lancer de sort (compétences à mana) ; son incantation est interrompue (sauf
+  // Concentration). Ni cassé par les dégâts, ni retiré par la Purification, pas d'immunité ensuite.
+  | { type: "silence"; duration: number }
+  // Affaiblissement de la cible : soins reçus réduits (Gangrène), dégâts de mêlée reçus augmentés (Brise armure).
+  | { type: "debuff"; debuff: "gangrene" | "armorBroken"; duration: number }
   // Vision réduite : portée des sorts de la cible réduite (voir NEAR_SIGHT_FACTOR).
   | { type: "nearSight"; duration: number }
   | { type: "guard" }
@@ -61,6 +67,12 @@ export interface AbilityDef {
   melee?: boolean;
   // Position exigée par rapport à la cible.
   position?: "back" | "side";
+  // Combo : technique qui ne part que si le coup d'arme précédent du lanceur, sur la même cible, était cette
+  // technique et a porté (pas de coup normal entre les deux, ni esquive ni blocage).
+  after?: string;
+  // Attaque de mêlée instantanée qui n'est pas une technique (Coup de pied) : elle part aussitôt, peut être esquivée,
+  // bloquée ou absorbée comme un coup d'arme.
+  meleeStrike?: boolean;
   // Type des dégâts magiques (feu, givre) : pour l'affichage seulement, il n'y a pas encore de résistances.
   school?: "fire" | "frost";
   // Zone d'effet : autour de la cible pour une compétence visant un ennemi, autour du lanceur sinon. Une compétence
@@ -483,7 +495,7 @@ const list: AbilityDef[] = [
   },
   {
     id: "silence",
-    name: "Silence",
+    name: "Oubli",
     description: "Interrompt l'incantation en cours de la cible.",
     castTime: 1,
     resource: "mana",
@@ -548,6 +560,87 @@ const list: AbilityDef[] = [
     cooldown: 60,
     target: "self",
     effects: [{ type: "status", status: "evasion", duration: 8 }],
+  },
+  {
+    id: "kick",
+    name: "Coup de pied",
+    description:
+      "50 dégâts et silence 10 s : la cible ne peut plus lancer de sort, et son incantation est interrompue. Attaque de mêlée instantanée (peut être esquivée ou bloquée).",
+    castTime: 0,
+    resource: "endurance",
+    cost: 20,
+    range: MELEE_RANGE,
+    cooldown: 60,
+    target: "enemy",
+    meleeStrike: true,
+    // Le silence d'abord : c'est lui qui interrompt l'incantation (avant les dégâts).
+    effects: [
+      { type: "silence", duration: 10 },
+      { type: "damage", amount: 50 },
+    ],
+  },
+  {
+    id: "sprint",
+    name: "Sprint",
+    description: "Vitesse de course doublée pendant 10 s (ne se cumule pas avec le Chant de vitesse).",
+    castTime: 0,
+    resource: "endurance",
+    cost: 25,
+    range: 0,
+    cooldown: 60,
+    target: "self",
+    effects: [{ type: "status", status: "sprint", duration: 10 }],
+  },
+  {
+    id: "poisonBlade",
+    name: "Lame empoisonnée",
+    description:
+      "Combo, juste après une Attaque dans le dos qui a porté : 300 dégâts de poison en 10 s. Technique de mêlée : part au prochain coup d'arme.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 20,
+    range: MELEE_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    melee: true,
+    after: "backstab",
+    effects: [{ type: "dot", amount: 300, duration: 10, effect: "poisoned" }],
+  },
+  {
+    id: "gangrene",
+    name: "Gangrène",
+    description:
+      "Combo, juste après une Lame empoisonnée qui a porté : 350 dégâts, et la cible reçoit 50 % de soins en moins pendant 10 s. Technique de mêlée : part au prochain coup d'arme.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 10,
+    range: MELEE_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    melee: true,
+    after: "poisonBlade",
+    effects: [
+      { type: "damage", amount: 350 },
+      { type: "debuff", debuff: "gangrene", duration: 10 },
+    ],
+  },
+  {
+    id: "armorBreak",
+    name: "Brise armure",
+    description:
+      "Combo, juste après une Attaque de flanc qui a porté : 250 dégâts, et la cible subit 25 % de dégâts de mêlée en plus pendant 10 s. Technique de mêlée : part au prochain coup d'arme.",
+    castTime: 0,
+    resource: "endurance",
+    cost: 10,
+    range: MELEE_RANGE,
+    cooldown: 0,
+    target: "enemy",
+    melee: true,
+    after: "flankStrike",
+    effects: [
+      { type: "damage", amount: 250 },
+      { type: "debuff", debuff: "armorBroken", duration: 10 },
+    ],
   },
   {
     id: "rage",

@@ -31,7 +31,14 @@ export type EffectKind =
   | "burning"
   | "arcanePower"
   // Prêtre : soin sur la durée (un par Prêtre).
-  | "renew";
+  | "renew"
+  // Lame : ne peut plus lancer de sort (Coup de pied), vitesse doublée, poison (dot), soins reçus réduits (Gangrène),
+  // dégâts de mêlée reçus augmentés (Brise armure).
+  | "silenced"
+  | "sprint"
+  | "poisoned"
+  | "gangrene"
+  | "armorBroken";
 
 export type EffectCategory = "control" | "debuff" | "immunity" | "buff";
 
@@ -62,6 +69,11 @@ export const EFFECTS: Record<EffectKind, { label: string; category: EffectCatego
   burning: { label: "Brûlure", category: "debuff" },
   arcanePower: { label: "Puissance arcanique", category: "buff" },
   renew: { label: "Renouveau", category: "buff" },
+  silenced: { label: "Silence", category: "control" },
+  sprint: { label: "Sprint", category: "buff" },
+  poisoned: { label: "Poison", category: "debuff" },
+  gangrene: { label: "Gangrène", category: "debuff" },
+  armorBroken: { label: "Armure brisée", category: "debuff" },
 };
 
 // Durée restante envoyée pour un effet sans limite de temps.

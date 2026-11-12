@@ -46,7 +46,9 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
   - **Stun** : la cible ne peut plus rien faire. Non cassé par les dégâts, ni retiré par la Purification.
   - Un personnage neutralisé (mez, stun) n'esquive pas et ne bloque pas au bouclier ; la bulle et la Garde d'un autre Gardien le protègent toujours.
   - **Techniques de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc), comme les styles de DAoC : la technique part au prochain coup d'arme, à la place du coup normal (aussitôt si l'arme est prête). Elle est mise en attente et s'allume sur la barre ; une autre technique la remplace ; couper l'attaque l'annule ; la lancer active l'attaque. Ses conditions (portée, position, face à la cible, endurance) sont vérifiées au moment du coup : si elles manquent, le coup reste normal et un message l'indique. Une technique au plus par coup d'arme (toutes les 2 s pour la Lame et le Gardien).
-  - **Attaques spéciales de mêlée** (Coup de bouclier, attaque dans le dos, attaque de flanc) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
+  - **Combos** (Lame) : une technique de combo ne part que juste après sa technique d'ouverture, au coup d'arme suivant, sur la même cible : l'ouverture doit avoir porté (ni esquivée, ni bloquée, ni absorbée, ni interceptée), et aucun coup normal ni round d'attaque manqué entre les deux (le coup suivant doit partir à l'heure, à 0,5 s près). La case du combo s'allume sur la barre quand il est possible. Enchaînements : Attaque dans le dos → Lame empoisonnée → Gangrène ; Attaque de flanc → Brise armure.
+  - **Silence** : la cible ne peut plus lancer de sort (compétences à mana) ; son incantation en cours est interrompue (sauf sous Concentration). Ni cassé par les dégâts, ni retiré par la Purification, pas d'immunité ensuite ; relancé, il repart de sa durée. Celui du Coup de pied est un contrôle physique (le Cri de ralliement n'en protège pas).
+  - **Attaques spéciales de mêlée** (techniques et Coup de pied) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
   - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse.
   - **Snare** : ralentissement de 40 % (tous les snares). Un seul snare à la fois : le plus puissant reste jusqu'à la fin de son effet, un snare plus faible reçu entre-temps est ignoré (pas mis en attente) ; à puissance égale, on garde celui qui dure le plus longtemps. Pas d'immunité.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
@@ -125,7 +127,7 @@ Neutralise le groupe adverse et contrôle le rythme du combat.
 | Mez de zone | Mez de 20 s sur les ennemis dans une zone de 6 m de rayon. | 3 s | 200 mana | — |
 | Mez ciblé | Mez de 20 s sur une cible. | 2 s | 100 mana | — |
 | Root de zone | Root de 12 s sur les ennemis dans une zone de 6 m de rayon. | 2,5 s | 120 mana | — |
-| Silence | Façon amnésie : interrompt l'incantation en cours de la cible. | 1 s | 40 mana | — |
+| Oubli | Façon amnésie : interrompt l'incantation en cours de la cible. | 1 s | 40 mana | — |
 | Chant de vitesse | +40 % de vitesse pour le groupe à 30 m. Coupé pendant 5 s quand le Barde attaque ou est attaqué. | Permanent | — | — |
 
 ### 5. Lame — dégâts au corps à corps
@@ -137,6 +139,11 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 | Attaque dans le dos | 270 dégâts, à la place du coup normal. Uniquement de dos. Technique de mêlée. | Prochain coup | 25 endurance | — |
 | Attaque de flanc | 190 dégâts, à la place du coup normal, et snare de 40 % pendant 8 s. Uniquement de côté. Technique de mêlée. | Prochain coup | 20 endurance | — |
 | Évasion | 75 % d'esquive contre la mêlée pendant 8 s. | Instantané | 20 endurance | 1 min |
+| Coup de pied | 50 dégâts et silence 10 s. Attaque de mêlée instantanée (pas une technique), qui peut être esquivée ou bloquée. | Instantané | 20 endurance | 1 min |
+| Sprint | Vitesse de course × 2 pendant 10 s. Ne retire ni snare ni root (un snare de 40 % donne × 1,2) ; ne se cumule pas avec le Chant de vitesse (le plus fort compte). | Instantané | 25 endurance | 1 min |
+| Lame empoisonnée | Combo après l'Attaque dans le dos : poison, 300 dégâts en 10 s (un tic par seconde). Technique de mêlée. | Prochain coup | 20 endurance | — |
+| Gangrène | Combo après la Lame empoisonnée : 350 dégâts, et la cible reçoit 50 % de soins en moins pendant 10 s (tous les soins : Soin, Renouveau, part du Soin de groupe). Technique de mêlée. | Prochain coup | 10 endurance | — |
+| Brise armure | Combo après l'Attaque de flanc : 250 dégâts, et la cible subit 25 % de dégâts de mêlée en plus pendant 10 s (attaques automatiques et techniques, de tous les attaquants ; pas les sorts). Relancé, il repart de zéro, sans cumul. Technique de mêlée. | Prochain coup | 10 endurance | — |
 | Rage | Tous les coups sont critiques pendant 10 s. | Instantané | — | 3 min |
 | *(option future)* Furtivité | Devenir invisible, pour un rôle d'assassin. | — | — | — |
 
@@ -157,7 +164,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Zones d'effet** : Mez de zone et Root de zone sont centrés sur la cible (et non sur un point du sol choisi à la souris) ; Déflagration est centrée sur le lanceur.
 - **Attaque automatique** : Gardien 55 dégâts / 2 s, Lame 70 / 2 s, Arcaniste, Prêtre et Barde 30 / 2,5 s.
 - **Critiques** : 10 % de chances en mêlée, dégâts × 1,5 (la Rage rend tous les coups critiques).
-- **Interception** : dure 10 s ou jusqu'au premier coup, le Gardien doit être à 4 m maximum de l'allié.
+- **Interception** : dure 10 s ou jusqu'au premier coup, le Gardien doit être à 4 m maximum de l'allié. Le Gardien prend le coup en entier : dégâts et effets d'une attaque spéciale de mêlée (snare, silence du Coup de pied, poison, Gangrène, Brise armure) ; un coup intercepté n'ouvre pas de combo.
 - **Garde** : utiliser Garde sur l'allié déjà protégé retire la protection.
 - **Chant de vitesse** : s'active et se désactive avec sa touche.
 - **Soins et buffs** : sans allié ciblé, ils s'appliquent au lanceur.
@@ -165,7 +172,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 
 ## Bots
 - Ils jouent avec les mêmes commandes que les joueurs et ne voient que ce que leur équipe voit. Un bouton permet de compléter la partie avec des bots.
-- Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes cherchent le mez de zone, puis le root de zone, puis le silence. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
+- Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes cherchent le mez de zone, puis le root de zone, puis l'Oubli. Les Lames enchaînent leurs combos, donnent un Coup de pied à un lanceur qui incante et sprintent vers une cible lointaine. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
 - **Erreur humaine** : un ennemi qui apparaît n'est remarqué qu'après 0,3 à 0,8 s. Une décision sur sept environ est sautée (hésitation), ce qui retarde aussi soins, fuites et interruptions. En changeant de cible, un bot prend parfois (15 %) un ennemi au hasard.
 - Pas de niveau de difficulté pour le moment.
 

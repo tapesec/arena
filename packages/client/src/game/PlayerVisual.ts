@@ -41,6 +41,8 @@ export interface PlayerView {
   lock: string;
   songActive: boolean;
   queuedAbility: string;
+  comboAbility: string;
+  comboTarget: string;
   charging: boolean;
   castAbility: string;
   castElapsed: number;

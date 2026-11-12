@@ -6,7 +6,7 @@ import type { Cue } from "./codeSounds";
 // communs » de animation-lab.html (voir COMMON_SOUND_SECTIONS).
 
 // Attaques au corps à corps : le geste de l'arme chez l'attaquant, puis le coup qui porte chez la cible.
-export const MELEE_ABILITIES = new Set(["backstab", "flankStrike", "powerStrike", "cripplingStrike"]);
+export const MELEE_ABILITIES = new Set(["backstab", "flankStrike", "powerStrike", "cripplingStrike", "poisonBlade", "gangrene", "armorBreak"]);
 // Le coup porte juste après le geste.
 export const HIT_DELAY = 0.15;
 // Un critique (et une attaque dans le dos) sonne plus grave et plus fort.

@@ -2099,11 +2099,11 @@
  {
   "name": "Kick",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": false,
   "category": "Combat",
   "description": "Coup de pied.",
-  "usedFor": ""
+  "usedFor": "Coup de pied (Lame)"
  },
  {
   "name": "PickUp_Kneeling",

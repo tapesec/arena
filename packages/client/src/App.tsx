@@ -344,6 +344,11 @@ const SHORT_EFFECT_LABELS: Record<string, string> = {
   buffHp: "PV",
   buffStrength: "Pui",
   renew: "Ren",
+  silenced: "Sil",
+  sprint: "Spr",
+  poisoned: "Poi",
+  gangrene: "Gang",
+  armorBroken: "Arm",
   speed: "Vit",
   regenAura: "Aura",
   bubble: "Bul",
@@ -489,7 +494,9 @@ function Hotbar() {
         // Part du cadran déjà découverte (recharge écoulée), en degrés : elle grandit dans le sens des aiguilles
         // d'une montre à partir de midi, le reste est dans l'ombre.
         const elapsed = remaining > 0 && ability.cooldown > 0 ? (1 - remaining / ability.cooldown) * 360 : 0;
-        const classes = ["slot", `slot-${status.state}`, active && "slot-active", queued && "slot-queued"];
+        // Combo possible : son ouverture vient de porter, il peut partir au prochain coup d'arme.
+        const comboReady = !!ability.after && ability.after === self.comboAbility && !queued;
+        const classes = ["slot", `slot-${status.state}`, active && "slot-active", queued && "slot-queued", comboReady && "slot-combo-ready"];
         return (
           <div
             key={abilityId}
