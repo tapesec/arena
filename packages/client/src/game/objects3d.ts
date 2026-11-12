@@ -1,7 +1,8 @@
 import { Constants } from "@babylonjs/core/Engines/constants";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import { CreateRibbon } from "@babylonjs/core/Meshes/Builders/ribbonBuilder";
@@ -15,8 +16,10 @@ import type { Scene } from "@babylonjs/core/scene";
 // (sphère, anneau, cylindre, cône, cube, cristal, croissant), seule ou répétée en cercle, lumineuse ou éclairée,
 // qui apparaît (en grandissant, en montant ou en descendant), tourne, flotte, change de taille et d'opacité au fil
 // de sa vie, puis s'efface. Utilisés par les compétences comme les effets à particules (type « object »).
+// Forme à part : les arcs électriques, des traits lumineux en zigzag autour du point d'accroche, redessinés au hasard
+// plusieurs fois par seconde (crépitement).
 
-export type ObjectForm = "sphere" | "torus" | "cylinder" | "cone" | "box" | "crystal" | "crescent";
+export type ObjectForm = "sphere" | "torus" | "cylinder" | "cone" | "box" | "crystal" | "crescent" | "arcs";
 
 export interface ObjectDef {
   label: string;
@@ -69,6 +72,12 @@ export interface ObjectDef {
   bob: number;
   bobSpeed: number;
   pulse: number;
+  // Arcs électriques : count arcs sur un cercle de rayon ring, jusqu'à size[1] de haut, d'épaisseur thickness
+  // (mètres). Redessinés flicker fois par seconde ; zigzag : écart des coudes (part de la longueur de l'arc) ;
+  // span : longueur d'un arc le long du cercle (degrés).
+  flicker: number;
+  jag: number;
+  span: number;
 }
 
 export const DEFAULT_OBJECT: ObjectDef = {
@@ -104,6 +113,9 @@ export const DEFAULT_OBJECT: ObjectDef = {
   bob: 0,
   bobSpeed: 1,
   pulse: 0,
+  flicker: 14,
+  jag: 0.25,
+  span: 80,
 };
 
 // Objets du jeu (dessinés jusqu'ici dans le code) convertis en réglages, comme point de départ.
@@ -238,6 +250,22 @@ export const BUILTIN_OBJECTS: Record<string, ObjectDef> = {
     fadeIn: 0,
     fadeOut: 0,
   },
+  sparkArcs: {
+    ...DEFAULT_OBJECT,
+    label: "Arcs électriques",
+    form: "arcs",
+    size: [0.5, 0.45, 0.5],
+    thickness: 0.05,
+    count: 3,
+    ring: 0.45,
+    color: "#a8dcff",
+    alpha: 1,
+    additive: true,
+    appear: 0,
+    appearScale: 1,
+    fadeIn: 0.05,
+    fadeOut: 0.15,
+  },
   frostRing: {
     ...DEFAULT_OBJECT,
     label: "Anneau de givre",
@@ -266,6 +294,7 @@ export const FORMS: Record<ObjectForm, string> = {
   box: "Cube",
   crystal: "Cristal",
   crescent: "Croissant (estafilade)",
+  arcs: "Arcs électriques",
 };
 
 let savedObjects: Record<string, ObjectDef> = {};
@@ -291,6 +320,8 @@ export function objectLabel(id: string): string {
 
 // Rayon d'un objet (mètres), pour l'étendre à une zone : celui de son cercle, sinon de sa forme.
 export function objectRadius(def: ObjectDef): number {
+  // Arcs électriques : leur cercle, plus l'écart des coudes.
+  if (def.form === "arcs") return def.ring * (1 + def.jag / 2);
   return def.count > 1 ? def.ring + Math.max(def.size[0], def.size[2]) / 2 : Math.max(def.size[0], def.size[2]) / 2;
 }
 
@@ -317,6 +348,8 @@ interface Live {
   fit: number;
   age: number;
   fading: number | null;
+  // Arcs électriques : temps avant le prochain redessin, et arcs allumés à ce redessin.
+  arcs: { wait: number; lit: boolean[] } | null;
 }
 
 const DEG = Math.PI / 180;
@@ -340,7 +373,18 @@ export class Objects3D {
     const rand = random(def.seed);
     const meshes: Mesh[] = [];
     const count = Math.max(1, Math.round(def.count));
-    for (let i = 0; i < count; i++) {
+    const arcs = def.form === "arcs";
+    for (let i = 0; i < count && arcs; i++) {
+      // Arcs électriques : leurs points sont calculés en mètres, autour du point d'accroche (voir drawArcs).
+      // Une seule face : le matériau ne cache pas l'arrière (sinon, en mode additif, l'arc serait dessiné deux fois).
+      const mesh = CreateRibbon("object3d", { pathArray: arcPaths(ARC_POINTS), updatable: true }, this.scene);
+      mesh.material = material;
+      mesh.isPickable = false;
+      mesh.parent = root;
+      mesh.visibility = 0;
+      meshes.push(mesh);
+    }
+    for (let i = 0; i < count && !arcs; i++) {
       const mesh = buildForm(this.scene, def);
       mesh.material = material;
       mesh.isPickable = false;
@@ -370,10 +414,11 @@ export class Objects3D {
       stop: () => this.fadeOut(live),
       remove: () => this.remove(live),
     };
-    const angles = def.billboard && count > 1 ? meshes.map((_, i) => (i / count) * Math.PI * 2) : null;
-    const live: Live = { object, angles, def, root, meshes, material, fit, age: 0, fading: null };
+    const angles = def.billboard && count > 1 && !arcs ? meshes.map((_, i) => (i / count) * Math.PI * 2) : null;
+    const live: Live = { object, angles, def, root, meshes, material, fit, age: 0, fading: null, arcs: arcs ? { wait: 0, lit: [] } : null };
     this.live.push(live);
     this.animate(live);
+    if (live.arcs) this.drawArcs(live);
     return object;
   }
 
@@ -388,7 +433,59 @@ export class Objects3D {
         continue;
       }
       this.animate(live);
+      if (live.arcs && (live.arcs.wait -= dt) <= 0) this.drawArcs(live);
     }
+  }
+
+  // Redessine les arcs électriques au hasard : chacun part d'un point du cercle vers un autre, en zigzag, à une
+  // hauteur au hasard ; ses bords font face à la caméra (un ruban plat, plus lumineux au milieu). Certains restent
+  // éteints jusqu'au prochain redessin (crépitement).
+  private drawArcs(live: Live) {
+    const def = live.def;
+    const arcs = live.arcs!;
+    arcs.wait = 1 / Math.max(1, def.flicker);
+    // Caméra dans le repère de l'objet (tourné et agrandi), pour orienter les rubans.
+    const camera = this.scene.activeCamera;
+    live.root.computeWorldMatrix(true);
+    live.root.getWorldMatrix().invertToRef(inverseRoot);
+    const eye = camera ? Vector3.TransformCoordinates(camera.globalPosition, inverseRoot) : new Vector3(0, 10, -10);
+    live.meshes.forEach((mesh, i) => {
+      arcs.lit[i] = Math.random() < 0.8;
+      const a0 = Math.random() * Math.PI * 2;
+      const span = def.span * DEG * (0.6 + 0.8 * Math.random()) * (Math.random() < 0.5 ? -1 : 1);
+      const r0 = def.ring * (0.7 + 0.3 * Math.random());
+      const r1 = def.ring * (0.7 + 0.3 * Math.random());
+      const h0 = Math.random() * def.size[1] * 0.3;
+      const h1 = Math.random() * def.size[1];
+      const start = new Vector3(Math.cos(a0) * r0, h0, Math.sin(a0) * r0);
+      const end = new Vector3(Math.cos(a0 + span) * r1, h1, Math.sin(a0 + span) * r1);
+      const jag = def.jag * Vector3.Distance(start, end);
+      const centre: Vector3[] = [];
+      for (let k = 0; k <= ARC_POINTS; k++) {
+        const t = k / ARC_POINTS;
+        const angle = a0 + span * t;
+        const radius = r0 + (r1 - r0) * t;
+        const point = new Vector3(Math.cos(angle) * radius, h0 + (h1 - h0) * t, Math.sin(angle) * radius);
+        // Coudes au hasard, sauf aux deux bouts.
+        if (k > 0 && k < ARC_POINTS) point.addInPlaceFromFloats((Math.random() - 0.5) * 2 * jag, (Math.random() - 0.5) * jag, (Math.random() - 0.5) * 2 * jag);
+        centre.push(point);
+      }
+      const left: Vector3[] = [];
+      const right: Vector3[] = [];
+      centre.forEach((point, k) => {
+        const previous = centre[Math.max(0, k - 1)];
+        const next = centre[Math.min(ARC_POINTS, k + 1)];
+        const along = next.subtract(previous);
+        const side = Vector3.Cross(along, eye.subtract(point));
+        // Plus fin aux deux bouts.
+        const width = def.thickness * (0.35 + 0.65 * Math.sin(Math.PI * (k / ARC_POINTS)));
+        side.normalize().scaleInPlace(width / 2);
+        left.push(point.subtract(side));
+        right.push(point.add(side));
+      });
+      CreateRibbon("object3d", { pathArray: [left, centre, right], instance: mesh });
+    });
+    this.animate(live);
   }
 
   dispose() {
@@ -434,7 +531,7 @@ export class Objects3D {
     const fadeOut = live.fading === null ? 1 : 1 - live.fading / Math.max(def.fadeOut, 1e-3);
     const pulse = 1 - def.pulse * (0.5 - 0.5 * Math.cos(age * Math.PI * 2));
     const visibility = Math.max(0, Math.min(fadeIn, fadeOut) * (1 + (def.endAlpha - 1) * life) * pulse);
-    for (const mesh of live.meshes) mesh.visibility = visibility;
+    live.meshes.forEach((mesh, i) => (mesh.visibility = live.arcs && !live.arcs.lit[i] ? 0 : visibility));
   }
 
   private fadeOut(live: Live) {
@@ -477,6 +574,9 @@ function buildForm(scene: Scene, def: ObjectDef): Mesh {
       mesh.bakeCurrentTransformIntoVertices();
       return mesh;
     }
+    case "arcs":
+      // Les arcs sont construits à part (createFromDef).
+      return CreateRibbon("object3d", { pathArray: arcPaths(ARC_POINTS) }, scene);
     case "crescent": {
       // Croissant dans le plan vertical, plus épais au milieu, effilé aux deux bouts.
       const outer: Vector3[] = [];
@@ -493,8 +593,50 @@ function buildForm(scene: Scene, def: ObjectDef): Mesh {
   }
 }
 
+// Points d'un arc électrique (et donc ses coudes).
+const ARC_POINTS = 10;
+const inverseRoot = new Matrix();
+
+// Trois chemins vides (bord, milieu, bord) d'un ruban d'arc, avant son premier dessin.
+function arcPaths(points: number): Vector3[][] {
+  return [0, 1, 2].map((side) => Array.from({ length: points + 1 }, (_, k) => new Vector3(k * 0.01, side * 0.01, 0)));
+}
+
+// Dégradé en travers d'un arc : lumineux au milieu, transparent aux bords (une texture par scène).
+const arcGlows = new WeakMap<Scene, DynamicTexture>();
+function arcGlow(scene: Scene): DynamicTexture {
+  let texture = arcGlows.get(scene);
+  if (!texture) {
+    texture = new DynamicTexture("arcGlow", { width: 4, height: 64 }, scene, false);
+    const ctx = texture.getContext() as CanvasRenderingContext2D;
+    const gradient = ctx.createLinearGradient(0, 0, 0, 64);
+    gradient.addColorStop(0, "black");
+    gradient.addColorStop(0.35, "rgb(90,90,90)");
+    gradient.addColorStop(0.5, "white");
+    gradient.addColorStop(0.65, "rgb(90,90,90)");
+    gradient.addColorStop(1, "black");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 4, 64);
+    texture.update();
+    arcGlows.set(scene, texture);
+  }
+  return texture;
+}
+
 function objectMaterial(scene: Scene, def: ObjectDef): StandardMaterial {
   const material = new StandardMaterial("object3d", scene);
+  if (def.form === "arcs") {
+    // Toujours lumineux et additionné : le dégradé (noir aux bords) disparaît sur le fond.
+    material.emissiveColor = Color3.FromHexString(def.color);
+    material.emissiveTexture = arcGlow(scene);
+    material.diffuseColor = Color3.Black();
+    material.specularColor = Color3.Black();
+    material.disableLighting = true;
+    material.backFaceCulling = false;
+    material.alpha = def.alpha;
+    material.alphaMode = Constants.ALPHA_ADD;
+    return material;
+  }
   const color = Color3.FromHexString(def.color);
   if (def.glow) {
     material.emissiveColor = color;

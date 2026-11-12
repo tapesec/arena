@@ -92,6 +92,9 @@ export class TargetVisuals {
   private areaCasts: AreaCast[] = [];
   // États en cours sur chaque joueur : type d'état → compétence d'origine et ses effets.
   private statuses = new Map<string, Map<string, StatusRun>>();
+  // Dernière position de chaque joueur, et depuis combien de temps il est immobile (effets « seulement en
+  // mouvement »).
+  private lastPositions = new Map<string, { x: number; z: number; still: number }>();
   // Dernière compétence (et son auteur) qui a atteint chaque joueur, pour chaque type d'état qu'elle laisse.
   private origins = new Map<string, Map<string, { abilityId: string; source: string }>>();
 
@@ -328,7 +331,15 @@ export class TargetVisuals {
       }
       if (!runs.size) this.statuses.delete(id);
     }
+    for (const id of this.lastPositions.keys()) if (!players.has(id)) this.lastPositions.delete(id);
     for (const [id, player] of players) {
+      const position = player.root.position;
+      const last = this.lastPositions.get(id);
+      const fast = !!last && dt > 0 && Math.hypot(position.x - last.x, position.z - last.z) / dt > MOVING_SPEED;
+      // Un arrêt très bref (demi-tour) ne coupe pas les effets : il faut rester immobile un moment.
+      const still = fast ? 0 : (last?.still ?? STILL_DELAY) + dt;
+      const moving = still < STILL_DELAY;
+      this.lastPositions.set(id, { x: position.x, z: position.z, still });
       if (!player.isAlive) continue;
       // Un même type d'état peut être là plusieurs fois (Renouveaux de lanceurs différents) : son suivi, rangé par
       // type, n'avance qu'une fois par image.
@@ -347,7 +358,7 @@ export class TargetVisuals {
         } else run.age += dt;
         if (run.entry?.status?.length) {
           run.player.updateTracks(player.character, [
-            { id: `${effect.kind}:${run.abilityId}`, effects: run.entry.status, time: run.age, ally: this.ally(player) },
+            { id: `${effect.kind}:${run.abilityId}`, effects: run.entry.status, time: run.age, ally: this.ally(player), moving },
           ]);
         }
       }
@@ -373,6 +384,11 @@ export class TargetVisuals {
     return candidates.find((id) => statusKindsOf(id).includes(kind)) ?? "";
   }
 }
+
+// Vitesse (m/s) au-delà de laquelle un joueur se déplace (pas un simple ajustement de position).
+const MOVING_SPEED = 0.5;
+// Temps (secondes) d'immobilité avant d'arrêter les effets « seulement en mouvement ».
+const STILL_DELAY = 0.2;
 
 // Hauteur du milieu du corps, pour un personnage pas encore chargé.
 const BODY_HEIGHT = 1.1;

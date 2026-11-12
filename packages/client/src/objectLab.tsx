@@ -87,7 +87,11 @@ export function ObjectEditor(props: {
         <div className="fx-row">
           <label className="fx-field">
             <span>Forme</span>
-            <select value={def.form} onChange={(e) => set("form", e.target.value as ObjectForm)}>
+            <select value={def.form} onChange={(e) => {
+                const form = e.target.value as ObjectForm;
+                // L'épaisseur n'a pas le même sens d'une forme à l'autre : les arcs reprennent la leur.
+                onChange({ ...def, form, ...(form === "arcs" && { thickness: BUILTIN_OBJECTS.sparkArcs.thickness }) });
+              }}>
               {Object.entries(FORMS).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
@@ -102,17 +106,30 @@ export function ObjectEditor(props: {
             </label>
           )}
         </div>
-        {["Largeur", "Hauteur", "Profondeur"].map((label, axis) => (
-          <Slider key={label} label={label} value={def.size[axis]} min={0.02} max={12} step={0.01} unit=" m" onChange={(v) => setAxis("size", axis, v)} />
-        ))}
+        {def.form === "arcs" ? (
+          <>
+            <Slider label="Nombre d'arcs" value={def.count} min={1} max={12} step={1} onChange={(v) => set("count", v)} />
+            <Slider label="Rayon autour du point d'accroche" value={def.ring} min={0.05} max={3} step={0.05} unit=" m" onChange={(v) => set("ring", v)} />
+            <Slider label="Hauteur maximale" value={def.size[1]} min={0} max={3} step={0.05} unit=" m" onChange={(v) => setAxis("size", 1, v)} />
+            <Slider label="Épaisseur du trait" value={def.thickness} min={0.01} max={0.3} step={0.005} unit=" m" onChange={(v) => set("thickness", v)} />
+            <Slider label="Longueur d'un arc (le long du cercle)" value={def.span} min={10} max={180} step={5} unit="°" onChange={(v) => set("span", v)} />
+            <Slider label="Zigzag (écart des coudes)" value={def.jag} min={0} max={0.8} step={0.05} onChange={(v) => set("jag", v)} />
+            <Slider label="Crépitement (redessins par seconde)" value={def.flicker} min={2} max={30} step={1} onChange={(v) => set("flicker", v)} />
+            <small className="lab-hint">Toujours lumineux et additionné ; redessinés au hasard, certains s'éteignent un instant.</small>
+          </>
+        ) : (
+          ["Largeur", "Hauteur", "Profondeur"].map((label, axis) => (
+            <Slider key={label} label={label} value={def.size[axis]} min={0.02} max={12} step={0.01} unit=" m" onChange={(v) => setAxis("size", axis, v)} />
+          ))
+        )}
         {def.form === "torus" && <Slider label="Épaisseur (part du diamètre)" value={def.thickness} min={0.005} max={0.5} step={0.005} onChange={(v) => set("thickness", v)} />}
         {def.form === "cylinder" && <Slider label="Diamètre du haut (part du bas)" value={def.thickness} min={0} max={3} step={0.05} onChange={(v) => set("thickness", v)} />}
         {def.form === "crescent" && <Slider label="Épaisseur au milieu" value={def.thickness} min={0.02} max={0.8} step={0.01} onChange={(v) => set("thickness", v)} />}
         {vertical && <small className="lab-hint">Posé sur sa base, au point d'accroche.</small>}
-        {AXES.map((axis, i) => (
+        {def.form !== "arcs" && AXES.map((axis, i) => (
           <Slider key={axis} label={`Inclinaison autour de ${axis}`} value={def.tilt[i]} min={-180} max={180} step={1} unit="°" onChange={(v) => setAxis("tilt", i, v)} />
         ))}
-        <div className="fx-row">
+        {def.form !== "arcs" && <div className="fx-row">
           <label className="fx-check">
             <input type="checkbox" checked={def.billboard} onChange={(e) => set("billboard", e.target.checked)} />
             Tourné vers la caméra
@@ -121,10 +138,10 @@ export function ObjectEditor(props: {
             <input type="checkbox" checked={def.roll} onChange={(e) => set("roll", e.target.checked)} />
             Rotation au hasard
           </label>
-        </div>
+        </div>}
       </div>
 
-      <div className="fx-group">
+      {def.form !== "arcs" && <div className="fx-group">
         <h4>Répétition en cercle</h4>
         <Slider label="Nombre" value={def.count} min={1} max={24} step={1} onChange={(v) => set("count", v)} />
         {def.count > 1 && (
@@ -140,7 +157,7 @@ export function ObjectEditor(props: {
             <button onClick={() => set("seed", def.seed + 1)}>Autre tirage</button>
           </div>
         )}
-      </div>
+      </div>}
 
       <div className="fx-group">
         <h4>Rendu</h4>

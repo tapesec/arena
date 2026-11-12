@@ -1160,6 +1160,7 @@ function roundEffect(effect: AnimationEffect): AnimationEffect {
       })),
     }),
     ...(effect.untilEnd && { untilEnd: true }),
+    ...(effect.movingOnly && { movingOnly: true }),
     ...(effect.fitZone && { fitZone: true }),
     ...(effect.tint && { tint: effect.tint }),
     ...(effect.teamColor && { teamColor: true }),
@@ -3506,6 +3507,20 @@ function EffectsPanel(props: {
                 }}
               />
               Jusqu'à la fin de l'état
+            </label>
+          )}
+          {kind === "status" && (
+            <label className="lab-check" title="En jeu, l'effet ne se montre que quand le personnage se déplace (ici, il est toujours montré)">
+              <input
+                type="checkbox"
+                checked={!!current.movingOnly}
+                onChange={(e) => {
+                  const next: AnimationEffect = { ...current, movingOnly: e.target.checked };
+                  if (!e.target.checked) delete next.movingOnly;
+                  replace(index, next);
+                }}
+              />
+              Seulement en mouvement
             </label>
           )}
           {kind === "zone" && (

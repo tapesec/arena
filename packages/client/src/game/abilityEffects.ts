@@ -135,6 +135,9 @@ export interface EffectTrack {
   ally?: boolean;
   // Sans les sons (pose figée de la page de réglage).
   silent?: boolean;
+  // Le personnage se déplace : sans ça (false), les effets « seulement en mouvement » s'arrêtent. Non précisé
+  // (page de réglage), ils jouent.
+  moving?: boolean;
 }
 
 // Écart de vitesse tiré au hasard à chaque lecture d'un son (un même son ne sonne jamais deux fois pareil).
@@ -215,7 +218,7 @@ export class AbilityEffectPlayer {
       const frame = track.zone ?? track.point;
       if (!character && !frame) continue;
       track.effects.forEach((effect, index) => {
-        if (!isActive(effect, track.time)) return;
+        if (!isActive(effect, track.time) || (effect.movingOnly && track.moving === false)) return;
         // Couleur imposée : celle du camp de celui qui porte l'effet, sinon la teinte réglée.
         const tint = effect.teamColor && track.ally !== undefined ? TEAM_COLORS[track.ally ? "ally" : "enemy"] : effect.tint;
         const key = `${track.id}:${index}:${effect.type ?? ""}${effect.recipe}:${tint ?? ""}:${effect.scale ?? 1}${track.silent ? ":muet" : ""}`;

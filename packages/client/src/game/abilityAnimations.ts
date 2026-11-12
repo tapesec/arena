@@ -151,6 +151,8 @@ export interface AnimationEffect {
   keys?: EffectKey[];
   // Pendant un état : l'effet dure jusqu'à la fin de l'état (end ne compte plus).
   untilEnd?: boolean;
+  // Pendant un état : l'effet ne se montre que quand le personnage se déplace (éclairs aux pieds du Sprint).
+  movingOnly?: boolean;
   // Sur une zone : l'effet prend le rayon de la zone.
   fitZone?: boolean;
   // Marque au sol ou objet 3D : couleur imposée (sinon, celle de la marque ou de l'objet), et taille (× la sienne).
