@@ -28,7 +28,7 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 - **Les zones de départ** : chaque équipe commence dans sa propre zone, aux deux extrémités de l'arène.
 - **La carte** (100 × 100 m, symétrique par rotation de 180°) : des ruines carrées au centre (une entrée par côté, un pilier au milieu), des piliers sur les approches, des murs et des blocs sur les flancs pour contourner à couvert, deux grandes zones ouvertes où un groupe est exposé, et un seul abri près de chaque zone de départ.
 - **Le relief** : un grand plateau de 3 m sur chaque flanc (dessus plat d'environ 14 × 16 m, rampes douces), une longue crête basse de 2 m entre chaque zone de départ et un flanc, et un large vallonnement de 1,5 m sur les approches du centre. Le centre, les zones de départ, les zones ouvertes et les abords des obstacles restent plats. Le relief bloque la ligne de vue (sorts et brouillard), calculée à hauteur des yeux (1,6 m) : on se cache derrière un plateau, on voit loin depuis son sommet. Les pentes ne ralentissent pas.
-- **La phase de préparation** : 10 s dans la zone de départ avant l'ouverture, pour former le plan et poser les buffs du Prêtre.
+- **La phase de préparation** : 15 s dans la zone de départ avant l'ouverture, pour former le plan et poser les buffs (Prêtre, Barde).
 - **La mort** : un joueur mort reste au sol jusqu'à la fin de la partie, sauf s'il est ressuscité. Aucune réapparition.
 - **La fin de partie** : dès qu'une équipe est entièrement morte, l'autre gagne.
 - **Mode développement** : possibilité de lancer une partie avec moins de 16 joueurs, pour tester.

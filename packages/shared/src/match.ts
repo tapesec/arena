@@ -12,7 +12,7 @@ export type MatchPhase = "waiting" | "classSelect" | "preparation" | "fighting" 
 export const MATCH_SIZE = 16;
 
 export const CLASS_SELECT_DURATION = 30;
-export const PREPARATION_DURATION = 10;
+export const PREPARATION_DURATION = 15;
 
 // Distance à laquelle un personnage voit les ennemis (si rien ne bloque la vue).
 export const VISION_RANGE = 35;
