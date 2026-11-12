@@ -1039,7 +1039,117 @@
           "rate": 1
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 0,
+          "end": 1.28,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "rate": 0.75
+        },
+        {
+          "type": "object",
+          "recipe": "slash1",
+          "start": 0,
+          "end": 2,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 0.517,
+          "end": 1.797,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 1.216,
+          "end": 2.496,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "object",
+          "recipe": "slash1",
+          "start": 1.55,
+          "end": 4.55,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Chest",
+          "start": 0,
+          "rate": 1,
+          "end": 0.25
+        },
+        "effects": [
+          {
+            "type": "object",
+            "recipe": "slash",
+            "start": 0.533,
+            "end": 1.533,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_01",
+            "start": 0.816,
+            "end": 2.286,
+            "anchor": "chest",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "status": [
+        {
+          "recipe": "poisonDrips1",
+          "start": 0,
+          "end": 8,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "untilEnd": true
+        }
+      ]
     },
     "kick": {
       "clips": [
@@ -1184,10 +1294,50 @@
       },
       "status": [
         {
-          "recipe": "healFlash",
+          "recipe": "poisonDrips",
           "start": 0,
           "end": 8,
           "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "untilEnd": true
+        }
+      ]
+    },
+    "rage": {
+      "clips": [
+        {
+          "animation": "MonsterTransformation",
+          "start": 0,
+          "end": 2.233,
+          "rate": 1.67
+        }
+      ],
+      "effects": [
+        {
+          "type": "sound",
+          "recipe": "DSGNStngr_Power_Up_Bright_Positive_Successful_Light_Saturation_Crash_Shimmer_05",
+          "start": 0,
+          "end": 1.52,
+          "anchor": "feet",
+          "offset": [
+            0,
+            1.1,
+            0
+          ],
+          "rate": 0.75,
+          "full": true
+        }
+      ],
+      "status": [
+        {
+          "recipe": "rageFlames",
+          "start": 0,
+          "end": 1,
+          "anchor": "feet",
           "offset": [
             0,
             0,
