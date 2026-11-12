@@ -418,8 +418,10 @@ export class CharacterAnimator {
     }
     const previous = this.current;
     const phase = keepPhase && previous && this.gaitKeys.has(this.currentKey) ? cyclePhase(previous) : null;
-    const start = phase === null ? undefined : group.from + phase * (group.to - group.from);
-    this.switchTo(group, key, loop, speedRatio, start);
+    this.switchTo(group, key, loop, speedRatio);
+    // La boucle garde toute l'animation : on saute seulement au même point du cycle (passer ce point comme image de
+    // départ ferait boucler l'animation entre lui et la fin).
+    if (phase !== null && speedRatio > 0) group.goToFrame(group.from + phase * (group.to - group.from));
   }
 
   // startFrame : image de départ (par défaut, la première) ; endFrame : image où s'arrêter (par défaut, la dernière).
