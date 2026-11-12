@@ -33,6 +33,9 @@ const WALK: Record<number, Gait> = {
   [-2]: { name: "Walk_L_Loop", speed: 0.65 },
   [-3]: { name: "Walk_Bwd_L_Loop", speed: 1.5 },
 };
+// Bonus de vitesse en avançant tout droit : au-delà de SPRINT_THRESHOLD (m/s), le personnage sprinte (même mesure).
+const SPRINT: Gait = { name: "Sprint_Loop", speed: 6.6 };
+const SPRINT_THRESHOLD = 8;
 // En dessous de cette part de la vitesse de course, le personnage marche plutôt que de courir au ralenti.
 const RUN_THRESHOLD = 0.47;
 // Au-delà, une animation accélérée devient ridicule (bonus de vitesse en pas de côté) : on accepte que les pieds
@@ -99,7 +102,8 @@ export class CharacterAnimator {
   // Direction (secteur de 45°, voir RUN) et allure (marche ou course) en cours.
   private sector = 0;
   private walking = false;
-  private readonly gaitKeys = new Set([...Object.values(RUN), ...Object.values(WALK)].map((gait) => gait.name));
+  private sprinting = false;
+  private readonly gaitKeys = new Set([...Object.values(RUN), ...Object.values(WALK), SPRINT].map((gait) => gait.name));
   private action: AnimationGroup | null = null;
   // Nature de l'action en cours : une réaction (coup reçu) cède la place aux actions du personnage ;
   // une auto-attaque ne coupe pas une compétence (la transformation de la Rage dure plus de 2 s).
@@ -270,6 +274,7 @@ export class CharacterAnimator {
     }
     const speed = Math.hypot(input.forward, input.right);
     if (speed < MOVING_SPEED) {
+      this.sprinting = false;
       // Un sort à geste d'incantation attend son geste dans la pose normale, sans l'incantation commune.
       const gestured = !!this.castGesture(input.castAbility);
       const cast = input.castAbility && !gestured ? (this.set.casts?.[input.castAbility] ?? CAST_LOOP) : "";
@@ -298,7 +303,10 @@ export class CharacterAnimator {
       else this.play(ROOT_WALK, true, rate);
       return;
     }
-    const gait = walking ? WALK[sector] : run;
+    // Même marge pour entrer dans le sprint et en sortir.
+    const sprintThreshold = SPRINT_THRESHOLD * (this.sprinting ? 1 - GAIT_MARGIN : 1 + GAIT_MARGIN);
+    this.sprinting = sector === 0 && speed > sprintThreshold;
+    const gait = walking ? WALK[sector] : this.sprinting ? SPRINT : run;
     this.play(gait.name, true, Math.min(speed / gait.speed, MAX_GAIT_RATE), gait.name, true);
   }
 
