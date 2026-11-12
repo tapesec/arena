@@ -44,3 +44,7 @@ sprint ← lorc/sprint
 poisonBlade ← lorc/dripping-blade
 gangrene ← lorc/virus
 armorBreak ← delapouite/armor-downgrade
+Effets sans compétence propre (icons/effects/) :
+stun ← delapouite/knocked-out-stars
+root ← delapouite/tree-roots
+snare ← lorc/snail

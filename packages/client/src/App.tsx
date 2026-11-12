@@ -3,6 +3,7 @@ import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/sh
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
+import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
@@ -129,6 +130,7 @@ function Hud() {
       <SpectatorBanner />
       <FlashMessage />
       <div className="hud-bottom">
+        <SelfAuras />
         <SelfCastBar />
         <SwingBar />
         <Hotbar />
@@ -296,7 +298,6 @@ function SelfPanel() {
       <Bar value={self.hp} max={self.maxHp} kind="hp" deadLabel="Mort" />
       {self.maxMana > 0 && <Bar value={self.mana} max={self.maxMana} kind="mana" />}
       {self.maxEndurance > 0 && <Bar value={self.endurance} max={self.maxEndurance} kind="endurance" />}
-      <EffectList effects={self.effects} />
     </div>
   );
 }
@@ -321,45 +322,16 @@ function TargetPanel() {
       </div>
       <Bar value={target.hp} max={target.maxHp} kind="hp" deadLabel="Mort" />
       {target.cast && <CastBar cast={target.cast} />}
-      <EffectList effects={target.effects} />
+      {target.effects.length > 0 && (
+        <div className="aura-list">
+          {target.effects.map((effect) => (
+            <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="target" timer />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-
-// Libellés courts des effets, pour la fenêtre de groupe (le libellé complet est en infobulle).
-const SHORT_EFFECT_LABELS: Record<string, string> = {
-  mez: "Mez",
-  stun: "Stun",
-  root: "Root",
-  snare: "Ral",
-  immuneMez: "iMez",
-  immuneStun: "iStun",
-  immuneRoot: "iRoot",
-  evasion: "Év",
-  rage: "Rage",
-  concentration: "Conc",
-  guarded: "Gard",
-  intercept: "Int",
-  buffHp: "PV",
-  buffStrength: "Pui",
-  renew: "Ren",
-  silenced: "Sil",
-  sprint: "Spr",
-  poisoned: "Poi",
-  gangrene: "Gang",
-  armorBroken: "Arm",
-  speed: "Vit",
-  secondWind: "Souf",
-  buffDexterity: "Dex",
-  oblivion: "Oubl",
-  ballad: "Bal",
-  bubble: "Bul",
-  taunted: "Prov",
-  halted: "Arrêt",
-  magicImmune: "iMag",
-  rampart: "Remp",
-  meleeImmune: "iCaC",
-};
 
 // Fenêtre de groupe : ses coéquipiers, cliquables pour les cibler (F2 à F8 au clavier).
 function GroupPanel() {
@@ -400,15 +372,9 @@ function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; h
       {member.maxEndurance > 0 && <MiniBar value={member.endurance} max={member.maxEndurance} kind="endurance" />}
       {!dead && member.effects.length > 0 && (
         <div className="group-effects">
-          {member.effects.map((effect, index) => (
-            <span
-              // Deux effets du même type peuvent coexister (Renouveau de deux Prêtres).
-              key={`${effect.kind}:${index}`}
-              className={`group-effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}
-              title={`${EFFECTS[effect.kind]?.label ?? effect.kind}${effect.remaining !== null ? ` (${effect.remaining}s)` : ""}`}
-            >
-              {SHORT_EFFECT_LABELS[effect.kind] ?? effect.kind}
-            </span>
+          {member.effects.map((effect) => (
+            // Deux effets du même type peuvent coexister (Renouveau de deux Prêtres) : un par lanceur.
+            <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="group" />
           ))}
         </div>
       )}
@@ -426,16 +392,67 @@ function MiniBar({ value, max, kind, label }: { value: number; max: number; kind
   );
 }
 
-function EffectList({ effects }: { effects: EffectFrame[] }) {
-  if (effects.length === 0) return null;
+// Effet affiché en icône (celle de la compétence qui le pose), bordée selon sa nature (contrôle, affaiblissement,
+// buff, immunité), avec un cadran qui se vide et, sur demande, le compte à rebours dessous ; il clignote dans ses
+// dernières secondes. Infobulle : nom, durée restante, qui l'a posé.
+const ENDING_SOON = 3;
+function EffectIcon({ effect, size, timer = false }: { effect: EffectFrame; size: "self" | "buff" | "target" | "group"; timer?: boolean }) {
+  const icon = effectIcon(effect.kind);
+  const label = EFFECTS[effect.kind]?.label ?? effect.kind;
+  const { remaining, duration } = effect;
+  const elapsed = remaining !== null && duration ? Math.min(1, Math.max(0, 1 - remaining / duration)) : 0;
+  const classes = [
+    "aura",
+    `aura-size-${size}`,
+    `aura-${EFFECTS[effect.kind]?.category ?? "buff"}`,
+    remaining === null && "aura-permanent",
+    remaining !== null && remaining < ENDING_SOON && "aura-ending",
+  ];
+  const title = `${label}${remaining !== null ? ` — ${formatRemaining(remaining)} s` : ""}${effect.source ? ` (${effect.source})` : ""}`;
   return (
-    <div className="effect-list">
-      {effects.map((effect, index) => (
-        <span key={`${effect.kind}:${index}`} className={`effect effect-${EFFECTS[effect.kind]?.category ?? "buff"}`}>
-          {EFFECTS[effect.kind]?.label ?? effect.kind}
-          {effect.remaining !== null && ` ${effect.remaining}s`}
-        </span>
-      ))}
+    <span className={classes.filter(Boolean).join(" ")} title={title}>
+      <span className="aura-box">
+        {icon ? (
+          <span className="aura-icon" style={{ color: icon.color }} dangerouslySetInnerHTML={{ __html: icon.svg }} />
+        ) : (
+          <span className="aura-icon aura-fallback">{label.slice(0, 3)}</span>
+        )}
+        {elapsed > 0 && <span className="aura-clock" style={{ background: `conic-gradient(rgba(0, 0, 0, 0.65) ${elapsed * 360}deg, transparent 0)` }} />}
+      </span>
+      {timer && remaining !== null && <span className="aura-time">{formatRemaining(remaining)}</span>}
+    </span>
+  );
+}
+
+// Secondes entières, au dixième dans les dernières secondes, en minutes au-delà d'une minute.
+function formatRemaining(seconds: number): string {
+  if (seconds >= 60) return `${Math.round(seconds / 60)} min`;
+  if (seconds >= ENDING_SOON) return String(Math.ceil(seconds));
+  return seconds.toFixed(1).replace(".", ",");
+}
+
+// Ses propres effets, juste au-dessus de la barre d'incantation : contrôles et affaiblissements au plus près (plus
+// grands), buffs au-dessus (ceux à durée d'abord, les permanents ensuite). Ses immunités ne sont pas montrées.
+function SelfAuras() {
+  const effects = useHudStore((s) => s.self?.effects);
+  if (!effects) return null;
+  const category = (effect: EffectFrame) => EFFECTS[effect.kind]?.category ?? "buff";
+  const afflictions = effects.filter((e) => category(e) === "control" || category(e) === "debuff");
+  const buffs = effects
+    .filter((e) => category(e) === "buff")
+    .sort((a, b) => (a.remaining === null ? 1 : 0) - (b.remaining === null ? 1 : 0));
+  return (
+    <div className="self-auras">
+      <div className="aura-row aura-row-buffs">
+        {buffs.map((effect) => (
+          <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="buff" timer />
+        ))}
+      </div>
+      <div className="aura-row">
+        {afflictions.map((effect) => (
+          <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="self" timer />
+        ))}
+      </div>
     </div>
   );
 }

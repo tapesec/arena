@@ -12,8 +12,13 @@ export interface CastFrame {
 
 export interface EffectFrame {
   kind: EffectKind;
-  // Secondes restantes arrondies, ou null pour un effet permanent.
+  // Secondes restantes (au dixième), ou null pour un effet permanent.
   remaining: number | null;
+  // Durée totale, ou null pour un effet permanent.
+  duration: number | null;
+  // Celui qui l'a posé : identifiant (clé d'affichage, un Renouveau par Prêtre) et nom (infobulle).
+  sourceId: string;
+  source: string;
 }
 
 export interface UnitFrame {

@@ -5,6 +5,8 @@ export const EffectState = schema(
   {
     kind: t.string().default(""),
     remaining: t.float32().default(0),
+    // Durée totale à la pose ou au dernier rafraîchissement (-1 = permanent) : cadran qui se vide dans le HUD.
+    duration: t.float32().default(-1),
     // Joueur à l'origine de l'effet (affichage du lien entre un Gardien et son protégé).
     source: t.string().default(""),
   },

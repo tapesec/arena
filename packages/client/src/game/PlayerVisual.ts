@@ -18,6 +18,8 @@ import { ABILITY_FX } from "./spellFx";
 export interface EffectView {
   kind: string;
   remaining: number;
+  // Durée totale (-1 = permanent).
+  duration: number;
   source: string;
 }
 

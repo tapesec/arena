@@ -568,10 +568,11 @@ export class Game {
     const now = performance.now();
     if (now - this.lastHudRefresh < HUD_REFRESH_MS) return;
     this.lastHudRefresh = now;
+    const nameOf = (id: string) => this.players.get(id)?.state.name ?? "";
 
     const selfFrame: SelfFrame | null = self
       ? {
-          ...unitFrame(self.state),
+          ...unitFrame(self.state, nameOf),
           classId: self.state.classId as ClassId,
           mana: Math.floor(self.state.mana),
           maxMana: self.state.maxMana,
@@ -589,7 +590,7 @@ export class Game {
     const targetFrame: TargetFrame | null =
       self && target
         ? {
-            ...unitFrame(target.state),
+            ...unitFrame(target.state, nameOf),
             isSelf: target === self,
             isAlly: target.state.team === self.state.team,
             distance: Math.round(distance(self.state, target.state)),
@@ -612,7 +613,7 @@ export class Game {
           endurance: Math.floor(p.state.endurance),
           maxEndurance: p.state.maxEndurance,
           casting: castFrame(p.state)?.abilityName ?? null,
-          effects: sortAfflictionsFirst(effectFrames(p.state)),
+          effects: sortAfflictionsFirst(effectFrames(p.state, nameOf, true)),
           inRange: distance(self.state, p.state) <= SPELL_RANGE && hasLineOfSight(self.state, p.state),
           isTarget: p === target,
         }))
@@ -655,14 +656,14 @@ export class Game {
   }
 }
 
-function unitFrame(state: PlayerView) {
+function unitFrame(state: PlayerView, nameOf: (id: string) => string) {
   return {
     name: state.name,
     className: getClass(state.classId)?.name ?? "",
     hp: state.hp,
     maxHp: state.maxHp,
     cast: castFrame(state),
-    effects: effectFrames(state),
+    effects: effectFrames(state, nameOf),
   };
 }
 
@@ -681,9 +682,20 @@ function castFrame(state: PlayerView): CastFrame | null {
   };
 }
 
-function effectFrames(state: PlayerView): EffectFrame[] {
+// Durée restante à la seconde, au dixième dans les dernières secondes (compte à rebours) : le HUD n'est pas redessiné
+// à chaque rafraîchissement. coarse : toujours à la seconde (fenêtre de groupe, sans chiffre).
+const FINE_COUNTDOWN = 3;
+function roundRemaining(remaining: number, coarse: boolean): number {
+  if (coarse || remaining >= FINE_COUNTDOWN) return Math.ceil(remaining);
+  return Math.max(0.1, Math.ceil(remaining * 10) / 10);
+}
+
+function effectFrames(state: PlayerView, nameOf: (id: string) => string, coarse = false): EffectFrame[] {
   return [...state.effects].map((e) => ({
     kind: e.kind as EffectKind,
-    remaining: e.remaining === PERMANENT ? null : Math.ceil(e.remaining),
+    remaining: e.remaining === PERMANENT ? null : roundRemaining(e.remaining, coarse),
+    duration: e.remaining === PERMANENT || !(e.duration > 0) ? null : e.duration,
+    sourceId: e.source,
+    source: nameOf(e.source),
   }));
 }

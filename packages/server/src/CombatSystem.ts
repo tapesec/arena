@@ -1105,12 +1105,14 @@ export class CombatSystem {
       existing.magic = magic;
       existing.ticks = undefined;
       existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
+      existing.view.duration = Number.isFinite(duration) ? duration : PERMANENT;
       existing.view.source = sourceId;
       return existing;
     }
     const view = new EffectState();
     view.kind = kind;
     view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
+    view.duration = Number.isFinite(duration) ? duration : PERMANENT;
     view.source = sourceId;
     player.state.effects.push(view);
     const effect: ActiveEffect = { kind, remaining: duration, duration, sourceId, value, magic, view };
