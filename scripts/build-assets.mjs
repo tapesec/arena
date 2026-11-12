@@ -1,7 +1,9 @@
 // Produit, à partir des fichiers bruts de assets-source/ (voir import-assets.sh), les modèles optimisés
 // chargés par le jeu, dans packages/client/public/models/ (ceux-là sont versionnés).
-// Usage : node scripts/build-assets.mjs
-import { copyFile, mkdir } from "node:fs/promises";
+// Usage : node scripts/build-assets.mjs              (tout)
+//         node scripts/build-assets.mjs --animations (seulement les bibliothèques d'animations, après un réglage
+//                                                     de animation-lab.html qui utilise une nouvelle animation)
+import { copyFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NodeIO } from "@gltf-transform/core";
@@ -63,6 +65,22 @@ const ANIMATIONS = {
     "MonsterTransformation",
   ],
 };
+
+// Animations choisies dans animation-lab.html (animationTuning.json : animations du geste et réaction de la cible) :
+// gardées aussi, dans la bibliothèque qui les contient (les animations Mixamo sont des fichiers à part).
+async function tunedAnimations() {
+  const tuning = JSON.parse(await readFile(path.join(ROOT, "packages/client/src/game/animationTuning.json"), "utf8"));
+  const names = new Set();
+  for (const entries of Object.values(tuning)) {
+    for (const entry of Object.values(entries)) {
+      // Ancien format (une seule animation) ou nouveau (suite d'animations).
+      if (entry.animation) names.add(entry.animation);
+      for (const clip of entry.clips ?? []) names.add(clip.animation);
+      if (entry.impact?.reaction?.animation) names.add(entry.impact.reaction.animation);
+    }
+  }
+  return names;
+}
 
 // Personnages : une tenue complète par classe (déjà assemblée sur le squelette). Les tenues n'ont pas de tête :
 // on y greffe celle du corps de base (body), avec ses yeux et sourcils, et des cheveux (hair).
@@ -430,6 +448,7 @@ async function buildAnimations(file, keep) {
   const root = doc.getRoot();
   const names = new Set(root.listAnimations().map((a) => a.getName()));
   const missing = keep.filter((name) => !names.has(name));
+  for (const name of await tunedAnimations()) if (names.has(name) && !keep.includes(name)) keep = [...keep, name];
   if (missing.length) throw new Error(`${file} : animations introuvables ${missing.join(", ")}`);
   for (const animation of root.listAnimations()) {
     if (keep.includes(animation.getName())) continue;
@@ -455,19 +474,24 @@ async function report(target) {
   console.log(`${target.padEnd(32)} ${(size / 1024 / 1024).toFixed(2)} Mo`);
 }
 
-await mkdir(path.join(OUT, "characters"), { recursive: true });
 await mkdir(path.join(OUT, "animations"), { recursive: true });
-await mkdir(path.join(OUT, "weapons"), { recursive: true });
-await mkdir(path.join(OUT, "ground"), { recursive: true });
-await buildGround();
-await mkdir(path.join(OUT, "village"), { recursive: true });
-await buildPieceLibrary("village/village.glb", VILLAGE_PIECES);
-await buildPieceLibrary("village/nature.glb", NATURE_PIECES);
+const onlyAnimations = process.argv.includes("--animations");
+if (!onlyAnimations) {
+  await mkdir(path.join(OUT, "characters"), { recursive: true });
+  await mkdir(path.join(OUT, "weapons"), { recursive: true });
+  await mkdir(path.join(OUT, "ground"), { recursive: true });
+  await buildGround();
+  await mkdir(path.join(OUT, "village"), { recursive: true });
+  await buildPieceLibrary("village/village.glb", VILLAGE_PIECES);
+  await buildPieceLibrary("village/nature.glb", NATURE_PIECES);
+}
 for (const [file, keep] of Object.entries(ANIMATIONS)) await buildAnimations(file, keep);
-for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
-for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
-for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`);
-for (const [id, source] of Object.entries(FBX_WEAPONS)) {
-  await copyFile(path.join(SOURCE, source), path.join(OUT, `weapons/${id}.fbx`));
-  report(`weapons/${id}.fbx`);
+if (!onlyAnimations) {
+  for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
+  for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
+  for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`);
+  for (const [id, source] of Object.entries(FBX_WEAPONS)) {
+    await copyFile(path.join(SOURCE, source), path.join(OUT, `weapons/${id}.fbx`));
+    report(`weapons/${id}.fbx`);
+  }
 }

@@ -12,6 +12,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { MIXAMO_ANIMATIONS, retargetMixamo } from "./mixamo";
 import type { Shadows } from "./shadows";
+import { TUNING } from "./tuning";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 
 // Modèles 3D produits par scripts/build-assets.mjs, servis depuis public/models/.
@@ -280,8 +281,9 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
 };
 
-// Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations).
-function usedAnimations(): Set<string> {
+// Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations), et de celles
+// choisies dans animation-lab.html (geste du lanceur, réaction de la cible).
+export function usedAnimations(): Set<string> {
   const names = new Set<string>();
   for (const { animations: set } of Object.values(CHARACTERS)) {
     names.add(set.idle);
@@ -293,6 +295,12 @@ function usedAnimations(): Set<string> {
       Object.values(set.stances ?? {}),
     ];
     for (const name of lists.flat()) if (name) names.add(name);
+  }
+  for (const entries of Object.values(TUNING)) {
+    for (const entry of Object.values(entries)) {
+      for (const clip of entry.clips) names.add(clip.animation);
+      if (entry.impact?.reaction) names.add(entry.impact.reaction.animation);
+    }
   }
   return names;
 }

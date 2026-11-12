@@ -99,7 +99,7 @@ import { CommonSoundsPane } from "./commonSoundsLab";
 audio.useMutedKey("arena.lab.muted");
 soundPlayer.setMuted(audio.settings.muted);
 import type { PlayerVisual } from "./game/PlayerVisual";
-import { CHARACTERS, CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
+import { CHARACTERS, CharacterAssets, usedAnimations, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
 import {
   BUILTIN_DEFS,
@@ -142,7 +142,9 @@ const IDLE_PAUSE = 0.8;
 // Pas de la timeline : une image d'animation à 60 images/s.
 const SNAP = 1 / 60;
 
-const IN_GAME = new Set((catalog as { name: string; inGame: boolean }[]).filter((a) => a.inGame).map((a) => a.name));
+// Animations chargées par le jeu (✓) : celles de ses bibliothèques, et celles des réglages enregistrés (ajoutées aux
+// bibliothèques par « node scripts/build-assets.mjs --animations »).
+const IN_GAME = new Set([...(catalog as { name: string; inGame: boolean }[]).filter((a) => a.inGame).map((a) => a.name), ...usedAnimations()]);
 
 interface FrameInfo {
   // Position de lecture (secondes) dans l'animation du lanceur, ou depuis le début du moment réglé ; null si rien

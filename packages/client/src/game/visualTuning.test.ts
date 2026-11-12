@@ -17,6 +17,7 @@ import soundCatalog from "../audio/soundCatalog.json";
 import samples from "../audio/samples.json";
 import { SOUNDS } from "../audio/sounds";
 import { BUILTIN_OVERLAYS } from "./overlays2d";
+import { MIXAMO_ANIMATIONS } from "./mixamo";
 
 // Les réglages enregistrés depuis animation-lab.html restent cohérents avec le jeu : chaque effet utilisé existe,
 // chaque moment réglé correspond à ce que fait la compétence.
@@ -180,6 +181,24 @@ test("animationTuning.json est au format actuel (suite d'animations)", () => {
   for (const [classId, entries] of Object.entries(animationTuning as Record<string, Record<string, unknown>>)) {
     for (const [abilityId, entry] of Object.entries(entries)) {
       assert.ok(Array.isArray((entry as AbilityAnimation).clips), `${classId}/${abilityId} : ancien format`);
+    }
+  }
+});
+
+// Le jeu n'embarque qu'une partie des bibliothèques d'animations (scripts/build-assets.mjs) : chaque animation
+// choisie dans animation-lab.html doit y être, sinon elle ne se joue pas en jeu. Si ce test échoue après un
+// réglage : node scripts/build-assets.mjs --animations.
+test("les animations réglées sont chargées par le jeu", () => {
+  const available = new Set(Object.keys(MIXAMO_ANIMATIONS));
+  for (const file of ["UAL1.glb", "UAL2.glb"]) {
+    const glb = readFileSync(fileURLToPath(new URL(`../../public/models/animations/${file}`, import.meta.url)));
+    const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString("utf8")) as { animations?: { name: string }[] };
+    for (const animation of json.animations ?? []) available.add(animation.name);
+  }
+  for (const [classId, entries] of Object.entries(tuning)) {
+    for (const [id, entry] of Object.entries(entries)) {
+      const names = [...entry.clips.map((clip) => clip.animation), ...(entry.impact?.reaction ? [entry.impact.reaction.animation] : [])];
+      for (const name of names) assert.ok(available.has(name), `${classId}/${id} : ${name} absente du jeu`);
     }
   }
 });
