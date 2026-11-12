@@ -726,5 +726,123 @@
       }
     ],
     "optional": true
+  },
+  "noteBurst1": {
+    "label": "Gerbe de notes  bleues",
+    "texture": "note",
+    "blend": "normal",
+    "emission": "continuous",
+    "rate": 20,
+    "count": 12,
+    "duration": 0,
+    "shape": "sphere",
+    "trail": false,
+    "radius": 0.4,
+    "innerRadius": 0,
+    "y": 0,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "random",
+    "spread": 0,
+    "speed": [
+      1,
+      2
+    ],
+    "gravity": 1,
+    "life": [
+      0.8,
+      1.2
+    ],
+    "size": [
+      0.3,
+      0.45
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#001eff",
+        "alpha": 1
+      },
+      {
+        "at": 0.7,
+        "color": "#0084ff",
+        "alpha": 0.9
+      },
+      {
+        "at": 1,
+        "color": "#1f2eff",
+        "alpha": 0
+      }
+    ],
+    "optional": false
+  },
+  "noteBurst": {
+    "label": "Gerbe de notes",
+    "texture": "note",
+    "blend": "normal",
+    "emission": "continuous",
+    "rate": 15,
+    "count": 14,
+    "duration": 0,
+    "shape": "sphere",
+    "trail": false,
+    "radius": 0.4,
+    "innerRadius": 0,
+    "y": 0,
+    "height": 0,
+    "arms": 0,
+    "spin": 0,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "core": 0,
+    "direction": "random",
+    "spread": 0,
+    "speed": [
+      1,
+      2
+    ],
+    "gravity": 1,
+    "life": [
+      0.8,
+      1.2
+    ],
+    "size": [
+      0.3,
+      0.45
+    ],
+    "growth": 1,
+    "rotation": [
+      0,
+      0
+    ],
+    "colors": [
+      {
+        "at": 0,
+        "color": "#ffe070",
+        "alpha": 1
+      },
+      {
+        "at": 0.7,
+        "color": "#ffb030",
+        "alpha": 0.9
+      },
+      {
+        "at": 1,
+        "color": "#ff9020",
+        "alpha": 0
+      }
+    ],
+    "optional": false
   }
 }
