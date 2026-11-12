@@ -2410,5 +2410,23 @@
   "category": "Attente / émote",
   "description": "Fait signe de la main (Mixamo : Waving).",
   "usedFor": "Cri de ralliement (Gardien)"
+ },
+ {
+  "name": "Mixamo_1H_Magic_Attack_01",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Lance un sort d'une main, debout (Mixamo : Standing 1H Magic Attack 01).",
+  "usedFor": ""
+ },
+ {
+  "name": "Mixamo_2H_Magic_Attack_01",
+  "pack": "Mixamo",
+  "inGame": false,
+  "loop": false,
+  "category": "Combat",
+  "description": "Lance un sort à deux mains, debout (Mixamo : Standing 2H Magic Attack 01).",
+  "usedFor": ""
  }
 ]
