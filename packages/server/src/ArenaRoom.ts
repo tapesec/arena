@@ -1,8 +1,8 @@
 import { Room, type Client } from "colyseus";
 import { StateView } from "@colyseus/schema";
 import {
-  CLASS_LIST,
-  CLASS_SELECT_DURATION,
+  FULL_LOBBY_COUNTDOWN,
+  LOBBY_DURATION,
   MATCH_SIZE,
   PREPARATION_DURATION,
   START_ZONES,
@@ -17,32 +17,33 @@ import {
 } from "@arena/shared";
 import { BotBrain } from "./bots/BotBrain";
 import { createBotBrain } from "./bots/classBots";
-import { pickBotClass } from "./bots/composition";
+import { botToReplace, initialBotClasses, pickBotClass } from "./bots/composition";
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime } from "./PlayerRuntime";
 import { ArenaState, PlayerState } from "./state";
+import { randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
-// Nombre de joueurs attendus pour lancer une partie, réductible pour tester (MATCH_SIZE=2).
+// Nombre de joueurs d'une partie (humains et bots), réductible pour tester (MATCH_SIZE=4).
 const MATCH_PLAYERS = Number(process.env.MATCH_SIZE ?? MATCH_SIZE);
+const TEAM_SIZE = Math.max(1, Math.floor(MATCH_PLAYERS / 2));
 
 // Durées des phases, réductibles pour tester (en secondes).
-const CLASS_SELECT_SECONDS = Number(process.env.CLASS_SELECT_DURATION ?? CLASS_SELECT_DURATION);
+const LOBBY_SECONDS = Number(process.env.LOBBY_DURATION ?? LOBBY_DURATION);
+const FULL_LOBBY_SECONDS = Number(process.env.FULL_LOBBY_COUNTDOWN ?? FULL_LOBBY_COUNTDOWN);
 const PREPARATION_SECONDS = Number(process.env.PREPARATION_DURATION ?? PREPARATION_DURATION);
-
-// En développement, un joueur peut lancer la partie avant qu'elle soit complète.
-const MIN_PLAYERS_FORCED_START = 2;
 
 // Une partie terminée ferme la salle après ce délai si les joueurs ne sont pas partis d'eux-mêmes.
 const ENDED_ROOM_LIFETIME_MS = 2 * 60 * 1000;
 
-// Une salle = une partie. Les joueurs y attendent, puis la salle se verrouille au lancement :
-// les suivants ouvrent une nouvelle partie. C'est la file d'attente.
+// Une salle = une partie. Elle s'ouvre avec deux équipes de bots ; chaque joueur qui arrive prend la place d'un bot de
+// l'équipe qui a le moins de joueurs, et choisit sa classe. La salle se verrouille au lancement : les suivants
+// ouvrent une nouvelle partie. C'est la file d'attente.
 export class ArenaRoom extends Room<{ state: ArenaState }> {
-  maxClients = MATCH_PLAYERS;
+  maxClients = TEAM_SIZE * 2;
   state = new ArenaState();
 
   private combat = new CombatSystem({
@@ -74,21 +75,20 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const player = this.state.players.get(client.sessionId);
       if (this.phase !== "classSelect" || !classDef || !player) return;
       player.classId = classDef.id;
-      // Tous les joueurs humains ont choisi : inutile d'attendre la fin du chrono.
-      let everyoneChose = true;
-      this.state.players.forEach((p) => (everyoneChose &&= p.isBot || p.classId !== ""));
-      if (everyoneChose) this.startPreparation();
     },
-    forceStart: () => {
-      if (IS_DEV && this.phase === "waiting" && this.state.players.size >= MIN_PLAYERS_FORCED_START) {
-        this.startClassSelect();
-      }
+    // Le chef d'équipe change la classe d'un bot de son équipe.
+    setBotClass: (client: Client, message: unknown) => {
+      const { botId, classId } = (message ?? {}) as { botId?: unknown; classId?: unknown };
+      const leader = this.state.players.get(client.sessionId);
+      const bot = typeof botId === "string" ? this.state.players.get(botId) : undefined;
+      const classDef = typeof classId === "string" ? getClass(classId) : undefined;
+      if (this.phase !== "classSelect" || !leader?.leader || !bot?.isBot || bot.team !== leader.team || !classDef) return;
+      bot.classId = classDef.id;
     },
-    // Complète la partie avec des bots et la lance.
-    addBots: () => {
-      if (!IS_DEV || this.phase !== "waiting") return;
-      while (this.state.players.size < MATCH_PLAYERS) this.addBot();
-      this.startClassSelect();
+    // En développement : lancer la partie sans attendre la fin du compte à rebours.
+    forceStart: (client: Client) => {
+      const player = this.state.players.get(client.sessionId);
+      if (IS_DEV && this.phase === "classSelect" && player?.leader) this.startPreparation();
     },
   };
 
@@ -96,14 +96,38 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private pathfinder = new Pathfinder();
   private bots: BotBrain[] = [];
   private botCount = 0;
+  // La salle a déjà été pleine (compte à rebours de FULL_LOBBY_SECONDS lancé).
+  private filledOnce = false;
+  // Ordre d'arrivée des joueurs : le premier de chaque équipe en est le chef.
+  private arrivals: string[] = [];
 
-  private addBot() {
+  private addBot(team: number, classId: ClassId) {
     const player = new PlayerState();
     player.colorIndex = this.nextColorIndex();
-    player.name = `Bot ${++this.botCount}`;
+    player.name = this.freshName();
     player.isBot = true;
-    this.state.players.set(`bot-${this.botCount}`, player);
-    this.state.playerCount = this.state.players.size;
+    player.team = team;
+    player.classId = classId;
+    this.state.players.set(`bot-${++this.botCount}`, player);
+  }
+
+  private humans(team?: number): number {
+    let count = 0;
+    this.state.players.forEach((p) => (count += !p.isBot && (team === undefined || p.team === team) ? 1 : 0));
+    return count;
+  }
+
+  // Le premier joueur arrivé dans chaque équipe (encore présent) en est le chef.
+  private updateLeaders() {
+    const leaders = new Set<string>();
+    const teamsWithLeader = new Set<number>();
+    for (const id of this.arrivals) {
+      const team = this.state.players.get(id)?.team;
+      if (team === undefined || teamsWithLeader.has(team)) continue;
+      teamsWithLeader.add(team);
+      leaders.add(id);
+    }
+    this.state.players.forEach((p, id) => (p.leader = leaders.has(id)));
   }
 
   private updateBots(dt: number) {
@@ -119,32 +143,66 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
 
   onCreate() {
     this.state.matchSize = MATCH_PLAYERS;
+    this.state.phaseTimeLeft = LOBBY_SECONDS;
+    for (const team of [0, 1]) for (const classId of initialBotClasses(TEAM_SIZE)) this.addBot(team, classId);
     this.setSimulationInterval((deltaMs) => this.update(deltaMs / 1000), 1000 / TICK_RATE);
     this.setPatchRate(1000 / TICK_RATE);
   }
 
   onJoin(client: Client) {
+    // L'équipe qui a le moins de joueurs ; le nouveau venu prend la place d'un de ses bots.
+    const team = this.humans(0) <= this.humans(1) ? 0 : 1;
+    const bots = [...this.state.players.entries()].filter(([, p]) => p.isBot && p.team === team);
+    const replaced = bots[botToReplace(bots.map(([, p]) => p.classId as ClassId))];
     const player = new PlayerState();
-    player.colorIndex = this.nextColorIndex();
-    player.name = `Joueur ${player.colorIndex + 1}`;
+    // Nom tiré avant de retirer le bot : le joueur ne reprend pas le sien.
+    player.name = this.freshName();
+    if (replaced) this.state.players.delete(replaced[0]);
+    player.colorIndex = replaced?.[1].colorIndex ?? this.nextColorIndex();
+    player.team = team;
     this.state.players.set(client.sessionId, player);
-    this.state.playerCount = this.state.players.size;
+    this.arrivals.push(client.sessionId);
+    this.updateLeaders();
+    this.state.playerCount = this.humans();
 
-    // Chaque client a sa propre vue de l'état ; au départ, il ne voit que lui-même.
+    // Chaque client a sa propre vue de l'état ; il y voit ses coéquipiers (updateViews).
     client.view = new StateView();
     client.view.add(player);
     console.log(`[arena ${this.roomId}] ${player.name} a rejoint (${this.state.playerCount}/${MATCH_PLAYERS})`);
 
-    if (this.state.playerCount >= MATCH_PLAYERS) this.startClassSelect();
+    // Salle pleine : la partie part bientôt, le temps que le dernier arrivé choisisse sa classe.
+    // Seulement la première fois : un joueur qui part et revient ne peut pas retarder la partie sans fin.
+    if (this.state.playerCount >= this.maxClients && !this.filledOnce) {
+      this.filledOnce = true;
+      this.state.phaseTimeLeft = FULL_LOBBY_SECONDS;
+    }
   }
 
   onLeave(client: Client) {
-    const name = this.state.players.get(client.sessionId)?.name;
+    const player = this.state.players.get(client.sessionId);
     this.combat.remove(client.sessionId);
     this.state.players.delete(client.sessionId);
-    this.state.playerCount = this.state.players.size;
-    console.log(`[arena ${this.roomId}] ${name} est parti (${this.state.playerCount} joueurs)`);
-    if (this.phase !== "waiting" && this.phase !== "ended") this.checkForWinner();
+    this.arrivals = this.arrivals.filter((id) => id !== client.sessionId);
+    // Dans la salle d'attente, un bot reprend la place libérée, avec la classe qui manque le plus à l'équipe.
+    if (player && this.phase === "classSelect") this.addBot(player.team, pickBotClass(this.teamClasses(player.team)));
+    this.updateLeaders();
+    this.state.playerCount = this.humans();
+    console.log(`[arena ${this.roomId}] ${player?.name} est parti (${this.state.playerCount} joueurs)`);
+    if (this.phase !== "classSelect" && this.phase !== "ended") this.checkForWinner();
+  }
+
+  private teamClasses(team: number): ClassId[] {
+    const classes: ClassId[] = [];
+    this.state.players.forEach((p) => {
+      if (p.team === team && p.classId) classes.push(p.classId as ClassId);
+    });
+    return classes;
+  }
+
+  private freshName(): string {
+    const taken = new Set<string>();
+    this.state.players.forEach((p) => taken.add(p.name));
+    return randomName(taken);
   }
 
   private update(dt: number) {
@@ -163,7 +221,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
         this.checkForWinner();
         break;
     }
-    if (this.phase !== "waiting") this.updateViews();
+    this.updateViews();
   }
 
   // Décompte la phase en cours ; retourne vrai quand le temps est écoulé.
@@ -174,18 +232,9 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
 
   // --- Phases ---
 
-  private startClassSelect() {
+  private startPreparation() {
     // Plus personne ne peut rejoindre cette partie.
     void this.lock();
-    this.state.phase = "classSelect";
-    this.state.phaseTimeLeft = CLASS_SELECT_SECONDS;
-
-    // Équipes tirées au hasard, en alternant pour qu'elles soient équilibrées.
-    const ids = shuffle([...this.state.players.keys()]);
-    ids.forEach((id, index) => (this.state.players.get(id)!.team = index % 2));
-  }
-
-  private startPreparation() {
     this.state.phase = "preparation";
     this.state.phaseTimeLeft = PREPARATION_SECONDS;
 
@@ -193,20 +242,9 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     const teamSizes = [0, 0];
     this.state.players.forEach((p) => teamSizes[p.team]++);
 
-    // Classe tirée au hasard pour les joueurs qui n'ont pas choisi à temps.
+    // Les joueurs qui n'ont pas choisi à temps prennent la classe qui manque le plus à leur équipe.
     this.state.players.forEach((player) => {
-      if (!player.isBot && !getClass(player.classId)) {
-        player.classId = CLASS_LIST[Math.floor(Math.random() * CLASS_LIST.length)].id;
-      }
-    });
-    // Les bots choisissent ensuite, pour compléter la composition de leur équipe.
-    this.state.players.forEach((player) => {
-      if (!player.isBot) return;
-      const teamClasses: ClassId[] = [];
-      this.state.players.forEach((p) => {
-        if (p.team === player.team && p.classId) teamClasses.push(p.classId as ClassId);
-      });
-      player.classId = pickBotClass(teamClasses);
+      if (!getClass(player.classId)) player.classId = pickBotClass(this.teamClasses(player.team));
     });
 
     this.state.players.forEach((player, id) => {
@@ -311,14 +349,6 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     while (used.has(index)) index++;
     return index;
   }
-}
-
-function shuffle<T>(items: T[]): T[] {
-  for (let i = items.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-  return items;
 }
 
 // Ne jamais faire confiance au client : on reconstruit un input propre.

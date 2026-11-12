@@ -1,17 +1,20 @@
 import type { Position } from "./movement";
 
 // Déroulement d'une partie :
-// - waiting : file d'attente, jusqu'à ce que la partie soit complète
-// - classSelect : chaque joueur choisit sa classe, sans voir celles des adversaires
+// - classSelect : salle d'attente. Les équipes sont complétées par des bots, qui cèdent leur place aux joueurs qui
+//   arrivent ; chacun choisit sa classe et voit celles de ses coéquipiers, pas celles des adversaires
 // - preparation : les équipes se préparent dans leur zone de départ (buffs, plan)
 // - fighting : combat, sans réapparition
 // - ended : une équipe a été entièrement éliminée
-export type MatchPhase = "waiting" | "classSelect" | "preparation" | "fighting" | "ended";
+export type MatchPhase = "classSelect" | "preparation" | "fighting" | "ended";
 
-// Nombre de joueurs pour lancer une partie (2 équipes de 8).
+// Nombre de joueurs dans une partie (2 équipes de 8, complétées par des bots).
 export const MATCH_SIZE = 16;
 
-export const CLASS_SELECT_DURATION = 30;
+// La salle d'attente dure au plus LOBBY_DURATION secondes ; quand elle est pleine (plus aucun bot), la partie part
+// FULL_LOBBY_COUNTDOWN secondes plus tard, pour laisser le dernier arrivé choisir sa classe.
+export const LOBBY_DURATION = 60;
+export const FULL_LOBBY_COUNTDOWN = 30;
 export const PREPARATION_DURATION = 15;
 
 // Distance à laquelle un personnage voit les ennemis (si rien ne bloque la vue).

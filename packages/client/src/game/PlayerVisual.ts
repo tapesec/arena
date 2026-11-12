@@ -27,6 +27,7 @@ export interface EffectView {
 export interface PlayerView {
   name: string;
   isBot: boolean;
+  leader: boolean;
   classId: string;
   team: number;
   x: number;

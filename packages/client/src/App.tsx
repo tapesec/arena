@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass } from "@arena/shared";
+import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
@@ -113,7 +113,7 @@ function Hud() {
 
   if (status === "connecting") return <div className="screen">Connexion au serveur…</div>;
   if (status === "error") return <ErrorScreen message={error} />;
-  if (!phase || phase === "waiting") return <WaitingScreen />;
+  if (!phase) return <div className="screen">Connexion à la partie…</div>;
   if (phase === "classSelect") return <ClassSelectScreen />;
 
   return (
@@ -156,47 +156,29 @@ function ErrorScreen({ message }: { message: string | null }) {
 
 // --- Avant le combat ---
 
-function WaitingScreen() {
-  const match = useHudStore((s) => s.match);
-  const actions = useHudStore((s) => s.actions);
-  const leaveGame = useHudStore((s) => s.leaveGame);
-  const count = match?.playerCount ?? 0;
-  return (
-    <div className="screen">
-      <h1>En attente de joueurs</h1>
-      <p className="screen-text">
-        {count} / {match?.matchSize ?? "?"} joueurs
-      </p>
-      <p className="screen-hint">La partie commence dès qu'elle est complète.</p>
-      {import.meta.env.DEV && (
-        <div className="button-row">
-          <button className="secondary-button" disabled={count < 2} onClick={() => actions?.forceStart()}>
-            Lancer maintenant (test)
-          </button>
-          <button className="secondary-button" onClick={() => actions?.addBots()}>
-            Compléter avec des bots
-          </button>
-        </div>
-      )}
-      <button className="link-button" onClick={leaveGame}>
-        Quitter la file
-      </button>
-    </div>
-  );
-}
-
+// Salle d'attente : chacun choisit sa classe pendant que les joueurs arrivent (ils remplacent des bots). Le chef
+// d'équipe choisit la classe des bots de son équipe. La composition adverse reste cachée.
 function ClassSelectScreen() {
   const match = useHudStore((s) => s.match);
   const teammates = useHudStore((s) => s.teammates);
   const actions = useHudStore((s) => s.actions);
-  const myClass = teammates.find((t) => t.isSelf)?.classId ?? "";
+  const leaveGame = useHudStore((s) => s.leaveGame);
+  const self = teammates.find((t) => t.isSelf);
+  const myClass = self?.classId ?? "";
   const team = match?.team ?? 0;
+  // Joueurs de son équipe seulement : le nombre total trahirait combien de bots il y a en face.
+  const humans = teammates.filter((t) => !t.isBot).length;
+  const full = (match?.matchSize ?? 0) > 0 && (match?.playerCount ?? 0) >= (match?.matchSize ?? 0);
 
   return (
     <div className="screen">
       <h1>Choisissez votre classe</h1>
       <p className="screen-text">
-        Équipe <span className={`team-name team-${team}`}>{TEAM_NAMES[team]}</span> · {match?.timeLeft ?? 0} s
+        Équipe <span className={`team-name team-${team}`}>{TEAM_NAMES[team]}</span> · La partie commence dans{" "}
+        <strong className="lobby-countdown">{match?.timeLeft ?? 0} s</strong>
+      </p>
+      <p className="screen-hint">
+        {full ? "Salle complète." : `${humans} / ${teammates.length} joueurs dans votre équipe · les places libres sont tenues par des bots.`}
       </p>
       <div className="class-list">
         {CLASS_LIST.map((c) => (
@@ -219,15 +201,45 @@ function ClassSelectScreen() {
       </div>
       <div className="roster">
         <h2>Votre équipe</h2>
-        {teammates.map((t, i) => (
-          <div key={i} className="roster-line">
-            {t.name}
-            {t.isSelf && " (vous)"} :{" "}
-            <strong>{t.classId ? getClass(t.classId)?.name : t.isBot ? "choix automatique" : "…"}</strong>
+        {teammates.map((t) => (
+          <div key={t.id} className={`roster-line ${t.isSelf ? "roster-self" : ""}`}>
+            <span className="roster-name">
+              {t.name}
+              {t.isSelf && <span className="roster-tag">vous</span>}
+              {t.leader && <span className="roster-tag roster-leader">chef</span>}
+              {t.isBot && <span className="roster-tag roster-bot">bot</span>}
+            </span>
+            {t.isBot && self?.leader ? (
+              <select
+                className="roster-select"
+                value={t.classId}
+                onChange={(e) => {
+                  audio.play(UI_SOUNDS.click);
+                  actions?.setBotClass(t.id, e.target.value as ClassId);
+                }}
+              >
+                {CLASS_LIST.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <strong className="roster-class">{t.classId ? getClass(t.classId)?.name : "choisit…"}</strong>
+            )}
           </div>
         ))}
+        {self?.leader && <p className="screen-hint">Vous êtes chef d'équipe : vous choisissez la classe des bots.</p>}
         <p className="screen-hint">La composition adverse reste cachée jusqu'à la rencontre.</p>
       </div>
+      {import.meta.env.DEV && self?.leader && (
+        <button className="secondary-button" onClick={() => actions?.forceStart()}>
+          Lancer maintenant (test)
+        </button>
+      )}
+      <button className="link-button" onClick={leaveGame}>
+        Quitter la file
+      </button>
     </div>
   );
 }

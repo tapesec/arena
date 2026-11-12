@@ -23,8 +23,11 @@ Un jeu de combat PvP en groupes, inspiré du combat de groupe de Dark Age of Cam
 
 ## Format de jeu : arène 8v8 avec roaming
 
-- **Matchmaking** : les joueurs rejoignent une file d'attente sans choisir de classe. La partie ne démarre que lorsque **16 joueurs** ont été trouvés, répartis en **2 équipes de 8**. Aucune notion de classement ni de niveau : les 16 premiers joueurs de la file forment la partie.
-- **Choix des classes** : une fois les équipes formées, chaque joueur choisit sa classe en même temps que les autres. Il voit les choix de ses coéquipiers, mais **pas ceux de l'équipe adverse**, qui ne découvre la composition d'en face qu'en la croisant dans l'arène. 30 s pour choisir, classe aléatoire si le temps est écoulé.
+- **Matchmaking** : les joueurs rejoignent une file d'attente sans choisir de classe. Une partie oppose **2 équipes de 8**, complétées par des **bots**. Aucune notion de classement ni de niveau. Chaque joueur reçoit un **pseudo de fantasy aléatoire** (les bots aussi, marqués « bot »).
+- **Salle d'attente et choix des classes** : la salle s'ouvre avec le premier joueur ; chaque équipe est alors remplie de bots : une classe de chaque, un second Prêtre et des Lames ou Arcanistes tirés au hasard. Chaque joueur qui arrive rejoint l'équipe qui a le moins de joueurs et y prend la place d'un bot, en commençant par les doublons (Lame ou Arcaniste en double, puis Prêtre en double), puis Lame, Arcaniste, Barde, Gardien et Prêtre. Un joueur qui part est remplacé par un bot de la classe qui manque le plus à l'équipe.
+  - Chacun choisit sa classe (et peut en changer) pendant que les autres arrivent. Il voit les choix de ses coéquipiers, mais **pas ceux de l'équipe adverse**, qui ne découvre la composition d'en face qu'en la croisant dans l'arène.
+  - Le **chef d'équipe** (premier joueur arrivé dans l'équipe, puis le suivant s'il part) choisit la classe des bots de son équipe.
+  - **Compte à rebours** toujours affiché : la partie part au bout d'**1 min**, ou **30 s** après que la salle est pleine (plus aucun bot), pour laisser le dernier arrivé choisir. Un joueur qui n'a pas choisi prend la classe qui manque le plus à son équipe.
 - **Composition** : doublons autorisés sans limite.
 - **Pas de score** pour le prototype : une partie se gagne ou se perd, c'est tout.
 - **L'arène** : une grande carte de 100 × 100 m, symétrique par rotation de 180°. Au centre, un **hameau** : une grande place pavée dégagée (28 m de diamètre, deux étals sur ses bords) entourée de six maisons fermées (deux grandes de 8 × 8 m face aux départs, deux moyennes, deux petites). Par moitié de carte, la place a une large entrée, un coin ouvert et une ruelle étroite de 3 m ; la grande maison cache la place à qui arrive de son départ. Autour : piles de caisses sur les approches, murets et cabanes sur les flancs, une palissade près de chaque départ. La carte est couverte d'un **brouillard de guerre**. Chaque équipe ne voit que ce que ses membres voient : il faut se déplacer et explorer pour trouver l'équipe adverse. À l'écran, le sol est assombri hors de la vue de son équipe (35 m autour de chaque allié vivant, masqué derrière les obstacles).
@@ -178,10 +181,9 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - **Garde** : utiliser Garde sur l'allié déjà protégé retire la protection.
 - **Chants du Barde** : s'activent et se désactivent avec leur touche.
 - **Soins et buffs** : sans allié ciblé, ils s'appliquent au lanceur.
-- **Équipes provisoires** : attribuées automatiquement à l'arrivée (l'équipe la moins nombreuse), en attendant le matchmaking.
 
 ## Bots
-- Ils jouent avec les mêmes commandes que les joueurs et ne voient que ce que leur équipe voit. Un bouton permet de compléter la partie avec des bots.
+- Ils jouent avec les mêmes commandes que les joueurs et ne voient que ce que leur équipe voit. Ils complètent les équipes dès l'ouverture de la salle et cèdent leur place aux joueurs (voir Salle d'attente).
 - Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes réveillent un allié mezzé, lancent la Ballade quand au moins trois alliés sont entravés, cherchent le mez de zone, puis l'Oubli sur un lanceur qui incante, et posent le Buff dextérité quand ils ont du mana. Les Lames enchaînent leurs combos, donnent un Coup de pied à un lanceur qui incante et sprintent vers une cible lointaine. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
 - **Erreur humaine** : un ennemi qui apparaît n'est remarqué qu'après 0,3 à 0,8 s. Une décision sur sept environ est sautée (hésitation), ce qui retarde aussi soins, fuites et interruptions. En changeant de cible, un bot prend parfois (15 %) un ennemi au hasard.
 - Pas de niveau de difficulté pour le moment.

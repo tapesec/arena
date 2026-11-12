@@ -172,7 +172,7 @@ export class Game {
     useHudStore.getState().setActions({
       selectClass: (classId) => this.room.send("selectClass", { classId }),
       forceStart: () => this.room.send("forceStart"),
-      addBots: () => this.room.send("addBots"),
+      setBotClass: (botId, classId) => this.room.send("setBotClass", { botId, classId }),
       selectTarget: (playerId) => this.setTarget(playerId),
       castAbility: (abilityId) => this.room.send("cast", { abilityId }),
     });
@@ -639,11 +639,15 @@ export class Game {
       ? [...this.players.values()]
           .filter((p) => p.state.team === self.state.team)
           .map((p) => ({
+            id: p.sessionId,
             name: p.state.name,
             classId: p.state.classId as ClassId | "",
             isSelf: p === self,
             isBot: p.state.isBot,
+            leader: p.state.leader,
           }))
+          // Soi-même, puis les autres joueurs, puis les bots.
+          .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || Number(a.isBot) - Number(b.isBot))
       : [];
 
     // On ne prévient React que si quelque chose a réellement changé.

@@ -92,17 +92,21 @@ export interface GroupMemberFrame {
 
 // Membre de son équipe, affiché pendant le choix des classes.
 export interface TeammateFrame {
+  id: string;
   name: string;
   classId: ClassId | "";
   isSelf: boolean;
   isBot: boolean;
+  // Chef d'équipe : il choisit la classe des bots.
+  leader: boolean;
 }
 
 // Commandes que l'interface peut envoyer au serveur, fournies par le jeu une fois connecté.
 export interface GameActions {
   selectClass: (classId: ClassId) => void;
   forceStart: () => void;
-  addBots: () => void;
+  // Chef d'équipe : changer la classe d'un bot de son équipe.
+  setBotClass: (botId: string, classId: ClassId) => void;
   // Cibler un joueur (clic dans la fenêtre de groupe).
   selectTarget: (playerId: string) => void;
   // Lancer une compétence (clic sur la barre d'action).

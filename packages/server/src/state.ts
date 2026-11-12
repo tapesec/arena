@@ -21,6 +21,8 @@ export const PlayerState = schema(
     name: t.string().default(""),
     // Joueur contrôlé par le serveur.
     isBot: t.boolean().default(false),
+    // Chef d'équipe (premier joueur arrivé dans l'équipe) : il choisit la classe des bots de son équipe.
+    leader: t.boolean().default(false),
     classId: t.string().default(""),
     team: t.uint8().default(0),
     x: t.float32().default(0),
@@ -63,11 +65,11 @@ export type PlayerState = SchemaType<typeof PlayerState>;
 export const ArenaState = schema(
   {
     // Phase de la partie (voir MatchPhase) et secondes restantes avant la suivante.
-    phase: t.string().default("waiting"),
+    phase: t.string().default("classSelect"),
     phaseTimeLeft: t.float32().default(0),
     // Équipe gagnante une fois la partie terminée (-1 tant qu'il n'y en a pas).
     winner: t.int8().default(-1),
-    // Nombre de joueurs dans la partie et nombre attendu pour la lancer.
+    // Nombre de joueurs humains dans la partie et nombre maximal (le reste est joué par des bots).
     playerCount: t.uint8().default(0),
     matchSize: t.uint8().default(0),
     // Filtrée par client (StateView) : chacun ne reçoit que les joueurs que son équipe voit.
