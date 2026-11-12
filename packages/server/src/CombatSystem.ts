@@ -581,6 +581,8 @@ export class CombatSystem {
         this.noteHostileAction(target);
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
         this.addEffect(target, "silenced", effect.duration, caster.id, 0, magic);
+        // Le chant du Barde se tait : il ne peut pas le relancer tant que dure le silence (c'est une compétence à mana).
+        target.state.songActive = false;
         if (target.state.castAbility && !target.castProtected) this.interrupt(target, "silence");
         this.emit({ kind: "cc", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "silenced" });
         break;

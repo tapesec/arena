@@ -902,6 +902,20 @@ describe("Lame", () => {
     assert.equal(enemy.state.castAbility, "");
   });
 
+  it("silence : le chant du Barde se coupe et ne peut pas être relancé pendant l'effet", () => {
+    const lame = world.spawn("l", "lame", 0, 0, -2, 0);
+    const barde = world.spawn("b", "barde", 1, 0, 0, Math.PI);
+    world.cast(barde, "speedSong");
+    assert.ok(barde.state.songActive);
+    world.cast(lame, "kick", barde);
+    assert.ok(!barde.state.songActive);
+    world.cast(barde, "speedSong");
+    assert.ok(!barde.state.songActive);
+    world.run(10.1);
+    world.cast(barde, "speedSong");
+    assert.ok(barde.state.songActive);
+  });
+
   it("Sprint sous snare : vitesse × 2 × 0,6", () => {
     const lame = world.spawn("l", "lame", 0, 0, 0, 0);
     const enemy = world.spawn("e", "lame", 1, 2, 0, -Math.PI / 2);

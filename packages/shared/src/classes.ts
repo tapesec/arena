@@ -69,7 +69,8 @@ const list: ClassDef[] = [
     maxHp: 1300,
     resource: "endurance",
     autoAttack: { damage: 70, interval: 2 },
-    abilities: ["backstab", "flankStrike", "evasion", "kick", "sprint", "poisonBlade", "gangrene", "armorBreak", "rage"],
+    abilities: ["backstab", "flankStrike", "evasion", "kick", "sprint", "poisonBlade", "gangrene", "rage"],
+    unlockable: ["armorBreak"],
     passives: [],
   },
 ];
