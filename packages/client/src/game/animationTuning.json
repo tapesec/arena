@@ -832,6 +832,286 @@
       }
     }
   },
+  "lame": {
+    "backstab": {
+      "clips": [
+        {
+          "animation": "Sword_Regular_C",
+          "start": 0,
+          "end": 2,
+          "rate": 1.39
+        }
+      ],
+      "effects": [
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 0,
+          "end": 1.28,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "rate": 0.75
+        },
+        {
+          "type": "object",
+          "recipe": "slash1",
+          "start": 0,
+          "end": 2,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 0.517,
+          "end": 1.797,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Chest",
+          "start": 0,
+          "rate": 1,
+          "end": 0.25
+        },
+        "effects": [
+          {
+            "type": "object",
+            "recipe": "slash",
+            "start": 0.533,
+            "end": 1.533,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_01",
+            "start": 0.816,
+            "end": 2.286,
+            "anchor": "chest",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    },
+    "evasion": {
+      "clips": [
+        {
+          "animation": "Roll",
+          "start": 0,
+          "end": 1.467,
+          "rate": 1
+        }
+      ],
+      "effects": [
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 0,
+          "end": 1.28,
+          "anchor": "feet",
+          "offset": [
+            0,
+            1.1,
+            0
+          ],
+          "full": true
+        }
+      ],
+      "impact": {
+        "effects": []
+      },
+      "status": [
+        {
+          "recipe": "effet6",
+          "start": 0,
+          "end": 8,
+          "anchor": "feet",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "untilEnd": true
+        }
+      ]
+    },
+    "flankStrike": {
+      "clips": [
+        {
+          "animation": "Sword_Regular_B",
+          "start": 0,
+          "end": 0.533,
+          "rate": 0.41
+        }
+      ],
+      "effects": [
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_26",
+          "start": 0,
+          "end": 0.82,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "rate": 0.75
+        },
+        {
+          "type": "object",
+          "recipe": "slash2",
+          "start": 0.55,
+          "end": 2.55,
+          "anchor": "hands",
+          "offset": [
+            0.75,
+            0,
+            0.04
+          ]
+        }
+      ],
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Chest",
+          "start": 0,
+          "rate": 1,
+          "end": 0.25
+        },
+        "effects": [
+          {
+            "type": "object",
+            "recipe": "slash",
+            "start": 0.533,
+            "end": 1.533,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "WEAPSwrd_SwordStabwWhoosh_HoveAud_SwordCombat_01",
+            "start": 0.816,
+            "end": 2.286,
+            "anchor": "chest",
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "rate": 0.8
+          }
+        ]
+      }
+    },
+    "gangrene": {
+      "clips": [
+        {
+          "animation": "Sword_Regular_Combo",
+          "start": 0,
+          "end": 3,
+          "rate": 1
+        }
+      ],
+      "effects": []
+    },
+    "kick": {
+      "clips": [
+        {
+          "animation": "Kick",
+          "start": 0,
+          "end": 1.1,
+          "rate": 1
+        }
+      ],
+      "effects": [
+        {
+          "type": "sound",
+          "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+          "start": 0,
+          "end": 0.28,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "hit15",
+          "start": 0.3,
+          "end": 1.35,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "object",
+          "recipe": "slash2",
+          "start": 0,
+          "end": 1.1,
+          "anchor": "hands",
+          "offset": [
+            0.78,
+            -0.32,
+            0.34
+          ]
+        }
+      ],
+      "impact": {
+        "reaction": {
+          "animation": "Hit_Head",
+          "start": 0,
+          "rate": 1,
+          "end": 0.433
+        },
+        "effects": [
+          {
+            "recipe": "silencePuff",
+            "start": 0,
+            "end": 0.6,
+            "anchor": "head",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "status": []
+    }
+  },
   "pretre": {
     "buffHp": {
       "clips": [

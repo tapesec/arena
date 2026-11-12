@@ -1,1 +1,86 @@
-{}
+{
+  "slash1": {
+    "label": "trainée frappe cac",
+    "form": "crescent",
+    "size": [
+      1.06,
+      1.1,
+      4.36
+    ],
+    "thickness": 0.12,
+    "open": false,
+    "tilt": [
+      56,
+      152,
+      -50
+    ],
+    "billboard": true,
+    "roll": true,
+    "count": 2,
+    "ring": 1.05,
+    "lean": 0,
+    "variation": 0,
+    "seed": 1,
+    "color": "#fff2cc",
+    "alpha": 1,
+    "glow": true,
+    "additive": true,
+    "appear": 0,
+    "appearScale": 1,
+    "appearRise": 0,
+    "unfoldDown": false,
+    "fadeIn": 0,
+    "duration": 0.25,
+    "endScale": 1.75,
+    "endAlpha": 0,
+    "lifeHold": 0,
+    "flatGrowth": false,
+    "fadeOut": 0,
+    "spin": 0,
+    "bob": 0,
+    "bobSpeed": 1,
+    "pulse": 0
+  },
+  "slash2": {
+    "label": "Estafilade B",
+    "form": "crescent",
+    "size": [
+      1.69,
+      0.7,
+      3.91
+    ],
+    "thickness": 0.28,
+    "open": false,
+    "tilt": [
+      -137,
+      -153,
+      -98
+    ],
+    "billboard": true,
+    "roll": true,
+    "count": 1,
+    "ring": 0.6,
+    "lean": 0,
+    "variation": 0,
+    "seed": 1,
+    "color": "#fff2cc",
+    "alpha": 1,
+    "glow": true,
+    "additive": true,
+    "appear": 0,
+    "appearScale": 0.25,
+    "appearRise": 0,
+    "unfoldDown": false,
+    "fadeIn": 0,
+    "duration": 0.25,
+    "endScale": 1.75,
+    "endAlpha": 0,
+    "lifeHold": 0,
+    "flatGrowth": false,
+    "fadeOut": 0,
+    "spin": -2.75,
+    "bob": 0.3,
+    "bobSpeed": 1,
+    "pulse": 0
+  }
+}
