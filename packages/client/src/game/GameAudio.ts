@@ -51,6 +51,14 @@ const tunedSounds = (abilityId: string, moment: "caster" | "impact") => {
   return !!entry?.effects?.some((effect) => effect.type === "sound");
 };
 
+// Une technique de mêlée (ou le Coup de pied) qui a une piste de son réglée au geste du lanceur ne joue plus le geste
+// de l'arme commun ; une piste de son réglée à l'impact remplace le bruit du coup commun.
+const hasSoundTrack = (abilityId: string, moment: "caster" | "impact") => {
+  const entry = tuningOf(TUNING, abilityId);
+  const effects = moment === "impact" ? entry?.impact?.effects : entry?.effects;
+  return !!effects?.some((effect) => effect.type === "sound");
+};
+
 // Suivi d'un joueur pour ses pas et sa voix.
 interface Tracked {
   x: number;
@@ -78,7 +86,7 @@ export class GameAudio {
   }
 
   onAbility(abilityId: string, caster: PlayerVisual | undefined, target: PlayerVisual | undefined) {
-    if (MELEE_ABILITIES.has(abilityId) && caster) this.swing(caster);
+    if (MELEE_ABILITIES.has(abilityId) && caster && !hasSoundTrack(abilityId, "caster")) this.swing(caster);
     const sounds = ABILITY_SOUNDS[abilityId];
     if (!sounds) return;
     if (sounds.cast && caster && !tunedSounds(abilityId, "caster")) this.playCues(sounds.cast, caster.root.position);
@@ -102,7 +110,7 @@ export class GameAudio {
     if (event.abilityId === "auto" && source && event.kind !== "heal") this.swing(source);
     switch (event.kind) {
       case "damage": {
-        if (melee) {
+        if (melee && (event.abilityId === "auto" || !hasSoundTrack(event.abilityId, "impact"))) {
           const heavy = event.crit || event.abilityId === "backstab";
           this.playCues([heavy ? HEAVY_HIT : HIT], position, HIT_DELAY);
         }

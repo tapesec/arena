@@ -61,6 +61,7 @@ function sections(): Section[] {
       ],
       rules: [
         `Geste de l'arme à chaque attaque automatique, et au lancement des techniques de mêlée (${[...C.MELEE_ABILITIES].join(", ")}).`,
+        "Une technique (ou le Coup de pied) qui a une piste de son réglée dans l'éditeur ne joue plus ces sons communs : une piste au geste du lanceur remplace le geste de l'arme, une piste à l'impact remplace le coup qui porte.",
       ],
     },
     {

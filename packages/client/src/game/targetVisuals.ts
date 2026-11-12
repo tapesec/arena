@@ -15,8 +15,9 @@ import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 
 // Événements qui montrent qu'une compétence de zone a atteint un joueur.
 const LANDED = new Set<CombatEvent["kind"]>(["damage", "heal", "cc", "buff", "debuff", "cleanse", "resurrect", "taunt", "absorbed", "blocked"]);
-// Événements qui montrent qu'une compétence à cible unique a manqué sa cible : l'impact annoncé n'a pas lieu.
-const MISSED = new Set<CombatEvent["kind"]>(["evaded", "immune", "absorbed"]);
+// Événements qui montrent qu'une compétence à cible unique a manqué sa cible : l'impact annoncé n'a pas lieu (une
+// attaque de mêlée bloquée est annulée en entier, comme une esquive : ni effets ni son d'impact).
+const MISSED = new Set<CombatEvent["kind"]>(["evaded", "immune", "absorbed", "blocked"]);
 // Un impact peut encore être annulé tant qu'il n'a pas commencé, ou à peine (compétence instantanée : l'issue
 // arrive juste après le départ du sort).
 const CANCEL_GRACE = 0.05;
