@@ -99,7 +99,7 @@ import { CommonSoundsPane } from "./commonSoundsLab";
 audio.useMutedKey("arena.lab.muted");
 soundPlayer.setMuted(audio.settings.muted);
 import type { PlayerVisual } from "./game/PlayerVisual";
-import { CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
+import { CHARACTERS, CharacterAssets, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
 import {
   BUILTIN_DEFS,
@@ -1826,7 +1826,9 @@ function AnimationLab() {
   }, [targetClass]);
   useEffect(() => stageRef.current?.setDistance(distance), [distance]);
 
-  const ids = useMemo(() => abilityIds(classId, set), [classId, set]);
+  // Lues dans la définition de la classe (pas dans le personnage chargé) : justes dès le changement de classe, même
+  // vers une compétence qui n'existe que par ses animations (« Dupliquer vers… » la Charge, impact à l'arrivée).
+  const ids = useMemo(() => abilityIds(classId, CHARACTERS[classId]?.animations ?? null), [classId]);
   // Une compétence d'une autre classe (classe changée) : on prend la première de la nouvelle.
   useEffect(() => {
     if (!ids.includes(abilityId)) setAbilityId(ids[0]);
@@ -1916,6 +1918,37 @@ function AnimationLab() {
     const suggested = instance && suggestedAbilityAnimation(instance.set, abilityId, clipLength);
     if (!current || (!current.impact && !current.status && !current.zone) || !suggested) return removeEntry();
     update({ ...suggested, impact: current.impact, status: current.status, zone: current.zone });
+  };
+
+  // Copie de tout le réglage montré (animations, effets, trajet, impact, état, zone) vers une autre compétence, de
+  // n'importe quelle classe (toutes partagent les mêmes animations). Un réglage déjà là n'est remplacé qu'après
+  // confirmation. La copie est un brouillon, comme une modification ; l'éditeur passe sur la compétence copiée.
+  // Seuls les moments que la cible a sont copiés (comme l'éditeur les propose), et une posture n'a pas de geste :
+  // entre une posture et une compétence normale, la cible garde le sien.
+  const duplicateTo = (target: string) => {
+    if (!entry || !target) return;
+    const [targetClass, targetId] = target.split("/") as [ClassId, string];
+    if (draft[targetClass]?.[targetId] && !window.confirm(`Remplacer le réglage de « ${abilityName(targetId)} » (${CLASSES[targetClass].name}) ?`)) return;
+    const source: AbilityAnimation = structuredClone(entry);
+    const targetSet = CHARACTERS[targetClass]?.animations ?? null;
+    const targetStance = isStance(targetSet, targetId);
+    const gesture: AbilityAnimation | null = targetStance
+      ? { clips: [] }
+      : !stance
+        ? { clips: source.clips, ...(source.effects && { effects: source.effects }) }
+        : (draft[targetClass]?.[targetId] ?? (targetSet && suggestedAbilityAnimation(targetSet, targetId, clipLength)));
+    if (!gesture) return;
+    const copy: AbilityAnimation = { clips: gesture.clips, ...(gesture.effects && { effects: gesture.effects }) };
+    if (source.projectile && canHaveProjectile(targetId) && !targetStance) copy.projectile = source.projectile;
+    if (source.impact && !targetStance) copy.impact = source.impact;
+    if (source.status && statusKindsOf(targetId).length) copy.status = source.status;
+    if (source.zone && getAbility(targetId)?.radius) copy.zone = source.zone;
+    // Effets du lanceur gardés dans la timeline de la cible (ses animations, son incantation, et CASTER_AFTER).
+    const maxTime = Math.max(sequenceLength(copy), castTimeOf(targetId)) + CASTER_AFTER;
+    const clamped = roundEntry(clampAbilityAnimation(copy, clipLength, maxTime));
+    setDraft((d) => ({ ...d, [targetClass]: { ...d[targetClass], [targetId]: clamped } }));
+    setClassId(targetClass);
+    setAbilityId(targetId);
   };
 
   const revert = () => {
@@ -2453,6 +2486,21 @@ function AnimationLab() {
                     >
                       Revenir au calage du code
                     </button>
+                    <select value="" disabled={!entry} onChange={(e) => duplicateTo(e.target.value)} title="Copier tout ce réglage vers une autre compétence">
+                      <option value="">Dupliquer vers…</option>
+                      {CLASS_LIST.map((cls) => (
+                        <optgroup key={cls.id} label={cls.name}>
+                          {abilityIds(cls.id, CHARACTERS[cls.id]?.animations ?? null)
+                            .filter((id) => cls.id !== classId || id !== abilityId)
+                            .map((id) => (
+                              <option key={id} value={`${cls.id}/${id}`}>
+                                {abilityName(id)}
+                                {draft[cls.id]?.[id] ? " (réglée)" : ""}
+                              </option>
+                            ))}
+                        </optgroup>
+                      ))}
+                    </select>
                   </div>
                   <SequenceTimeline
                     axis={casterAxis}

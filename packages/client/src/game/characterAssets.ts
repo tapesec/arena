@@ -149,7 +149,7 @@ function normalize(v: readonly number[]): [number, number, number] {
 const GARDIEN_GESTURE_RATE = 2.33 / 1.5;
 
 // Une classe sans entrée ici reste affichée en capsule.
-const CHARACTERS: Record<string, CharacterDef> = {
+export const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
     model: "characters/gardien.glb",
     outfit: "MI_Knight",
