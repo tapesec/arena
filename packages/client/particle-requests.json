@@ -139,5 +139,14 @@
     "status": "fait",
     "result": "lifeCrosses",
     "note": "« Croix de vie » : nouveau dessin « Croix de vie » (halo vert, anneau, grande croix au centre, couronne de 8 petites croix qui tournent doucement et pulsent). Rayon intérieur = taille de la grande croix, Nombre = petites croix."
+  },
+  {
+    "id": "mwdgs9yw",
+    "date": "2026-11-12T11:28:18.296Z",
+    "kind": "particules",
+    "prompt": "Je voudrais un effet empoisonné",
+    "status": "fait",
+    "result": "poison",
+    "note": "« Empoisonné (bulles) » (poison) : bulles vertes qui montent autour du corps et grossissent avant d’éclater ; et « Empoisonné (gouttes) » (poisonDrips), gouttes vertes qui tombent, à ajouter en plus si tu veux. À accrocher aux pieds, pendant l’état « jusqu’à la fin »."
   }
 ]

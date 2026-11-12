@@ -554,5 +554,123 @@
       }
     ],
     "optional": false
+  },
+  "poison": {
+    "blend": "add",
+    "emission": "continuous",
+    "count": 40,
+    "duration": 0,
+    "trail": false,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "innerRadius": 0.15,
+    "arms": 0,
+    "spin": 0,
+    "core": 0,
+    "spread": 0.15,
+    "rotation": [
+      0,
+      0
+    ],
+    "optional": false,
+    "label": "Empoisonné (bulles)",
+    "texture": "ring",
+    "rate": 14,
+    "shape": "cylinder",
+    "radius": 0.32,
+    "y": 0.15,
+    "height": 1.4,
+    "direction": "up",
+    "speed": [
+      0.15,
+      0.35
+    ],
+    "gravity": 0.2,
+    "life": [
+      0.7,
+      1.3
+    ],
+    "size": [
+      0.06,
+      0.13
+    ],
+    "growth": 1.5,
+    "colors": [
+      {
+        "at": 0,
+        "color": "#b6ff4a",
+        "alpha": 0
+      },
+      {
+        "at": 0.15,
+        "color": "#8cff3a",
+        "alpha": 0.85
+      },
+      {
+        "at": 0.8,
+        "color": "#3fae1c",
+        "alpha": 0.6
+      },
+      {
+        "at": 1,
+        "color": "#1f6b0e",
+        "alpha": 0
+      }
+    ]
+  },
+  "poisonDrips": {
+    "blend": "add",
+    "emission": "continuous",
+    "count": 40,
+    "duration": 0,
+    "trail": false,
+    "closeTime": 0.8,
+    "closeAmount": 1,
+    "fingerWidth": 0.06,
+    "innerRadius": 0.1,
+    "arms": 0,
+    "spin": 0,
+    "core": 0,
+    "spread": 0.1,
+    "rotation": [
+      0,
+      0
+    ],
+    "optional": true,
+    "label": "Empoisonné (gouttes)",
+    "texture": "glow",
+    "rate": 8,
+    "shape": "cylinder",
+    "radius": 0.3,
+    "y": 0.6,
+    "height": 0.8,
+    "direction": "down",
+    "speed": [
+      0.05,
+      0.2
+    ],
+    "gravity": -5,
+    "life": [
+      0.4,
+      0.6
+    ],
+    "size": [
+      0.05,
+      0.08
+    ],
+    "growth": 0.7,
+    "colors": [
+      {
+        "at": 0,
+        "color": "#a6ff3a",
+        "alpha": 0.9
+      },
+      {
+        "at": 1,
+        "color": "#2d8a12",
+        "alpha": 0
+      }
+    ]
   }
 }
