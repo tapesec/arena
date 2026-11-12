@@ -32,6 +32,9 @@ export class PlayerRuntime {
   castProtected = false;
   // Le combo se perd si le coup d'arme suivant ne part pas à temps (un round d'attaque manqué).
   comboExpiresAt = 0;
+  // Dernière fois (temps de la partie) où il a été touché ou a agi : le Chant de vitesse ne l'accélère qu'après
+  // SONG_SPEED_CALM secondes de calme.
+  lastEngagedAt = -Infinity;
   // Instant (temps de la partie, en secondes) où chaque compétence redevient disponible.
   cooldowns = new Map<string, number>();
   effects: ActiveEffect[] = [];

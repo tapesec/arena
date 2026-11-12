@@ -26,6 +26,7 @@ import {
   SECOND_WIND_MANA_REGEN,
   SHIELD_BLOCK_CHANCE,
   SONG_RANGE,
+  SONG_SPEED_CALM,
   SONG_SPEED_MULTIPLIER,
   SPRINT_SPEED_MULTIPLIER,
   STICK_DISTANCE,
@@ -154,7 +155,7 @@ export class CombatSystem {
     const player = this.players.get(id);
     if (!player?.alive) return;
     player.state.attacking = !player.state.attacking;
-    if (player.state.attacking) this.endBallad(player);
+    if (player.state.attacking) this.noteAction(player);
     // Couper l'attaque annule la technique en attente et l'enchaînement d'un combo.
     if (!player.state.attacking) {
       player.state.queuedAbility = "";
@@ -202,7 +203,7 @@ export class CombatSystem {
       if (!this.areEnemies(caster, target)) return this.sendError(caster, "Cible non hostile");
       const comboError = this.comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
       if (comboError) return this.sendError(caster, comboError);
-      this.endBallad(caster);
+      this.noteAction(caster);
       caster.state.queuedAbility = ability.id;
       caster.state.attacking = true;
       this.updateAutoAttack(caster, 0);
@@ -212,7 +213,9 @@ export class CombatSystem {
     const targetError = this.validateTarget(caster, ability, targetId);
     if (targetError) return this.sendError(caster, targetError);
     // Ballade rythmée : agir (autre chose que se déplacer) la fait perdre ; couper son chant ne compte pas.
+    // Chant de vitesse : lancer ou couper un chant ne compte pas comme une action.
     if (!this.stopsSong(caster, ability)) this.endBallad(caster);
+    if (!isSong(ability)) caster.lastEngagedAt = this.time;
 
     if (ability.castTime === 0) {
       this.resolveAbility(caster, ability, targetId);
@@ -335,13 +338,15 @@ export class CombatSystem {
     const ability = getAbility(state.castAbility)!;
     const targetId = caster.castTargetId!;
     this.endCast(caster);
+    // La fin d'une incantation est une action, même si le sort ne part pas (Chant de vitesse).
+    caster.lastEngagedAt = this.time;
 
     // Les conditions sont revérifiées à la fin : la cible a pu s'éloigner ou se cacher.
     const error =
       state[ability.resource] < this.costOf(caster, ability) ? "Ressource insuffisante" : this.validateTarget(caster, ability, targetId);
     if (error) return this.sendError(caster, error);
     // Un sort commencé avant la Ballade rythmée la fait perdre en partant.
-    this.endBallad(caster);
+    this.noteAction(caster);
     this.resolveAbility(caster, ability, targetId);
   }
 
@@ -363,7 +368,7 @@ export class CombatSystem {
     // Buff dextérité : coups d'arme plus rapprochés.
     const interval = attacker.classDef.autoAttack.interval * this.dexterityFactor(attacker);
     attacker.swingTimer = interval;
-    this.endBallad(attacker);
+    this.noteAction(attacker);
     this.sendSwing(attacker, true);
     // Une technique en attente remplace le coup normal ; si ses conditions ne sont pas remplies, le coup reste normal.
     const queued = attacker.state.queuedAbility ? getAbility(attacker.state.queuedAbility) : undefined;
@@ -417,6 +422,13 @@ export class CombatSystem {
 
   private dexterityFactor(player: PlayerRuntime): number {
     return player.has("buffDexterity") ? DEXTERITY_FACTOR : 1;
+  }
+
+  // Agir (attaquer, lancer une compétence ; pas se déplacer) : la Ballade rythmée se perd, et le Chant de vitesse
+  // attend SONG_SPEED_CALM secondes de calme.
+  private noteAction(player: PlayerRuntime) {
+    this.endBallad(player);
+    player.lastEngagedAt = this.time;
   }
 
   // Ballade rythmée : elle se perd dès qu'on agit (attaquer, lancer une compétence) ; se déplacer ne compte pas.
@@ -507,8 +519,11 @@ export class CombatSystem {
     // Technique de mêlée ou coup instantané (Coup de pied) : un coup d'arme, qui peut être évité.
     const meleeAttack = !!ability.melee || !!ability.meleeStrike;
     let landed = false;
+    const offensive = isOffensive(ability);
     for (const reached of affected) {
       let target = reached;
+      // Pris pour cible par une attaque ou un effet hostile, même évité : le Chant de vitesse attend le calme.
+      if (offensive) target.lastEngagedAt = this.time;
       if (meleeAttack) {
         // Attaque spéciale de mêlée : un Gardien qui intercepte la prend en entier à la place de sa cible (dégâts et
         // effets : silence, poison, affaiblissements…). Puis l'évitement est tranché une fois, avant ses effets :
@@ -518,6 +533,7 @@ export class CombatSystem {
           this.removeEffect(target, target.getEffect("intercept")!);
           this.emit({ kind: "intercepted", sourceId: caster.id, targetId: interceptor.id, abilityId: ability.id, detail: target.id });
           target = interceptor;
+          target.lastEngagedAt = this.time;
         }
         if (this.meleeAvoidance(caster, target, ability.id)) continue;
         // Un coup intercepté n'ouvre pas de combo : il n'a pas porté sur sa cible.
@@ -756,6 +772,8 @@ export class CombatSystem {
     dot = false,
   ) {
     if (!target.alive) return;
+    // Touché (coup, tic, même évité) : le Chant de vitesse attend le calme.
+    target.lastEngagedAt = this.time;
 
     // Interception : le Gardien prend le coup s'il est assez proche (une attaque spéciale l'a déjà tranchée).
     const interceptor = dot || avoidanceDone ? undefined : this.interceptorOf(target);
@@ -763,6 +781,7 @@ export class CombatSystem {
       this.removeEffect(target, target.getEffect("intercept")!);
       this.emit({ kind: "intercepted", sourceId: source.id, targetId: interceptor.id, abilityId, detail: target.id });
       target = interceptor;
+      target.lastEngagedAt = this.time;
     }
 
     // Buff de puissance : plus de dégâts, en mêlée comme avec les sorts (tics compris).
@@ -950,7 +969,13 @@ export class CombatSystem {
     const near = (p: PlayerRuntime, range: number) => distance(p.state, player.state) <= range;
 
     const singing = (song: string) => allies.some((p) => p.state.song === song && near(p, SONG_RANGE));
-    this.setDerivedEffect(player, "speed", singing("speedSong"));
+    // Chant de vitesse : seulement après SONG_SPEED_CALM secondes sans être touché ni agir.
+    // Incanter est une action en cours : pas de bonus pendant l'incantation.
+    this.setDerivedEffect(
+      player,
+      "speed",
+      singing("speedSong") && !player.state.castAbility && this.time - player.lastEngagedAt >= SONG_SPEED_CALM,
+    );
     this.setDerivedEffect(player, "secondWind", singing("secondWind"));
     // Rempart : le Gardien et ses alliés à RAMPART_RADIUS de lui, y compris ceux qui entrent dans la zone.
     this.setDerivedEffect(
@@ -1038,6 +1063,8 @@ export class CombatSystem {
     const impact: AbilityUsedEvent = { casterId: player.id, abilityId: "chargeImpact", targetId: target.id };
     this.out.broadcast("ability", impact, [player.id, target.id]);
     player.state.attacking = true;
+    this.noteAction(player);
+    target.lastEngagedAt = this.time;
     if (target.has("meleeImmune")) {
       this.emit({ kind: "immune", sourceId: player.id, targetId: target.id, abilityId: "charge", detail: "melee" });
       return;
@@ -1139,6 +1166,11 @@ export class CombatSystem {
   private sendError(player: PlayerRuntime, message: string) {
     this.out.sendTo(player.id, "error", { message });
   }
+}
+
+// Chant du Barde (à activer ou couper).
+function isSong(ability: AbilityDef): boolean {
+  return ability.effects.some((effect) => effect.type === "toggleSong");
 }
 
 // Dégâts décroissants du centre vers le bord d'une zone d'effet (edgeAmount au bord du rayon).

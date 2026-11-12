@@ -130,7 +130,7 @@ Neutralise le groupe adverse et contrôle le rythme du combat.
 | Réveil | Retire le mez d'un autre allié (pas le stun ; l'immunité reste). | 1 s | 50 mana | — |
 | Mez de zone | Mez de 10 s sur la cible et les ennemis à 10 m d'elle. | 2 s | 100 mana | — |
 | Oubli | Pendant 10 s, le prochain sort de la cible n'a aucun effet (voir Oubli). | 1 s | 40 mana | — |
-| Chant de vitesse | Active ou coupe le chant : +100 % de vitesse de course aux alliés à 30 m (ne se cumule ni avec le Sprint ni avec la Ballade : le plus fort compte). | Instantané | 50 mana à l'activation | — |
+| Chant de vitesse | Active ou coupe le chant : +100 % de vitesse de course aux alliés à 30 m (ne se cumule ni avec le Sprint ni avec la Ballade : le plus fort compte). Un bénéficiaire touché (attaque ou effet hostile, même esquivé, bloqué ou absorbé) ou qui agit (attaquer, lancer ou incanter une compétence ; ni se déplacer, ni lancer ou couper un chant) le perd, et ne le retrouve qu'après 5 s consécutives sans être touché ni agir. | Instantané | 50 mana à l'activation | — |
 | Chant de second souffle | Active ou coupe le chant : +50 mana et +5 endurance par seconde aux alliés à 30 m, Barde compris. | Instantané | 50 mana à l'activation | — |
 | Buff dextérité | Intervalle d'attaque et temps d'incantation × 0,85. Dure jusqu'à la mort du Barde ou de la cible ; sans cumul. | 2 s | 50 mana | — |
 | Ballade rythmée (ultime) | Pendant 10 s, tous les alliés, quelle que soit leur distance, Barde compris : vitesse de course +100 % et immunité aux root et snares (ceux en place sont retirés). Chacun la perd dès qu'il agit (attaque, sort, compétence) ; se déplacer ne compte pas. Comme le Speed of Sound de DAoC. | Instantané | 200 mana | 3 min |

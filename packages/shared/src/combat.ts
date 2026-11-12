@@ -56,6 +56,9 @@ export const HOT_INTERVAL = 1;
 // Chant de second souffle, durées multipliées par le Buff dextérité (intervalle d'attaque, incantation).
 export const SONG_RANGE = 30;
 export const SONG_SPEED_MULTIPLIER = 2;
+// Chant de vitesse : un bénéficiaire touché (attaque ou effet hostile, même évité) ou qui agit (hors déplacement et
+// chants) le perd, et ne le retrouve qu'après ce temps sans être touché ni agir (secondes).
+export const SONG_SPEED_CALM = 5;
 export const BALLAD_SPEED_MULTIPLIER = 2;
 export const SECOND_WIND_MANA_REGEN = 50;
 export const SECOND_WIND_ENDURANCE_REGEN = 5;

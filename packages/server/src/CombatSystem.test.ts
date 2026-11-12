@@ -640,6 +640,35 @@ describe("Barde", () => {
     assert.equal(barde.state.mana, mana, "couper le chant est gratuit");
   });
 
+  it("Chant de vitesse : perdu quand le bénéficiaire est touché ou agit, retrouvé après 5 s de calme", () => {
+    const barde = world.spawn("b", "barde", 0, 0, 0, 0);
+    const lame = world.spawn("l", "lame", 0, 5, 0);
+    const enemy = world.spawn("e", "arcaniste", 1, 5, 12, Math.PI);
+    world.cast(barde, "speedSong");
+    world.run(DT);
+    assert.ok(barde.has("speed"), "lancer son chant n'est pas une action");
+    assert.ok(lame.has("speed"));
+
+    world.cast(lame, "evasion");
+    world.run(DT);
+    assert.ok(!lame.has("speed"), "agir le fait perdre");
+    world.run(4.8);
+    assert.ok(!lame.has("speed"));
+    world.run(0.3);
+    assert.ok(lame.has("speed"), "retrouvé après 5 s de calme");
+
+    // Touché par un effet hostile (sans dégâts) : il le perd aussi.
+    world.cast(enemy, "nearSight", lame);
+    world.run(1.55);
+    assert.ok(!lame.has("speed"), "touché par un effet hostile");
+    world.combat.setInput(lame.id, { ...NO_INPUT, left: true });
+    world.run(0.5);
+    world.combat.setInput(lame.id, NO_INPUT);
+    world.run(4.6);
+    assert.ok(lame.has("speed"), "se déplacer ne compte pas");
+    assert.ok(barde.has("speed"));
+  });
+
   it("Chant de second souffle : +50 mana et +5 endurance par seconde aux alliés à 30 m", () => {
     const barde = world.spawn("b", "barde", 0, 0, 0, 0);
     const lame = world.spawn("l", "lame", 0, 5, 0);
@@ -852,11 +881,16 @@ describe("Lame", () => {
     const z = lame.state.z;
     world.run(1);
     assert.ok(Math.abs(lame.state.z - z - 2 * MOVE_SPEED) < 0.2, `distance ${lame.state.z - z}`);
+    world.combat.setInput(lame.id, NO_INPUT);
     const barde = world.spawn("b", "barde", 0, 0, lame.state.z - OFFSET_X * 0, 0);
     barde.state.x = lame.state.x;
     world.cast(barde, "speedSong");
+    // Le Sprint est une action : le chant n'accélère la Lame qu'après 5 s de calme.
     world.run(0.1);
+    assert.ok(!lame.has("speed"));
+    world.run(4);
     assert.ok(lame.has("speed"));
+    world.combat.setInput(lame.id, { ...NO_INPUT, up: true });
     const z2 = lame.state.z;
     world.run(1);
     assert.ok(Math.abs(lame.state.z - z2 - 2 * MOVE_SPEED) < 0.2, "le plus fort compte, pas le cumul");
