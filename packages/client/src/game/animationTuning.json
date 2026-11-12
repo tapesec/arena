@@ -1,6 +1,14 @@
 {
   "arcaniste": {
     "arcanePower": {
+      "clips": [
+        {
+          "animation": "Spell_Simple_Shoot",
+          "start": 0,
+          "end": 0.5,
+          "rate": 1
+        }
+      ],
       "effects": [
         {
           "type": "sound",
@@ -19,17 +27,17 @@
       ],
       "impact": {
         "effects": []
-      },
-      "clips": [
-        {
-          "animation": "Spell_Simple_Shoot",
-          "start": 0,
-          "end": 0.5,
-          "rate": 1
-        }
-      ]
+      }
     },
     "blast": {
+      "clips": [
+        {
+          "animation": "Mixamo_2H_Area_Attack_02",
+          "start": 0,
+          "end": 2.147,
+          "rate": 0.83
+        }
+      ],
       "effects": [
         {
           "recipe": "fireTrail",
@@ -137,17 +145,17 @@
           ],
           "fitZone": true
         }
-      ],
-      "clips": [
-        {
-          "animation": "Mixamo_2H_Area_Attack_02",
-          "start": 0,
-          "end": 2.147,
-          "rate": 0.83
-        }
       ]
     },
     "bubble": {
+      "clips": [
+        {
+          "animation": "Mixamo_2H_Cast_01",
+          "start": 0,
+          "end": 1.8,
+          "rate": 0.65
+        }
+      ],
       "effects": [
         {
           "recipe": "mezHalo",
@@ -184,17 +192,17 @@
             0
           ]
         }
-      ],
-      "clips": [
-        {
-          "animation": "Mixamo_2H_Cast_01",
-          "start": 0,
-          "end": 1.8,
-          "rate": 0.65
-        }
       ]
     },
     "burn": {
+      "clips": [
+        {
+          "animation": "Mixamo_2H_Magic_Attack_04",
+          "start": 0,
+          "end": 1.337,
+          "rate": 0.55
+        }
+      ],
       "effects": [
         {
           "recipe": "fireBurst",
@@ -304,17 +312,10 @@
           ],
           "untilEnd": true
         }
-      ],
-      "clips": [
-        {
-          "animation": "Mixamo_2H_Magic_Attack_04",
-          "start": 0,
-          "end": 1.337,
-          "rate": 0.55
-        }
       ]
     },
     "concentration": {
+      "clips": [],
       "effects": [
         {
           "type": "sound",
@@ -329,10 +330,17 @@
           ],
           "rate": 1.7
         }
-      ],
-      "clips": []
+      ]
     },
     "firebolt": {
+      "clips": [
+        {
+          "animation": "Mixamo_Casting_Spell",
+          "start": 3.166,
+          "end": 6.146,
+          "rate": 1.34
+        }
+      ],
       "effects": [
         {
           "recipe": "fireCharge",
@@ -491,17 +499,17 @@
             ]
           }
         ]
-      },
-      "clips": [
-        {
-          "animation": "Mixamo_Casting_Spell",
-          "start": 3.166,
-          "end": 6.146,
-          "rate": 1.34
-        }
-      ]
+      }
     },
     "frostNova": {
+      "clips": [
+        {
+          "animation": "Mixamo_2H_Area_Attack_02",
+          "start": 0.183,
+          "end": 1.983,
+          "rate": 1.2
+        }
+      ],
       "effects": [
         {
           "recipe": "effet5",
@@ -543,17 +551,17 @@
       ],
       "impact": {
         "effects": []
-      },
-      "clips": [
-        {
-          "animation": "Mixamo_2H_Area_Attack_02",
-          "start": 0.183,
-          "end": 1.983,
-          "rate": 1.2
-        }
-      ]
+      }
     },
     "frostbolt": {
+      "clips": [
+        {
+          "animation": "Mixamo_Casting_Spell",
+          "start": 3.5,
+          "end": 5.68,
+          "rate": 1.09
+        }
+      ],
       "effects": [
         {
           "recipe": "frostCharge",
@@ -697,17 +705,17 @@
             ]
           }
         ]
-      },
-      "clips": [
-        {
-          "animation": "Mixamo_Casting_Spell",
-          "start": 3.5,
-          "end": 5.68,
-          "rate": 1.09
-        }
-      ]
+      }
     },
     "nearSight": {
+      "clips": [
+        {
+          "animation": "Mixamo_2H_Magic_Attack_05",
+          "start": 0,
+          "end": 2.5,
+          "rate": 1.333
+        }
+      ],
       "effects": [
         {
           "recipe": "mezHalo",
@@ -821,19 +829,70 @@
             "skip": 0.3
           }
         ]
-      },
-      "clips": [
-        {
-          "animation": "Mixamo_2H_Magic_Attack_05",
-          "start": 0,
-          "end": 2.5,
-          "rate": 1.333
-        }
-      ]
+      }
     }
   },
   "pretre": {
+    "buffHp": {
+      "clips": [
+        {
+          "animation": "Mixamo_Cast_1H",
+          "start": 0,
+          "end": 2.267,
+          "rate": 1
+        }
+      ],
+      "effects": [],
+      "impact": {
+        "effects": [
+          {
+            "recipe": "buffSpiral",
+            "start": 0,
+            "end": 1,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "jeu:spellFantasy0",
+            "start": 0,
+            "end": 1,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "full": true
+          },
+          {
+            "type": "ground",
+            "recipe": "holyRays",
+            "start": 0,
+            "end": 0.6,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    },
     "groupHeal": {
+      "clips": [
+        {
+          "animation": "Mixamo_2H_Cast_01",
+          "start": 0,
+          "end": 1.442,
+          "rate": 0.48
+        }
+      ],
       "effects": [
         {
           "type": "sound",
@@ -912,17 +971,17 @@
           ],
           "fitZone": true
         }
-      ],
-      "clips": [
-        {
-          "animation": "Mixamo_2H_Cast_01",
-          "start": 0,
-          "end": 1.442,
-          "rate": 0.48
-        }
       ]
     },
     "heal": {
+      "clips": [
+        {
+          "animation": "Mixamo_Cast_1H",
+          "start": 0,
+          "end": 1.093,
+          "rate": 0.51
+        }
+      ],
       "effects": [
         {
           "recipe": "rallyHalo1",
@@ -1007,17 +1066,17 @@
             ]
           }
         ]
-      },
-      "clips": [
-        {
-          "animation": "Mixamo_Cast_1H",
-          "start": 0,
-          "end": 1.093,
-          "rate": 0.455
-        }
-      ]
+      }
     },
     "instantHeal": {
+      "clips": [
+        {
+          "animation": "Spell_Simple_Shoot",
+          "start": 0,
+          "end": 0.5,
+          "rate": 1
+        }
+      ],
       "effects": [
         {
           "recipe": "effet1",
@@ -1070,24 +1129,40 @@
             ]
           }
         ]
-      },
-      "clips": [
-        {
-          "animation": "Spell_Simple_Shoot",
-          "start": 0,
-          "end": 0.5,
-          "rate": 1
-        }
-      ]
+      }
     },
     "resurrect": {
-      "effects": [],
       "clips": [
         {
           "animation": "Spell_Double_Enter",
           "start": 0,
           "end": 0.633,
+          "rate": 0.23
+        },
+        {
+          "animation": "Spell_Double_Shoot_Loop",
+          "start": 0,
+          "end": 0.267,
           "rate": 0.2
+        },
+        {
+          "animation": "Spell_Double_Exit",
+          "start": 0,
+          "end": 0.633,
+          "rate": 1.14
+        }
+      ],
+      "effects": [
+        {
+          "recipe": "fireCharge",
+          "start": 0,
+          "end": 4,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0.31
+          ]
         }
       ]
     }
