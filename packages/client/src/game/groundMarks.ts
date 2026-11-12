@@ -12,7 +12,7 @@ import type { Scene } from "@babylonjs/core/scene";
 // (cercle, anneau, runes, rayons, fissures, créneaux) posé à plat sur le terrain, qui apparaît en grandissant,
 // tourne, pulse et s'efface. Utilisées par les compétences comme les effets à particules (type « ground »).
 
-export type GroundPattern = "disc" | "ring" | "runes" | "rays" | "cracks" | "crenels";
+export type GroundPattern = "disc" | "ring" | "runes" | "rays" | "cracks" | "crenels" | "crosses";
 
 export interface GroundMarkDef {
   label: string;
@@ -112,6 +112,7 @@ export const PATTERNS: Record<GroundPattern, string> = {
   rays: "Rayons",
   cracks: "Fissures",
   crenels: "Créneaux",
+  crosses: "Croix de vie",
 };
 
 // Marques réglées et enregistrées (groundMarks.json), données par le jeu ou par la page de réglage.
@@ -448,6 +449,37 @@ export function drawMark(scene: Scene, def: GroundMarkDef, size = TEXTURE_SIZE):
         ctx.arc(c, c, wall, a1, a0, true);
         ctx.closePath();
         ctx.fill();
+      }
+      break;
+    }
+    case "crosses": {
+      // Halo doux, anneau extérieur, grande croix au centre (dans le rayon intérieur) et petites croix en couronne
+      // entre le rayon intérieur et le bord.
+      const halo = ctx.createRadialGradient(c, c, 0, c, c, r);
+      halo.addColorStop(0, color(def.alpha * 0.3));
+      halo.addColorStop(1, color(0));
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(c, c, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color(def.alpha);
+      circle(r - line / 2);
+      const cross = (x: number, y: number, half: number, angle: number) => {
+        const arm = half * 0.34;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillRect(-arm, -half, arm * 2, half * 2);
+        ctx.fillRect(-half, -arm, half * 2, arm * 2);
+        ctx.restore();
+      };
+      cross(c, c, r * def.inner * 0.6, 0);
+      const middle = (r - line + r * def.inner) / 2;
+      const band = Math.max(0, r - line - r * def.inner);
+      const half = Math.min(band * 0.4, ((Math.PI * middle) / def.count) * 0.4);
+      for (let i = 0; i < def.count; i++) {
+        const angle = (i / def.count) * Math.PI * 2;
+        cross(c + Math.cos(angle) * middle, c + Math.sin(angle) * middle, half, angle);
       }
       break;
     }

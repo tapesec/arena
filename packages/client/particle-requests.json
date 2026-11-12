@@ -130,5 +130,14 @@
     "status": "fait",
     "result": "image « Croix de santé »",
     "note": "Ajoutée au choix « Image » du rendu : croix pleine aux bouts arrondis, plus lumineuse au centre (elle prend la couleur de l'effet)."
+  },
+  {
+    "id": "mwd921df",
+    "date": "2026-11-12T07:51:56.787Z",
+    "kind": "sol",
+    "prompt": "j'aimerai une marque au sol qui symbolise un buff de vie.",
+    "status": "fait",
+    "result": "lifeCrosses",
+    "note": "« Croix de vie » : nouveau dessin « Croix de vie » (halo vert, anneau, grande croix au centre, couronne de 8 petites croix qui tournent doucement et pulsent). Rayon intérieur = taille de la grande croix, Nombre = petites croix."
   }
 ]

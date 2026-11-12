@@ -36,7 +36,7 @@ export function MarkList(props: {
 }
 
 // Dessins qui ont un nombre d'éléments, et ceux tirés au hasard (graine).
-const COUNTED: GroundPattern[] = ["runes", "rays", "cracks", "crenels"];
+const COUNTED: GroundPattern[] = ["runes", "rays", "cracks", "crenels", "crosses"];
 const SEEDED: GroundPattern[] = ["runes", "cracks"];
 
 export function MarkEditor(props: {
