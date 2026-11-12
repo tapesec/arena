@@ -667,7 +667,27 @@ function SoundControl() {
   );
 }
 
+// Aide des commandes, repliée derrière un bouton « i » (le bouton ne prend pas le focus : le clavier reste au jeu).
 function HelpPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        className={`help-toggle${open ? " active" : ""}`}
+        title={open ? "Masquer les commandes" : "Afficher les commandes"}
+        aria-label="Commandes du jeu"
+        aria-expanded={open}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setOpen((v) => !v)}
+      >
+        i
+      </button>
+      {open && <HelpContent />}
+    </>
+  );
+}
+
+function HelpContent() {
   return (
     <div className="hud-panel help">
       <div>Z/S : avancer/reculer · Q/D : pivoter</div>
