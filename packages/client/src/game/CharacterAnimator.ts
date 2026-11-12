@@ -1,29 +1,50 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { normalizeAngle } from "@arena/shared";
 import { casterLength, castTimeOf, clipAt, legacyCastGesture, type AbilityAnimation, type ClassAnimationTuning, type TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import type { CharacterAnimationSet } from "./characterAssets";
 
-// Vitesse (m/s) à laquelle chaque animation de déplacement a été enregistrée : on accélère ou ralentit
-// la lecture pour que les pieds suivent la vitesse réelle du personnage (mesuré sur les versions root motion).
-const JOG_SPEED = 5.36;
-// Estimée d'après l'amplitude du pas et la durée du cycle, comparées à celles de la course.
-const WALK_SPEED = 1.5;
-// En dessous, le personnage marche plutôt que de courir au ralenti (reprise après un root, ralentissement).
-const RUN_THRESHOLD = 2.5;
-const STRAFE_SPEED = 0.65;
-// Au-delà, une marche latérale accélérée devient ridicule : on accepte que les pieds glissent un peu.
-const MAX_STRAFE_RATE = 2.5;
+// Déplacement dans 8 directions (0 devant, puis par pas de 45° vers la droite ; 4 derrière ; -1 à -3 vers la gauche) :
+// pour chacune, une course et une marche (personnage lent : reprise après un root, ralentissement).
+// speed : vitesse (m/s) à laquelle l'animation a été enregistrée ; on accélère ou ralentit la lecture pour que les pieds
+// suivent la vitesse réelle du personnage. La course avant a été mesurée sur sa version root motion ; les autres sont
+// sur place : leur vitesse est déduite de l'amplitude des pas et de la durée du cycle, comparées à celles de la course.
+interface Gait {
+  name: string;
+  speed: number;
+}
+const RUN: Record<number, Gait> = {
+  0: { name: "Jog_Fwd_Loop", speed: 5.36 },
+  1: { name: "Jog_Fwd_R_Loop", speed: 5.3 },
+  2: { name: "Jog_Right_Loop", speed: 2.5 },
+  3: { name: "Jog_Bwd_R_Loop", speed: 4.4 },
+  4: { name: "Jog_Bwd_Loop", speed: 4.3 },
+  [-1]: { name: "Jog_Fwd_L_Loop", speed: 5.3 },
+  [-2]: { name: "Jog_Left_Loop", speed: 2.5 },
+  [-3]: { name: "Jog_Bwd_L_Loop", speed: 4.4 },
+};
+const WALK: Record<number, Gait> = {
+  0: { name: "Walk_Loop", speed: 1.5 },
+  1: { name: "Walk_Fwd_R_Loop", speed: 1.5 },
+  2: { name: "Walk_R_Loop", speed: 0.65 },
+  3: { name: "Walk_Bwd_R_Loop", speed: 1.5 },
+  4: { name: "Walk_Bwd_Loop", speed: 1.5 },
+  [-1]: { name: "Walk_Fwd_L_Loop", speed: 1.5 },
+  [-2]: { name: "Walk_L_Loop", speed: 0.65 },
+  [-3]: { name: "Walk_Bwd_L_Loop", speed: 1.5 },
+};
+// En dessous de cette part de la vitesse de course, le personnage marche plutôt que de courir au ralenti.
+const RUN_THRESHOLD = 0.47;
+// Au-delà, une animation accélérée devient ridicule (bonus de vitesse en pas de côté) : on accepte que les pieds
+// glissent un peu.
+const MAX_GAIT_RATE = 2.5;
+// Marge (radians) avant de changer de direction, et part de la vitesse avant de passer de la marche à la course.
+const SECTOR_MARGIN = 0.15;
+const GAIT_MARGIN = 0.1;
 // En dessous de cette vitesse, le personnage est considéré immobile.
 const MOVING_SPEED = 0.6;
 // Durée des fondus entre deux animations (vitesse de mélange Babylon, par image).
 const BLENDING_SPEED = 0.12;
-
-const LOCOMOTION = {
-  forward: "Jog_Fwd_Loop",
-  walk: "Walk_Loop",
-  left: "Walk_L_Loop",
-  right: "Walk_R_Loop",
-} as const;
 
 // Incantation par défaut ; une classe peut en donner une autre pour certains sorts (CharacterAnimationSet.casts).
 const CAST_LOOP = "Spell_Simple_Idle_Loop";
@@ -75,6 +96,10 @@ export interface AnimationInput {
 export class CharacterAnimator {
   private current: AnimationGroup | null = null;
   private currentKey = "";
+  // Direction (secteur de 45°, voir RUN) et allure (marche ou course) en cours.
+  private sector = 0;
+  private walking = false;
+  private readonly gaitKeys = new Set([...Object.values(RUN), ...Object.values(WALK)].map((gait) => gait.name));
   private action: AnimationGroup | null = null;
   // Nature de l'action en cours : une réaction (coup reçu) cède la place aux actions du personnage ;
   // une auto-attaque ne coupe pas une compétence (la transformation de la Rage dure plus de 2 s).
@@ -251,23 +276,30 @@ export class CharacterAnimator {
       this.play(cast || this.set.idle, true, 1);
       return;
     }
-    // Angle du déplacement par rapport au regard : 0 devant, ±π derrière, positif vers la droite.
+    // Angle du déplacement par rapport au regard : 0 devant, ±π derrière, positif vers la droite ; secteur de 45°.
+    // On garde la direction en cours tant que l'écart ne dépasse pas d'une marge la moitié du secteur : sinon, autour de
+    // la frontière, le personnage alternerait entre deux animations.
     const angle = Math.atan2(input.right, input.forward);
-    const forward = Math.abs(angle) <= Math.PI / 3;
-    const backward = Math.abs(angle) >= (2 * Math.PI) / 3;
-    if (forward || backward) {
-      const walking = speed < RUN_THRESHOLD;
-      // Rooté et encore lent : marche entravée.
-      const entangled = walking && input.rooted;
-      const name = entangled ? ROOT_WALK : walking ? LOCOMOTION.walk : LOCOMOTION.forward;
-      const rate = speed / (entangled ? ROOT_WALK_SPEED : walking ? WALK_SPEED : JOG_SPEED);
-      // Pas d'animation de recul dans les packs : celle d'avancer, jouée à l'envers.
-      if (forward) this.play(name, true, rate);
-      else this.play(name, true, -rate, `${name}:backward`);
-    } else {
-      const rate = Math.min(speed / STRAFE_SPEED, MAX_STRAFE_RATE);
-      this.play(angle > 0 ? LOCOMOTION.right : LOCOMOTION.left, true, rate);
+    const offset = Math.abs(normalizeAngle(angle - (this.sector * Math.PI) / 4));
+    if (offset > Math.PI / 8 + SECTOR_MARGIN) {
+      this.sector = Math.round(angle / (Math.PI / 4));
+      if (this.sector === -4) this.sector = 4;
     }
+    const sector = this.sector;
+    const run = RUN[sector];
+    // Même marge entre marche et course.
+    const threshold = run.speed * RUN_THRESHOLD * (this.walking ? 1 + GAIT_MARGIN : 1 - GAIT_MARGIN);
+    const walking = (this.walking = speed < threshold);
+    // Rooté et encore lent, en avançant ou en reculant : marche entravée (jouée à l'envers pour reculer).
+    if (walking && input.rooted && Math.abs(sector) !== 2) {
+      const backward = Math.abs(sector) >= 3;
+      const rate = Math.min(speed / ROOT_WALK_SPEED, MAX_GAIT_RATE);
+      if (backward) this.play(ROOT_WALK, true, -rate, `${ROOT_WALK}:backward`);
+      else this.play(ROOT_WALK, true, rate);
+      return;
+    }
+    const gait = walking ? WALK[sector] : run;
+    this.play(gait.name, true, Math.min(speed / gait.speed, MAX_GAIT_RATE), gait.name, true);
   }
 
   dispose() {}
@@ -367,14 +399,19 @@ export class CharacterAnimator {
   }
 
   // key distingue deux usages d'une même animation (course avant et course à l'envers).
-  private play(name: string, loop: boolean, speedRatio: number, key = name) {
+  // keepPhase : d'une allure à l'autre (changement de direction), la nouvelle animation reprend au même point du cycle
+  // de pas que la précédente au lieu de repartir du début.
+  private play(name: string, loop: boolean, speedRatio: number, key = name, keepPhase = false) {
     const group = this.animations.get(name);
     if (!group) return;
     if (this.currentKey === key) {
       group.speedRatio = speedRatio;
       return;
     }
-    this.switchTo(group, key, loop, speedRatio);
+    const previous = this.current;
+    const phase = keepPhase && previous && this.gaitKeys.has(this.currentKey) ? cyclePhase(previous) : null;
+    const start = phase === null ? undefined : group.from + phase * (group.to - group.from);
+    this.switchTo(group, key, loop, speedRatio, start);
   }
 
   // startFrame : image de départ (par défaut, la première) ; endFrame : image où s'arrêter (par défaut, la dernière).
@@ -387,6 +424,15 @@ export class CharacterAnimator {
     if (speedRatio < 0) group.start(loop, speedRatio, group.to, group.from);
     else group.start(loop, speedRatio, startFrame ?? group.from, endFrame ?? group.to);
   }
+}
+
+// Avancement (0 à 1) d'une animation en boucle dans son cycle.
+function cyclePhase(group: AnimationGroup): number | null {
+  const animatable = group.animatables[0];
+  const length = group.to - group.from;
+  if (!animatable || length <= 0) return null;
+  const frame = animatable.masterFrame;
+  return (((frame - group.from) % length) + length) % length / length;
 }
 
 export function framesPerSecond(group: AnimationGroup): number {

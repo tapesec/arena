@@ -1280,29 +1280,29 @@
  {
   "name": "Walk_Bwd_L_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Recule en diagonale gauche.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Walk_Bwd_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Recule.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Walk_Bwd_R_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Recule en diagonale droite.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Walk_Carry_Loop",
@@ -1316,11 +1316,11 @@
  {
   "name": "Walk_Fwd_L_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Marche en diagonale gauche.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Walk_Fwd_Loop",
@@ -1334,11 +1334,11 @@
  {
   "name": "Walk_Fwd_R_Loop",
   "pack": "UAL2 (Source)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Marche en diagonale droite.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Walk_L_Loop",
@@ -2018,38 +2018,38 @@
  {
   "name": "Jog_Bwd_L_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court en arrière en diagonale gauche.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Jog_Bwd_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court en arrière.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Jog_Bwd_R_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court en arrière en diagonale droite.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Jog_Fwd_L_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court en diagonale avant gauche.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Jog_Fwd_LeanL_Loop",
@@ -2072,29 +2072,29 @@
  {
   "name": "Jog_Fwd_R_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court en diagonale avant droite.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Jog_Left_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court de côté vers la gauche.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Jog_Right_Loop",
   "pack": "UAL1 (Pro)",
-  "inGame": false,
+  "inGame": true,
   "loop": true,
   "category": "Déplacement",
   "description": "Court de côté vers la droite.",
-  "usedFor": ""
+  "usedFor": "Déplacement"
  },
  {
   "name": "Kick",
