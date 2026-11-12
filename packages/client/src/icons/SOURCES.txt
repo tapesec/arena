@@ -40,5 +40,5 @@ divineIntervention ← lorc/angel-outfit
 kick ← delapouite/high-kick
 sprint ← lorc/sprint
 poisonBlade ← lorc/dripping-blade
-gangrene ← lorc/shadow-follower
+gangrene ← lorc/virus
 armorBreak ← delapouite/armor-downgrade
