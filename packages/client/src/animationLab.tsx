@@ -99,7 +99,7 @@ import { CommonSoundsPane } from "./commonSoundsLab";
 audio.useMutedKey("arena.lab.muted");
 soundPlayer.setMuted(audio.settings.muted);
 import type { PlayerVisual } from "./game/PlayerVisual";
-import { CHARACTERS, CharacterAssets, usedAnimations, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
+import { CHARACTERS, CharacterAssets, INSTRUMENT_ANIMATIONS, usedAnimations, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
 import {
   BUILTIN_DEFS,
@@ -189,6 +189,8 @@ class Stage {
   private cycle: { phase: "idle" | "cast" | "after"; time: number } = { phase: "idle", time: 0 };
   // Animation figée pour la pose montrée (sans fondu), tant qu'on ne relance pas la lecture.
   private frozen: AnimationGroup | null = null;
+  // La pose figée joue d'un instrument : le luth est replacé à chaque image (les os ne sont à jour qu'au rendu).
+  private frozenPlaying = false;
   private effects: AbilityEffectPlayer;
   // Cible : mannequin face au lanceur, à distance réglable (le lanceur lui-même pour une compétence sur soi).
   private targetHolder: TransformNode;
@@ -634,6 +636,9 @@ class Stage {
     this.zoneDisc.isVisible = false;
     for (const group of instance.animations.values()) group.stop();
     this.frozen = null;
+    this.frozenPlaying = false;
+    instance.setStowed(false);
+    instance.setPlaying(false);
     // Nouvel animateur : il remet les fondus que la pose figée retire.
     this.animator = new CharacterAnimator(instance.animations, instance.set, this.tuning);
     this.unfreezeTarget();
@@ -669,6 +674,12 @@ class Stage {
         group.goToFrame(group.from + (at ? at.clipTime : 0) * framesPerSecond(group));
       }
       instance.setStowed(!!at);
+      this.frozenPlaying = !!at && INSTRUMENT_ANIMATIONS.has(at.clip.animation);
+      instance.setPlaying(this.frozenPlaying);
+    } else {
+      this.frozenPlaying = false;
+      instance.setStowed(false);
+      instance.setPlaying(false);
     }
     this.showTargetFrame();
     const time = this.scrubTimes[this.moment];
@@ -717,6 +728,7 @@ class Stage {
       if (!instance || !animator) return;
       animator.update(this.idleInput());
       instance.setStowed(false);
+      instance.setPlaying(false);
       if (this.fxPreview) this.tickFx(instance);
       if (this.markPreview) this.tickMark();
       if (this.objectPreview) this.tickObject(instance);
@@ -726,6 +738,7 @@ class Stage {
     }
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
     if (this.mode === "scrub" && instance && entry) {
+      instance.setPlaying(this.frozenPlaying);
       const time = this.scrubTimes[this.moment];
       if (this.moment === "caster" && this.frozen) this.effects.update(instance, { abilityId: this.abilityId, entry, time }, true, true);
       else this.effects.stopAll();
@@ -786,6 +799,7 @@ class Stage {
     const casting = cycle.phase === "cast";
     animator.update({ ...this.idleInput(), castAbility: casting ? this.abilityId : "", castElapsed: casting ? cycle.time : 0, castDuration: castTime });
     instance.setStowed(casting || animator.performingAbility);
+    instance.setPlaying(animator.performingAbility && INSTRUMENT_ANIMATIONS.has(animator.currentAnimation));
     this.effects.update(instance, animator.playingAbility(), true);
     const impactTime = this.tickSequence(dt);
     if (this.moment === "caster") {

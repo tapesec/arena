@@ -12,7 +12,7 @@ import type { TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
-import { hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
+import { INSTRUMENT_ANIMATIONS, hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
 import { ABILITY_FX } from "./spellFx";
 
 export interface EffectView {
@@ -306,6 +306,9 @@ export class PlayerVisual {
     });
     // Le bâton passe dans le dos pendant l'incantation et le geste du sort, puis revient en main.
     this.model?.setStowed(this.isAlive && (casting || (this.animator?.performingAbility ?? false)));
+    // Le Barde joue du luth : il le tient entre ses mains.
+    const animator = this.animator;
+    this.model?.setPlaying(this.isAlive && !!animator?.performingAbility && INSTRUMENT_ANIMATIONS.has(animator.currentAnimation));
   }
 
   // La lueur d'incantation pulse, et prend la couleur du sort en cours.

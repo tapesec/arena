@@ -142,6 +142,11 @@ export class CharacterAnimator {
     return this.action.isPlaying || (this.sequence !== null && this.sequence.group === this.action);
   }
 
+  // Animation en cours de lecture ("" si aucune).
+  get currentAnimation(): string {
+    return this.current?.name ?? "";
+  }
+
   ability(abilityId: string) {
     const now = performance.now() / 1000;
     const castTime = castTimeOf(abilityId);

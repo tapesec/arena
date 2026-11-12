@@ -8,6 +8,7 @@ import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
+import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { MIXAMO_ANIMATIONS, retargetMixamo } from "./mixamo";
@@ -49,7 +50,20 @@ interface WeaponMount {
   teamPaint?: string[];
   // Où ranger l'arme quand le personnage lance un sort (le bâton passe dans le dos).
   stow?: Placement;
+  // Instrument (luth) : pendant une animation de jeu (INSTRUMENT_ANIMATIONS), il passe entre les mains (voir
+  // holdInstrument). hiddenWhilePlaying : arme cachée pendant ce temps (la dague de la main qui gratte).
+  instrument?: boolean;
+  hiddenWhilePlaying?: boolean;
 }
+
+// Animations où le Barde joue de son instrument : il le tient entre ses mains.
+export const INSTRUMENT_ANIMATIONS = new Set(["Mixamo_Guitar_Playing"]);
+
+// Luth tenu en main, dans le repère du modèle (caisse vers +y, manche vers -y, table vers +z, avant mise à
+// l'échelle) : point gratté par la main droite (bas de la caisse, entre la rosace et le chevalet), et recul des
+// cordes derrière la paume, vers le ventre.
+const LUTE_STRUM_POINT = new Vector3(0, 0.55, 0.03);
+const LUTE_BEHIND_HAND = 0.05;
 
 // Placement d'une arme sur un os du squelette.
 type Placement = Pick<WeaponMount, "bone" | "position" | "rotation">;
@@ -132,6 +146,46 @@ function staffStow(middle: number): Placement {
   // Le milieu du bâton (middle, sur l'axe du modèle) se place derrière le dos.
   const position = TORSO_FORWARD.map((f, i) => -f * STOW_BACK - TORSO_UP[i] * STOW_DOWN - axis[i] * middle);
   return { bone: "spine_03", position: position as [number, number, number], rotation: alignModelY(axis) };
+}
+
+// Luth entre les mains, recalculé à chaque image dans le repère de son os (le buste) : le point gratté sous la paume
+// droite, un peu vers le ventre ; le manche (-y du modèle) vers la paume gauche ; la table vers l'avant du personnage. Les mains
+// viennent de l'image précédente (une image de retard, invisible).
+function holdInstrument(attach: TransformNode, bones: Map<string, TransformNode>) {
+  const parent = attach.parent as TransformNode | null;
+  const right = palmOf(bones, "r");
+  const left = palmOf(bones, "l");
+  if (!parent || !right || !left) return;
+  const toParent = parent.getWorldMatrix().clone().invert();
+  const r = Vector3.TransformCoordinates(right, toParent);
+  const l = Vector3.TransformCoordinates(left, toParent);
+  // Axe y du modèle : de la main gauche (manche) vers la main droite (caisse). Mains confondues ou alignées sur
+  // l'avant du buste : pas d'orientation possible, on garde celle de l'image précédente.
+  const up = r.subtract(l);
+  if (up.lengthSquared() < 1e-6) return;
+  up.normalize();
+  const forward = new Vector3(...TORSO_FORWARD);
+  const face = forward.subtract(up.scale(Vector3.Dot(forward, up)));
+  if (face.lengthSquared() < 1e-6) return;
+  face.normalize();
+  const side = Vector3.Cross(up, face);
+  const rotation = Quaternion.FromRotationMatrix(Matrix.FromValues(
+    side.x, side.y, side.z, 0,
+    up.x, up.y, up.z, 0,
+    face.x, face.y, face.z, 0,
+    0, 0, 0, 1,
+  ));
+  attach.rotationQuaternion = rotation;
+  const strum = LUTE_STRUM_POINT.scale(attach.scaling.x).applyRotationQuaternion(rotation);
+  attach.position.copyFrom(r.subtract(face.scale(LUTE_BEHIND_HAND)).subtract(strum));
+}
+
+// Milieu de la paume : entre le poignet (os de la main) et la base du majeur.
+function palmOf(bones: Map<string, TransformNode>, side: "r" | "l"): Vector3 | null {
+  const wrist = bones.get(`hand_${side}`);
+  const finger = bones.get(`middle_01_${side}`);
+  if (!wrist || !finger) return null;
+  return Vector3.Center(wrist.getAbsolutePosition(), finger.getAbsolutePosition());
 }
 
 // Rotation (angles x et z, sans y) qui amène l'axe y du modèle sur la direction donnée.
@@ -271,14 +325,16 @@ export const CHARACTERS: Record<string, CharacterDef> = {
     outfit: "MI_Peasant",
     hairColor: "#5a3a22",
     weapons: [
-      { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35 },
-      // Le luth est porté en bandoulière dans le dos, manche au-dessus de l'épaule (orientation calculée en jeu).
+      { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35, hiddenWhilePlaying: true },
+      // Le luth est porté en bandoulière dans le dos, manche au-dessus de l'épaule ; il passe entre les mains quand le
+      // Barde en joue (instrument).
       {
         model: "weapons/lute.glb",
         bone: "spine_03",
         position: [0, 0.1, -0.18],
         rotation: [(13 * Math.PI) / 12, (13 * Math.PI) / 12, Math.PI / 12],
         scale: 0.6,
+        instrument: true,
       },
     ],
     animations: { idle: "Idle_Loop", attacks: ["Sword_Attack"], abilities: { default: CAST_RELEASE } },
@@ -329,6 +385,9 @@ export interface CharacterInstance {
   setTeam(team: number): void;
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
   setStowed(stowed: boolean): void;
+  // Joue de son instrument (luth entre les mains, dague cachée) ou le remet en bandoulière. À appeler à chaque image :
+  // le luth suit les mains.
+  setPlaying(playing: boolean): void;
   dispose(): void;
 }
 
@@ -446,6 +505,9 @@ export class CharacterAssets {
     const weapons: TransformNode[] = [];
     // Armes qui se rangent : leur attache, et où la mettre en main ou rangée.
     const stowable: { attach: TransformNode; held: Placement; stowed: Placement }[] = [];
+    // Instrument (et sa place en bandoulière), armes cachées pendant qu'on en joue.
+    const instruments: { attach: TransformNode; rest: Placement }[] = [];
+    const hiddenWhilePlaying: TransformNode[] = [];
     const teamPainted: { mesh: AbstractMesh; base: PBRMaterial }[] = [];
     def.weapons.forEach((mount, i) => {
       const bone = bones.get(mount.bone);
@@ -466,6 +528,8 @@ export class CharacterAssets {
       }
       if (mount.colors) paintWeapon(attach, mount.colors, mount.glow ?? []);
       if (mount.stow) stowable.push({ attach, held: mount, stowed: mount.stow });
+      if (mount.instrument) instruments.push({ attach, rest: mount });
+      if (mount.hiddenWhilePlaying) hiddenWhilePlaying.push(attach);
       const paintable = mount.teamPaint ?? [];
       for (const mesh of attach.getChildMeshes(false)) {
         if (mesh.material && paintable.includes(mesh.material.name)) teamPainted.push({ mesh, base: mesh.material as PBRMaterial });
@@ -511,6 +575,17 @@ export class CharacterAssets {
           weapon.attach.parent = bone;
           weapon.attach.position.set(...placement.position);
           weapon.attach.rotation.set(...placement.rotation);
+        }
+      },
+      setPlaying: (playing) => {
+        for (const attach of hiddenWhilePlaying) attach.setEnabled(!playing);
+        for (const { attach, rest } of instruments) {
+          if (playing) holdInstrument(attach, bones);
+          else if (attach.rotationQuaternion) {
+            attach.rotationQuaternion = null;
+            attach.position.set(...rest.position);
+            attach.rotation.set(...rest.rotation);
+          }
         }
       },
       // Matériaux et textures sont partagés par tous les personnages de la classe : on ne les libère pas.
