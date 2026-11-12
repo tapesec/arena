@@ -708,6 +708,12 @@
   "duration": 2.49
  },
  {
+  "name": "harpe",
+  "pack": "Divers",
+  "file": "harpe.mp3",
+  "duration": 3.03
+ },
+ {
   "name": "hit01",
   "pack": "hits",
   "file": "hits/hit01.mp3.flac",
