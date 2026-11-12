@@ -917,6 +917,178 @@
         ]
       }
     },
+    "buffStrength": {
+      "clips": [
+        {
+          "animation": "Mixamo_Cast_1H",
+          "start": 0,
+          "end": 0.95,
+          "rate": 0.48
+        }
+      ],
+      "effects": [
+        {
+          "recipe": "fireCharge",
+          "start": 0,
+          "end": 1.366,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "keys": [
+            {
+              "time": 0.433,
+              "anchor": "hands",
+              "offset": [
+                0.46,
+                0,
+                0
+              ]
+            },
+            {
+              "time": 1.334,
+              "anchor": "hands",
+              "offset": [
+                0.18,
+                1.17,
+                -0.4
+              ]
+            }
+          ]
+        }
+      ],
+      "impact": {
+        "effects": [
+          {
+            "recipe": "buffSpiral",
+            "start": 0,
+            "end": 1,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "Activate_Shrine_05",
+            "start": 0,
+            "end": 4.51,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "rate": 1.25,
+            "full": true
+          },
+          {
+            "type": "ground",
+            "recipe": "fireCracks",
+            "start": 0,
+            "end": 0.6,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    },
+    "divineIntervention": {
+      "clips": [
+        {
+          "animation": "Spell_Double_Enter",
+          "start": 0,
+          "end": 0.633,
+          "rate": 0.21
+        },
+        {
+          "animation": "Spell_Double_Shoot_Loop",
+          "start": 0,
+          "end": 0.267,
+          "rate": 0.2
+        },
+        {
+          "animation": "Spell_Double_Exit",
+          "start": 0,
+          "end": 0.633,
+          "rate": 0.99
+        }
+      ],
+      "effects": [
+        {
+          "recipe": "fireCharge",
+          "start": 0,
+          "end": 4,
+          "anchor": "hands",
+          "offset": [
+            0,
+            0,
+            0.31
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "Arcane_Wind_Chimes",
+          "start": 0,
+          "end": 4.724,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "impact": {
+        "effects": [
+          {
+            "recipe": "resurrectRain",
+            "start": 0,
+            "end": 1.2,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "object",
+            "recipe": "lightBeam",
+            "start": 0,
+            "end": 1.4,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "Activate_Shrine_05",
+            "start": 0,
+            "end": 3.89,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "rate": 1.3,
+            "full": true
+          }
+        ]
+      }
+    },
     "groupHeal": {
       "clips": [
         {
@@ -1164,6 +1336,101 @@
         ]
       }
     },
+    "renew": {
+      "clips": [
+        {
+          "animation": "Mixamo_Cast_1H",
+          "start": 0,
+          "end": 1.093,
+          "rate": 0.51
+        }
+      ],
+      "effects": [
+        {
+          "recipe": "rallyHalo1",
+          "start": 0.585,
+          "end": 1.89,
+          "anchor": "hands",
+          "offset": [
+            0.22,
+            -0.34,
+            -0.09
+          ],
+          "keys": [
+            {
+              "time": 0.585,
+              "anchor": "hands",
+              "offset": [
+                0.22,
+                -0.34,
+                -0.09
+              ]
+            },
+            {
+              "time": 1.611,
+              "anchor": "hands",
+              "offset": [
+                0.22,
+                0.71,
+                -0.09
+              ]
+            }
+          ]
+        },
+        {
+          "type": "sound",
+          "recipe": "Healing_Spell_Impact_6",
+          "start": 0,
+          "end": 5.143,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "impact": {
+        "effects": [
+          {
+            "recipe": "healColumn1",
+            "start": 0,
+            "end": 2,
+            "anchor": "chest",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "jeu:Healing_Full",
+            "start": 0,
+            "end": 1,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "full": true
+          },
+          {
+            "type": "ground",
+            "recipe": "healPool",
+            "start": 0,
+            "end": 0.6,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    },
     "resurrect": {
       "clips": [
         {
@@ -1196,8 +1463,61 @@
             0,
             0.31
           ]
+        },
+        {
+          "type": "sound",
+          "recipe": "Arcane_Wind_Chime_Gust",
+          "start": 0,
+          "end": 4.377,
+          "anchor": "chest",
+          "offset": [
+            0,
+            0,
+            0
+          ]
         }
-      ]
+      ],
+      "impact": {
+        "effects": [
+          {
+            "recipe": "resurrectRain",
+            "start": 0,
+            "end": 1.2,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "object",
+            "recipe": "lightBeam",
+            "start": 0,
+            "end": 1.4,
+            "anchor": "feet",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "type": "sound",
+            "recipe": "Activate_Shrine_05",
+            "start": 0,
+            "end": 3.89,
+            "anchor": "feet",
+            "offset": [
+              0,
+              1.1,
+              0
+            ],
+            "rate": 1.3,
+            "full": true
+          }
+        ]
+      }
     }
   }
 }
