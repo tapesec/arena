@@ -42,6 +42,8 @@ export const fr: Record<TextKey, string> = {
 
   "punct.colon": "\u00a0: ",
 
+  "ping.title": "Aller-retour avec le serveur",
+  "ping.value": "{value}\u00a0ms",
   "loading.title": "Chargement",
   "loading.startsIn": "La partie commence quand tout le monde est prêt, au plus tard dans",
   "loading.hint": "Chargement des modèles et des sons…",

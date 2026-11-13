@@ -2440,3 +2440,21 @@ body,
   font-size: 13px;
   opacity: 0.8;
 }
+
+/* Latence avec le serveur, à gauche du réglage du son. */
+.ping {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ping-good {
+  color: #7bd88f;
+}
+
+.ping-medium {
+  color: #e6c15a;
+}
+
+.ping-bad {
+  color: #ef6b6b;
+}

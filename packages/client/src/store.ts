@@ -146,6 +146,9 @@ interface HudState {
   error: string | null;
   match: MatchFrame | null;
   teammates: TeammateFrame[];
+  // Aller-retour avec le serveur, en millisecondes (null avant la première mesure).
+  ping: number | null;
+  setPing: (ping: number | null) => void;
   // Écran de chargement : tous les joueurs, et la fin de son propre chargement.
   loading: LoadingFrame[];
   loaded: boolean;
@@ -182,6 +185,7 @@ const freshGame = {
   teammates: [],
   loading: [],
   loaded: false,
+  ping: null,
   self: null,
   target: null,
   group: [],
@@ -229,6 +233,7 @@ export const useHudStore = create<HudState>((set) => ({
   setStatus: (status, error) => set(status === "replaced" ? { status, error: null, match: null } : { status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
   setLoading: (loading, loaded) => set({ loading, loaded }),
+  setPing: (ping) => set({ ping }),
   setFrames: (self, target, group) => set({ self, target, group }),
   setActions: (actions) => set({ actions }),
   pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),

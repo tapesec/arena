@@ -739,11 +739,25 @@ function CombatLog() {
   );
 }
 
+// Latence, affichée tant qu'on est connecté à une partie : vert jusqu'à 80 ms, orange jusqu'à 150 ms, rouge au-delà.
+function PingDisplay() {
+  const connected = useHudStore((s) => s.inGame && s.status === "connected");
+  const ping = useHudStore((s) => s.ping);
+  if (!connected || ping === null) return null;
+  const level = ping <= 80 ? "good" : ping <= 150 ? "medium" : "bad";
+  return (
+    <span className={`ping ping-${level}`} title={t("ping.title")}>
+      {t("ping.value", { value: ping })}
+    </span>
+  );
+}
+
 // Volume général et sourdine, mémorisés dans le navigateur.
 function SoundControl() {
   const [settings, setSettings] = useState(audio.settings);
   return (
     <div className="sound-control">
+      <PingDisplay />
       <button
         className="sound-toggle"
         title={t(settings.muted ? "sound.unmute" : "sound.mute")}

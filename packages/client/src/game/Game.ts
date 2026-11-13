@@ -90,6 +90,8 @@ const SMOOTHING = 15;
 
 // Fréquence de mise à jour de l'interface React (inutile de la recalculer à chaque frame).
 const HUD_REFRESH_MS = 100;
+// Mesure de l'aller-retour avec le serveur (affiché à côté du son).
+const PING_INTERVAL_MS = 2000;
 
 // Quand la caméra tourne pendant un déplacement, on renvoie la direction au plus 20 fois par seconde.
 const YAW_RESEND_MS = 50;
@@ -133,6 +135,10 @@ export class Game {
   // Chargement du jeu, suivi pour l'écran de chargement ; dernier pourcentage envoyé au serveur.
   private loading: LoadingTracker;
   private sentLoadPercent = -1;
+  private pingTimer: ReturnType<typeof setInterval>;
+  // Instant d'envoi de la mesure en cours (null si elle a répondu) ; jeu arrêté (réponses ignorées).
+  private pingSentAt: number | null = null;
+  private disposed = false;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -189,11 +195,16 @@ export class Game {
       Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village, audio, spellEffects: this.spellEffects });
     }
 
+    this.measurePing();
+    this.pingTimer = setInterval(() => this.measurePing(), PING_INTERVAL_MS);
+
     this.engine.runRenderLoop(() => this.renderFrame());
     window.addEventListener("resize", this.handleResize);
   }
 
   dispose() {
+    this.disposed = true;
+    clearInterval(this.pingTimer);
     useHudStore.getState().setActions(null);
     window.removeEventListener("resize", this.handleResize);
     this.keyboard.dispose();
@@ -208,6 +219,26 @@ export class Game {
   }
 
   private handleResize = () => this.engine.resize();
+
+  // Une mesure à la fois : tant que la précédente n'a pas répondu, on affiche le temps déjà écoulé (le SDK ne garde
+  // qu'un envoi en mémoire, une nouvelle mesure ferait passer une réponse tardive pour une réponse rapide).
+  // Connexion perdue : plus de chiffre.
+  private measurePing() {
+    const hud = useHudStore.getState();
+    if (!this.room.connection.isOpen) {
+      hud.setPing(null);
+      return;
+    }
+    if (this.pingSentAt !== null) {
+      hud.setPing(Math.max(hud.ping ?? 0, Math.round(performance.now() - this.pingSentAt)));
+      return;
+    }
+    this.pingSentAt = performance.now();
+    this.room.ping((ms) => {
+      this.pingSentAt = null;
+      if (!this.disposed) useHudStore.getState().setPing(ms);
+    });
+  }
 
   // Envoie l'avancement du chargement au serveur, à chaque point de pourcentage gagné.
   private sendLoadProgress() {
@@ -358,6 +389,9 @@ export class Game {
     this.room.onMessage("error", (event: GameErrorMessage) => hud.flash(errorText(event.code, event.abilityId)));
     // Chargement trop long : un bot a pris notre place, le serveur nous déconnecte. Le jeu s'arrête derrière l'écran.
     this.room.onMessage("replacedByBot", () => {
+      this.disposed = true;
+      clearInterval(this.pingTimer);
+      hud.setPing(null);
       this.engine.stopRenderLoop();
       this.keyboard.dispose();
       hud.setStatus("replaced");

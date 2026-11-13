@@ -47,7 +47,9 @@ export const en = {
   // Ponctuation
   "punct.colon": ": ",
 
-  // Combat
+  // Chargement et réseau
+  "ping.title": "Round trip to the server",
+  "ping.value": "{value} ms",
   "loading.title": "Loading",
   "loading.startsIn": "The match starts once everyone is ready, at most in",
   "loading.hint": "Loading models and sounds…",
@@ -55,6 +57,8 @@ export const en = {
   "loading.lateHint": "Your game is still loading: if it is not ready when the fight starts, a bot will take your place.",
   "loading.percent": "{value}%",
   "loading.replaced": "Your game took too long to load: a bot took your place in this match.",
+
+  // Combat
   "match.preparation": "Preparation: the fight starts in",
   "match.dead": "You are dead",
   "match.spectator": "Spectator mode",
