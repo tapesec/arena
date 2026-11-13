@@ -41,6 +41,7 @@ import {
   ORDERS,
   orderAvailable,
   type BotReplyMessage,
+  type OrderSituation,
   type OrderId,
 } from "@arena/shared";
 import {
@@ -501,17 +502,38 @@ export class Game {
     }
   }
 
-  // Ordres de la roue (molette) : pendant le combat, vivant (même sous contrôle). Un ordre qu'aucun bot vivant de
-  // l'équipe ne peut exécuter est grisé.
+  // Ordres de la roue (molette) : pendant le combat, vivant (même sous contrôle). Un ordre impossible sur le moment
+  // est grisé (aucun bot pour l'exécuter, pas de cible, déjà à pleine vie…).
   private orderWheelItems() {
     const self = this.self;
     const phase = (this.room.state as { phase: MatchPhase }).phase;
     if (!self || !self.isAlive || phase !== "fighting" || this.loading.progress < 1) return null;
-    const classId = self.state.classId as ClassId;
-    const bots = [...this.players.values()]
-      .filter((p) => p.state.isBot && p.isAlive && p.state.team === self.state.team)
-      .map((p) => p.state.classId as ClassId);
-    return ORDERS.map((id) => ({ id, label: this.orderLabel(id), enabled: orderAvailable(id, classId, bots) }));
+    const kinds = (p: PlayerVisual) => new Set([...p.state.effects].map((e) => e.kind));
+    const state = self.state;
+    const selfEffects = kinds(self);
+    const target = this.targetId ? this.players.get(this.targetId) : undefined;
+    const situation: OrderSituation = {
+      issuer: {
+        classId: state.classId as ClassId,
+        hurt: state.hp < state.maxHp,
+        mezzed: selfEffects.has("mez"),
+        resourceFull: state.maxMana > 0 ? state.mana >= state.maxMana : state.endurance >= state.maxEndurance,
+        effects: selfEffects,
+      },
+      hasEnemyTarget: !!target && target.isAlive && target.state.team !== state.team,
+      bots: [...this.players.values()]
+        .filter((p) => p.state.isBot && p.isAlive && p.state.team === state.team)
+        .map((p) => {
+          const effects = kinds(p);
+          return {
+            classId: p.state.classId as ClassId,
+            mana: p.state.mana,
+            song: p.state.song,
+            incapacitated: effects.has("mez") || effects.has("stun") || effects.has("rampart"),
+          };
+        }),
+    };
+    return ORDERS.map((id) => ({ id, label: this.orderLabel(id), enabled: orderAvailable(id, situation) }));
   }
 
   // « J'ai besoin de mana » ou « d'endurance », selon la ressource de sa classe.
@@ -634,6 +656,7 @@ export class Game {
       player.setOutfitColor(enemy ? 1 : 0);
     }
     this.overlay.update(dt);
+    this.orderWheel.update();
     this.spellEffects.update(dt);
     // Les effets d'état réglés d'abord : ils décident si les particules d'état du code sont jouées.
     this.spellEffects.targets.update(dt, this.players, this.self?.state.team ?? null);

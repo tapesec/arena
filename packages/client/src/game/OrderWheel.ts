@@ -1,13 +1,13 @@
 import type { OrderId } from "@arena/shared";
 import { useHudStore, type OrderWheelFrame } from "../store";
 
-// En deçà de cette distance au centre (pixels), aucun ordre n'est pointé : relâcher la molette ne donne rien.
-const DEAD_ZONE = 30;
+// Trou au centre de la roue (rayon en pixels) : la souris n'y pointe aucun ordre, relâcher la molette ne donne rien.
+export const WHEEL_INNER = 50;
 
 // Case de la roue pointée par la souris, décalée de (dx, dy) pixels par rapport au centre : la case 0 est en haut, les
 // suivantes dans le sens des aiguilles d'une montre. null au centre.
 export function wheelSlot(dx: number, dy: number, count: number): number | null {
-  if (Math.hypot(dx, dy) < DEAD_ZONE) return null;
+  if (Math.hypot(dx, dy) < WHEEL_INNER) return null;
   // Angle depuis le haut de l'écran, croissant dans le sens horaire (l'axe y de l'écran pointe vers le bas).
   const angle = Math.atan2(dx, -dy);
   const slot = Math.round(angle / ((2 * Math.PI) / count));
@@ -18,6 +18,8 @@ export function wheelSlot(dx: number, dy: number, count: number): number | null 
 // pour le donner. L'interface (App.tsx) l'affiche d'après le store.
 export class OrderWheel {
   private pointerId: number | null = null;
+  // Position de la souris par rapport au centre de la roue.
+  private lastOffset = { dx: 0, dy: 0 };
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -50,6 +52,7 @@ export class OrderWheel {
     const items = this.items();
     if (!items) return;
     this.pointerId = event.pointerId;
+    this.lastOffset = { dx: 0, dy: 0 };
     this.canvas.setPointerCapture(event.pointerId);
     useHudStore.getState().setOrderWheel({ x: event.clientX, y: event.clientY, items, selected: null });
   };
@@ -64,9 +67,26 @@ export class OrderWheel {
     }
     const wheel = useHudStore.getState().orderWheel;
     if (!wheel || event.pointerId !== this.pointerId) return;
-    const slot = wheelSlot(event.clientX - wheel.x, event.clientY - wheel.y, wheel.items.length);
-    const selected = slot !== null && wheel.items[slot].enabled ? slot : null;
-    if (selected !== wheel.selected) useHudStore.getState().setOrderWheel({ ...wheel, selected });
+    this.refresh(event.clientX - wheel.x, event.clientY - wheel.y);
+  };
+
+  // Recalcule les ordres possibles (la situation change pendant que la roue est ouverte : un soin, une cible qui
+  // meurt…) et l'ordre pointé ; la roue se ferme si elle ne peut plus être ouverte (mort, fin du combat).
+  private refresh(dx: number, dy: number) {
+    const wheel = useHudStore.getState().orderWheel;
+    if (!wheel) return;
+    const items = this.items();
+    if (!items) return this.close();
+    const slot = wheelSlot(dx, dy, items.length);
+    const selected = slot !== null && items[slot].enabled ? slot : null;
+    const changed = selected !== wheel.selected || items.some((item, i) => item.enabled !== wheel.items[i]?.enabled || item.label !== wheel.items[i]?.label);
+    if (changed) useHudStore.getState().setOrderWheel({ ...wheel, items, selected });
+    this.lastOffset = { dx, dy };
+  }
+
+  // Appelé à chaque image par le jeu : la roue suit la situation même si la souris ne bouge pas.
+  update() {
+    if (this.pointerId !== null) this.refresh(this.lastOffset.dx, this.lastOffset.dy);
   };
 
   private handleUp = (event: PointerEvent) => {

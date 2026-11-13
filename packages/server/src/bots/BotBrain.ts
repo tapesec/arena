@@ -12,6 +12,7 @@ import {
   type ClassId,
   type MatchPhase,
   type MoveInput,
+  ORDER_BUFFS,
   type OrderId,
   type OrderReply,
   type Position,
@@ -169,8 +170,8 @@ export class BotBrain {
   }
 
   // Buffs que ce bot peut lancer et que le joueur n'a pas (Buff please).
-  missingBuffs(_player: PlayerRuntime): string[] {
-    return [];
+  missingBuffs(player: PlayerRuntime): string[] {
+    return (ORDER_BUFFS[this.classId] ?? []).filter((buff) => !player.has(buff));
   }
 
   // Un ordre cesse à la mort ou au départ (déconnexion) de celui qui l'a donné ou de sa cible, ou une fois son temps

@@ -260,10 +260,6 @@ class PretreBot extends CasterBot {
     return kind === "buff" ? ONE_SHOT_ORDER_DURATION : Infinity;
   }
 
-  missingBuffs(player: PlayerRuntime): string[] {
-    return (["buffHp", "buffStrength"] as const).filter((buff) => !player.has(buff));
-  }
-
   // Soigne-moi : le joueur passe avant tout le monde jusqu'à être à pleine vie. Buff please : ses buffs manquants.
   // Retourne vrai si le Prêtre s'en occupe (déplacement ou sort).
   private obeyOrder(): boolean {
@@ -361,6 +357,8 @@ class BardeBot extends CasterBot {
       if (!this.isReady("awaken")) return "cooldown";
       if (mana < manaCost("awaken")) return "noMana";
     }
+    // Vitesse : un Barde qui la chante déjà laisse l'ordre à un autre Barde (celui qui chante le second souffle).
+    if (kind === "speed" && this.self.state.song === "speedSong" && this.order?.kind !== "resource") return "alreadySinging";
     if (kind === "resource" && resourceFull(issuer)) return "full";
     if (kind === "resource" && this.self.state.song !== "secondWind" && mana < manaCost("secondWind")) return "noMana";
     if (kind === "buff" && mana < manaCost("buffDexterity")) return "noMana";
@@ -371,10 +369,6 @@ class BardeBot extends CasterBot {
     // Vitesse : il suffit de reprendre le Chant de vitesse (fin de l'ordre « mana »).
     if (kind === "speed") return 0;
     return kind === "awaken" || kind === "buff" ? ONE_SHOT_ORDER_DURATION : Infinity;
-  }
-
-  missingBuffs(player: PlayerRuntime): string[] {
-    return player.has("buffDexterity") ? [] : ["buffDexterity"];
   }
 
   // Réveille-moi, Buff please, et rester à portée de chant pour « besoin de mana ». Retourne vrai si le Barde s'en

@@ -3,9 +3,9 @@ import type { PlayerRuntime } from "../PlayerRuntime";
 import type { BotBrain } from "./BotBrain";
 
 // Transmet l'ordre d'un joueur aux bots de son équipe qui peuvent l'exécuter, et retourne leurs réponses (bulles
-// au-dessus de leur tête). Les ordres qui ne concernent qu'un bot vont au plus proche qui peut agir (pas sous mez ni
-// stun) et accepte ; si aucun n'accepte, le plus proche dit pourquoi. Assistez-moi et
-// Suivez-moi vont à tous ; Buff please à chaque bot qui a un buff que le joueur n'a pas.
+// au-dessus de leur tête). Seuls les bots qui peuvent agir (ni mezzés ni stunnés) sont concernés, sauf pour Suivez-moi.
+// Les ordres qui ne concernent qu'un bot vont au plus proche qui accepte ; si aucun n'accepte, le plus proche dit
+// pourquoi. Assistez-moi et Suivez-moi vont à tous ; Buff please à chaque bot qui a un buff que le joueur n'a pas.
 // visible : joueurs que l'équipe voit (la cible d'Assistez-moi doit en faire partie).
 export function dispatchOrder(
   kind: OrderId,
@@ -35,12 +35,12 @@ export function dispatchOrder(
       const target = issuer.targetId ? players.get(issuer.targetId) : undefined;
       const valid = !!target && target.alive && target.state.team !== issuer.state.team && visible.has(target.id);
       if (!valid) return [{ botId: nearest.player.id, reply: "noTarget" }];
-      return executors.map((bot) => answer(bot, target));
+      return executors.filter((bot) => !bot.player.incapacitated).map((bot) => answer(bot, target));
     }
     case "follow":
       return executors.map((bot) => answer(bot));
     case "buff": {
-      const givers = executors.filter((bot) => bot.missingBuffs(issuer).length > 0);
+      const givers = executors.filter((bot) => !bot.player.incapacitated && bot.missingBuffs(issuer).length > 0);
       if (givers.length === 0) return [{ botId: nearest.player.id, reply: "alreadyBuffed" }];
       return givers.map((bot) => answer(bot));
     }

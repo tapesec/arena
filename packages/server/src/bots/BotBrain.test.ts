@@ -329,6 +329,16 @@ describe("Bots : ordres", () => {
     assert.deepEqual(sim.order("awaken", joueur), [{ botId: "b2", reply: "awaken" }]);
   });
 
+  it("Besoin de vitesse : le Barde qui chante déjà la vitesse laisse l'ordre à celui qui chante le second souffle", () => {
+    const sim = new Sim();
+    const proche = sim.spawn("b1", "barde", 0, 1, 0, 0, true);
+    const loin = sim.spawn("b2", "barde", 0, 6, 0, 0, true);
+    const joueur = sim.spawn("j", "lame", 0, 0, 2);
+    proche.state.song = "speedSong";
+    loin.state.song = "secondWind";
+    assert.deepEqual(sim.order("speed", joueur), [{ botId: "b2", reply: "speed" }]);
+  });
+
   it("Buff please : chaque Prêtre et chaque Barde lance les buffs qui manquent au joueur", () => {
     const sim = new Sim();
     sim.spawn("p", "pretre", 0, 0, 0, 0, true);

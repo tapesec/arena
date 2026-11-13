@@ -74,6 +74,7 @@ export const fr: Record<TextKey, string> = {
   "reply.notMezzed": "Tu n'es pas mezzé.",
   "reply.full": "Tu es déjà au max.",
   "reply.alreadyBuffed": "Tu as déjà tout.",
+  "reply.alreadySinging": "Je la chante déjà\u00a0!",
   "match.preparation": "Préparation\u00a0: le combat commence dans",
   "match.dead": "Vous êtes mort",
   "match.spectator": "Mode spectateur",

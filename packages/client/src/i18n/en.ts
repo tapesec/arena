@@ -81,6 +81,7 @@ export const en = {
   "reply.notMezzed": "You're not mezzed.",
   "reply.full": "You're already full.",
   "reply.alreadyBuffed": "You already have everything.",
+  "reply.alreadySinging": "Already singing it!",
 
   // Combat
   "match.preparation": "Preparation: the fight starts in",
