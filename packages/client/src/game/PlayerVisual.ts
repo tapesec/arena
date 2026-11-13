@@ -8,6 +8,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { terrainHeight, type EffectKind } from "@arena/shared";
+import type { PredictedBody } from "./prediction";
 import type { TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
@@ -21,6 +22,8 @@ export interface EffectView {
   // Durée totale (-1 = permanent).
   duration: number;
   source: string;
+  // Valeur propre à l'effet (part de vitesse perdue d'un snare).
+  value: number;
 }
 
 // Ce que le client lit dans l'état synchronisé par le serveur.
@@ -50,6 +53,9 @@ export interface PlayerView {
   castAbility: string;
   castElapsed: number;
   castDuration: number;
+  // Prédiction du déplacement : dernière commande reçue par le serveur et temps passé depuis sous cette commande.
+  inputSeq: number;
+  inputTime: number;
   effects: Iterable<EffectView>;
 }
 
@@ -71,6 +77,8 @@ const VELOCITY_SMOOTHING = 12;
 // Représentation 3D d'un joueur : un personnage animé quand sa classe a un modèle, sinon une capsule
 // avec un "nez" pour l'orientation ; un anneau au sol pour son propre personnage.
 export class PlayerVisual {
+  // Position et orientation prédites (son propre personnage, voir MovementPredictor), sinon null : on suit le serveur.
+  predicted: PredictedBody | null = null;
   readonly root: TransformNode;
   private body: Mesh;
   private nose: Mesh;
@@ -164,15 +172,27 @@ export class PlayerVisual {
     return 0;
   }
 
-  // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame.
+  // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame. Son propre personnage,
+  // prédit (predicted), est placé directement.
   update(smoothing: number) {
-    this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
-    this.root.position.z += (this.state.z - this.root.position.z) * smoothing;
+    if (this.predicted) {
+      // Recalage net : l'animation de course ne doit pas y voir un déplacement.
+      if (this.predicted.snapped) {
+        this.lastX = this.predicted.x;
+        this.lastZ = this.predicted.z;
+      }
+      this.root.position.x = this.predicted.x;
+      this.root.position.z = this.predicted.z;
+      this.root.rotation.y = this.predicted.facing;
+    } else {
+      this.root.position.x += (this.state.x - this.root.position.x) * smoothing;
+      this.root.position.z += (this.state.z - this.root.position.z) * smoothing;
+      // Rotation lissée par le chemin le plus court (l'orientation arrive par paliers à 20 Hz).
+      const turn = this.state.facing - this.root.rotation.y;
+      this.root.rotation.y += Math.atan2(Math.sin(turn), Math.cos(turn)) * smoothing;
+    }
     // Le personnage suit le relief.
     this.root.position.y = terrainHeight(this.root.position.x, this.root.position.z);
-    // Rotation lissée par le chemin le plus court (l'orientation arrive par paliers à 20 Hz).
-    const turn = this.state.facing - this.root.rotation.y;
-    this.root.rotation.y += Math.atan2(Math.sin(turn), Math.cos(turn)) * smoothing;
 
     // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur.
     if (this.state.team !== this.team) {

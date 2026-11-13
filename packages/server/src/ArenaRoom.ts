@@ -62,7 +62,9 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
 
   messages = {
     input: (client: Client, message: unknown) => {
-      this.combat.setInput(client.sessionId, sanitizeInput(message));
+      const seq = (message as { seq?: unknown } | null)?.seq;
+      const validSeq = typeof seq === "number" && Number.isInteger(seq) && seq >= 0 && seq <= 0xffffffff ? seq : undefined;
+      this.combat.setInput(client.sessionId, sanitizeInput(message), validSeq);
     },
     target: (client: Client, message: unknown) => {
       const targetId = (message as { targetId?: unknown } | null)?.targetId;

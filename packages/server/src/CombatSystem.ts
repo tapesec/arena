@@ -1,6 +1,5 @@
 import {
   ARMOR_BREAK_BONUS,
-  BALLAD_SPEED_MULTIPLIER,
   CHARGE_MAX_DURATION,
   CHARGE_SPEED_MULTIPLIER,
   CRIT_CHANCE,
@@ -27,19 +26,11 @@ import {
   SHIELD_BLOCK_CHANCE,
   SONG_RANGE,
   SONG_SPEED_CALM,
-  SONG_SPEED_MULTIPLIER,
-  SPRINT_SPEED_MULTIPLIER,
-  STICK_DISTANCE,
   STRENGTH_BUFF_BONUS,
   TAUNT_DAMAGE_FACTOR,
   TAUNT_HALT_DURATION,
   distance,
   facingTowards,
-  forwardOf,
-  inputSpeedFactor,
-  isTurning,
-  moveDirection,
-  turnFacing,
   getAbility,
   hasLineOfSight,
   isFacing,
@@ -50,6 +41,8 @@ import {
   positionRelativeTo,
   revivesInArea,
   stepMovement,
+  simulateMovement,
+  lockReleased,
   type AbilityDef,
   type AbilityEffect,
   type AbilityUsedEvent,
@@ -127,9 +120,15 @@ export class CombatSystem {
 
   // --- Commandes des joueurs ---
 
-  setInput(id: string, input: MoveInput) {
+  // seq : numéro de la commande envoyée par le client (prédiction de son déplacement) ; absent pour les bots.
+  setInput(id: string, input: MoveInput, seq?: number) {
     const player = this.players.get(id);
-    if (player) player.input = input;
+    if (!player) return;
+    player.input = input;
+    if (seq !== undefined) {
+      player.state.inputSeq = seq;
+      player.state.inputTime = 0;
+    }
   }
 
   setTarget(id: string, targetId: string | null) {
@@ -257,44 +256,24 @@ export class CombatSystem {
   private updateMovement(player: PlayerRuntime, dt: number) {
     const state = player.state;
     player.stickMoving = false;
+    // Temps passé sous la dernière commande reçue : le client en déduit ce qu'il lui reste à rejouer (prédiction).
+    // Pas pour les bots, qui n'envoient pas de commandes numérotées (inutile de synchroniser ce champ à chaque tic).
+    if (state.inputSeq > 0) state.inputTime += dt;
     if (player.charge) return this.updateCharge(player, dt);
     this.updateLock(player);
     if (player.incapacitated) return;
 
-    // Orientation : verrou sur la cible, sinon la souris (clic droit), sinon la rotation au clavier.
-    // Pivoter n'interrompt pas l'incantation.
-    const input = player.input;
+    // Même calcul que la prédiction du client (voir simulateMovement). Pivoter n'interrompt pas l'incantation.
     const target = state.lock && player.targetId ? this.players.get(player.targetId) : undefined;
-    if (target) state.facing = facingTowards(state, target.state);
-    else if (input.steer && input.yaw !== undefined) state.facing = input.yaw;
-    else state.facing = turnFacing(state.facing, input, dt);
-
-    // Root : arrêt net, puis la vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet.
-    const root = player.getEffect("root");
-    const rootFactor = player.has("halted") ? 0 : root ? 1 - root.remaining / root.duration : 1;
-    if (rootFactor <= 0) return;
-    const direction = moveDirection(input, state.facing);
-    // Stick : on avance vers la cible tant qu'on n'est pas assez près (les pas de côté restent possibles).
-    if (target && state.lock === "stick" && distance(state, target.state) > STICK_DISTANCE) {
-      const forward = forwardOf(state.facing);
-      direction.x += forward.x;
-      direction.z += forward.z;
-      player.stickMoving = true;
-    }
-
-    const snare = player.getEffect("snare");
-    const speed =
-      // Chant de vitesse, Ballade rythmée et Sprint ne se cumulent pas : le plus fort compte.
-      Math.max(
-        player.has("speed") ? SONG_SPEED_MULTIPLIER : 1,
-        player.has("ballad") ? BALLAD_SPEED_MULTIPLIER : 1,
-        player.has("sprint") ? SPRINT_SPEED_MULTIPLIER : 1,
-      ) *
-      (snare ? 1 - snare.value : 1) *
-      rootFactor *
-      inputSpeedFactor(input);
-    let next = stepMovement(state, direction, dt, speed);
-    if (this.confine) next = this.confine(player, next);
+    const confine = this.confine;
+    const next = simulateMovement(state, player.input, dt, {
+      effects: player.effects,
+      lock: state.lock,
+      target: target?.state ?? null,
+      confine: confine ? (pos) => confine(player, pos) : null,
+    });
+    state.facing = next.facing;
+    player.stickMoving = next.stickMoving;
     if (next.x === state.x && next.z === state.z) return;
 
     state.x = next.x;
@@ -308,14 +287,7 @@ export class CombatSystem {
     const state = player.state;
     if (!state.lock) return;
     const target = player.targetId ? this.players.get(player.targetId) : undefined;
-    const input = player.input;
-    const released =
-      !target?.alive ||
-      player.incapacitated ||
-      (state.lock === "stick" && player.has("root")) ||
-      input.up !== input.down ||
-      isTurning(input);
-    if (released) state.lock = "";
+    if (lockReleased(state.lock, player.input, !!target?.alive, player.effects)) state.lock = "";
   }
 
   private updateRegen(player: PlayerRuntime, dt: number) {
@@ -1109,6 +1081,7 @@ export class CombatSystem {
       existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
       existing.view.duration = Number.isFinite(duration) ? duration : PERMANENT;
       existing.view.source = sourceId;
+      existing.view.value = value;
       return existing;
     }
     const view = new EffectState();
@@ -1116,6 +1089,7 @@ export class CombatSystem {
     view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
     view.duration = Number.isFinite(duration) ? duration : PERMANENT;
     view.source = sourceId;
+    view.value = value;
     player.state.effects.push(view);
     const effect: ActiveEffect = { kind, remaining: duration, duration, sourceId, value, magic, view };
     player.effects.push(effect);

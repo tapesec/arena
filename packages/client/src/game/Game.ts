@@ -25,6 +25,8 @@ import {
   inputToDirection,
   isInMeleeRange,
   NO_INPUT,
+  START_ZONES,
+  confineToZone,
   type ClassId,
   type AbilityUsedEvent,
   type CombatEvent,
@@ -65,6 +67,7 @@ import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
+import { MovementPredictor } from "./prediction";
 import { TUNING } from "./tuning";
 import { MUSIC } from "./commonSounds";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
@@ -96,6 +99,10 @@ const PING_INTERVAL_MS = 2000;
 // Quand la caméra tourne pendant un déplacement, on renvoie la direction au plus 20 fois par seconde.
 const YAW_RESEND_MS = 50;
 const YAW_RESEND_THRESHOLD = 0.02;
+
+// En développement, ?lag=150 dans l'adresse retarde l'envoi des déplacements (en ms) : simule un joueur éloigné pour
+// essayer la prédiction.
+const DEV_INPUT_LAG = import.meta.env.DEV ? Number(new URLSearchParams(location.search).get("lag")) || 0 : 0;
 
 // Vitesse de la caméra libre en mode spectateur, en mètres par seconde.
 const SPECTATOR_SPEED = 18;
@@ -136,6 +143,8 @@ export class Game {
   private loading: LoadingTracker;
   private sentLoadPercent = -1;
   private pingTimer: ReturnType<typeof setInterval>;
+  // Prédiction du déplacement de son propre personnage.
+  private predictor = new MovementPredictor();
   // Instant d'envoi de la mesure en cours (null si elle a répondu) ; jeu arrêté (réponses ignorées).
   private pingSentAt: number | null = null;
   private disposed = false;
@@ -254,7 +263,10 @@ export class Game {
     if (this.loading.progress < 1) return;
     this.sentYaw = this.camera.yaw;
     this.lastMoveSent = performance.now();
-    this.room.send("input", { ...this.moveKeys, steer: this.camera.steering, yaw: this.sentYaw });
+    const input: MoveInput = { ...this.moveKeys, steer: this.camera.steering, yaw: this.sentYaw };
+    const message = { ...input, seq: this.predictor.send(input) };
+    if (DEV_INPUT_LAG > 0) setTimeout(() => this.room.send("input", message), DEV_INPUT_LAG);
+    else this.room.send("input", message);
   }
 
   // Mort pendant le combat : la caméra devient libre et le brouillard de guerre disparaît (côté serveur).
@@ -567,6 +579,7 @@ export class Game {
     // Lissage exponentiel : on rattrape la position reçue du serveur sans à-coups,
     // le serveur n'envoyant que 20 mises à jour par seconde.
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
+    this.predictSelf(dt);
     for (const player of this.players.values()) {
       player.update(smoothing);
       const enemy = !!this.self && player.state.team !== this.self.state.team;
@@ -603,6 +616,36 @@ export class Game {
 
     this.refreshHud(self, target);
     this.scene.render();
+  }
+
+  // Son personnage bouge tout de suite, sans attendre le serveur (voir MovementPredictor) : en préparation et en combat,
+  // vivant, hors charge (le serveur la mène seul).
+  private predictSelf(dt: number) {
+    const self = this.self;
+    if (!self) return;
+    const phase = (this.room.state as { phase: MatchPhase }).phase;
+    const active =
+      (phase === "preparation" || phase === "fighting") &&
+      self.isAlive &&
+      !self.state.charging &&
+      !this.isSpectating &&
+      this.loading.progress >= 1;
+    const target = this.targetId && this.targetId !== this.room.sessionId ? this.players.get(this.targetId) : undefined;
+    const zone = START_ZONES[self.state.team];
+    const root = self.root;
+    self.predicted = this.predictor.update(
+      dt,
+      self.state,
+      {
+        target: target ? target.state : null,
+        targetAlive: !!target?.isAlive,
+        confine: phase === "preparation" && zone ? (pos) => confineToZone(pos, zone) : null,
+      },
+      active,
+      { x: root.position.x, z: root.position.z, facing: root.rotation.y },
+    );
+    // Reprise (fin de charge…) : les touches tenues sont renvoyées pour être prédites.
+    if (this.predictor.takeRestart()) this.sendMove();
   }
 
   // Le brouillard s'affiche quand le serveur l'applique : en préparation et en combat, sauf en spectateur.

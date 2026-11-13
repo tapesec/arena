@@ -9,6 +9,8 @@ export const EffectState = schema(
     duration: t.float32().default(-1),
     // Joueur à l'origine de l'effet (affichage du lien entre un Gardien et son protégé).
     source: t.string().default(""),
+    // Valeur propre à l'effet (part de vitesse perdue d'un snare) : le client en a besoin pour prédire son déplacement.
+    value: t.float32().default(0),
   },
   "EffectState",
 );
@@ -44,6 +46,10 @@ export const PlayerState = schema(
     facing: t.float32().default(0),
     // Verrou sur la cible : "face" (F, lui faire face en permanence), "stick" (C, la suivre), "" sinon.
     lock: t.string().default(""),
+    // Prédiction du déplacement par le client : numéro de la dernière commande reçue, et temps de simulation passé
+    // depuis sous cette commande.
+    inputSeq: t.uint32().default(0),
+    inputTime: t.float32().default(0),
     colorIndex: t.uint8().default(0),
     hp: t.uint16().default(0),
     maxHp: t.uint16().default(0),

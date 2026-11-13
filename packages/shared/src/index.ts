@@ -9,3 +9,4 @@ export * from "./movement";
 export * from "./terrain";
 export * from "./names";
 export * from "./errors";
+export * from "./locomotion";
