@@ -4,7 +4,6 @@ import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
 import "@babylonjs/core/Rendering/outlineRenderer"; // Effet de bord : active renderOutline (contour au survol).
-import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -16,7 +15,6 @@ import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { INSTRUMENT_ANIMATIONS, hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
-import { ABILITY_FX } from "./spellFx";
 
 export interface EffectView {
   kind: string;
@@ -95,14 +93,10 @@ export class PlayerVisual {
   private wasAlive = true;
   private team: number;
   private outfitColor = 0;
-  // Lueur au sol pendant une incantation, à la couleur du sort.
-  private castRing: Mesh;
-  private castMaterial: StandardMaterial;
-  private castingAbility = "";
-  // Personnage animé (chargé en arrière-plan) ; la capsule reste affichée en attendant.
   // Zone de clic (cylindre invisible) et couleur du contour de survol (null sans survol).
   readonly hitbox: Mesh;
   private hovered: Color3 | null = null;
+  // Personnage animé (chargé en arrière-plan) ; la capsule reste affichée en attendant.
   private model: CharacterInstance | null = null;
   private animator: CharacterAnimator | null = null;
   private modelClass = "";
@@ -119,7 +113,6 @@ export class PlayerVisual {
     scene: Scene,
     readonly state: PlayerView,
     readonly sessionId: string,
-    isLocal: boolean,
     private assets: CharacterAssets,
   ) {
     this.root = new TransformNode(`player-${sessionId}`, scene);
@@ -151,28 +144,6 @@ export class PlayerVisual {
     this.hitbox.isVisible = false;
     this.hitbox.metadata = { sessionId, hitbox: true };
     this.hitbox.parent = this.root;
-
-    this.castRing = CreateTorus("castRing", { diameter: 1.9, thickness: 0.12, tessellation: 48 }, scene);
-    this.castRing.position.y = 0.08;
-    this.castMaterial = new StandardMaterial("castMat", scene);
-    this.castMaterial.disableLighting = true;
-    this.castRing.material = this.castMaterial;
-    this.castRing.isPickable = false;
-    this.castRing.parent = this.root;
-    this.castRing.setEnabled(false);
-
-
-    if (isLocal) {
-      const ring = CreateTorus("ring", { diameter: 1.6, thickness: 0.08, tessellation: 48 }, scene);
-      ring.position.y = 0.05;
-      const ringMat = new StandardMaterial("ringMat", scene);
-      // Blanc, pour ne pas se confondre avec la lueur dorée des incantations sacrées.
-      ringMat.emissiveColor = new Color3(0.95, 0.95, 0.95);
-      ringMat.disableLighting = true;
-      ring.material = ringMat;
-      ring.isPickable = false;
-      ring.parent = this.root;
-    }
   }
 
   get isAlive(): boolean {
@@ -226,7 +197,6 @@ export class PlayerVisual {
 
 
 
-    this.updateCastRing();
     if (this.state.classId !== this.modelClass) this.loadModel();
     this.updateAnimation();
   }
@@ -367,21 +337,6 @@ export class PlayerVisual {
     const animator = this.animator;
     // Mort : le luth retourne aussitôt dans le dos.
     this.model?.setPlaying(this.isAlive && !!animator?.performingAbility && INSTRUMENT_ANIMATIONS.has(animator.currentAnimation), !this.isAlive);
-  }
-
-  // La lueur d'incantation pulse, et prend la couleur du sort en cours.
-  private updateCastRing() {
-    const ability = this.isAlive ? this.state.castAbility : "";
-    if (ability !== this.castingAbility) {
-      this.castingAbility = ability;
-      this.castRing.setEnabled(ability !== "");
-      const color = ABILITY_FX[ability]?.color;
-      if (color) this.castMaterial.emissiveColor = color;
-    }
-    if (ability) {
-      const pulse = 1 + 0.12 * Math.sin(performance.now() / 120);
-      this.castRing.scaling.set(pulse, 1, pulse);
-    }
   }
 
   dispose() {

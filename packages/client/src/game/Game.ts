@@ -369,7 +369,7 @@ export class Game {
       const key = sessionId as string;
       this.players.set(
         key,
-        new PlayerVisual(this.scene, player as PlayerView, key, key === this.room.sessionId, this.characterAssets),
+        new PlayerVisual(this.scene, player as PlayerView, key, this.characterAssets),
       );
     });
 
