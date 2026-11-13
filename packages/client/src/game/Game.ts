@@ -38,6 +38,10 @@ import {
   type InterruptEvent,
   type MatchPhase,
   type MoveInput,
+  ORDERS,
+  orderAvailable,
+  type BotReplyMessage,
+  type OrderId,
 } from "@arena/shared";
 import {
   useHudStore,
@@ -65,6 +69,7 @@ import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
+import { OrderWheel } from "./OrderWheel";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
 import { MovementPredictor, VelocityTracker } from "./prediction";
@@ -127,6 +132,7 @@ export class Game {
   private fog: FogOfWar;
   private gameAudio: GameAudio;
   private keyboard: KeyboardInput;
+  private orderWheel: OrderWheel;
   // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
   private moveKeys: MoveInput = NO_INPUT;
   private sentYaw = 0;
@@ -189,6 +195,7 @@ export class Game {
       (action) => this.handleAction(action),
     );
     this.scene.onPointerObservable.add((info) => this.handlePointer(info));
+    this.orderWheel = new OrderWheel(canvas, () => this.orderWheelItems(), (order) => this.giveOrder(order));
 
     // Commandes accessibles depuis l'interface React (choix de classe, lancement anticipé).
     useHudStore.getState().setActions({
@@ -218,6 +225,7 @@ export class Game {
     useHudStore.getState().setActions(null);
     window.removeEventListener("resize", this.handleResize);
     this.keyboard.dispose();
+    this.orderWheel.dispose();
     this.camera.dispose();
     this.overlay.dispose();
     this.spellEffects.dispose();
@@ -400,6 +408,11 @@ export class Game {
     });
     this.room.onMessage("swing", (event: SwingEvent) => hud.startSwing(event.remaining, event.struck));
     this.room.onMessage("error", (event: GameErrorMessage) => hud.flash(errorText(event.code, event.abilityId)));
+    // Réponse d'un bot à un ordre : une bulle au-dessus de sa tête.
+    this.room.onMessage("botReply", (message: BotReplyMessage) => {
+      const bot = this.players.get(message.botId);
+      if (bot) this.overlay.say(bot.sessionId, bot.root, t(`reply.${message.reply}` as TextKey));
+    });
     // Chargement trop long : un bot a pris notre place, le serveur nous déconnecte. Le jeu s'arrête derrière l'écran.
     this.room.onMessage("replacedByBot", () => {
       this.disposed = true;
@@ -407,6 +420,7 @@ export class Game {
       hud.setPing(null);
       this.engine.stopRenderLoop();
       this.keyboard.dispose();
+      this.orderWheel.dispose();
       hud.setStatus("replaced");
     });
   }
@@ -485,6 +499,34 @@ export class Game {
       default:
         if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, t(INFO_LABELS[event.kind]!), "info", false, delay);
     }
+  }
+
+  // Ordres de la roue (molette) : pendant le combat, vivant (même sous contrôle). Un ordre qu'aucun bot vivant de
+  // l'équipe ne peut exécuter est grisé.
+  private orderWheelItems() {
+    const self = this.self;
+    const phase = (this.room.state as { phase: MatchPhase }).phase;
+    if (!self || !self.isAlive || phase !== "fighting" || this.loading.progress < 1) return null;
+    const classId = self.state.classId as ClassId;
+    const bots = [...this.players.values()]
+      .filter((p) => p.state.isBot && p.isAlive && p.state.team === self.state.team)
+      .map((p) => p.state.classId as ClassId);
+    return ORDERS.map((id) => ({ id, label: this.orderLabel(id), enabled: orderAvailable(id, classId, bots) }));
+  }
+
+  // « J'ai besoin de mana » ou « d'endurance », selon la ressource de sa classe.
+  private orderLabel(order: OrderId): string {
+    if (order !== "resource") return t(`order.${order}`);
+    return t(getClass(this.self?.state.classId ?? "")?.resource === "endurance" ? "order.resourceEndurance" : "order.resourceMana");
+  }
+
+  // Envoie l'ordre aux bots et l'affiche dans une bulle au-dessus de son personnage. La roue a pu rester ouverte
+  // pendant que la situation changeait (mort, fin du combat, bot tombé) : on revérifie.
+  private giveOrder(order: OrderId) {
+    if (!this.orderWheelItems()?.find((item) => item.id === order)?.enabled) return;
+    this.room.send("order", { order });
+    const self = this.self;
+    if (self) this.overlay.say(self.sessionId, self.root, this.orderLabel(order));
   }
 
   private get self(): PlayerVisual | undefined {

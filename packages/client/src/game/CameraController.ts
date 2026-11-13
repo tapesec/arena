@@ -1,6 +1,7 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
+import { useHudStore } from "../store";
 
 // Vue isométrique : caméra en diagonale, inclinée d'environ 55° par rapport à la verticale.
 const DEFAULT_ALPHA = (-3 * Math.PI) / 4;
@@ -93,7 +94,20 @@ export class CameraController {
   };
 
   private handlePointerMove = (event: PointerEvent) => {
+    // Clic droit enfoncé ou relâché pendant qu'un autre bouton est tenu (la molette de la roue des ordres) : le
+    // navigateur ne signale qu'un déplacement, avec le bouton qui a changé.
+    if (event.button === 2) {
+      if (event.buttons & 2) this.handlePointerDown(event);
+      else this.handlePointerUp(event);
+      return;
+    }
     if (!this.dragging) return;
+    // Roue des ordres ouverte : la souris sert à pointer un ordre, la caméra ne tourne pas.
+    if (useHudStore.getState().orderWheel) {
+      this.lastX = event.clientX;
+      this.lastY = event.clientY;
+      return;
+    }
     this.camera.alpha -= (event.clientX - this.lastX) * ROTATION_SPEED;
     // Souris vers le haut : la caméra s'abaisse vers l'horizon ; vers le bas : elle plonge.
     const beta = this.camera.beta - (event.clientY - this.lastY) * ROTATION_SPEED;
@@ -106,7 +120,8 @@ export class CameraController {
     if (event.button !== 2) return;
     if (!this.dragging) return;
     this.dragging = false;
-    this.canvas.releasePointerCapture(event.pointerId);
+    // Un autre bouton encore tenu (la molette) garde la capture.
+    if (event.buttons === 0 && this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
     this.onSteerChange(false);
   };
 

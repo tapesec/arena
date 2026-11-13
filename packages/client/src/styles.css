@@ -989,6 +989,78 @@ body,
   filter: grayscale(1);
 }
 
+/* --- Ordres aux bots : roue de la molette et bulles de réponse --- */
+.order-wheel {
+  position: fixed;
+  width: 0;
+  height: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.order-wheel-center {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(10, 14, 22, 0.45);
+}
+
+.order-wheel-item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 8px 12px;
+  border-radius: 18px;
+  border: 1px solid #5a6475;
+  background: rgba(16, 20, 30, 0.88);
+  color: #e8ecf3;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.order-wheel-selected {
+  border-color: #ffd36a;
+  background: rgba(70, 56, 20, 0.95);
+  color: #fff3cf;
+  box-shadow: 0 0 10px rgba(255, 211, 106, 0.6);
+}
+
+.order-wheel-disabled {
+  opacity: 0.35;
+}
+
+.speech-bubble {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 200px;
+  padding: 4px 9px;
+  border-radius: 10px;
+  background: rgba(250, 248, 240, 0.95);
+  color: #1c2230;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Pointe de la bulle, vers la tête du personnage. */
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom: 0;
+  border-top-color: rgba(250, 248, 240, 0.95);
+}
+
 .spectator-banner {
   top: auto;
   bottom: 110px;

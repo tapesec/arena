@@ -12,6 +12,8 @@ import {
   type ClassId,
   type MatchPhase,
   type MoveInput,
+  type OrderId,
+  type OrderReply,
   type Position,
 } from "@arena/shared";
 import type { CombatSystem } from "../CombatSystem";
@@ -44,6 +46,18 @@ const EDGE_MARGIN = 10;
 const ESCORT_DISTANCE = 3;
 // Angles essayés (en degrés) si la direction de fuite idéale est bloquée.
 const FLEE_ANGLES = [0, 30, -30, 60, -60, 90, -90, 120, -120];
+
+// Suivez-moi : distance à laquelle chaque bot suit le joueur (tirée au hasard pour qu'ils ne s'empilent pas).
+const FOLLOW_MIN_DISTANCE = 2.5;
+const FOLLOW_MAX_DISTANCE = 5;
+
+// Ordre donné par un joueur (roue de la molette) : qui l'a donné, sa cible (Assistez-moi), et jusqu'à quand il vaut.
+export interface BotOrder {
+  kind: OrderId;
+  issuer: PlayerRuntime;
+  target: PlayerRuntime | null;
+  until: number;
+}
 
 // Erreur humaine : les bots ne sont pas des machines parfaites. Modifiable (les tests la coupent).
 export const HUMAN_ERRORS = {
@@ -78,6 +92,9 @@ export class BotBrain {
   private stuckTime = 0;
   // Instant (temps de la partie) à partir duquel chaque ennemi visible est remarqué.
   private noticedAt = new Map<string, number>();
+  // Ordre en cours (un seul à la fois : un nouvel ordre remplace le précédent).
+  order: BotOrder | null = null;
+  private followDistance = FOLLOW_MIN_DISTANCE + Math.random() * (FOLLOW_MAX_DISTANCE - FOLLOW_MIN_DISTANCE);
 
   constructor(
     readonly player: PlayerRuntime,
@@ -87,6 +104,7 @@ export class BotBrain {
 
   update(dt: number, world: BotWorld) {
     if (!this.player.alive) {
+      this.order = null;
       this.stop();
       return;
     }
@@ -98,8 +116,10 @@ export class BotBrain {
       this.rememberEnemies();
       if (world.phase === "preparation") this.prepare();
       else if (world.phase === "fighting") {
+        this.expireOrder();
         // Hésitation : le bot continue ce qu'il faisait au lieu de réagir.
         if (!(HUMAN_ERRORS.enabled && Math.random() < HUMAN_ERRORS.hesitation)) this.think();
+        this.follow();
       } else this.stop();
     }
     this.steer(dt);
@@ -126,6 +146,57 @@ export class BotBrain {
       this.lastSeenEnemy = { x: enemy.state.x, z: enemy.state.z };
       this.exploreTarget = null;
     }
+  }
+
+  // --- Ordres ---
+
+  // Reçoit un ordre d'un joueur de son équipe : retourne la réponse du bot. S'il refuse, il garde son ordre précédent.
+  receiveOrder(kind: OrderId, issuer: PlayerRuntime, target: PlayerRuntime | null): OrderReply {
+    const refusal = this.refuseOrder(kind, issuer);
+    if (refusal) return refusal;
+    this.order = { kind, issuer, target, until: this.combat.now + this.orderDuration(kind) };
+    return kind;
+  }
+
+  // Raison de ne pas pouvoir obéir (plus de mana, compétence en recharge…), ou null.
+  protected refuseOrder(_kind: OrderId, _issuer: PlayerRuntime): OrderReply | null {
+    return null;
+  }
+
+  // Durée maximale d'un ordre (secondes) ; par défaut, jusqu'au prochain ordre.
+  protected orderDuration(_kind: OrderId): number {
+    return Infinity;
+  }
+
+  // Buffs que ce bot peut lancer et que le joueur n'a pas (Buff please).
+  missingBuffs(_player: PlayerRuntime): string[] {
+    return [];
+  }
+
+  // Un ordre cesse à la mort ou au départ (déconnexion) de celui qui l'a donné ou de sa cible, ou une fois son temps
+  // écoulé.
+  private expireOrder() {
+    const order = this.order;
+    if (!order) return;
+    const present = (p: PlayerRuntime) => p.alive && this.world.players.get(p.id) === p;
+    if (!present(order.issuer) || (order.target && !present(order.target)) || this.combat.now > order.until) this.order = null;
+  }
+
+  // Suivez-moi : tant qu'aucun ennemi n'est en vue, le bot suit le joueur ; au premier ennemi aperçu, l'ordre cesse
+  // et le bot engage le combat comme d'habitude.
+  private follow() {
+    if (this.order?.kind !== "follow") return;
+    if (this.enemies().length > 0) {
+      this.order = null;
+      return;
+    }
+    if (!this.isCasting) this.moveTo(this.order.issuer.state, this.followDistance);
+  }
+
+  // Assistez-moi : la cible du joueur, tant que l'équipe la voit.
+  protected assistTarget(): PlayerRuntime | undefined {
+    const target = this.order?.kind === "assist" ? this.order.target : null;
+    return target?.alive && this.world.visible.has(target.id) ? target : undefined;
   }
 
   // Pendant la préparation, par défaut, on attend sans bouger.
@@ -186,9 +257,11 @@ export class BotBrain {
     return best;
   }
 
-  // Cible prioritaire : le premier groupe de classes qui a un représentant visible, puis le plus proche.
+  // Cible prioritaire : celle du joueur qui a demandé assistance, sinon le premier groupe de classes qui a un représentant visible, puis le plus proche.
   // On garde la cible actuelle tant qu'elle reste dans le meilleur groupe, pour ne pas papillonner.
   protected pickTarget(priorities: ClassId[][]): PlayerRuntime | undefined {
+    const assisted = this.assistTarget();
+    if (assisted) return assisted;
     const enemies = this.enemies();
     const rank = (p: PlayerRuntime) => {
       const index = priorities.findIndex((group) => group.includes(p.classDef.id));

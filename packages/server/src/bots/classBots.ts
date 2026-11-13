@@ -1,4 +1,6 @@
 import {
+  GARDIEN_ASSIST_DURATION,
+  HEAL_ORDER_DURATION,
   MELEE_RANGE,
   RAMPART_RADIUS,
   distance,
@@ -6,6 +8,8 @@ import {
   positionRelativeTo,
   type ClassId,
   type EffectKind,
+  type OrderId,
+  type OrderReply,
 } from "@arena/shared";
 import type { CombatSystem } from "../CombatSystem";
 import type { PlayerRuntime } from "../PlayerRuntime";
@@ -26,6 +30,23 @@ const AOE_MEZ_RADIUS = getAbility("aoeMez")?.radius ?? 10;
 // Prêtre : rayons de l'Intervention divine et du Soin de groupe.
 const DIVINE_INTERVENTION_RADIUS = getAbility("divineIntervention")?.radius ?? 30;
 const GROUP_HEAL_RADIUS = getAbility("groupHeal")?.radius ?? 30;
+
+// Les ordres ponctuels (réveiller, buffer) sont abandonnés s'ils ne sont pas faits dans ce délai (secondes).
+const ONE_SHOT_ORDER_DURATION = 10;
+// Portée à laquelle les soigneurs et le Barde se placent pour lancer un sort à un allié (portée des sorts : 30 m).
+const SUPPORT_REACH = 28;
+const SUPPORT_APPROACH = 24;
+
+// Coût en mana d'une compétence (pour refuser un ordre faute de mana).
+function manaCost(abilityId: string): number {
+  return getAbility(abilityId)?.cost ?? 0;
+}
+
+// La ressource du joueur (mana ou endurance) est pleine.
+function resourceFull(player: PlayerRuntime): boolean {
+  const state = player.state;
+  return player.classDef.resource === "mana" ? state.mana >= state.maxMana : state.endurance >= state.maxEndurance;
+}
 
 // Distance que les lanceurs de sorts cherchent à garder avec l'ennemi (la portée des sorts est de 30 m).
 const CASTER_MIN_DISTANCE = 15;
@@ -183,6 +204,7 @@ class PretreBot extends CasterBot {
     if (this.meleeThreats(CASTER_DANGER_RADIUS).length > 0 && this.hpRatio(self) < 0.5) this.tryUse("instantHeal", self);
     if (this.evadeMelee()) return;
     if (this.isCasting) return;
+    if (this.obeyOrder()) return;
 
     const allies = this.allies();
     const byHealth = [...allies].sort((a, b) => this.hpRatio(a) - this.hpRatio(b));
@@ -226,6 +248,43 @@ class PretreBot extends CasterBot {
     this.advance();
   }
 
+  protected refuseOrder(kind: OrderId, issuer: PlayerRuntime): OrderReply | null {
+    if (kind === "heal" && issuer.state.hp >= issuer.state.maxHp) return "full";
+    if (kind === "heal" && this.self.state.mana < manaCost("heal")) return "noMana";
+    if (kind === "buff" && this.self.state.mana < Math.min(...this.missingBuffs(issuer).map(manaCost))) return "noMana";
+    return null;
+  }
+
+  protected orderDuration(kind: OrderId): number {
+    if (kind === "heal") return HEAL_ORDER_DURATION;
+    return kind === "buff" ? ONE_SHOT_ORDER_DURATION : Infinity;
+  }
+
+  missingBuffs(player: PlayerRuntime): string[] {
+    return (["buffHp", "buffStrength"] as const).filter((buff) => !player.has(buff));
+  }
+
+  // Soigne-moi : le joueur passe avant tout le monde jusqu'à être à pleine vie. Buff please : ses buffs manquants.
+  // Retourne vrai si le Prêtre s'en occupe (déplacement ou sort).
+  private obeyOrder(): boolean {
+    const order = this.order;
+    if (order?.kind !== "heal" && order?.kind !== "buff") return false;
+    const issuer = order.issuer;
+    const missing = order.kind === "buff" ? this.missingBuffs(issuer) : [];
+    const done = order.kind === "heal" ? issuer.state.hp >= issuer.state.maxHp : missing.length === 0;
+    if (done) {
+      this.order = null;
+      return false;
+    }
+    if (this.distanceTo(issuer) > SUPPORT_REACH) {
+      this.moveTo(issuer.state, SUPPORT_APPROACH);
+      return true;
+    }
+    if (order.kind === "buff") return missing.some((buff) => this.tryUse(buff, issuer));
+    if (this.hpRatio(issuer) < 0.35 && this.tryUse("instantHeal", issuer)) return true;
+    return this.tryUse("heal", issuer);
+  }
+
   // Buff de vie pour tous, buff de puissance pour tous les combattants (il augmente aussi les sorts et les soins). Retourne vrai si un buff est lancé.
   private buffAllies(): boolean {
     for (const ally of this.allies()) {
@@ -259,6 +318,7 @@ class BardeBot extends CasterBot {
     this.ensureSong();
     if (this.evadeMelee()) return;
     if (this.isCasting) return;
+    if (this.obeyOrder()) return;
     const allies = this.allies();
 
     // 1. Réveiller un allié mezzé (pas soi-même : on ne peut rien faire sous mez).
@@ -294,8 +354,62 @@ class BardeBot extends CasterBot {
     return !!ally && this.tryUse("buffDexterity", ally);
   }
 
+  protected refuseOrder(kind: OrderId, issuer: PlayerRuntime): OrderReply | null {
+    const mana = this.self.state.mana;
+    if (kind === "awaken") {
+      if (!issuer.has("mez")) return "notMezzed";
+      if (!this.isReady("awaken")) return "cooldown";
+      if (mana < manaCost("awaken")) return "noMana";
+    }
+    if (kind === "resource" && resourceFull(issuer)) return "full";
+    if (kind === "resource" && this.self.state.song !== "secondWind" && mana < manaCost("secondWind")) return "noMana";
+    if (kind === "buff" && mana < manaCost("buffDexterity")) return "noMana";
+    return null;
+  }
+
+  protected orderDuration(kind: OrderId): number {
+    // Vitesse : il suffit de reprendre le Chant de vitesse (fin de l'ordre « mana »).
+    if (kind === "speed") return 0;
+    return kind === "awaken" || kind === "buff" ? ONE_SHOT_ORDER_DURATION : Infinity;
+  }
+
+  missingBuffs(player: PlayerRuntime): string[] {
+    return player.has("buffDexterity") ? [] : ["buffDexterity"];
+  }
+
+  // Réveille-moi, Buff please, et rester à portée de chant pour « besoin de mana ». Retourne vrai si le Barde s'en
+  // occupe (déplacement ou sort).
+  private obeyOrder(): boolean {
+    const order = this.order;
+    if (!order) return false;
+    const issuer = order.issuer;
+    if (order.kind === "resource") {
+      if (resourceFull(issuer)) {
+        this.order = null;
+        return false;
+      }
+      if (this.distanceTo(issuer) <= SUPPORT_APPROACH) return false;
+      this.moveTo(issuer.state, SUPPORT_APPROACH - 4);
+      return true;
+    }
+    if (order.kind !== "awaken" && order.kind !== "buff") return false;
+    const done = order.kind === "awaken" ? !issuer.has("mez") : this.missingBuffs(issuer).length === 0;
+    if (done) {
+      this.order = null;
+      return false;
+    }
+    if (this.distanceTo(issuer) > SUPPORT_REACH) {
+      this.moveTo(issuer.state, SUPPORT_APPROACH);
+      return true;
+    }
+    return this.tryUse(order.kind === "awaken" ? "awaken" : "buffDexterity", issuer);
+  }
+
+  // Chant de vitesse, ou Chant de second souffle pour un joueur qui a demandé du mana ou de l'endurance.
   private ensureSong() {
-    if (!this.self.state.song) this.tryUse("speedSong");
+    if (this.order?.kind === "resource" && resourceFull(this.order.issuer)) this.order = null;
+    const wanted = this.order?.kind === "resource" ? "secondWind" : "speedSong";
+    if (this.self.state.song !== wanted) this.tryUse(wanted);
   }
 }
 
@@ -322,6 +436,13 @@ class GardienBot extends BotBrain {
     // Provocation : l'ennemi qui frappe le protégé, ou qui achève un allié (au corps à corps ou par un sort).
     const taunted = this.tauntTarget(ward);
     if (taunted && this.tryUse("taunt", taunted)) return;
+
+    // Assistez-moi : la cible du joueur, en chargeant si elle est loin.
+    const assisted = this.assistTarget();
+    if (assisted) {
+      if (this.distanceTo(assisted) >= CHARGE_MIN && this.tryUse("charge", assisted)) return;
+      return this.fight(assisted);
+    }
 
     if (!ward) {
       const target = this.pickTarget(DAMAGE_PRIORITY);
@@ -403,8 +524,15 @@ class GardienBot extends BotBrain {
     return !!ward && group.includes(ward) && this.hpRatio(ward) < 0.3 && this.combat.now - ward.lastMeleeHitAt < 2;
   }
 
-  // Le lanceur de sorts allié attaqué le plus récemment, sinon le plus proche.
+  // Assistez-moi : le Gardien n'obéit que GARDIEN_ASSIST_DURATION secondes (il retourne ensuite protéger).
+  protected orderDuration(kind: OrderId): number {
+    return kind === "assist" ? GARDIEN_ASSIST_DURATION : Infinity;
+  }
+
+  // Le joueur qui a demandé sa protection ; sinon le lanceur de sorts allié attaqué le plus récemment, sinon le plus
+  // proche.
   private chooseWard(): PlayerRuntime | undefined {
+    if (this.order?.kind === "protect") return this.order.issuer;
     const casters = this.allies().filter((a) => a !== this.self && CASTER_CLASSES.includes(a.classDef.id));
     const attacked = casters
       .filter((c) => this.combat.now - c.lastMeleeHitAt < 3)

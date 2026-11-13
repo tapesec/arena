@@ -10,3 +10,4 @@ export * from "./terrain";
 export * from "./names";
 export * from "./errors";
 export * from "./locomotion";
+export * from "./orders";

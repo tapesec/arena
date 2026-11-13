@@ -170,8 +170,38 @@ function Hud() {
       </div>
       <CombatLog />
       <HelpPanel />
+      <OrderWheelView />
       {phase === "ended" && <EndScreen />}
     </>
+  );
+}
+
+// Rayon de la roue des ordres (pixels, du centre au milieu de chaque ordre).
+const ORDER_WHEEL_RADIUS = 120;
+
+// Roue des ordres aux bots, ouverte tant que la molette est enfoncée (voir game/OrderWheel.ts).
+function OrderWheelView() {
+  const wheel = useHudStore((s) => s.orderWheel);
+  if (!wheel) return null;
+  const count = wheel.items.length;
+  return (
+    <div className="order-wheel" style={{ left: wheel.x, top: wheel.y }}>
+      <div className="order-wheel-center" />
+      {wheel.items.map((item, index) => {
+        // Le premier ordre en haut, les suivants dans le sens des aiguilles d'une montre.
+        const angle = (index / count) * 2 * Math.PI;
+        const x = Math.sin(angle) * ORDER_WHEEL_RADIUS;
+        const y = -Math.cos(angle) * ORDER_WHEEL_RADIUS;
+        const classes = ["order-wheel-item"];
+        if (!item.enabled) classes.push("order-wheel-disabled");
+        if (index === wheel.selected) classes.push("order-wheel-selected");
+        return (
+          <div key={item.id} className={classes.join(" ")} style={{ transform: `translate(${x}px, ${y}px) translate(-50%, -50%)` }}>
+            {item.label}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -814,6 +844,7 @@ function HelpContent() {
       <div>{t("help.lock")}</div>
       <div>{t("help.attack")}</div>
       <div>{t("help.abilities")}</div>
+      <div>{t("help.orders")}</div>
     </div>
   );
 }

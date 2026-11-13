@@ -57,6 +57,30 @@ export const en = {
   "loading.lateHint": "Your game is still loading: if it is not ready when the fight starts, a bot will take your place.",
   "loading.percent": "{value}%",
   "loading.replaced": "Your game took too long to load: a bot took your place in this match.",
+  // Ordres aux bots (roue de la molette) et réponses des bots
+  "order.follow": "Follow me",
+  "order.assist": "Assist me",
+  "order.protect": "Protect me",
+  "order.heal": "Heal me",
+  "order.awaken": "Wake me up",
+  "order.resourceMana": "I need mana",
+  "order.resourceEndurance": "I need endurance",
+  "order.speed": "I need speed",
+  "order.buff": "Buff please",
+  "reply.follow": "Right behind you!",
+  "reply.assist": "On your target!",
+  "reply.protect": "I've got you!",
+  "reply.heal": "Healing you!",
+  "reply.awaken": "Waking you up!",
+  "reply.resource": "Second wind!",
+  "reply.speed": "Speed song!",
+  "reply.buff": "Buffs incoming!",
+  "reply.noMana": "Out of mana!",
+  "reply.cooldown": "Not ready yet!",
+  "reply.noTarget": "Which target?",
+  "reply.notMezzed": "You're not mezzed.",
+  "reply.full": "You're already full.",
+  "reply.alreadyBuffed": "You already have everything.",
 
   // Combat
   "match.preparation": "Preparation: the fight starts in",
@@ -95,6 +119,7 @@ export const en = {
   "help.lock": "F: face the target · C: follow it (stick)",
   "help.attack": "R: toggle auto-attack · mouse wheel: zoom · V: reset camera",
   "help.abilities": "1–9, 0: abilities",
+  "help.orders": "Hold the mouse wheel: orders to your bots",
 
   // Raisons d'un refus (serveur et infobulle de la barre d'action), voir GameErrorCode
   "error.noTarget": "No target",

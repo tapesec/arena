@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CLASSES, MELEE_RANGE, START_ZONES, distance, maxResource, spawnPosition, type ClassId } from "@arena/shared";
+import { CLASSES, MELEE_RANGE, START_ZONES, distance, maxResource, spawnPosition, type ClassId, type OrderId } from "@arena/shared";
 import { CombatSystem } from "../CombatSystem";
 import { PlayerRuntime } from "../PlayerRuntime";
 import { PlayerState } from "../state";
@@ -8,6 +8,7 @@ import { computeTeamVisibility } from "../visibility";
 import { HUMAN_ERRORS, type BotBrain } from "./BotBrain";
 import { createBotBrain } from "./classBots";
 import { pickBotClass } from "./composition";
+import { dispatchOrder } from "./orders";
 import { Pathfinder } from "./Pathfinder";
 
 const DT = 0.05;
@@ -43,18 +44,29 @@ class Sim {
     return player;
   }
 
+  // Joueurs vus par chaque équipe.
+  visibility(): Map<number, Set<string>> {
+    const units = [...this.combat.players.values()].map((p) => ({
+      id: p.id,
+      team: p.state.team,
+      x: p.state.x,
+      z: p.state.z,
+      alive: p.alive,
+    }));
+    return computeTeamVisibility(units);
+  }
+
+  // Ordre donné par un joueur : réponses des bots.
+  order(kind: OrderId, issuer: PlayerRuntime) {
+    const visible = this.visibility().get(issuer.state.team) ?? new Set<string>();
+    return dispatchOrder(kind, issuer, this.bots, this.combat.players, visible);
+  }
+
   // Avance la simulation ; s'arrête plus tôt si until() devient vrai.
   run(seconds: number, until: () => boolean = () => false): number {
     let elapsed = 0;
     while (elapsed < seconds && !until()) {
-      const units = [...this.combat.players.values()].map((p) => ({
-        id: p.id,
-        team: p.state.team,
-        x: p.state.x,
-        z: p.state.z,
-        alive: p.alive,
-      }));
-      const visibility = computeTeamVisibility(units);
+      const visibility = this.visibility();
       for (const bot of this.bots) {
         const visible = visibility.get(bot.player.state.team) ?? new Set<string>();
         bot.update(DT, { phase: "fighting", players: this.combat.players, visible });
@@ -216,5 +228,116 @@ describe("Bots : erreur humaine", () => {
     } finally {
       HUMAN_ERRORS.enabled = false;
     }
+  });
+});
+
+describe("Bots : ordres", () => {
+  it("Soigne-moi : le Prêtre soigne le joueur avant un allié plus blessé", () => {
+    const sim = new Sim();
+    sim.spawn("p", "pretre", 0, 0, 0, 0, true);
+    const joueur = sim.spawn("j", "lame", 0, 5, 0);
+    const autre = sim.spawn("o", "barde", 0, -5, 0);
+    joueur.state.hp = Math.round(joueur.state.maxHp * 0.7);
+    autre.state.hp = Math.round(autre.state.maxHp * 0.5);
+    const hp = { joueur: joueur.state.hp, autre: autre.state.hp };
+    assert.deepEqual(sim.order("heal", joueur), [{ botId: "p", reply: "heal" }]);
+    sim.run(5, () => joueur.state.hp > hp.joueur);
+    assert.ok(joueur.state.hp > hp.joueur, "le joueur n'a pas été soigné");
+    assert.equal(autre.state.hp, hp.autre);
+  });
+
+  it("Soigne-moi à pleine vie, Réveille-moi sans être mezzé : le bot dit pourquoi il n'obéit pas", () => {
+    const sim = new Sim();
+    sim.spawn("p", "pretre", 0, 0, 0, 0, true);
+    sim.spawn("b", "barde", 0, 2, 0, 0, true);
+    const joueur = sim.spawn("j", "lame", 0, 5, 0);
+    assert.deepEqual(sim.order("heal", joueur), [{ botId: "p", reply: "full" }]);
+    assert.deepEqual(sim.order("awaken", joueur), [{ botId: "b", reply: "notMezzed" }]);
+  });
+
+  it("J'ai besoin de mana : le Barde passe au Chant de second souffle, puis reprend le Chant de vitesse", () => {
+    const sim = new Sim();
+    const barde = sim.spawn("b", "barde", 0, 0, 0, 0, true);
+    const joueur = sim.spawn("j", "arcaniste", 0, 5, 0);
+    sim.run(1);
+    assert.equal(barde.state.song, "speedSong");
+    joueur.state.mana = 100;
+    assert.deepEqual(sim.order("resource", joueur), [{ botId: "b", reply: "resource" }]);
+    // Le Barde finit d'abord l'incantation en cours (Buff dextérité sur le joueur).
+    sim.run(4, () => barde.state.song === "secondWind");
+    assert.equal(barde.state.song, "secondWind");
+    joueur.state.mana = joueur.state.maxMana;
+    sim.run(4, () => barde.state.song === "speedSong");
+    assert.equal(barde.state.song, "speedSong");
+  });
+
+  it("Protège-moi : le Gardien garde le joueur plutôt qu'un lanceur de sorts", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 0, 0, 0, true);
+    sim.spawn("a", "arcaniste", 0, 1, 0);
+    const joueur = sim.spawn("j", "lame", 0, 6, 0);
+    assert.deepEqual(sim.order("protect", joueur), [{ botId: "g", reply: "protect" }]);
+    sim.run(5, () => joueur.getEffect("guarded")?.sourceId === gardien.id);
+    assert.equal(joueur.getEffect("guarded")?.sourceId, gardien.id);
+  });
+
+  it("Assistez-moi : les Lames attaquent la cible du joueur, pas leur cible préférée ; sans cible, « quelle cible ? »", () => {
+    const sim = new Sim();
+    const lame = sim.spawn("l", "lame", 0, 0, 0, 0, true);
+    const joueur = sim.spawn("j", "arcaniste", 0, 1, 0);
+    sim.spawn("e1", "barde", 1, -3, 12);
+    const gardien = sim.spawn("e2", "gardien", 1, 3, 12);
+    assert.deepEqual(sim.order("assist", joueur), [{ botId: "l", reply: "noTarget" }]);
+    sim.combat.setTarget(joueur.id, gardien.id);
+    assert.deepEqual(sim.order("assist", joueur), [{ botId: "l", reply: "assist" }]);
+    sim.run(2);
+    assert.equal(lame.targetId, gardien.id);
+  });
+
+  it("Suivez-moi : les bots suivent le joueur, et l'ordre cesse au premier ennemi aperçu", () => {
+    const sim = new Sim();
+    const lame = sim.spawn("l", "lame", 0, 0, 0, 0, true);
+    const joueur = sim.spawn("j", "barde", 0, 0, 2);
+    assert.deepEqual(sim.order("follow", joueur), [{ botId: "l", reply: "follow" }]);
+    joueur.state.x += 12;
+    sim.run(5);
+    assert.ok(distance(lame.state, joueur.state) <= 5.5, `Lame à ${distance(lame.state, joueur.state).toFixed(1)} m`);
+    sim.spawn("e", "arcaniste", 1, 12, 14);
+    sim.run(1);
+    assert.equal(sim.bots[0].order, null);
+  });
+
+  it("Suivez-moi : un Prêtre suit encore le joueur après plus de 10 s sans ennemi", () => {
+    const sim = new Sim();
+    const pretre = sim.spawn("p", "pretre", 0, 0, 0, 0, true);
+    const joueur = sim.spawn("j", "lame", 0, 0, 2);
+    sim.order("follow", joueur);
+    sim.run(12);
+    joueur.state.x += 12;
+    sim.run(5);
+    assert.ok(distance(pretre.state, joueur.state) <= 5.5, `Prêtre à ${distance(pretre.state, joueur.state).toFixed(1)} m`);
+  });
+
+  it("Réveille-moi : le Barde mezzé ne répond pas, le Barde libre suivant obéit", () => {
+    const sim = new Sim();
+    const proche = sim.spawn("b1", "barde", 0, 1, 0, 0, true);
+    sim.spawn("b2", "barde", 0, 6, 0, 0, true);
+    const joueur = sim.spawn("j", "lame", 0, 0, 2);
+    const mez = (p: PlayerRuntime) => (sim.combat as unknown as { addEffect(p: PlayerRuntime, kind: string, duration: number, sourceId: string): void }).addEffect(p, "mez", 10, "x");
+    mez(proche);
+    mez(joueur);
+    assert.deepEqual(sim.order("awaken", joueur), [{ botId: "b2", reply: "awaken" }]);
+  });
+
+  it("Buff please : chaque Prêtre et chaque Barde lance les buffs qui manquent au joueur", () => {
+    const sim = new Sim();
+    sim.spawn("p", "pretre", 0, 0, 0, 0, true);
+    sim.spawn("b", "barde", 0, 2, 0, 0, true);
+    const joueur = sim.spawn("j", "lame", 0, 5, 0);
+    joueur.effects = joueur.effects.filter((e) => !e.kind.startsWith("buff"));
+    const replies = sim.order("buff", joueur).map((r) => r.reply);
+    assert.deepEqual(replies.sort(), ["buff", "buff"]);
+    sim.run(10, () => joueur.has("buffHp") && joueur.has("buffStrength") && joueur.has("buffDexterity"));
+    assert.ok(joueur.has("buffHp") && joueur.has("buffStrength") && joueur.has("buffDexterity"));
   });
 });

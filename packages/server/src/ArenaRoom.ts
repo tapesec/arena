@@ -17,9 +17,11 @@ import {
   type MatchPhase,
   type MoveInput,
   NO_INPUT,
+  isOrderId,
 } from "@arena/shared";
 import { BotBrain } from "./bots/BotBrain";
 import { createBotBrain } from "./bots/classBots";
+import { dispatchOrder } from "./bots/orders";
 import { botToReplace, initialBotClasses, pickBotClass } from "./bots/composition";
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
@@ -73,6 +75,14 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     toggleAttack: (client: Client) => this.combat.toggleAttack(client.sessionId),
     faceLock: (client: Client) => this.combat.lockOnTarget(client.sessionId, "face"),
     stick: (client: Client) => this.combat.lockOnTarget(client.sessionId, "stick"),
+    // Ordre aux bots de son équipe (roue de la molette) : pendant le combat, même sous contrôle, pas mort.
+    order: (client: Client, message: unknown) => {
+      const order = (message as { order?: unknown } | null)?.order;
+      const issuer = this.combat.players.get(client.sessionId);
+      if (!isOrderId(order) || this.phase !== "fighting" || !issuer?.alive) return;
+      const visible = this.teamVisibility.get(issuer.state.team) ?? new Set<string>();
+      for (const reply of dispatchOrder(order, issuer, this.bots, this.combat.players, visible)) client.send("botReply", reply);
+    },
     cast: (client: Client, message: unknown) => {
       const abilityId = (message as { abilityId?: unknown } | null)?.abilityId;
       if (typeof abilityId === "string") this.combat.useAbility(client.sessionId, abilityId);

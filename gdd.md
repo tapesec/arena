@@ -188,6 +188,15 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 - Priorités par classe : les Lames visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les lanceurs de sorts visent les lanceurs de sorts, puis les Lames, puis les Gardiens. Les Prêtres soignent en priorité. Les Bardes réveillent un allié mezzé, lancent la Ballade quand au moins trois alliés sont entravés, cherchent le mez de zone, puis l'Oubli sur un lanceur qui incante, et posent le Buff dextérité quand ils ont du mana. Les Lames enchaînent leurs combos, donnent un Coup de pied à un lanceur qui incante et sprintent vers une cible lointaine. Les Gardiens protègent les lanceurs de sorts attaqués. Les lanceurs de sorts fuient la mêlée.
 - **Erreur humaine** : un ennemi qui apparaît n'est remarqué qu'après 0,3 à 0,8 s. Une décision sur sept environ est sautée (hésitation), ce qui retarde aussi soins, fuites et interruptions. En changeant de cible, un bot prend parfois (15 %) un ennemi au hasard.
 - Pas de niveau de difficulté pour le moment.
+- **Ordres aux bots** : pendant le combat, un joueur vivant (même sous mez ou stun) tient la molette de la souris enfoncée pour ouvrir une roue de 8 ordres, pointe l'un d'eux et relâche pour le donner aux bots de son équipe. Un ordre qu'aucun bot présent ne peut exécuter est grisé. Le bot qui obéit le dit dans une bulle au-dessus de sa tête ; s'il ne peut pas obéir (plus de mana, compétence en recharge, rien à faire), il le dit aussi. Les bots obéissent tout de suite (l'équilibrage viendra plus tard). Chaque bot n'a qu'un ordre à la fois : un nouvel ordre remplace le précédent. Un ordre cesse aussi à la mort de celui qui l'a donné. Les coéquipiers humains ne reçoivent pas les ordres pour le moment.
+  - **Soigne-moi** : le Prêtre le plus proche fait du joueur sa priorité de soin, jusqu'à ce qu'il soit à pleine vie, 10 s au plus.
+  - **Réveille-moi** : le Barde le plus proche lance Réveil sur le joueur mezzé.
+  - **J'ai besoin de mana / d'endurance** (selon la classe du joueur) : le Barde le plus proche passe au Chant de second souffle et reste à portée du joueur jusqu'à ce que sa ressource soit pleine, puis reprend le Chant de vitesse.
+  - **J'ai besoin de vitesse** : le Barde le plus proche reprend le Chant de vitesse.
+  - **Protège-moi** (pas pour un Gardien) : le Gardien le plus proche fait du joueur son protégé (Garde, Interception, Provocation de ses agresseurs).
+  - **Assistez-moi** (le joueur doit avoir un ennemi en cible) : les Lames et les Arcanistes attaquent la cible du joueur jusqu'à sa mort ; les Gardiens aussi, mais pendant 10 s seulement.
+  - **Suivez-moi** : tous les bots suivent le joueur jusqu'au premier ennemi aperçu ; ils reprennent alors leur comportement normal pour engager le combat.
+  - **Buff please** : chaque Prêtre et chaque Barde qui a un buff que le joueur n'a pas encore le lui lance (vie et puissance pour le Prêtre, dextérité pour le Barde).
 
 ## Assets
 - **Source** : packs Quaternius, licence CC0 (libre, même commercialement). Tous partagent le même squelette humanoïde (65 os), donc toutes les animations vont sur tous les personnages.

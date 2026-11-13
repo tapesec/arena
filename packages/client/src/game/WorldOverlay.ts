@@ -12,6 +12,10 @@ const TEXT_RISE = 45;
 const BADGE_HEIGHT = 2.6;
 const INDICATOR_HEIGHT = 3.1;
 const TEXT_HEIGHT = 3.35;
+// Bulle de parole d'un bot (réponse à un ordre) : durée d'affichage, dont le fondu final, et hauteur de sa pointe.
+const BUBBLE_DURATION = 2.5;
+const BUBBLE_FADE = 0.4;
+const BUBBLE_HEIGHT = 3.5;
 // Au-delà, les textes les plus anciens disparaissent (évite d'encombrer l'écran en 8v8).
 const MAX_TEXTS = 60;
 
@@ -45,6 +49,12 @@ interface Badge {
   key: string;
 }
 
+interface Bubble {
+  element: HTMLDivElement;
+  anchor: TransformNode;
+  age: number;
+}
+
 // Camp d'un joueur vu par le joueur local : son texte au-dessus de la tête est bleu ou rouge.
 export type Side = "ally" | "enemy";
 
@@ -55,6 +65,7 @@ export class WorldOverlay {
   private pool: HTMLDivElement[] = [];
   private indicators = new Map<string, Indicator>();
   private badges = new Map<string, Badge>();
+  private bubbles = new Map<string, Bubble>();
   private projected = new Vector3();
   private worldPos = new Vector3();
 
@@ -127,12 +138,26 @@ export class WorldOverlay {
     this.badges.set(playerId, { element, anchor, key });
   }
 
+  // Bulle de parole au-dessus d'un joueur (un bot qui répond à un ordre, ou l'ordre lui-même au-dessus du joueur) :
+  // elle remplace la précédente.
+  say(playerId: string, anchor: TransformNode, text: string) {
+    this.bubbles.get(playerId)?.element.remove();
+    const element = document.createElement("div");
+    element.className = "speech-bubble";
+    element.textContent = text;
+    element.style.opacity = "0";
+    this.container.appendChild(element);
+    this.bubbles.set(playerId, { element, anchor, age: 0 });
+  }
+
   // Les textes rattachés à un joueur disparu sont retirés à la prochaine mise à jour.
   removePlayer(playerId: string) {
     this.indicators.get(playerId)?.element.remove();
     this.indicators.delete(playerId);
     this.badges.get(playerId)?.element.remove();
     this.badges.delete(playerId);
+    this.bubbles.get(playerId)?.element.remove();
+    this.bubbles.delete(playerId);
   }
 
   update(dt: number) {
@@ -166,12 +191,28 @@ export class WorldOverlay {
       badge.element.style.display = screen ? "" : "none";
       if (screen) badge.element.style.transform = `translate(${screen.x}px, ${screen.y}px) translate(-50%, -50%)`;
     }
+
+    for (const [playerId, bubble] of this.bubbles) {
+      bubble.age += dt;
+      if (bubble.age >= BUBBLE_DURATION || bubble.anchor.isDisposed()) {
+        bubble.element.remove();
+        this.bubbles.delete(playerId);
+        continue;
+      }
+      const screen = this.toScreen(bubble.anchor, BUBBLE_HEIGHT);
+      const fade = Math.min(1, (BUBBLE_DURATION - bubble.age) / BUBBLE_FADE);
+      bubble.element.style.opacity = screen ? String(fade) : "0";
+      // La pointe de la bulle est au-dessus de la tête.
+      if (screen) bubble.element.style.transform = `translate(${screen.x}px, ${screen.y}px) translate(-50%, -100%) translateY(-8px)`;
+    }
   }
 
   dispose() {
     for (const text of this.texts) text.element.remove();
     for (const indicator of this.indicators.values()) indicator.element.remove();
     for (const badge of this.badges.values()) badge.element.remove();
+    for (const bubble of this.bubbles.values()) bubble.element.remove();
+    this.bubbles.clear();
     this.texts = [];
     this.indicators.clear();
     this.badges.clear();

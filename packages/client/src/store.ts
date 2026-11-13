@@ -1,11 +1,20 @@
 import { create } from "zustand";
 import { currentLanguage, setLanguage as applyLanguage, type Language } from "./i18n";
-import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type RelativePosition } from "@arena/shared";
+import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type OrderId, type RelativePosition } from "@arena/shared";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
 // replaced : un bot a pris la place du joueur, qui n'avait pas fini de charger au début du combat.
 type ConnectionStatus = "connecting" | "connected" | "error" | "replaced";
+
+// Roue des ordres : centre à l'écran (pixels), ordres dans l'ordre de la roue (en partant du haut, sens horaire), et
+// ordre pointé par la souris (null au centre ou sur un ordre grisé).
+export interface OrderWheelFrame {
+  x: number;
+  y: number;
+  items: { id: OrderId; label: string; enabled: boolean }[];
+  selected: number | null;
+}
 
 export interface CastFrame {
   abilityName: string;
@@ -161,6 +170,9 @@ interface HudState {
   // Prochain coup d'arme : instants (performance.now()) de début et de fin de l'attente, null avant le premier ;
   // struck : l'attente a commencé par un coup (la jauge le signale d'un éclat).
   swing: { start: number; end: number; struck: boolean } | null;
+  // Roue des ordres aux bots, ouverte tant que la molette est enfoncée (null si fermée).
+  orderWheel: OrderWheelFrame | null;
+  setOrderWheel: (wheel: OrderWheelFrame | null) => void;
   // Message bref affiché au centre de l'écran ("Cible hors de portée"...).
   flashMessage: string | null;
   actions: GameActions | null;
@@ -193,6 +205,7 @@ const freshGame = {
   cooldownEnds: {},
   swing: null,
   flashMessage: null,
+  orderWheel: null,
 };
 
 // Le dernier pseudo saisi est retenu par le navigateur ; à la première visite, un pseudo par défaut est proposé.
@@ -236,6 +249,7 @@ export const useHudStore = create<HudState>((set) => ({
   setPing: (ping) => set({ ping }),
   setFrames: (self, target, group) => set({ self, target, group }),
   setActions: (actions) => set({ actions }),
+  setOrderWheel: (orderWheel) => set({ orderWheel }),
   pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),
   startCooldown: (abilityId, durationSeconds) =>
     set((s) => ({ cooldownEnds: { ...s.cooldownEnds, [abilityId]: performance.now() + durationSeconds * 1000 } })),
