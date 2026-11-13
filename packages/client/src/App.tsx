@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CLASS_LIST, EFFECTS, TEAM_NAMES, getAbility, getClass, type ClassId } from "@arena/shared";
+import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, TEAM_NAMES, cleanName, getAbility, getClass, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
@@ -61,21 +61,45 @@ function useMusic(phase: string | undefined) {
 
 function HomeScreen() {
   const joinGame = useHudStore((s) => s.joinGame);
+  const playerName = useHudStore((s) => s.playerName);
+  const setPlayerName = useHudStore((s) => s.setPlayerName);
+  const play = () => {
+    if (!playerName) return;
+    // Retenu par le navigateur, même s'il s'agit du pseudo proposé par défaut.
+    setPlayerName(playerName);
+    // Premier clic : le navigateur autorise alors le son.
+    audio.unlock();
+    audio.play(UI_SOUNDS.click);
+    joinGame();
+  };
   return (
     <div className="screen">
       <h1>Arena</h1>
       <p className="screen-text">Combat de groupe 8 contre 8</p>
-      <button
-        className="primary-button"
-        onClick={() => {
-          // Premier clic : le navigateur autorise alors le son.
-          audio.unlock();
-          audio.play(UI_SOUNDS.click);
-          joinGame();
+      <form
+        className="name-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          play();
         }}
       >
-        Rejoindre une partie
-      </button>
+        <label className="name-label" htmlFor="player-name">
+          Pseudo
+        </label>
+        {/* Seuls les lettres sans accent, les chiffres et le @ passent, 15 au plus (cleanName) ; le reste est ignoré. */}
+        <input
+          id="player-name"
+          className="name-input"
+          value={playerName}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(event) => setPlayerName(cleanName(event.target.value))}
+        />
+        <p className="name-hint">Lettres, chiffres et @ · {NAME_MAX_LENGTH} caractères au plus</p>
+        <button type="submit" className="primary-button" disabled={!playerName}>
+          Jouer
+        </button>
+      </form>
       <p className="credits">
         Musiques : « Woodland Fantasy », Matthew Pablo,{" "}
         <a href="https://www.matthewpablo.com" target="_blank" rel="noreferrer">

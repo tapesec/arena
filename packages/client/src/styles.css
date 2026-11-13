@@ -383,9 +383,47 @@ body,
   border: 1px solid #555;
 }
 
+.primary-button:disabled,
 .secondary-button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.name-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.name-label {
+  color: #8a93a3;
+  font-size: 13px;
+}
+
+.name-input {
+  width: 220px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: #1b2027;
+  color: #e8e8e8;
+  font: inherit;
+  font-size: 16px;
+  text-align: center;
+}
+
+.name-input:focus {
+  outline: none;
+  border-color: #ffd76a;
+}
+
+.name-hint {
+  margin: 0 0 4px;
+  color: #8a93a3;
+  font-size: 12px;
 }
 
 .link-button {

@@ -6,7 +6,7 @@ import { Client, type Room } from "@colyseus/sdk";
 const serverUrl = import.meta.env.VITE_SERVER_URL ?? `${window.location.origin}/colyseus`;
 const client = new Client(serverUrl);
 
-// Rejoint la partie en attente de joueurs, ou en ouvre une nouvelle.
-export function joinArena(): Promise<Room> {
-  return client.joinOrCreate("arena");
+// Rejoint la partie en attente de joueurs, ou en ouvre une nouvelle, sous le pseudo saisi à l'accueil.
+export function joinArena(name: string): Promise<Room> {
+  return client.joinOrCreate("arena", { name });
 }

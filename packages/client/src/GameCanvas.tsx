@@ -12,7 +12,7 @@ export function GameCanvas() {
   useEffect(() => {
     let disposed = false;
     let game: Game | null = null;
-    const { setStatus } = useHudStore.getState();
+    const { setStatus, playerName } = useHudStore.getState();
 
     setStatus("connecting");
     // Connexion reportée d'un instant : en développement, StrictMode monte le composant, le démonte et le remonte
@@ -20,7 +20,7 @@ export function GameCanvas() {
     // y prenait la place d'un bot, remplacé à son départ par un autre bot (classe et pseudo différents). Le démontage
     // simulé annule le délai avant que la connexion parte.
     const start = setTimeout(() => {
-      joinArena()
+      joinArena(playerName)
         .then((room) => {
           // Le composant a pu être démonté pendant la connexion.
           if (disposed) {

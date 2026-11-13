@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ClassId, EffectKind, MatchPhase, RelativePosition } from "@arena/shared";
+import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type RelativePosition } from "@arena/shared";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
@@ -123,6 +123,9 @@ interface HudState {
   inGame: boolean;
   // Change à chaque nouvelle partie pour reconnecter proprement le jeu.
   gameKey: number;
+  // Pseudo saisi à l'accueil, envoyé au serveur en rejoignant une partie.
+  playerName: string;
+  setPlayerName: (name: string) => void;
   status: ConnectionStatus;
   error: string | null;
   match: MatchFrame | null;
@@ -166,9 +169,31 @@ const freshGame = {
   flashMessage: null,
 };
 
+// Le dernier pseudo saisi est retenu par le navigateur ; à la première visite, un pseudo par défaut est proposé.
+const NAME_STORAGE_KEY = "arena.playerName";
+
+function initialPlayerName(): string {
+  try {
+    const saved = cleanName(localStorage.getItem(NAME_STORAGE_KEY) ?? "");
+    if (saved) return saved;
+  } catch {
+    // Stockage indisponible (navigation privée…) : pseudo par défaut.
+  }
+  return defaultPlayerName();
+}
+
 export const useHudStore = create<HudState>((set) => ({
   inGame: false,
   gameKey: 0,
+  playerName: initialPlayerName(),
+  setPlayerName: (name) => {
+    try {
+      localStorage.setItem(NAME_STORAGE_KEY, name);
+    } catch {
+      // Stockage indisponible : le pseudo vaut pour cette visite seulement.
+    }
+    set({ playerName: name });
+  },
   actions: null,
   ...freshGame,
   joinGame: () => set((s) => ({ ...freshGame, inGame: true, gameKey: s.gameKey + 1 })),

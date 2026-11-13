@@ -7,6 +7,7 @@ import {
   PREPARATION_DURATION,
   START_ZONES,
   TICK_RATE,
+  cleanName,
   confineToZone,
   getClass,
   maxResource,
@@ -22,7 +23,7 @@ import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime } from "./PlayerRuntime";
 import { ArenaState, PlayerState } from "./state";
-import { randomName } from "./names";
+import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
 
 const IS_DEV = process.env.NODE_ENV !== "production";
@@ -149,15 +150,19 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     this.setPatchRate(1000 / TICK_RATE);
   }
 
-  onJoin(client: Client) {
+  onJoin(client: Client, options?: { name?: unknown }) {
     // L'équipe qui a le moins de joueurs ; le nouveau venu prend la place d'un de ses bots.
     const team = this.humans(0) <= this.humans(1) ? 0 : 1;
     const bots = [...this.state.players.entries()].filter(([, p]) => p.isBot && p.team === team);
     const replaced = bots[botToReplace(bots.map(([, p]) => p.classId as ClassId))];
     const player = new PlayerState();
-    // Nom tiré avant de retirer le bot : le joueur ne reprend pas le sien.
-    player.name = this.freshName();
+    // Pseudo saisi à l'accueil, revérifié ici. Le bot remplacé est retiré avant : si le joueur a choisi son pseudo,
+    // il le garde tel quel. Sans pseudo valide, un nom est tiré avant de retirer le bot (le joueur ne reprend pas
+    // le sien).
+    const wanted = cleanName(typeof options?.name === "string" ? options.name : "");
+    const fallback = wanted ? "" : this.freshName();
     if (replaced) this.state.players.delete(replaced[0]);
+    player.name = wanted ? claimName(wanted, [...this.state.players.values()]) : fallback;
     player.colorIndex = replaced?.[1].colorIndex ?? this.nextColorIndex();
     player.team = team;
     this.state.players.set(client.sessionId, player);
@@ -199,10 +204,14 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     return classes;
   }
 
-  private freshName(): string {
+  private takenNames(): Set<string> {
     const taken = new Set<string>();
-    this.state.players.forEach((p) => taken.add(p.name));
-    return randomName(taken);
+    this.state.players.forEach((p) => taken.add(nameKey(p.name)));
+    return taken;
+  }
+
+  private freshName(): string {
+    return randomName(this.takenNames());
   }
 
   private update(dt: number) {
