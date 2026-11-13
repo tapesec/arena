@@ -7,6 +7,8 @@
   "scripts": {
     "dev:server": "npm run dev -w @arena/server",
     "dev:client": "npm run dev -w @arena/client",
+    "build": "npm run build -w @arena/client",
+    "start": "npm run start -w @arena/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "dev:server:duo": "MATCH_SIZE=2 npm run dev -w @arena/server"

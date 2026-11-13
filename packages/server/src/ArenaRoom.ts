@@ -29,18 +29,19 @@ import { PlayerRuntime } from "./PlayerRuntime";
 import { ArenaState, LoadingState, PlayerState } from "./state";
 import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
+import { envNumber } from "./settings";
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
 // Nombre de joueurs d'une partie (humains et bots), réductible pour tester (MATCH_SIZE=4).
-const MATCH_PLAYERS = Number(process.env.MATCH_SIZE ?? MATCH_SIZE);
+const MATCH_PLAYERS = envNumber("MATCH_SIZE", MATCH_SIZE);
 const TEAM_SIZE = Math.max(1, Math.floor(MATCH_PLAYERS / 2));
 
 // Durées des phases, réductibles pour tester (en secondes).
-const LOBBY_SECONDS = Number(process.env.LOBBY_DURATION ?? LOBBY_DURATION);
-const FULL_LOBBY_SECONDS = Number(process.env.FULL_LOBBY_COUNTDOWN ?? FULL_LOBBY_COUNTDOWN);
-const PREPARATION_SECONDS = Number(process.env.PREPARATION_DURATION ?? PREPARATION_DURATION);
-const LOADING_SECONDS = Number(process.env.LOADING_DURATION ?? LOADING_DURATION);
+const LOBBY_SECONDS = envNumber("LOBBY_DURATION", LOBBY_DURATION);
+const FULL_LOBBY_SECONDS = envNumber("FULL_LOBBY_COUNTDOWN", FULL_LOBBY_COUNTDOWN);
+const PREPARATION_SECONDS = envNumber("PREPARATION_DURATION", PREPARATION_DURATION);
+const LOADING_SECONDS = envNumber("LOADING_DURATION", LOADING_DURATION);
 // L'écran de chargement reste affiché au moins ce temps, même si tout le monde a déjà fini en salle d'attente.
 const LOADING_MIN_SECONDS = 2;
 

@@ -1,4 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
@@ -51,8 +52,25 @@ function devFilesEndpoint(): Plugin {
   };
 }
 
+// Dossiers de public/ réservés aux pages de développement (bibliothèques complètes d'animations et de sons) : retirés
+// de la version de production.
+const DEV_ONLY_PUBLIC = ["dev-models", "dev-sounds"];
+function excludeDevAssets(): Plugin {
+  let outDir = "";
+  return {
+    name: "exclude-dev-assets",
+    apply: "build",
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir);
+    },
+    async closeBundle() {
+      for (const folder of DEV_ONLY_PUBLIC) await rm(resolve(outDir, folder), { recursive: true, force: true });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), devFilesEndpoint()],
+  plugins: [react(), devFilesEndpoint(), excludeDevAssets()],
   server: {
     port: 5173,
     // Tout passe par Vite (page et serveur de jeu) : une seule adresse à exposer, par exemple avec ngrok.
