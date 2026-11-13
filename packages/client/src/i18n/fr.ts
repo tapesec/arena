@@ -2,7 +2,7 @@ import type { TextKey } from "./en";
 
 // Textes du jeu en français : mêmes clés que en.ts (TypeScript signale une clé manquante ou en trop).
 export const fr: Record<TextKey, string> = {
-  "home.tagline": "Combat de groupe 8 contre 8",
+  "home.tagline": "Arène PvP en 8 contre 8",
   "home.language": "Langue",
   "home.name": "Pseudo",
   "home.nameHint": "Lettres, chiffres et @ · {max} caractères au plus",

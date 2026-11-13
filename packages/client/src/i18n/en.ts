@@ -2,7 +2,7 @@
 // {nom} : valeur insérée à l'affichage (voir t()).
 export const en = {
   // Accueil
-  "home.tagline": "8v8 group PvP",
+  "home.tagline": "8v8 PvP arena",
   "home.language": "Language",
   "home.name": "Player name",
   "home.nameHint": "Letters, digits and @ · {max} characters max",

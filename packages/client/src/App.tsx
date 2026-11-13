@@ -15,7 +15,11 @@ export function App() {
   const gameKey = useHudStore((s) => s.gameKey);
   const phase = useHudStore((s) => s.match?.phase);
   // Abonné à la langue : changer de langue sur l'accueil redessine tous les textes.
-  useHudStore((s) => s.language);
+  const language = useHudStore((s) => s.language);
+  // Titre de l'onglet dans la langue choisie (index.html le donne en anglais, pour les liens partagés).
+  useEffect(() => {
+    document.title = `Win or Wipe — ${t("home.tagline")}`;
+  }, [language]);
   useMusic(inGame ? phase : undefined);
   // Le bouton du son reste en bas à droite sur tous les écrans : accueil, attente, choix de classe et partie.
   if (!inGame) {
@@ -79,7 +83,7 @@ function HomeScreen() {
   };
   return (
     <div className="screen">
-      <h1>Arena</h1>
+      <h1>Win or Wipe</h1>
       <p className="screen-text">{t("home.tagline")}</p>
       <LanguageMenu />
       <form

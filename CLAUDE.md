@@ -1,5 +1,7 @@
 # Instructions du projet
 
+Le jeu s'appelle **Win or Wipe** (domaine winorwipe.com). « arena » reste le nom du dépôt et des identifiants internes (`@arena/*`, salle `arena`, clés `arena.*` du navigateur) : ne pas les renommer.
+
 - Infrastructure as code : **Terraform** (fournisseurs AWS et Cloudflare), pas AWS CDK ni CloudFormation. Cette
   consigne prime sur la préférence des règles AWS ci-dessous.
 - Profil AWS local : `lionnel-perso` ; région du jeu : `eu-west-3` (Paris).
