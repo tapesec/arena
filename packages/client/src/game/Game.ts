@@ -412,7 +412,7 @@ export class Game {
     // Réponse d'un bot à un ordre : une bulle au-dessus de sa tête.
     this.room.onMessage("botReply", (message: BotReplyMessage) => {
       const bot = this.players.get(message.botId);
-      if (bot) this.overlay.say(bot.sessionId, bot.root, t(`reply.${message.reply}` as TextKey));
+      if (bot) this.overlay.say(bot.sessionId, bot.root, t(`reply.${message.reply}` satisfies TextKey));
     });
     // Chargement trop long : un bot a pris notre place, le serveur nous déconnecte. Le jeu s'arrête derrière l'écran.
     this.room.onMessage("replacedByBot", () => {
