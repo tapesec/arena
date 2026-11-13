@@ -1,0 +1,78 @@
+import type { TextKey } from "./en";
+
+// Textes du jeu en français : mêmes clés que en.ts (TypeScript signale une clé manquante ou en trop).
+export const fr: Record<TextKey, string> = {
+  "home.tagline": "Combat de groupe 8 contre 8",
+  "home.language": "Langue",
+  "home.name": "Pseudo",
+  "home.nameHint": "Lettres, chiffres et @ · {max} caractères au plus",
+  "home.play": "Jouer",
+  "home.creditsMusic": "Musiques\u00a0:",
+  "home.creditsIcons": "Icônes\u00a0:",
+  "home.creditsSounds": "Sons\u00a0:",
+  "home.creditsVoices": "voix de combat",
+  "home.and": "et",
+
+  "connect.server": "Connexion au serveur…",
+  "connect.match": "Connexion à la partie…",
+  "connect.error": "Connexion impossible\u00a0: {message}",
+  "connect.back": "Retour",
+
+  "team.0": "Bleus",
+  "team.1": "Rouges",
+
+  "lobby.title": "Choisissez votre classe",
+  "lobby.team": "Équipe",
+  "lobby.startsIn": "La partie commence dans",
+  "lobby.full": "Salle complète.",
+  "lobby.players": "{humans} / {total} joueurs dans votre équipe · les places libres sont tenues par des bots.",
+  "lobby.hp": "PV",
+  "lobby.yourTeam": "Votre équipe",
+  "lobby.you": "vous",
+  "lobby.leader": "chef",
+  "lobby.bot": "bot",
+  "lobby.choosing": "choisit…",
+  "lobby.leaderHint": "Vous êtes chef d'équipe\u00a0: vous choisissez la classe des bots.",
+  "lobby.hidden": "La composition adverse reste cachée jusqu'à la rencontre.",
+  "lobby.forceStart": "Lancer maintenant (test)",
+  "lobby.leave": "Quitter la file",
+
+  "resource.mana": "Mana",
+  "resource.endurance": "Endurance",
+
+  "punct.colon": "\u00a0: ",
+
+  "match.preparation": "Préparation\u00a0: le combat commence dans",
+  "match.dead": "Vous êtes mort",
+  "match.spectator": "Mode spectateur",
+  "match.spectatorHint": "{up}{left}{down}{right} déplace la caméra · V revient à votre corps",
+  "end.draw": "Égalité",
+  "end.victory": "Victoire\u00a0!",
+  "end.defeat": "Défaite",
+  "end.winner": "Les {team} remportent la partie.",
+  "end.newMatch": "Nouvelle partie",
+  "end.home": "Retour à l'accueil",
+
+  "frame.attack": "Attaque",
+  "frame.face": "Face",
+  "frame.stick": "Stick",
+  "frame.dead": "Mort",
+  "frame.you": "Vous",
+  "frame.outOfSight": "Hors de vue",
+  "frame.notFacing": "Pas en face",
+  "frame.inMelee": "Au contact",
+
+  "sound.unmute": "Réactiver le son",
+  "sound.mute": "Couper le son",
+  "sound.volume": "Volume",
+
+  "help.show": "Afficher les commandes",
+  "help.hide": "Masquer les commandes",
+  "help.label": "Commandes du jeu",
+  "help.move": "{up}/{down}\u00a0: avancer/reculer · {left}/{right}\u00a0: pivoter",
+  "help.mouse": "Clic droit maintenu\u00a0: la souris oriente (haut/bas\u00a0: inclinaison) · {left}/{right}\u00a0: pas de côté",
+  "help.target": "Tab\u00a0: ennemi suivant · clic\u00a0: cibler · F1\u00a0: soi-même · Échap\u00a0: annuler",
+  "help.lock": "F\u00a0: faire face à la cible · C\u00a0: la suivre (stick)",
+  "help.attack": "R\u00a0: activer/couper l'attaque · molette\u00a0: zoom · V\u00a0: recentrer",
+  "help.abilities": "1 à 9, 0\u00a0: compétences",
+};

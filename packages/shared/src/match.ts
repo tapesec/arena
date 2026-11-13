@@ -32,8 +32,6 @@ export const START_ZONES: StartZone[] = [
   { x: 36, z: 36, radius: 8 },
 ];
 
-export const TEAM_NAMES = ["Bleus", "Rouges"];
-
 // Garde une position à l'intérieur d'une zone de départ (pendant la préparation).
 export function confineToZone(pos: Position, zone: StartZone): Position {
   const dx = pos.x - zone.x;

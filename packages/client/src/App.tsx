@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, TEAM_NAMES, cleanName, getAbility, getClass, type ClassId } from "@arena/shared";
+import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
+import { LANGUAGES, formatDecimal, moveKeys, quote, t, type Language } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
 export function App() {
   const inGame = useHudStore((s) => s.inGame);
   const gameKey = useHudStore((s) => s.gameKey);
   const phase = useHudStore((s) => s.match?.phase);
+  // Abonné à la langue : changer de langue sur l'accueil redessine tous les textes.
+  useHudStore((s) => s.language);
   useMusic(inGame ? phase : undefined);
   // Le bouton du son reste en bas à droite sur tous les écrans : accueil, attente, choix de classe et partie.
   if (!inGame) {
@@ -63,6 +66,8 @@ function HomeScreen() {
   const joinGame = useHudStore((s) => s.joinGame);
   const playerName = useHudStore((s) => s.playerName);
   const setPlayerName = useHudStore((s) => s.setPlayerName);
+  const language = useHudStore((s) => s.language);
+  const setLanguage = useHudStore((s) => s.setLanguage);
   const play = () => {
     if (!playerName) return;
     // Retenu par le navigateur, même s'il s'agit du pseudo proposé par défaut.
@@ -75,7 +80,17 @@ function HomeScreen() {
   return (
     <div className="screen">
       <h1>Arena</h1>
-      <p className="screen-text">Combat de groupe 8 contre 8</p>
+      <p className="screen-text">{t("home.tagline")}</p>
+      <label className="language-picker">
+        <span className="name-label">{t("home.language")}</span>
+        <select className="roster-select" value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
+          {LANGUAGES.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <form
         className="name-form"
         onSubmit={(event) => {
@@ -84,7 +99,7 @@ function HomeScreen() {
         }}
       >
         <label className="name-label" htmlFor="player-name">
-          Pseudo
+          {t("home.name")}
         </label>
         {/* Seuls les lettres sans accent, les chiffres et le @ passent, 15 au plus (cleanName) ; le reste est ignoré. */}
         <input
@@ -95,28 +110,28 @@ function HomeScreen() {
           spellCheck={false}
           onChange={(event) => setPlayerName(cleanName(event.target.value))}
         />
-        <p className="name-hint">Lettres, chiffres et @ · {NAME_MAX_LENGTH} caractères au plus</p>
+        <p className="name-hint">{t("home.nameHint", { max: NAME_MAX_LENGTH })}</p>
         <button type="submit" className="primary-button" disabled={!playerName}>
-          Jouer
+          {t("home.play")}
         </button>
       </form>
       <p className="credits">
-        Musiques : « Woodland Fantasy », Matthew Pablo,{" "}
+        {t("home.creditsMusic")} {quote("Woodland Fantasy")}, Matthew Pablo,{" "}
         <a href="https://www.matthewpablo.com" target="_blank" rel="noreferrer">
           matthewpablo.com
         </a>{" "}
-        · « The Last Encounter », Eric Matyas,{" "}
+        · {quote("The Last Encounter")}, Eric Matyas,{" "}
         <a href="https://soundimage.org" target="_blank" rel="noreferrer">
           soundimage.org
         </a>
         <br />
-        Icônes : Lorc, Delapouite, Zeromancer, Sbed, Felbrigg et Skoll,{" "}
+        {t("home.creditsIcons")} Lorc, Delapouite, Zeromancer, Sbed, Felbrigg {t("home.and")} Skoll,{" "}
         <a href="https://game-icons.net" target="_blank" rel="noreferrer">
           game-icons.net
         </a>{" "}
         (CC BY 3.0)
         <br />
-        Sons : « Elemental Magic: Fire Attacks », Last Day Dreaming,{" "}
+        {t("home.creditsSounds")} {quote("Elemental Magic: Fire Attacks")}, Last Day Dreaming,{" "}
         <a href="https://lastdaydreaming.uwu.ai" target="_blank" rel="noreferrer">
           lastdaydreaming.uwu.ai
         </a>{" "}
@@ -124,7 +139,7 @@ function HomeScreen() {
         <a href="https://creativecommons.org/licenses/by-nd/4.0/" target="_blank" rel="noreferrer">
           CC BY-ND 4.0
         </a>
-        ) · voix de combat, Marti Topmade
+        ) · {t("home.creditsVoices")}, Marti Topmade
       </p>
     </div>
   );
@@ -135,9 +150,9 @@ function Hud() {
   const error = useHudStore((s) => s.error);
   const phase = useHudStore((s) => s.match?.phase);
 
-  if (status === "connecting") return <div className="screen">Connexion au serveur…</div>;
+  if (status === "connecting") return <div className="screen">{t("connect.server")}</div>;
   if (status === "error") return <ErrorScreen message={error} />;
-  if (!phase) return <div className="screen">Connexion à la partie…</div>;
+  if (!phase) return <div className="screen">{t("connect.match")}</div>;
   if (phase === "classSelect") return <ClassSelectScreen />;
 
   return (
@@ -166,13 +181,17 @@ function Hud() {
   );
 }
 
+function teamName(team: number): string {
+  return t(team === 0 ? "team.0" : "team.1");
+}
+
 function ErrorScreen({ message }: { message: string | null }) {
   const leaveGame = useHudStore((s) => s.leaveGame);
   return (
     <div className="screen">
-      <p className="hud-error">Connexion impossible : {message}</p>
+      <p className="hud-error">{t("connect.error", { message: message ?? "" })}</p>
       <button className="primary-button" onClick={leaveGame}>
-        Retour
+        {t("connect.back")}
       </button>
     </div>
   );
@@ -187,22 +206,22 @@ function ClassSelectScreen() {
   const teammates = useHudStore((s) => s.teammates);
   const actions = useHudStore((s) => s.actions);
   const leaveGame = useHudStore((s) => s.leaveGame);
-  const self = teammates.find((t) => t.isSelf);
+  const self = teammates.find((mate) => mate.isSelf);
   const myClass = self?.classId ?? "";
   const team = match?.team ?? 0;
   // Joueurs de son équipe seulement : le nombre total trahirait combien de bots il y a en face.
-  const humans = teammates.filter((t) => !t.isBot).length;
+  const humans = teammates.filter((mate) => !mate.isBot).length;
   const full = (match?.matchSize ?? 0) > 0 && (match?.playerCount ?? 0) >= (match?.matchSize ?? 0);
 
   return (
     <div className="screen">
-      <h1>Choisissez votre classe</h1>
+      <h1>{t("lobby.title")}</h1>
       <p className="screen-text">
-        Équipe <span className={`team-name team-${team}`}>{TEAM_NAMES[team]}</span> · La partie commence dans{" "}
+        {t("lobby.team")} <span className={`team-name team-${team}`}>{teamName(team)}</span> · {t("lobby.startsIn")}{" "}
         <strong className="lobby-countdown">{match?.timeLeft ?? 0} s</strong>
       </p>
       <p className="screen-hint">
-        {full ? "Salle complète." : `${humans} / ${teammates.length} joueurs dans votre équipe · les places libres sont tenues par des bots.`}
+        {full ? t("lobby.full") : t("lobby.players", { humans, total: teammates.length })}
       </p>
       <div className="class-list">
         {CLASS_LIST.map((c) => (
@@ -217,29 +236,29 @@ function ClassSelectScreen() {
             <span className="class-name">{c.name}</span>
             <span className="class-role">{c.role}</span>
             <span className="class-stats">
-              {c.maxHp} PV · {c.resource === "mana" ? "Mana" : "Endurance"}
+              {c.maxHp} {t("lobby.hp")} · {t(c.resource === "mana" ? "resource.mana" : "resource.endurance")}
             </span>
             <span className="class-abilities">{c.abilities.map((id) => getAbility(id)?.name).join(" · ")}</span>
           </button>
         ))}
       </div>
       <div className="roster">
-        <h2>Votre équipe</h2>
-        {teammates.map((t) => (
-          <div key={t.id} className={`roster-line ${t.isSelf ? "roster-self" : ""}`}>
+        <h2>{t("lobby.yourTeam")}</h2>
+        {teammates.map((mate) => (
+          <div key={mate.id} className={`roster-line ${mate.isSelf ? "roster-self" : ""}`}>
             <span className="roster-name">
-              {t.name}
-              {t.isSelf && <span className="roster-tag">vous</span>}
-              {t.leader && <span className="roster-tag roster-leader">chef</span>}
-              {t.isBot && <span className="roster-tag roster-bot">bot</span>}
+              {mate.name}
+              {mate.isSelf && <span className="roster-tag">{t("lobby.you")}</span>}
+              {mate.leader && <span className="roster-tag roster-leader">{t("lobby.leader")}</span>}
+              {mate.isBot && <span className="roster-tag roster-bot">{t("lobby.bot")}</span>}
             </span>
-            {t.isBot && self?.leader ? (
+            {mate.isBot && self?.leader ? (
               <select
                 className="roster-select"
-                value={t.classId}
+                value={mate.classId}
                 onChange={(e) => {
                   audio.play(UI_SOUNDS.click);
-                  actions?.setBotClass(t.id, e.target.value as ClassId);
+                  actions?.setBotClass(mate.id, e.target.value as ClassId);
                 }}
               >
                 {CLASS_LIST.map((c) => (
@@ -249,20 +268,20 @@ function ClassSelectScreen() {
                 ))}
               </select>
             ) : (
-              <strong className="roster-class">{t.classId ? getClass(t.classId)?.name : "choisit…"}</strong>
+              <strong className="roster-class">{mate.classId ? getClass(mate.classId)?.name : t("lobby.choosing")}</strong>
             )}
           </div>
         ))}
-        {self?.leader && <p className="screen-hint">Vous êtes chef d'équipe : vous choisissez la classe des bots.</p>}
-        <p className="screen-hint">La composition adverse reste cachée jusqu'à la rencontre.</p>
+        {self?.leader && <p className="screen-hint">{t("lobby.leaderHint")}</p>}
+        <p className="screen-hint">{t("lobby.hidden")}</p>
       </div>
       {import.meta.env.DEV && self?.leader && (
         <button className="secondary-button" onClick={() => actions?.forceStart()}>
-          Lancer maintenant (test)
+          {t("lobby.forceStart")}
         </button>
       )}
       <button className="link-button" onClick={leaveGame}>
-        Quitter la file
+        {t("lobby.leave")}
       </button>
     </div>
   );
@@ -275,7 +294,7 @@ function PhaseBanner() {
   if (match?.phase !== "preparation") return null;
   return (
     <div className="phase-banner">
-      Préparation : le combat commence dans <strong>{match.timeLeft} s</strong>
+      {t("match.preparation")} <strong>{match.timeLeft} s</strong>
     </div>
   );
 }
@@ -287,7 +306,9 @@ function SpectatorBanner() {
   if (phase !== "fighting" || !dead) return null;
   return (
     <div className="phase-banner spectator-banner">
-      Vous êtes mort · <strong>Mode spectateur</strong> : ZQSD déplace la caméra, V revient à votre corps
+      {t("match.dead")} · <strong>{t("match.spectator")}</strong>
+      {t("punct.colon")}
+      {t("match.spectatorHint", moveKeys())}
     </div>
   );
 }
@@ -297,11 +318,11 @@ function EndScreen() {
   const joinGame = useHudStore((s) => s.joinGame);
   const leaveGame = useHudStore((s) => s.leaveGame);
   if (!match) return null;
-  const title = match.winner === -1 ? "Égalité" : match.winner === match.team ? "Victoire !" : "Défaite";
+  const title = t(match.winner === -1 ? "end.draw" : match.winner === match.team ? "end.victory" : "end.defeat");
   return (
     <div className="end-overlay">
       <h1>{title}</h1>
-      {match.winner !== -1 && <p className="screen-text">Les {TEAM_NAMES[match.winner]} remportent la partie.</p>}
+      {match.winner !== -1 && <p className="screen-text">{t("end.winner", { team: teamName(match.winner) })}</p>}
       <button
         className="primary-button"
         onClick={() => {
@@ -309,10 +330,10 @@ function EndScreen() {
           joinGame();
         }}
       >
-        Nouvelle partie
+        {t("end.newMatch")}
       </button>
       <button className="link-button" onClick={leaveGame}>
-        Retour à l'accueil
+        {t("end.home")}
       </button>
     </div>
   );
@@ -327,11 +348,11 @@ function SelfPanel() {
         <span>
           {self.name} <span className="unit-class">{self.className}</span>
         </span>
-        {self.attacking && <span className="tag tag-attack">Attaque</span>}
-        {self.lock === "face" && <span className="tag tag-lock">Face</span>}
-        {self.lock === "stick" && <span className="tag tag-lock">Stick</span>}
+        {self.attacking && <span className="tag tag-attack">{t("frame.attack")}</span>}
+        {self.lock === "face" && <span className="tag tag-lock">{t("frame.face")}</span>}
+        {self.lock === "stick" && <span className="tag tag-lock">{t("frame.stick")}</span>}
       </div>
-      <Bar value={self.hp} max={self.maxHp} kind="hp" deadLabel="Mort" />
+      <Bar value={self.hp} max={self.maxHp} kind="hp" deadLabel={t("frame.dead")} />
       {self.maxMana > 0 && <Bar value={self.mana} max={self.maxMana} kind="mana" />}
       {self.maxEndurance > 0 && <Bar value={self.endurance} max={self.maxEndurance} kind="endurance" />}
     </div>
@@ -343,10 +364,10 @@ function TargetPanel() {
   if (!target) return null;
 
   let tag = <span className="tag tag-out-range">{target.distance} m</span>;
-  if (target.isSelf) tag = <span className="tag tag-out-range">Vous</span>;
-  else if (!target.inLineOfSight) tag = <span className="tag tag-blocked">Hors de vue</span>;
-  else if (!target.isAlly && !target.facing) tag = <span className="tag tag-blocked">Pas en face</span>;
-  else if (target.inMeleeRange) tag = <span className="tag tag-in-range">Au contact</span>;
+  if (target.isSelf) tag = <span className="tag tag-out-range">{t("frame.you")}</span>;
+  else if (!target.inLineOfSight) tag = <span className="tag tag-blocked">{t("frame.outOfSight")}</span>;
+  else if (!target.isAlly && !target.facing) tag = <span className="tag tag-blocked">{t("frame.notFacing")}</span>;
+  else if (target.inMeleeRange) tag = <span className="tag tag-in-range">{t("frame.inMelee")}</span>;
 
   return (
     <div className={`hud-panel unit-frame ${target.isAlly ? "frame-ally" : "frame-enemy"}`}>
@@ -356,7 +377,7 @@ function TargetPanel() {
         </span>
         {tag}
       </div>
-      <Bar value={target.hp} max={target.maxHp} kind="hp" deadLabel="Mort" />
+      <Bar value={target.hp} max={target.maxHp} kind="hp" deadLabel={t("frame.dead")} />
       {target.cast && <CastBar cast={target.cast} />}
       {target.effects.length > 0 && (
         <div className="aura-list">
@@ -403,7 +424,7 @@ function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; h
         {member.casting && <span className="group-casting">{member.casting}</span>}
         <span className="group-hotkey">{hotkey}</span>
       </div>
-      <MiniBar value={member.hp} max={member.maxHp} kind="hp" label={dead ? "Mort" : String(member.hp)} />
+      <MiniBar value={member.hp} max={member.maxHp} kind="hp" label={dead ? t("frame.dead") : String(member.hp)} />
       {member.maxMana > 0 && <MiniBar value={member.mana} max={member.maxMana} kind="mana" />}
       {member.maxEndurance > 0 && <MiniBar value={member.endurance} max={member.maxEndurance} kind="endurance" />}
       {!dead && member.effects.length > 0 && (
@@ -444,7 +465,7 @@ function EffectIcon({ effect, size, timer = false }: { effect: EffectFrame; size
     remaining === null && "aura-permanent",
     remaining !== null && remaining < ENDING_SOON && "aura-ending",
   ];
-  const title = `${label}${remaining !== null ? ` — ${formatRemaining(remaining)} s` : ""}${effect.source ? ` (${effect.source})` : ""}`;
+  const title = `${label}${remaining !== null ? ` — ${formatRemaining(remaining)}${remaining >= 60 ? "" : " s"}` : ""}${effect.source ? ` (${effect.source})` : ""}`;
   return (
     <span className={classes.filter(Boolean).join(" ")} title={title}>
       <span className="aura-box">
@@ -464,7 +485,7 @@ function EffectIcon({ effect, size, timer = false }: { effect: EffectFrame; size
 function formatRemaining(seconds: number): string {
   if (seconds >= 60) return `${Math.round(seconds / 60)} min`;
   if (seconds >= ENDING_SOON) return String(Math.ceil(seconds));
-  return seconds.toFixed(1).replace(".", ",");
+  return formatDecimal(seconds, 1);
 }
 
 // Ses propres effets, juste au-dessus de la barre d'incantation : contrôles et affaiblissements au plus près (plus
@@ -639,7 +660,7 @@ function PositionBadge({ position, wrong }: { position: "back" | "side"; wrong: 
 
 function formatCooldown(seconds: number): string {
   if (seconds >= 60) return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
-  return seconds.toFixed(1);
+  return formatDecimal(seconds, 1);
 }
 
 // Rafraîchit l'heure courante 10 fois par seconde, uniquement quand c'est utile.
@@ -678,7 +699,7 @@ function SoundControl() {
     <div className="sound-control">
       <button
         className="sound-toggle"
-        title={settings.muted ? "Réactiver le son" : "Couper le son"}
+        title={t(settings.muted ? "sound.unmute" : "sound.mute")}
         onClick={() => {
           audio.setMuted(!settings.muted);
           setSettings(audio.settings);
@@ -693,7 +714,7 @@ function SoundControl() {
         step={0.05}
         value={settings.volume}
         disabled={settings.muted}
-        aria-label="Volume"
+        aria-label={t("sound.volume")}
         onChange={(e) => {
           audio.setVolume(Number(e.target.value));
           setSettings(audio.settings);
@@ -710,8 +731,8 @@ function HelpPanel() {
     <>
       <button
         className={`help-toggle${open ? " active" : ""}`}
-        title={open ? "Masquer les commandes" : "Afficher les commandes"}
-        aria-label="Commandes du jeu"
+        title={t(open ? "help.hide" : "help.show")}
+        aria-label={t("help.label")}
         aria-expanded={open}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => setOpen((v) => !v)}
@@ -726,12 +747,12 @@ function HelpPanel() {
 function HelpContent() {
   return (
     <div className="hud-panel help">
-      <div>Z/S : avancer/reculer · Q/D : pivoter</div>
-      <div>Clic droit maintenu : la souris oriente (haut/bas : inclinaison) · Q/D : pas de côté</div>
-      <div>Tab : ennemi suivant · clic : cibler · F1 : soi-même · Échap : annuler</div>
-      <div>F : faire face à la cible · C : la suivre (stick)</div>
-      <div>R : activer/couper l'attaque · molette : zoom · V : recentrer</div>
-      <div>1 à 9, 0 : compétences</div>
+      <div>{t("help.move", moveKeys())}</div>
+      <div>{t("help.mouse", moveKeys())}</div>
+      <div>{t("help.target")}</div>
+      <div>{t("help.lock")}</div>
+      <div>{t("help.attack")}</div>
+      <div>{t("help.abilities")}</div>
     </div>
   );
 }

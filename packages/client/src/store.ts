@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { currentLanguage, setLanguage as applyLanguage, type Language } from "./i18n";
 import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type RelativePosition } from "@arena/shared";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
@@ -126,6 +127,9 @@ interface HudState {
   // Pseudo saisi à l'accueil, envoyé au serveur en rejoignant une partie.
   playerName: string;
   setPlayerName: (name: string) => void;
+  // Langue de l'interface, choisie sur l'accueil (voir i18n).
+  language: Language;
+  setLanguage: (language: Language) => void;
   status: ConnectionStatus;
   error: string | null;
   match: MatchFrame | null;
@@ -186,6 +190,11 @@ export const useHudStore = create<HudState>((set) => ({
   inGame: false,
   gameKey: 0,
   playerName: initialPlayerName(),
+  language: currentLanguage(),
+  setLanguage: (language) => {
+    applyLanguage(language);
+    set({ language });
+  },
   setPlayerName: (name) => {
     try {
       localStorage.setItem(NAME_STORAGE_KEY, name);
