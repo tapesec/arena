@@ -3,7 +3,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import { PointerEventTypes, type PointerInfo } from "@babylonjs/core/Events/pointerEvents";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
@@ -71,6 +71,7 @@ import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
+import { MAGNET_RADIUS, bestCandidate, type TargetCandidate } from "./targeting";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
 import { MovementPredictor, VelocityTracker } from "./prediction";
@@ -109,6 +110,12 @@ const YAW_RESEND_THRESHOLD = 0.02;
 // En développement, ?lag=150 dans l'adresse retarde l'envoi des déplacements (en ms) : simule un joueur éloigné pour
 // essayer la prédiction.
 const DEV_INPUT_LAG = import.meta.env.DEV ? Number(new URLSearchParams(location.search).get("lag")) || 0 : 0;
+
+// Contour des personnages survolés à la souris : rouge pour un ennemi, bleu pour un allié (comme leurs pseudos).
+const HOVER_ENEMY = new Color3(1, 0.36, 0.32);
+const HOVER_ALLY = new Color3(0.61, 0.78, 1);
+// Point visé par l'aimant : le milieu du corps.
+const BODY_CENTER = new Vector3(0, 1.1, 0);
 
 // Vitesse de la caméra libre en mode spectateur, en mètres par seconde.
 const SPECTATOR_SPEED = 18;
@@ -156,9 +163,13 @@ export class Game {
   // Instant d'envoi de la mesure en cours (null si elle a répondu) ; jeu arrêté (réponses ignorées).
   private pingSentAt: number | null = null;
   private disposed = false;
+  // Personnage survolé par la souris (contour), et souris au-dessus du canvas.
+  private hoveredId: string | null = null;
+  private hoveredColor: Color3 | null = null;
+  private pointerInside = false;
 
   constructor(
-    canvas: HTMLCanvasElement,
+    private canvas: HTMLCanvasElement,
     overlayElement: HTMLElement,
     private room: Room,
   ) {
@@ -196,6 +207,13 @@ export class Game {
       (action) => this.handleAction(action),
     );
     this.scene.onPointerObservable.add((info) => this.handlePointer(info));
+    // Survol et clic sont calculés par le jeu (zones de clic seulement, voir playerUnderPointer) : pas de lancer de
+    // rayon automatique, et le jeu gère lui-même le curseur.
+    this.scene.skipPointerMovePicking = true;
+    this.scene.skipPointerDownPicking = true;
+    this.scene.doNotHandleCursors = true;
+    canvas.addEventListener("pointerenter", this.handlePointerEnter);
+    canvas.addEventListener("pointerleave", this.handlePointerLeave);
     this.orderWheel = new OrderWheel(canvas, () => this.orderWheelItems(), (order) => this.giveOrder(order));
 
     // Commandes accessibles depuis l'interface React (choix de classe, lancement anticipé).
@@ -225,6 +243,8 @@ export class Game {
     clearInterval(this.pingTimer);
     useHudStore.getState().setActions(null);
     window.removeEventListener("resize", this.handleResize);
+    this.canvas.removeEventListener("pointerenter", this.handlePointerEnter);
+    this.canvas.removeEventListener("pointerleave", this.handlePointerLeave);
     this.keyboard.dispose();
     this.orderWheel.dispose();
     this.camera.dispose();
@@ -238,6 +258,8 @@ export class Game {
   }
 
   private handleResize = () => this.engine.resize();
+  private handlePointerEnter = () => (this.pointerInside = true);
+  private handlePointerLeave = () => (this.pointerInside = false);
 
   // Une mesure à la fois : tant que la précédente n'a pas répondu, on affiche le temps déjà écoulé (le SDK ne garde
   // qu'un envoi en mémoire, une nouvelle mesure ferait passer une réponse tardive pour une réponse rapide).
@@ -357,6 +379,10 @@ export class Game {
       this.overlay.removePlayer(key);
       this.players.delete(key);
       if (this.targetId === key) this.setTarget(null);
+      if (this.hoveredId === key) {
+        this.hoveredId = null;
+        this.hoveredColor = null;
+      }
     });
   }
 
@@ -598,8 +624,71 @@ export class Game {
   // Clic gauche sur un personnage (allié, ennemi ou mort) : il devient la cible.
   private handlePointer(info: PointerInfo) {
     if (info.type !== PointerEventTypes.POINTERDOWN || info.event.button !== 0) return;
-    const sessionId = info.pickInfo?.pickedMesh?.metadata?.sessionId as string | undefined;
+    const sessionId = this.playerUnderPointer();
     if (sessionId) this.setTarget(sessionId);
+  }
+
+  // Personnage visé par la souris : parmi ceux dont la zone de clic est sous le curseur, sinon (aimant) parmi ceux
+  // dont le milieu du corps est à moins de MAGNET_RADIUS pixels du curseur. Jamais soi-même (F1 le fait) : son
+  // personnage est toujours au milieu de l'écran et masquerait ce qui est derrière lui, un corps à ressusciter par
+  // exemple. Priorité : vivant, puis ennemi, puis le plus proche.
+  private playerUnderPointer(): string | null {
+    const self = this.self;
+    const x = this.scene.pointerX;
+    const y = this.scene.pointerY;
+    const describe = (player: PlayerVisual, distance: number): TargetCandidate => ({
+      id: player.sessionId,
+      alive: player.isAlive,
+      enemy: !!self && player.state.team !== self.state.team,
+      distance,
+    });
+    const hits = this.scene.multiPick(x, y, (mesh) => mesh.metadata?.hitbox === true && mesh.isEnabled()) ?? [];
+    const touched: TargetCandidate[] = [];
+    for (const hit of hits) {
+      const player = this.players.get(hit.pickedMesh?.metadata?.sessionId);
+      if (player && player !== self && !touched.some((c) => c.id === player.sessionId)) touched.push(describe(player, hit.distance));
+    }
+    if (touched.length > 0) return bestCandidate(touched);
+
+    const near: TargetCandidate[] = [];
+    for (const player of this.players.values()) {
+      if (player === self || !player.root.isEnabled()) continue;
+      const screen = this.toScreen(player.root.position.add(BODY_CENTER));
+      if (!screen) continue;
+      const distance = Math.hypot(screen.x - x, screen.y - y);
+      if (distance <= MAGNET_RADIUS) near.push(describe(player, distance));
+    }
+    return bestCandidate(near);
+  }
+
+  // Position à l'écran (pixels CSS du canvas, comme scene.pointerX) d'un point du monde, ou null hors champ.
+  private toScreen(point: Vector3): { x: number; y: number } | null {
+    const camera = this.scene.activeCamera;
+    if (!camera) return null;
+    const width = this.engine.getRenderWidth();
+    const height = this.engine.getRenderHeight();
+    const projected = Vector3.Project(point, Matrix.IdentityReadOnly, this.scene.getTransformMatrix(), camera.viewport.toGlobal(width, height));
+    if (projected.z < 0 || projected.z > 1) return null;
+    return { x: (projected.x * this.canvas.clientWidth) / width, y: (projected.y * this.canvas.clientHeight) / height };
+  }
+
+  // Contour léger sur le personnage que la souris vise (celui qu'un clic ciblerait), et curseur en main. Pas pendant
+  // qu'on oriente la caméra (clic droit) ni pendant la roue des ordres.
+  private updateHover() {
+    const active = this.pointerInside && !this.camera.steering && !useHudStore.getState().orderWheel;
+    const id = active ? this.playerUnderPointer() : null;
+    const player = id ? this.players.get(id) : undefined;
+    const enemy = !!player && !!this.self && player.state.team !== this.self.state.team;
+    const color = player ? (enemy ? HOVER_ENEMY : HOVER_ALLY) : null;
+    // Même personnage, même couleur (l'équipe peut changer au lancement de la partie) : rien à refaire.
+    if (id !== this.hoveredId || color !== this.hoveredColor) {
+      if (this.hoveredId) this.players.get(this.hoveredId)?.setHovered(null);
+      player?.setHovered(color);
+      this.hoveredId = id;
+      this.hoveredColor = color;
+    }
+    const cursor = player ? "pointer" : "";
+    if (this.canvas.style.cursor !== cursor) this.canvas.style.cursor = cursor;
   }
 
   // Tab : passe à l'ennemi vivant et visible suivant, du plus proche au plus éloigné.
@@ -657,6 +746,7 @@ export class Game {
     }
     this.overlay.update(dt);
     this.orderWheel.update();
+    this.updateHover();
     this.spellEffects.update(dt);
     // Les effets d'état réglés d'abord : ils décident si les particules d'état du code sont jouées.
     this.spellEffects.targets.update(dt, this.players, this.self?.state.team ?? null);

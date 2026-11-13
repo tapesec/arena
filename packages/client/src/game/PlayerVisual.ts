@@ -2,6 +2,8 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder";
+import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
+import "@babylonjs/core/Rendering/outlineRenderer"; // Effet de bord : active renderOutline (contour au survol).
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -60,6 +62,12 @@ export interface PlayerView {
 }
 
 const BODY_HEIGHT = 1.8;
+// Zone de clic : un cylindre invisible plus large que le personnage, sur toute sa hauteur (personnages agrandis à
+// 2,2 m), pour le cibler sans viser pile sa silhouette.
+const HITBOX_DIAMETER = 1.4;
+const HITBOX_HEIGHT = 2.4;
+// Épaisseur du contour au survol (unités du maillage).
+const HOVER_OUTLINE_WIDTH = 0.02;
 const DEAD_COLOR = new Color3(0.3, 0.3, 0.3);
 
 // Teinte de base par équipe : bleu ou rouge, légèrement variée d'un joueur à l'autre.
@@ -92,6 +100,9 @@ export class PlayerVisual {
   private castMaterial: StandardMaterial;
   private castingAbility = "";
   // Personnage animé (chargé en arrière-plan) ; la capsule reste affichée en attendant.
+  // Zone de clic (cylindre invisible) et couleur du contour de survol (null sans survol).
+  readonly hitbox: Mesh;
+  private hovered: Color3 | null = null;
   private model: CharacterInstance | null = null;
   private animator: CharacterAnimator | null = null;
   private modelClass = "";
@@ -121,18 +132,25 @@ export class PlayerVisual {
     this.material = new StandardMaterial("playerMat", scene);
     this.material.diffuseColor = this.aliveColor;
 
-    // Les métadonnées permettent de retrouver le joueur quand on clique sur le maillage.
+    // Personnage provisoire (en attendant le modèle animé) : capsule et nez.
     this.body = CreateCapsule("body", { height: BODY_HEIGHT, radius: 0.5 }, scene);
     this.body.position.y = BODY_HEIGHT / 2;
     this.body.material = this.material;
-    this.body.metadata = { sessionId };
+    this.body.isPickable = false;
     this.body.parent = this.root;
 
     this.nose = CreateBox("nose", { width: 0.25, height: 0.25, depth: 0.4 }, scene);
     this.nose.position.set(0, 1.4, 0.5);
     this.nose.material = this.material;
-    this.nose.metadata = { sessionId };
+    this.nose.isPickable = false;
     this.nose.parent = this.root;
+
+    // Seule la zone de clic est cliquable (jamais affichée) : les métadonnées retrouvent le joueur.
+    this.hitbox = CreateCylinder("hitbox", { height: HITBOX_HEIGHT, diameter: HITBOX_DIAMETER, tessellation: 12 }, scene);
+    this.hitbox.position.y = HITBOX_HEIGHT / 2;
+    this.hitbox.isVisible = false;
+    this.hitbox.metadata = { sessionId, hitbox: true };
+    this.hitbox.parent = this.root;
 
     this.castRing = CreateTorus("castRing", { diameter: 1.9, thickness: 0.12, tessellation: 48 }, scene);
     this.castRing.position.y = 0.08;
@@ -270,6 +288,8 @@ export class PlayerVisual {
     this.model = null;
     this.animator = null;
     this.showCapsule(true);
+    // Le contour de survol passe du modèle retiré à la capsule.
+    if (this.hovered) this.setHovered(this.hovered);
     if (!hasCharacterModel(this.modelClass)) return;
     const token = ++this.loadToken;
     void this.assets.create(this.modelClass, this.root).then((model) => {
@@ -281,18 +301,32 @@ export class PlayerVisual {
       }
       this.model = model;
       model.setTeam(this.outfitColor);
-      // Cliquer sur le personnage le cible, comme la capsule.
-      for (const mesh of model.meshes) {
-        mesh.metadata = { sessionId: this.sessionId };
-        mesh.isPickable = true;
-      }
+      // Le clic passe par la zone de clic, pas par le modèle.
+      for (const mesh of model.meshes) mesh.isPickable = false;
+      if (this.hovered) this.setHovered(this.hovered);
       // Calage des animations de compétence réglé sur la page animation-lab.html.
       this.animator = new CharacterAnimator(model.animations, model.set, TUNING[this.modelClass]);
       this.showCapsule(false);
     });
   }
 
-  // La capsule reste cliquable mais devient invisible quand le personnage animé est là.
+  // Contour léger quand la souris le survole (null pour l'enlever) : sur le modèle animé, ou sur la capsule.
+  setHovered(color: Color3 | null) {
+    const previous = this.hovered;
+    this.hovered = color;
+    const meshes = this.model ? this.model.meshes : [this.body, this.nose];
+    // Le modèle vient de remplacer la capsule : on retire le contour de la capsule.
+    if (previous && this.model) for (const mesh of [this.body, this.nose]) mesh.renderOutline = false;
+    for (const mesh of meshes) {
+      mesh.renderOutline = !!color;
+      if (color) {
+        mesh.outlineColor = color;
+        mesh.outlineWidth = HOVER_OUTLINE_WIDTH;
+      }
+    }
+  }
+
+  // La capsule devient invisible quand le personnage animé est là.
   private showCapsule(visible: boolean) {
     this.body.visibility = visible ? 1 : 0;
     this.nose.setEnabled(visible && this.isAlive);
