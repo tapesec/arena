@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { NO_INPUT, simulateMovement, type MoveInput, type MovementEffect } from "@arena/shared";
-import { MovementPredictor, type ServerBody } from "./prediction";
+import { MovementPredictor, VelocityTracker, type ServerBody } from "./prediction";
 
 // Serveur simulé : reçoit les commandes avec un délai, avance par tics de 50 ms avec le même calcul que le vrai.
 class FakeServer {
@@ -34,7 +34,7 @@ class FakeServer {
 }
 
 const FORWARD: MoveInput = { up: true, down: false, left: false, right: false };
-const context = { target: null, targetAlive: false, confine: null };
+const context = { target: null, targetVelocity: { x: 0, z: 0 }, targetAlive: false, confine: null };
 
 // Le client joue à 60 images par seconde ; ses commandes arrivent au serveur latency secondes plus tard, et il voit
 // l'état du serveur latency secondes en retard.
@@ -82,4 +82,58 @@ test("prédiction : tient compte d'un ralentissement", () => {
   assert.ok(Math.hypot(shown.x - server.x, shown.z - server.z) < 0.05);
   // Une seconde à mi-vitesse : environ 3 m (vitesse normale 6 m/s).
   assert.ok(server.z > 2.5 && server.z < 3.5, `z = ${server.z}`);
+});
+
+// Poursuite au stick (C) d'une cible qui fuit en ligne droite, sur un réseau irrégulier (mises à jour qui arrivent
+// avec jusqu'à 40 ms de retard en plus, parfois deux à la fois) : le personnage doit la suivre à vitesse constante.
+test("prédiction : suit au stick une cible en fuite sans à-coups", () => {
+  const latency = 0.1;
+  const speed = 4;
+  const target = (t: number) => ({ x: 0, z: 3 + speed * t });
+  let server: ServerBody = { x: 0, z: 0, facing: 0, lock: "stick", inputSeq: 0, inputTime: 0, effects: [] };
+  const predictor = new MovementPredictor();
+  const tracker = new VelocityTracker();
+  const seq = predictor.send(NO_INPUT);
+  const snapshots: { tick: number; arrival: number; body: ServerBody; target: { x: number; z: number } }[] = [];
+  let seed = 7;
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  let tick = 0;
+  const frame = 1 / 60;
+  let shown = { x: 0, z: 0, facing: 0 };
+  const speeds: number[] = [];
+  for (let time = frame; time <= 4; time += frame) {
+    while ((tick + 1) * 0.05 <= time + 1e-9) {
+      tick++;
+      const clock = tick * 0.05;
+      // Le serveur vise la cible là où elle était au début du tic.
+      const next = simulateMovement(server, NO_INPUT, 0.05, { effects: [], lock: "stick", target: target(clock - 0.05), confine: null });
+      const acked = clock >= latency;
+      server = { ...server, x: next.x, z: next.z, facing: next.facing, inputSeq: acked ? seq : 0, inputTime: acked ? server.inputTime + 0.05 : 0 };
+      const previous = snapshots[snapshots.length - 1]?.arrival ?? 0;
+      snapshots.push({ tick, arrival: Math.max(previous, clock + latency + random() * 0.04), body: server, target: target(clock) });
+    }
+    const seen = [...snapshots].reverse().find((s) => s.arrival <= time);
+    if (!seen) continue;
+    const before = shown;
+    const velocity = tracker.update("cible", seen.target, seen.tick * 50);
+    shown = predictor.update(frame, seen.body, { target: seen.target, targetVelocity: velocity, targetAlive: true, confine: null }, true, shown) ?? shown;
+    if (time > 1) speeds.push((shown.z - before.z) / frame);
+  }
+  const slowest = Math.min(...speeds);
+  const fastest = Math.max(...speeds);
+  assert.ok(slowest > speed - 0.2 && fastest < speed + 0.2, `vitesse affichée entre ${slowest} et ${fastest}`);
+});
+
+test("stick : s'arrête net derrière une cible immobile (sinon il resterait « en mouvement » et ne pourrait plus incanter)", () => {
+  const target = { x: 0.37, z: 7.913 };
+  for (const start of [{ x: 0, z: 0 }, { x: -3.21, z: 1.7 }, { x: 5.5, z: -2.3 }]) {
+    let body = { ...start, facing: 0 };
+    let moving = true;
+    for (let tick = 0; tick < 200; tick++) {
+      const next = simulateMovement(body, NO_INPUT, 0.05, { effects: [], lock: "stick", target, confine: null });
+      moving = next.stickMoving;
+      body = next;
+    }
+    assert.equal(moving, false);
+  }
 });

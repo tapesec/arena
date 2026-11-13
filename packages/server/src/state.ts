@@ -86,6 +86,9 @@ export const ArenaState = schema(
     // Phase de la partie (voir MatchPhase) et secondes restantes avant la suivante.
     phase: t.string().default("classSelect"),
     phaseTimeLeft: t.float32().default(0),
+    // Temps de simulation écoulé, en millisecondes : le client en déduit la vitesse des autres joueurs (les mises à
+    // jour arrivent irrégulièrement, parfois deux à la fois, et un tic ne dure pas toujours 50 ms).
+    time: t.uint32().default(0),
     // Équipe gagnante une fois la partie terminée (-1 tant qu'il n'y en a pas).
     winner: t.int8().default(-1),
     // Nombre de joueurs humains dans la partie et nombre maximal (le reste est joué par des bots).

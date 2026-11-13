@@ -1,6 +1,9 @@
 import {
+  CHARGE_SPEED_MULTIPLIER,
+  MOVE_SPEED,
   PERMANENT,
   isIncapacitated,
+  isTurning,
   normalizeAngle,
   lockReleased,
   simulateMovement,
@@ -46,8 +49,11 @@ export interface PredictedBody extends MovementBody {
 }
 
 export interface PredictionContext {
-  // Position de la cible verrouillable (null sans cible) et si elle est vivante.
+  // Position de la cible verrouillable (null sans cible), à la même mise à jour du serveur que notre position, et sa
+  // vitesse : pendant le rejeu, la cible continue d'avancer (sinon le stick vise une cible figée et se fait corriger
+  // à chaque mise à jour, d'où des saccades en la poursuivant).
   target: Position | null;
+  targetVelocity: Position;
   targetAlive: boolean;
   confine: ((pos: Position) => Position) | null;
 }
@@ -57,6 +63,9 @@ export class MovementPredictor {
   private nextSeq = 1;
   // Dernière position serveur prise en compte (pour mesurer la correction quand elle change).
   private base: ServerBody | null = null;
+  // Cible vue à cette même mise à jour (position et vitesse) : rejouer l'ancienne position avec la nouvelle cible
+  // fausserait la correction.
+  private baseTarget: { target: Position | null; velocity: Position } = { target: null, velocity: { x: 0, z: 0 } };
   private baseKey = "";
   // Écart avec la position prédite, résorbé peu à peu (position et orientation).
   private offset = { x: 0, z: 0, facing: 0 };
@@ -100,6 +109,10 @@ export class MovementPredictor {
     if (key !== this.baseKey) {
       this.baseKey = key;
       this.base = copyServerBody(server);
+      this.baseTarget = {
+        target: context.target ? { x: context.target.x, z: context.target.z } : null,
+        velocity: { x: context.targetVelocity.x, z: context.targetVelocity.z },
+      };
       // Les commandes antérieures à la dernière reçue par le serveur sont faites.
       this.segments = this.segments.filter((s) => s.seq >= server.inputSeq);
     }
@@ -143,11 +156,21 @@ export class MovementPredictor {
     // Les effets s'écoulent pendant le rejeu, comme sur le serveur (décomptés avant le déplacement) : un root qui
     // expire libère le personnage au bon moment.
     let effects = [...base.effects].map((e) => ({ ...e }));
+    // Temps écoulé depuis la position du serveur (position estimée de la cible).
+    let elapsed = 0;
+    const { target, velocity } = this.baseTarget;
+    const last = this.segments[this.segments.length - 1];
     for (const segment of this.segments) {
       let remaining = segment.seq === base.inputSeq ? Math.max(0, segment.elapsed - base.inputTime) : segment.elapsed;
       while (remaining > 1e-6) {
-        const dt = Math.min(REPLAY_STEP, remaining);
-        remaining -= dt;
+        // Le tout dernier pas, partiel, est calculé en entier puis pris à proportion : comme le serveur avance par tics
+        // entiers, un pas partiel ne donnerait pas le même résultat (au stick, la position avancerait par paliers).
+        const fraction = segment === last && remaining < REPLAY_STEP ? remaining / REPLAY_STEP : 1;
+        const dt = fraction < 1 ? REPLAY_STEP : Math.min(REPLAY_STEP, remaining);
+        remaining -= fraction < 1 ? remaining : dt;
+        // La cible là où elle est au début du pas (comme le serveur, qui vise les positions du début du tic).
+        const at = elapsed;
+        elapsed += dt;
         for (const effect of effects) if (effect.remaining !== PERMANENT) effect.remaining -= dt;
         effects = effects.filter((e) => e.remaining === PERMANENT || e.remaining > 0);
         if (lock && lockReleased(lock, segment.input, context.targetAlive, effects)) lock = "";
@@ -155,10 +178,20 @@ export class MovementPredictor {
         const next = simulateMovement(body, segment.input, dt, {
           effects,
           lock,
-          target: lock ? context.target : null,
+          target: lock && target ? { x: target.x + velocity.x * at, z: target.z + velocity.z * at } : null,
           confine: context.confine,
         });
-        body = { x: next.x, z: next.z, facing: next.facing };
+        body =
+          fraction < 1
+            ? {
+                x: body.x + (next.x - body.x) * fraction,
+                z: body.z + (next.z - body.z) * fraction,
+                // Seule la rotation au clavier est progressive ; à la souris ou au verrou, l'orientation est immédiate.
+                facing: isTurning(segment.input) && !lock
+                  ? normalizeAngle(body.facing + normalizeAngle(next.facing - body.facing) * fraction)
+                  : next.facing,
+              }
+            : { x: next.x, z: next.z, facing: next.facing };
       }
     }
     return body;
@@ -176,4 +209,35 @@ function copyServerBody(server: ServerBody): ServerBody {
     inputTime: server.inputTime,
     effects: [...server.effects].map((e) => ({ kind: e.kind, remaining: e.remaining, duration: e.duration, value: e.value })),
   };
+}
+
+// Vitesse d'un autre joueur, d'après ses positions envoyées par le serveur et le temps de simulation qui les accompagne
+// (l'heure d'arrivée, elle, varie avec le réseau) : sert à prévoir où sera la cible pendant le rejeu. Plafonnée à la
+// vitesse d'une charge (au-delà, c'est un recalage, pas un déplacement).
+const MAX_TARGET_SPEED = MOVE_SPEED * CHARGE_SPEED_MULTIPLIER;
+
+export class VelocityTracker {
+  private id: string | null = null;
+  private last: Position | null = null;
+  private lastTime = 0;
+  private velocity = { x: 0, z: 0 };
+
+  // timeMs : temps de simulation du serveur, en millisecondes.
+  update(id: string | null, position: Position | null, timeMs: number): Position {
+    if (id !== this.id || !position || !this.last || timeMs < this.lastTime) {
+      this.id = id;
+      this.last = position ? { x: position.x, z: position.z } : null;
+      this.lastTime = timeMs;
+      this.velocity = { x: 0, z: 0 };
+      return this.velocity;
+    }
+    const seconds = (timeMs - this.lastTime) / 1000;
+    if (seconds <= 0) return this.velocity;
+    const velocity = { x: (position.x - this.last.x) / seconds, z: (position.z - this.last.z) / seconds };
+    const speed = Math.hypot(velocity.x, velocity.z);
+    this.velocity = speed > MAX_TARGET_SPEED ? { x: 0, z: 0 } : velocity;
+    this.last = { x: position.x, z: position.z };
+    this.lastTime = timeMs;
+    return this.velocity;
+  }
 }

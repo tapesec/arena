@@ -67,7 +67,7 @@ import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
-import { MovementPredictor } from "./prediction";
+import { MovementPredictor, VelocityTracker } from "./prediction";
 import { TUNING } from "./tuning";
 import { MUSIC } from "./commonSounds";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
@@ -145,6 +145,7 @@ export class Game {
   private pingTimer: ReturnType<typeof setInterval>;
   // Prédiction du déplacement de son propre personnage.
   private predictor = new MovementPredictor();
+  private targetVelocity = new VelocityTracker();
   // Instant d'envoi de la mesure en cours (null si elle a répondu) ; jeu arrêté (réponses ignorées).
   private pingSentAt: number | null = null;
   private disposed = false;
@@ -638,6 +639,11 @@ export class Game {
       self.state,
       {
         target: target ? target.state : null,
+        targetVelocity: this.targetVelocity.update(
+          target ? target.sessionId : null,
+          target ? target.state : null,
+          (this.room.state as { time: number }).time,
+        ),
         targetAlive: !!target?.isAlive,
         confine: phase === "preparation" && zone ? (pos) => confineToZone(pos, zone) : null,
       },

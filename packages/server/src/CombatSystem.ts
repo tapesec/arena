@@ -93,6 +93,8 @@ type Avoidance = "evaded" | "absorbed" | "blocked" | "immune" | null;
 
 export class CombatSystem {
   readonly players = new Map<string, PlayerRuntime>();
+  // Positions des joueurs au début du tic en cours.
+  private tickStart = new Map<string, Position>();
   // Limite de déplacement optionnelle (zone de départ pendant la préparation).
   confine: ((player: PlayerRuntime, pos: Position) => Position) | null = null;
   // Temps écoulé depuis le début de la partie, en secondes.
@@ -241,6 +243,9 @@ export class CombatSystem {
     const alive = [...this.players.values()].filter((p) => p.alive);
     for (const p of alive) this.updateEffectTimers(p, dt);
     for (const p of alive) this.updateDerivedEffects(p);
+    // Le verrou F/C vise la cible là où elle était au début du tic, quel que soit l'ordre des déplacements : le client
+    // prédit son propre déplacement de la même façon.
+    this.tickStart = new Map(alive.map((p) => [p.id, { x: p.state.x, z: p.state.z }]));
     for (const p of alive) {
       this.updateMovement(p, dt);
       this.updateRegen(p, dt);
@@ -269,7 +274,7 @@ export class CombatSystem {
     const next = simulateMovement(state, player.input, dt, {
       effects: player.effects,
       lock: state.lock,
-      target: target?.state ?? null,
+      target: target ? (this.tickStart.get(target.id) ?? target.state) : null,
       confine: confine ? (pos) => confine(player, pos) : null,
     });
     state.facing = next.facing;

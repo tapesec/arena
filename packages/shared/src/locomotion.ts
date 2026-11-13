@@ -6,6 +6,7 @@ import {
   distance,
   facingTowards,
 } from "./combat";
+import { MOVE_SPEED } from "./constants";
 import {
   forwardOf,
   inputSpeedFactor,
@@ -28,6 +29,9 @@ export interface MovementEffect {
   // Ralentissement (snare) : part de la vitesse perdue.
   value: number;
 }
+
+// Marge en deçà de laquelle le stick considère la cible atteinte (mètres).
+export const STICK_TOLERANCE = 1e-3;
 
 export interface MovementBody extends Position {
   facing: number;
@@ -92,9 +96,15 @@ export function simulateMovement(body: MovementBody, input: MoveInput, dt: numbe
   if (rootFactor <= 0) return { x: body.x, z: body.z, facing, stickMoving: false };
 
   const direction = moveDirection(input, facing);
-  // Stick : on avance vers la cible tant qu'on n'est pas assez près (les pas de côté restent possibles).
+  // Stick : on avance vers la cible tant qu'on n'est pas assez près (les pas de côté restent possibles). Sans autre
+  // touche, on n'avance que de ce qui manque pour être à STICK_DISTANCE : derrière une cible plus lente, le personnage
+  // la suit à sa vitesse au lieu d'alterner pleine vitesse et arrêt à chaque pas.
   let stickMoving = false;
-  if (target && lock === "stick" && distance(body, target) > STICK_DISTANCE) {
+  let stickLimit = Infinity;
+  // La tolérance évite qu'un arrondi laisse le personnage à 2 m + ε, faisant des pas infimes sans fin (il serait
+  // toujours « en mouvement » et ne pourrait plus incanter).
+  if (target && lock === "stick" && distance(body, target) > STICK_DISTANCE + STICK_TOLERANCE) {
+    if (direction.x === 0 && direction.z === 0) stickLimit = (distance(body, target) - STICK_DISTANCE) / (MOVE_SPEED * dt);
     const forward = forwardOf(facing);
     direction.x += forward.x;
     direction.z += forward.z;
@@ -112,7 +122,7 @@ export function simulateMovement(body: MovementBody, input: MoveInput, dt: numbe
     (snare ? 1 - snare.value : 1) *
     rootFactor *
     inputSpeedFactor(input);
-  let next = stepMovement(body, direction, dt, speed);
+  let next = stepMovement(body, direction, dt, Math.min(speed, stickLimit));
   if (context.confine) next = context.confine(next);
   return { x: next.x, z: next.z, facing, stickMoving };
 }

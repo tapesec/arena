@@ -122,6 +122,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private loadProgress = new Map<string, number>();
   // Joueurs remplacés par un bot faute d'avoir fini de charger : leur départ ne retire pas le personnage.
   private replacedByBot = new Set<string>();
+  // Temps de simulation écoulé (ms), non arrondi.
+  private elapsedMs = 0;
 
   private addBot(team: number, classId: ClassId): string {
     const player = new PlayerState();
@@ -244,6 +246,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   }
 
   private update(dt: number) {
+    this.elapsedMs += dt * 1000;
+    this.state.time = Math.round(this.elapsedMs);
     switch (this.phase) {
       case "classSelect":
         if (this.countdown(dt)) this.startLoading();
