@@ -58,6 +58,8 @@ import {
   type SwingEvent,
   type CrowdControl,
   type EffectKind,
+  type GameErrorCode,
+  type GameErrorMessage,
   type InterruptEvent,
   type InterruptReason,
   type MoveInput,
@@ -146,7 +148,7 @@ export class CombatSystem {
     const player = this.players.get(id);
     if (!player?.alive) return;
     const target = player.targetId ? this.players.get(player.targetId) : undefined;
-    if (!target?.alive) return this.sendError(player, "Aucune cible");
+    if (!target?.alive) return this.sendError(player, "noTarget");
     if (player.incapacitated || (lock === "stick" && player.has("root"))) return;
     player.state.lock = lock;
   }
@@ -193,16 +195,16 @@ export class CombatSystem {
     if (error) return this.sendError(caster, error);
 
     const targetId = this.pickTarget(caster, ability);
-    if (!targetId) return this.sendError(caster, "Aucune cible");
+    if (!targetId) return this.sendError(caster, "noTarget");
 
     // Technique de mêlée : mise en attente du prochain coup d'arme, qui part aussitôt si l'arme est prête.
     // Ses conditions (portée, position, endurance) sont vérifiées au moment du coup.
     if (ability.melee) {
       const target = this.players.get(targetId);
-      if (!target?.alive) return this.sendError(caster, "La cible est morte");
-      if (!this.areEnemies(caster, target)) return this.sendError(caster, "Cible non hostile");
+      if (!target?.alive) return this.sendError(caster, "targetDead");
+      if (!this.areEnemies(caster, target)) return this.sendError(caster, "notHostile");
       const comboError = this.comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
-      if (comboError) return this.sendError(caster, comboError);
+      if (comboError) return this.sendError(caster, comboError, ability.after);
       this.noteAction(caster);
       caster.state.queuedAbility = ability.id;
       caster.state.attacking = true;
@@ -343,7 +345,7 @@ export class CombatSystem {
 
     // Les conditions sont revérifiées à la fin : la cible a pu s'éloigner ou se cacher.
     const error =
-      state[ability.resource] < this.costOf(caster, ability) ? "Ressource insuffisante" : this.validateTarget(caster, ability, targetId);
+      state[ability.resource] < this.costOf(caster, ability) ? (ability.resource === "mana" ? "noMana" : "noEndurance") : this.validateTarget(caster, ability, targetId);
     if (error) return this.sendError(caster, error);
     // Un sort commencé avant la Ballade rythmée la fait perdre en partant.
     this.noteAction(caster);
@@ -390,24 +392,24 @@ export class CombatSystem {
         }
         return;
       }
-      this.sendError(attacker, error);
+      this.sendError(attacker, error, error === "combo" ? queued.after : undefined);
     }
     this.dealDamage(attacker, target, attacker.classDef.autoAttack.damage, "auto", true);
   }
 
   // --- Compétences ---
 
-  private checkCanUse(caster: PlayerRuntime, ability: AbilityDef, ignoreMovement = false): string | null {
-    if (caster.incapacitated) return "Vous êtes neutralisé";
-    if (caster.charge) return "Charge en cours";
-    if (ability.effects.some((e) => e.type === "charge") && caster.has("root")) return "Impossible en étant enraciné";
-    if (caster.state.castAbility) return "Incantation déjà en cours";
-    if (caster.has("silenced") && isMagic(ability)) return "Vous êtes réduit au silence";
-    if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "Compétence en recharge";
+  private checkCanUse(caster: PlayerRuntime, ability: AbilityDef, ignoreMovement = false): GameErrorCode | null {
+    if (caster.incapacitated) return "incapacitated";
+    if (caster.charge) return "charging";
+    if (ability.effects.some((e) => e.type === "charge") && caster.has("root")) return "rooted";
+    if (caster.state.castAbility) return "alreadyCasting";
+    if (caster.has("silenced") && isMagic(ability)) return "silenced";
+    if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "cooldown";
     if (caster.state[ability.resource] < this.costOf(caster, ability)) {
-      return ability.resource === "mana" ? "Pas assez de mana" : "Pas assez d'endurance";
+      return ability.resource === "mana" ? "noMana" : "noEndurance";
     }
-    if (ability.castTime > 0 && caster.isMoving && !ignoreMovement) return "Impossible d'incanter en mouvement";
+    if (ability.castTime > 0 && caster.isMoving && !ignoreMovement) return "castWhileMoving";
     return null;
   }
 
@@ -443,9 +445,9 @@ export class CombatSystem {
   }
 
   // Combo : la technique d'ouverture (opener) doit avoir porté sur la même cible au coup d'arme précédent.
-  private comboError(ability: AbilityDef, opener: string, openerTargetId: string, targetId: string): string | null {
+  private comboError(ability: AbilityDef, opener: string, openerTargetId: string, targetId: string): GameErrorCode | null {
     if (!ability.after || (opener === ability.after && openerTargetId === targetId)) return null;
-    return `Combo : juste après « ${getAbility(ability.after)?.name ?? ability.after} » sur cette cible`;
+    return "combo";
   }
 
   // Détermine la cible de la compétence selon son type.
@@ -459,37 +461,37 @@ export class CombatSystem {
     return current?.id ?? null;
   }
 
-  // Retourne le message d'erreur à afficher au joueur, ou null si la cible convient.
-  private validateTarget(caster: PlayerRuntime, ability: AbilityDef, targetId: string): string | null {
+  // Retourne la raison du refus à envoyer au joueur, ou null si la cible convient.
+  private validateTarget(caster: PlayerRuntime, ability: AbilityDef, targetId: string): GameErrorCode | null {
     const target = this.players.get(targetId);
-    if (!target) return "Cible introuvable";
+    if (!target) return "targetNotFound";
     // Intervention divine : il faut au moins un allié mort dans la zone.
     if (revivesInArea(ability) && this.affectedBy(caster, ability, targetId).length === 0) {
-      return "Aucun allié mort à portée";
+      return "noDeadAllyInRange";
     }
     if (ability.target === "self" || ability.target === "enemiesAround") return null;
 
     const enemy = this.areEnemies(caster, target);
-    if (ability.target === "enemy" && !enemy) return "Cible non hostile";
-    if (ability.target !== "enemy" && enemy) return "Cible hostile";
-    if (ability.target === "otherAlly" && target === caster) return "Ciblez un autre allié";
+    if (ability.target === "enemy" && !enemy) return "notHostile";
+    if (ability.target !== "enemy" && enemy) return "hostile";
+    if (ability.target === "otherAlly" && target === caster) return "needOtherAlly";
     if (ability.target === "deadAlly") {
-      if (target.alive) return "La cible n'est pas morte";
+      if (target.alive) return "targetNotDead";
     } else if (!target.alive) {
-      return "La cible est morte";
+      return "targetDead";
     }
 
     if (target !== caster) {
       // Near sight : la portée des sorts du lanceur est réduite (une incantation finit donc hors de portée).
       const reduced = isMagic(ability) && caster.has("nearSight");
       const range = reduced ? ability.range * NEAR_SIGHT_FACTOR : ability.range;
-      if (distance(caster.state, target.state) > range) return reduced ? "Cible hors de portée (vision réduite)" : "Cible hors de portée";
-      if (ability.minRange && distance(caster.state, target.state) < ability.minRange) return "Cible trop proche";
-      if (!hasLineOfSight(caster.state, target.state)) return "Cible hors de vue";
+      if (distance(caster.state, target.state) > range) return reduced ? "outOfRangeNearSight" : "outOfRange";
+      if (ability.minRange && distance(caster.state, target.state) < ability.minRange) return "tooClose";
+      if (!hasLineOfSight(caster.state, target.state)) return "noLineOfSight";
     }
-    if (isOffensive(ability) && !isFacing(caster.state, target.state)) return "Vous devez faire face à la cible";
+    if (isOffensive(ability) && !isFacing(caster.state, target.state)) return "notFacing";
     if (ability.position && positionRelativeTo(target.state, caster.state) !== ability.position) {
-      return ability.position === "back" ? "Placez-vous dans le dos de la cible" : "Placez-vous sur le flanc de la cible";
+      return ability.position === "back" ? "needBack" : "needSide";
     }
     return null;
   }
@@ -1052,7 +1054,7 @@ export class CombatSystem {
     charge.stuck = moved < 1e-3 ? charge.stuck + dt : 0;
     if (charge.stuck > 0.25 || charge.elapsed > CHARGE_MAX_DURATION) {
       this.stopCharge(player);
-      this.sendError(player, "Charge interrompue");
+      this.sendError(player, "chargeInterrupted");
     }
   }
 
@@ -1165,8 +1167,10 @@ export class CombatSystem {
     this.out.sendTo(player.id, "swing", event);
   }
 
-  private sendError(player: PlayerRuntime, message: string) {
-    this.out.sendTo(player.id, "error", { message });
+  // Le client affiche le texte dans la langue du joueur ; abilityId : compétence citée (ouverture d'un combo).
+  private sendError(player: PlayerRuntime, code: GameErrorCode, abilityId?: string) {
+    const message: GameErrorMessage = abilityId ? { code, abilityId } : { code };
+    this.out.sendTo(player.id, "error", message);
   }
 }
 

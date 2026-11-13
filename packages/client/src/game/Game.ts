@@ -32,6 +32,7 @@ import {
   type SwingEvent,
   type EffectCategory,
   type EffectKind,
+  type GameErrorMessage,
   type InterruptEvent,
   type MatchPhase,
   type MoveInput,
@@ -58,28 +59,22 @@ import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 import { formatCombatEvent, formatInterrupt } from "./combatLog";
+import { errorText } from "../abilityBar";
+import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { CharacterAssets } from "./characterAssets";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
-// Textes flottants des événements de combat.
-const CONTROL_LABELS: Record<string, string> = {
-  mez: "Mez",
-  stun: "Stun",
-  root: "Root",
-  nearSight: "Vision réduite",
-  silenced: "Silence",
-  poisoned: "Poison",
-  gangrene: "Gangrène",
-  armorBroken: "Armure brisée",
-};
-const INFO_LABELS: Partial<Record<CombatEvent["kind"], string>> = {
-  blocked: "Bloqué",
-  evaded: "Esquivé",
-  absorbed: "Absorbé",
-  intercepted: "Interception",
-  immune: "Immunisé",
-  taunt: "Provoqué",
+// Textes flottants des événements de combat : contrôles et affaiblissements affichés (nom de l'effet), et
+// issues d'un coup. Pas de texte pour l'Oubli : la cible ne doit pas le voir venir.
+const FLOATING_EFFECTS = new Set(["mez", "stun", "root", "nearSight", "silenced", "poisoned", "gangrene", "armorBroken"]);
+const INFO_LABELS: Partial<Record<CombatEvent["kind"], TextKey>> = {
+  blocked: "float.blocked",
+  evaded: "float.evaded",
+  absorbed: "float.absorbed",
+  intercepted: "float.intercepted",
+  immune: "float.immune",
+  taunt: "float.taunted",
 };
 
 // Provocation : durée de l'effet, et durée d'affichage des points d'exclamation au-dessus de la cible.
@@ -321,9 +316,9 @@ export class Game {
       }
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
-      hud.pushLog(formatInterrupt(event, nameOf));
+      hud.pushLog(formatInterrupt(event, nameOf, this.room.sessionId));
       const caster = this.players.get(event.casterId);
-      if (caster) this.overlay.addText(caster.root, "Interrompu", "info");
+      if (caster) this.overlay.addText(caster.root, t("float.interrupted"), "info");
       caster?.interruptCast();
     });
     this.room.onMessage("ability", (event: AbilityUsedEvent) => {
@@ -339,7 +334,7 @@ export class Game {
       this.gameAudio.onCooldown(event.duration);
     });
     this.room.onMessage("swing", (event: SwingEvent) => hud.startSwing(event.remaining, event.struck));
-    this.room.onMessage("error", (event: { message: string }) => hud.flash(event.message));
+    this.room.onMessage("error", (event: GameErrorMessage) => hud.flash(errorText(event.code, event.abilityId)));
   }
 
   // Indicateur au-dessus de la tête. Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez
@@ -406,17 +401,15 @@ export class Game {
         if (event.amount) this.overlay.addText(anchor, `+${event.amount}`, "heal", false, delay);
         break;
       case "resurrect":
-        this.overlay.addText(anchor, "Ressuscité", "heal");
+        this.overlay.addText(anchor, t("float.resurrected"), "heal");
         break;
       case "cc":
       case "debuff": {
-        // Pas de texte pour l'Oubli : la cible ne doit pas le voir venir.
-        const label = CONTROL_LABELS[event.detail ?? ""];
-        if (label) this.overlay.addText(anchor, label, "control", false, delay);
+        if (FLOATING_EFFECTS.has(event.detail ?? "")) this.overlay.addText(anchor, effectLabel(event.detail!), "control", false, delay);
         break;
       }
       default:
-        if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, INFO_LABELS[event.kind]!, "info", false, delay);
+        if (INFO_LABELS[event.kind]) this.overlay.addText(anchor, t(INFO_LABELS[event.kind]!), "info", false, delay);
     }
   }
 
@@ -504,7 +497,7 @@ export class Game {
   }
 
   private nameOf(id: string): string {
-    return id === this.room.sessionId ? "Vous" : (this.players.get(id)?.state.name ?? "?");
+    return id === this.room.sessionId ? t("log.you") : (this.players.get(id)?.state.name ?? "?");
   }
 
   private renderFrame() {
@@ -517,7 +510,7 @@ export class Game {
       const enemy = !!this.self && player.state.team !== this.self.state.team;
       const classId = player.state.classId as ClassId | "";
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
-      const label = enemy ? (getClass(classId)?.name ?? "") : player.state.name;
+      const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
       // Comme les textes, les tenues dépendent du point de vue : alliés en bleu, ennemis en rouge.
       player.setOutfitColor(enemy ? 1 : 0);
@@ -663,7 +656,7 @@ export class Game {
 function unitFrame(state: PlayerView, nameOf: (id: string) => string) {
   return {
     name: state.name,
-    className: getClass(state.classId)?.name ?? "",
+    className: state.classId ? className(state.classId) : "",
     hp: state.hp,
     maxHp: state.maxHp,
     cast: castFrame(state),
@@ -681,7 +674,7 @@ function sortAfflictionsFirst(effects: EffectFrame[]): EffectFrame[] {
 function castFrame(state: PlayerView): CastFrame | null {
   if (!state.castAbility || state.castDuration <= 0) return null;
   return {
-    abilityName: getAbility(state.castAbility)?.name ?? state.castAbility,
+    abilityName: abilityName(state.castAbility),
     progress: Math.min(1, state.castElapsed / state.castDuration),
   };
 }

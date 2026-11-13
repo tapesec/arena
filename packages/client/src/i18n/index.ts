@@ -2,7 +2,8 @@ import { en, type TextKey } from "./en";
 import { fr } from "./fr";
 
 export type { TextKey };
-export type Language = "en" | "fr";
+export { currentLanguage, setLanguage, type Language } from "./language";
+import { currentLanguage, type Language } from "./language";
 
 // Langues proposées par le sélecteur de l'accueil, chacune écrite dans sa propre langue.
 export const LANGUAGES: { id: Language; label: string }[] = [
@@ -11,53 +12,22 @@ export const LANGUAGES: { id: Language; label: string }[] = [
 ];
 
 const TEXTS: Record<Language, Record<TextKey, string>> = { en, fr };
-const STORAGE_KEY = "arena.language";
-
-// Anglais par défaut ; le choix fait sur l'accueil est retenu par le navigateur. La langue ne change que sur
-// l'accueil : le code du jeu (hors React) peut lire la langue courante au moment d'afficher un texte.
-let current: Language = readSavedLanguage();
-// Garde : le module peut être importé hors navigateur (tests node).
-if (typeof document !== "undefined") document.documentElement.lang = current;
-
-function readSavedLanguage(): Language {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "en" || saved === "fr") return saved;
-  } catch {
-    // Stockage indisponible (navigation privée…) : langue par défaut.
-  }
-  return "en";
-}
-
-export function currentLanguage(): Language {
-  return current;
-}
-
-export function setLanguage(language: Language) {
-  current = language;
-  if (typeof document !== "undefined") document.documentElement.lang = language;
-  try {
-    localStorage.setItem(STORAGE_KEY, language);
-  } catch {
-    // Stockage indisponible : la langue vaut pour cette visite seulement.
-  }
-}
-
 // Texte dans la langue courante ; {nom} est remplacé par params.nom.
 export function t(key: TextKey, params?: Record<string, string | number>): string {
-  const text = TEXTS[current][key];
+  // Repli sur l'anglais puis sur la clé : un code inconnu (client et serveur de versions différentes) ne plante pas.
+  const text = TEXTS[currentLanguage()][key] ?? TEXTS.en[key] ?? key;
   return params ? text.replace(/\{(\w+)\}/g, (match, name: string) => (name in params ? String(params[name]) : match)) : text;
 }
 
 // Nombre décimal à l'écrit : virgule en français, point en anglais.
 export function formatDecimal(value: number, digits: number): string {
   const text = value.toFixed(digits);
-  return current === "fr" ? text.replace(".", ",") : text;
+  return currentLanguage() === "fr" ? text.replace(".", ",") : text;
 }
 
 // Titre cité : « … » en français (espaces insécables), “…” en anglais.
 export function quote(title: string): string {
-  return current === "fr" ? `«\u00a0${title}\u00a0»` : `“${title}”`;
+  return currentLanguage() === "fr" ? `«\u00a0${title}\u00a0»` : `“${title}”`;
 }
 
 // Touches de déplacement (touches physiques, voir KeyboardInput) écrites comme sur le clavier du joueur : la
@@ -90,5 +60,6 @@ keyboard
   });
 
 export function moveKeys(): Record<MoveKey, string> {
-  return layoutKeys ?? ASSUMED_KEYS[current];
+  return layoutKeys ?? ASSUMED_KEYS[currentLanguage()];
 }
+export * from "./content";

@@ -1,4 +1,5 @@
-import { DEXTERITY_FACTOR, getAbility, isMagic, type AbilityDef } from "@arena/shared";
+import { DEXTERITY_FACTOR, isMagic, type AbilityDef, type GameErrorCode } from "@arena/shared";
+import { abilityName, formatDecimal, quote, t, type TextKey } from "./i18n";
 import { ABILITY_FX } from "./game/spellFx";
 import type { SelfFrame, TargetFrame } from "./store";
 
@@ -29,28 +30,37 @@ export type AbilityState = "ready" | "unaffordable" | "range" | "position" | "no
 
 export interface AbilityStatus {
   state: AbilityState;
-  // Explication affichée dans l'infobulle quand la compétence n'est pas utilisable.
+  // Explication affichée dans l'infobulle quand la compétence n'est pas utilisable (dans la langue du joueur).
   reason: string | null;
+}
+
+// Texte d'une raison de refus, envoyée par le serveur ou calculée ici ; abilityId : compétence citée (combo).
+export function errorText(code: GameErrorCode, abilityId?: string): string {
+  return t(`error.${code}` satisfies TextKey, { ability: abilityId ? quote(abilityName(abilityId)) : "" });
+}
+
+function refused(state: AbilityState, code: GameErrorCode, abilityId?: string): AbilityStatus {
+  return { state, reason: errorText(code, abilityId) };
 }
 
 const READY: AbilityStatus = { state: "ready", reason: null };
 
 export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: TargetFrame | null): AbilityStatus {
-  if (self.hp <= 0) return { state: "disabled", reason: "Vous êtes mort" };
+  if (self.hp <= 0) return refused("disabled", "dead");
   if (self.effects.some((e) => e.kind === "mez" || e.kind === "stun" || e.kind === "rampart")) {
-    return { state: "disabled", reason: "Vous êtes neutralisé" };
+    return refused("disabled", "incapacitated");
   }
-  if (self.charging) return { state: "disabled", reason: "Charge en cours" };
-  if (isMagic(ability) && self.effects.some((e) => e.kind === "silenced")) return { state: "disabled", reason: "Vous êtes réduit au silence" };
+  if (self.charging) return refused("disabled", "charging");
+  if (isMagic(ability) && self.effects.some((e) => e.kind === "silenced")) return refused("disabled", "silenced");
   if (ability.effects.some((e) => e.type === "charge") && self.effects.some((e) => e.kind === "root")) {
-    return { state: "disabled", reason: "Impossible en étant enraciné" };
+    return refused("disabled", "rooted");
   }
   if (ability.after && self.comboAbility !== ability.after) {
-    return { state: "combo", reason: `Combo : juste après « ${getAbility(ability.after)?.name ?? ability.after} »` };
+    return refused("combo", "combo", ability.after);
   }
   // Couper son chant ne coûte rien.
   if (self.song !== ability.id && self[ability.resource] < ability.cost) {
-    return { state: "unaffordable", reason: ability.resource === "mana" ? "Pas assez de mana" : "Pas assez d'endurance" };
+    return refused("unaffordable", ability.resource === "mana" ? "noMana" : "noEndurance");
   }
 
   switch (ability.target) {
@@ -62,18 +72,18 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
       if (!target || !target.isAlly || target.isSelf || target.hp <= 0) return READY;
       return reach(ability, target);
     case "otherAlly":
-      if (!target || !target.isAlly || target.isSelf || target.hp <= 0) return { state: "noTarget", reason: "Ciblez un autre allié" };
+      if (!target || !target.isAlly || target.isSelf || target.hp <= 0) return refused("noTarget", "needOtherAlly");
       return reach(ability, target);
     case "deadAlly":
-      if (!target || !target.isAlly || target.hp > 0) return { state: "noTarget", reason: "Ciblez un allié mort" };
+      if (!target || !target.isAlly || target.hp > 0) return refused("noTarget", "needDeadAlly");
       return reach(ability, target);
     case "enemy": {
-      if (!target || target.isAlly || target.hp <= 0) return { state: "noTarget", reason: "Ciblez un ennemi" };
+      if (!target || target.isAlly || target.hp <= 0) return refused("noTarget", "needEnemy");
       const status = reach(ability, target);
       if (status !== READY) return status;
-      if (!target.facing) return { state: "position", reason: "Faites face à la cible" };
+      if (!target.facing) return refused("position", "notFacing");
       if (ability.position && target.position !== ability.position) {
-        return { state: "position", reason: ability.position === "back" ? "Placez-vous dans son dos" : "Placez-vous sur son flanc" };
+        return refused("position", ability.position === "back" ? "needBack" : "needSide");
       }
       return READY;
     }
@@ -81,9 +91,9 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
 }
 
 function reach(ability: AbilityDef, target: TargetFrame): AbilityStatus {
-  if (ability.melee || ability.meleeStrike ? !target.inMeleeRange : target.distance > ability.range) return { state: "range", reason: "Cible hors de portée" };
-  if (ability.minRange && target.distance < ability.minRange) return { state: "range", reason: "Cible trop proche" };
-  if (!target.inLineOfSight) return { state: "range", reason: "Cible hors de vue" };
+  if (ability.melee || ability.meleeStrike ? !target.inMeleeRange : target.distance > ability.range) return refused("range", "outOfRange");
+  if (ability.minRange && target.distance < ability.minRange) return refused("range", "tooClose");
+  if (!target.inLineOfSight) return refused("range", "noLineOfSight");
   return READY;
 }
 
@@ -91,19 +101,23 @@ function reach(ability: AbilityDef, target: TargetFrame): AbilityStatus {
 // self : pour le chant en cours (couper est gratuit) et le Buff dextérité (incantation plus rapide).
 export function abilityDetails(ability: AbilityDef, self?: SelfFrame): string[] {
   const details: string[] = [];
-  if (self?.song === ability.id) details.push("Couper le chant : gratuit");
-  else if (ability.cost > 0) details.push(`${ability.cost} ${ability.resource === "mana" ? "mana" : "endurance"}`);
+  if (self?.song === ability.id) details.push(t("ability.stopSong"));
+  else if (ability.cost > 0) details.push(t("ability.cost", { cost: ability.cost, resource: t(ability.resource === "mana" ? "ability.costMana" : "ability.costEndurance") }));
   const dexterity = self?.effects.some((e) => e.kind === "buffDexterity") ? DEXTERITY_FACTOR : 1;
-  details.push(ability.melee ? "Prochain coup d'arme" : ability.castTime > 0 ? `Incantation ${format(Math.round(ability.castTime * dexterity * 100) / 100)} s` : "Instantané");
-  if (ability.target === "self") details.push("Sur soi");
-  else if (ability.target === "enemiesAround") details.push(`Autour de soi (${ability.radius} m)`);
-  else if (ability.minRange) details.push(`Portée ${ability.minRange} à ${ability.range} m`);
-  else details.push(ability.melee || ability.meleeStrike ? "Au contact" : `Portée ${ability.range} m`);
-  if (ability.after) details.push(`Combo après « ${getAbility(ability.after)?.name ?? ability.after} »`);
-  if (ability.cooldown > 0) details.push(`Recharge ${ability.cooldown >= 60 ? `${ability.cooldown / 60} min` : `${format(ability.cooldown)} s`}`);
+  const castTime = Math.round(ability.castTime * dexterity * 100) / 100;
+  details.push(ability.melee ? t("ability.nextSwing") : ability.castTime > 0 ? t("ability.castTime", { seconds: format(castTime) }) : t("ability.instant"));
+  if (ability.target === "self") details.push(t("ability.self"));
+  else if (ability.target === "enemiesAround") details.push(t("ability.around", { radius: ability.radius ?? 0 }));
+  else if (ability.minRange) details.push(t("ability.rangeMinMax", { min: ability.minRange, max: ability.range }));
+  else details.push(ability.melee || ability.meleeStrike ? t("ability.melee") : t("ability.range", { range: ability.range }));
+  if (ability.after) details.push(t("ability.comboAfter", { ability: quote(abilityName(ability.after)) }));
+  if (ability.cooldown > 0) {
+    details.push(ability.cooldown >= 60 ? t("ability.cooldownMin", { minutes: ability.cooldown / 60 }) : t("ability.cooldownSec", { seconds: format(ability.cooldown) }));
+  }
   return details;
 }
 
+// Nombre tel quel (sans zéros inutiles), avec la virgule décimale en français.
 function format(value: number): string {
-  return String(value).replace(".", ",");
+  return Number.isInteger(value) ? String(value) : formatDecimal(value, String(value).split(".")[1].length);
 }

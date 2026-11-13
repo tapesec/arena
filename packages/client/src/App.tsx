@@ -5,7 +5,7 @@ import { GameCanvas } from "./GameCanvas";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
-import { LANGUAGES, formatDecimal, moveKeys, quote, t, type Language } from "./i18n";
+import { LANGUAGES, abilityDescription, abilityName, className, classRole, effectLabel, formatDecimal, moveKeys, quote, t, type Language } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
 export function App() {
@@ -233,12 +233,12 @@ function ClassSelectScreen() {
               actions?.selectClass(c.id);
             }}
           >
-            <span className="class-name">{c.name}</span>
-            <span className="class-role">{c.role}</span>
+            <span className="class-name">{className(c.id)}</span>
+            <span className="class-role">{classRole(c.id)}</span>
             <span className="class-stats">
               {c.maxHp} {t("lobby.hp")} · {t(c.resource === "mana" ? "resource.mana" : "resource.endurance")}
             </span>
-            <span className="class-abilities">{c.abilities.map((id) => getAbility(id)?.name).join(" · ")}</span>
+            <span className="class-abilities">{c.abilities.map((id) => abilityName(id)).join(" · ")}</span>
           </button>
         ))}
       </div>
@@ -263,12 +263,12 @@ function ClassSelectScreen() {
               >
                 {CLASS_LIST.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {className(c.id)}
                   </option>
                 ))}
               </select>
             ) : (
-              <strong className="roster-class">{mate.classId ? getClass(mate.classId)?.name : t("lobby.choosing")}</strong>
+              <strong className="roster-class">{mate.classId ? className(mate.classId) : t("lobby.choosing")}</strong>
             )}
           </div>
         ))}
@@ -455,7 +455,7 @@ function MiniBar({ value, max, kind, label }: { value: number; max: number; kind
 const ENDING_SOON = 3;
 function EffectIcon({ effect, size, timer = false }: { effect: EffectFrame; size: "self" | "buff" | "target" | "group"; timer?: boolean }) {
   const icon = effectIcon(effect.kind);
-  const label = EFFECTS[effect.kind]?.label ?? effect.kind;
+  const label = effectLabel(effect.kind);
   const { remaining, duration } = effect;
   const elapsed = remaining !== null && duration ? Math.min(1, Math.max(0, 1 - remaining / duration)) : 0;
   const classes = [
@@ -588,10 +588,10 @@ function Hotbar() {
             {hovered === abilityId && (
               <div className="slot-tooltip">
                 <div className="tooltip-name" style={{ color: abilityColor(abilityId) }}>
-                  {ability.name}
+                  {abilityName(abilityId)}
                 </div>
                 <div className="tooltip-details">{abilityDetails(ability, self).join(" · ")}</div>
-                <div className="tooltip-description">{ability.description}</div>
+                <div className="tooltip-description">{abilityDescription(abilityId)}</div>
                 {status.reason && <div className="tooltip-reason">{status.reason}</div>}
               </div>
             )}

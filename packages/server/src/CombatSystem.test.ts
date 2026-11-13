@@ -27,7 +27,7 @@ class World {
   combat: CombatSystem;
   events: CombatEvent[] = [];
   interrupts: InterruptEvent[] = [];
-  errors: { id: string; message: string }[] = [];
+  errors: { id: string; code: string; abilityId?: string }[] = [];
   // Valeurs renvoyées par le générateur aléatoire ; 0.99 par défaut = aucun blocage, esquive ou critique.
   rolls: number[] = [];
 
@@ -39,7 +39,7 @@ class World {
           if (type === "interrupt") this.interrupts.push(message as InterruptEvent);
         },
         sendTo: (id, type, message) => {
-          if (type === "error") this.errors.push({ id, message: (message as { message: string }).message });
+          if (type === "error") this.errors.push({ id, ...(message as { code: string; abilityId?: string }) });
         },
       },
       () => this.rolls.shift() ?? 0.99,
@@ -345,7 +345,7 @@ describe("Arcaniste", () => {
     assert.ok(enemy.has("nearSight"), "le Cri de ralliement n'en protège pas");
     world.run(0.5);
     assert.equal(arcaniste.state.hp, arcaniste.state.maxHp, "le Trait de feu échoue à 10 m (portée 7,5 m)");
-    assert.ok(world.errors.some((e) => e.id === "e" && e.message.includes("vision réduite")));
+    assert.ok(world.errors.some((e) => e.id === "e" && e.code === "outOfRangeNearSight"));
     world.cast(enemy, "firebolt", arcaniste);
     world.run(0.1);
     assert.equal(enemy.state.castAbility, "");
@@ -377,7 +377,7 @@ describe("Prêtre", () => {
     pretre.state.hp = 1;
     const enemy = world.spawn("e", "lame", 1, 0, 2, Math.PI);
     world.cast(enemy, "backstab", pretre); // de face : refusé
-    assert.match(world.errors.at(-1)!.message, /dos/);
+    assert.equal(world.errors.at(-1)!.code, "needBack");
     enemy.state.x = OFFSET_X;
     enemy.state.z = -2;
     enemy.state.facing = 0;
@@ -503,7 +503,7 @@ describe("Prêtre", () => {
   it("l'Intervention divine relève les alliés morts à 30 m, à 50 % de vie", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);
     world.cast(pretre, "divineIntervention");
-    assert.equal(world.errors.at(-1)?.message, "Aucun allié mort à portée");
+    assert.equal(world.errors.at(-1)?.code, "noDeadAllyInRange");
     const near = world.spawn("n", "lame", 0, 10, 0);
     const far = world.spawn("f", "lame", 0, 0, 31);
     const kill = (p: PlayerRuntime) => {
@@ -614,7 +614,7 @@ describe("Barde", () => {
     world.run(1);
     assert.equal(lame.state.z, 10);
     world.cast(lame, "rage");
-    assert.equal(world.errors.at(-1)?.message, "Vous êtes neutralisé");
+    assert.equal(world.errors.at(-1)?.code, "incapacitated");
   });
 
   it("chants : 50 mana à l'activation, un seul à la fois, couper est gratuit, pas coupés par les attaques", () => {
@@ -821,7 +821,7 @@ describe("Lame", () => {
     enemy.state.facing = Math.PI;
     world.run(2.1);
     assert.equal(world.eventsOf("damage").filter((e) => e.abilityId === "auto").length, 1);
-    assert.ok(world.errors.some((e) => e.id === "l" && e.message.includes("dos")));
+    assert.ok(world.errors.some((e) => e.id === "l" && e.code === "needBack"));
   });
 
   it("la Rage rend tous les coups critiques", () => {
@@ -854,7 +854,7 @@ describe("Lame", () => {
     assert.ok(enemy.has("silenced"));
     assert.equal(enemy.state.castAbility, "", "l'incantation est interrompue");
     world.cast(enemy, "concentration");
-    assert.ok(world.errors.some((e) => e.id === "e" && e.message === "Vous êtes réduit au silence"));
+    assert.ok(world.errors.some((e) => e.id === "e" && e.code === "silenced"));
     world.cast(ally, "backstab", enemy);
     assert.ok(enemy.has("silenced"), "les dégâts ne cassent pas le silence");
     world.run(10.1);
@@ -900,7 +900,7 @@ describe("Lame", () => {
     const lame = world.spawn("l", "lame", 0, 0, -2, 0);
     const enemy = world.spawn("e", "barde", 1, 0, 0, 0);
     world.cast(lame, "poisonBlade", enemy);
-    assert.ok(world.errors.some((e) => e.message.startsWith("Combo")), "pas de combo sans ouverture");
+    assert.ok(world.errors.some((e) => e.code === "combo"), "pas de combo sans ouverture");
     world.cast(lame, "backstab", enemy);
     assert.equal(lame.state.comboAbility, "backstab");
     world.cast(lame, "poisonBlade", enemy);
@@ -927,7 +927,7 @@ describe("Lame", () => {
     world.run(2.05); // coup normal
     assert.equal(lame.state.comboAbility, "");
     world.cast(lame, "poisonBlade", enemy);
-    assert.ok(world.errors.some((e) => e.message.startsWith("Combo")));
+    assert.ok(world.errors.some((e) => e.code === "combo"));
     assert.equal(lame.state.queuedAbility, "");
   });
 
@@ -1036,7 +1036,7 @@ describe("Lame", () => {
     world.cast(lame, "backstab", enemy);
     assert.equal(lame.state.comboTarget, "e");
     world.cast(lame, "poisonBlade", other);
-    assert.ok(world.errors.some((e) => e.message.startsWith("Combo")));
+    assert.ok(world.errors.some((e) => e.code === "combo"));
     assert.equal(lame.state.queuedAbility, "");
   });
 
@@ -1152,10 +1152,10 @@ describe("Règles communes", () => {
     const ally = world.spawn("x", "arcaniste", 0, 0, 5, Math.PI);
     const enemy = world.spawn("e", "lame", 1, 0, 8, Math.PI);
     world.cast(ally, "firebolt", pretre);
-    assert.equal(world.errors.at(-1)?.message, "Cible non hostile");
+    assert.equal(world.errors.at(-1)?.code, "notHostile");
     world.combat.setTarget(pretre.id, enemy.id);
     world.cast(pretre, "resurrect");
-    assert.equal(world.errors.at(-1)?.message, "Cible hostile");
+    assert.equal(world.errors.at(-1)?.code, "hostile");
   });
 });
 
@@ -1270,7 +1270,7 @@ describe("Gardien : nouvelles compétences", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
     const enemy = world.spawn("e", "lame", 1, 0, 6, Math.PI);
     world.cast(gardien, "charge", enemy);
-    assert.equal(world.errors.at(-1)?.message, "Cible trop proche");
+    assert.equal(world.errors.at(-1)?.code, "tooClose");
     assert.ok(!gardien.state.charging);
   });
 
@@ -1354,7 +1354,7 @@ describe("Gardien : nouvelles compétences", () => {
     assert.equal(pretre.state.hp, pretre.state.maxHp);
     assert.ok(world.eventsOf("immune").some((e) => e.detail === "melee"));
     world.cast(gardien, "taunt", lame);
-    assert.equal(world.errors.at(-1)?.message, "Vous êtes neutralisé");
+    assert.equal(world.errors.at(-1)?.code, "incapacitated");
     // Un allié qui entre dans la zone est protégé aussi.
     lointain.state.z = 20;
     world.run(0.1);
