@@ -416,12 +416,16 @@ export class CharacterAssets {
   }
 
   // Lance le téléchargement de tout ce qui est connu, pour qu'il soit prêt à l'apparition des joueurs.
-  preload() {
-    for (const url of this.libraries) void this.load(url);
-    void this.loadMixamo();
-    for (const def of Object.values(CHARACTERS)) {
-      void this.load(def.model);
-      for (const weapon of def.weapons) void this.load(weapon.model);
+  // track : suivi du chargement (écran de chargement). Les textures de tenue, créées à l'apparition des personnages,
+  // sont seulement téléchargées : le navigateur les reprend ensuite de son cache.
+  // Poids : un modèle compte pour 10 sons environ dans la barre de chargement.
+  preload(track: <T>(task: Promise<T>, weight?: number) => Promise<T> = (task) => task) {
+    for (const url of this.libraries) void track(this.load(url), 10);
+    void track(this.loadMixamo(), 20);
+    for (const [classId, def] of Object.entries(CHARACTERS)) {
+      void track(this.load(def.model), 10);
+      for (const weapon of def.weapons) void track(this.load(weapon.model), 2);
+      for (const team of [0, 1]) void track(fetch(`${MODELS_URL}characters/${classId}-${team}.webp`).then((r) => r.blob()));
     }
   }
 

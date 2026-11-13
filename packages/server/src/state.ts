@@ -14,6 +14,19 @@ export const EffectState = schema(
 );
 export type EffectState = SchemaType<typeof EffectState>;
 
+// Avancement du chargement d'un joueur (écran de chargement) : visible de tous, adversaires compris, sans la classe.
+export const LoadingState = schema(
+  {
+    name: t.string().default(""),
+    team: t.uint8().default(0),
+    isBot: t.boolean().default(false),
+    // En pourcentage (les bots n'ont rien à charger : 100).
+    progress: t.uint8().default(0),
+  },
+  "LoadingState",
+);
+export type LoadingState = SchemaType<typeof LoadingState>;
+
 // L'état synchronisé automatiquement vers tous les clients.
 // Colyseus n'envoie que les champs modifiés à chaque patch.
 export const PlayerState = schema(
@@ -74,6 +87,8 @@ export const ArenaState = schema(
     matchSize: t.uint8().default(0),
     // Filtrée par client (StateView) : chacun ne reçoit que les joueurs que son équipe voit.
     players: t.map(PlayerState).view(),
+    // Écran de chargement : tous les joueurs de la partie, sans filtre (rempli au lancement du chargement).
+    loading: t.map(LoadingState),
   },
   "ArenaState",
 );

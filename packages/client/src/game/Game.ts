@@ -45,6 +45,7 @@ import {
   type MatchFrame,
   type SelfFrame,
   type TargetFrame,
+  type LoadingFrame,
   type TeammateFrame,
 } from "../store";
 import { CameraController } from "./CameraController";
@@ -63,6 +64,9 @@ import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { CharacterAssets } from "./characterAssets";
+import { LoadingTracker } from "./loading";
+import { TUNING } from "./tuning";
+import { MUSIC } from "./commonSounds";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 
 // Textes flottants des événements de combat : contrôles et affaiblissements affichés (nom de l'effet), et
@@ -126,6 +130,9 @@ export class Game {
   private targetMarker!: Mesh;
   private lastHudRefresh = 0;
   private lastHudSnapshot = "";
+  // Chargement du jeu, suivi pour l'écran de chargement ; dernier pourcentage envoyé au serveur.
+  private loading: LoadingTracker;
+  private sentLoadPercent = -1;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -134,6 +141,8 @@ export class Game {
   ) {
     this.engine = new Engine(canvas, true);
     this.scene = new Scene(this.engine);
+    // Le chargement commence dès la salle d'attente ; le serveur attend que chacun ait fini avant la préparation.
+    this.loading = new LoadingTracker(() => this.sendLoadProgress());
 
     this.camera = new CameraController(this.scene, canvas, () => {
       if (!this.isSpectating) this.sendMove();
@@ -142,7 +151,8 @@ export class Game {
     this.spellEffects = new SpellEffects(this.scene);
     this.village = new Village(this.scene);
     this.characterAssets = new CharacterAssets(this.scene);
-    this.characterAssets.preload();
+    this.characterAssets.preload((task, weight) => this.loading.track(task, weight));
+    audio.preloadGame(soundRecipes(TUNING), [MUSIC.match], (task, weight) => this.loading.track(task, weight));
     this.fog = new FogOfWar(this.scene);
     this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
     // Les pistes de sons des compétences réglées passent par l'audio du jeu (spatialisé).
@@ -152,6 +162,7 @@ export class Game {
     this.createTargetMarker();
     this.bindState();
     this.bindMessages();
+    this.sendLoadProgress();
 
     this.keyboard = new KeyboardInput(
       (keys) => {
@@ -198,8 +209,18 @@ export class Game {
 
   private handleResize = () => this.engine.resize();
 
+  // Envoie l'avancement du chargement au serveur, à chaque point de pourcentage gagné.
+  private sendLoadProgress() {
+    const percent = Math.floor(this.loading.progress * 100);
+    if (percent === this.sentLoadPercent) return;
+    this.sentLoadPercent = percent;
+    this.room.send("loadProgress", { progress: percent });
+  }
+
   // Touches de déplacement, plus l'état du clic droit : maintenu, le personnage s'oriente comme la caméra.
   private sendMove() {
+    // Tant que le jeu charge (écran de chargement), le joueur ne voit pas son personnage : pas de commandes.
+    if (this.loading.progress < 1) return;
     this.sentYaw = this.camera.yaw;
     this.lastMoveSent = performance.now();
     this.room.send("input", { ...this.moveKeys, steer: this.camera.steering, yaw: this.sentYaw });
@@ -250,8 +271,8 @@ export class Game {
     this.shadows.receive([createGround(this.scene)]);
 
     // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
-    void this.village.load();
-    void new Nature(this.scene).load();
+    void this.loading.track(this.village.load(), 10);
+    void this.loading.track(new Nature(this.scene).load(), 10);
 
   }
 
@@ -335,6 +356,12 @@ export class Game {
     });
     this.room.onMessage("swing", (event: SwingEvent) => hud.startSwing(event.remaining, event.struck));
     this.room.onMessage("error", (event: GameErrorMessage) => hud.flash(errorText(event.code, event.abilityId)));
+    // Chargement trop long : un bot a pris notre place, le serveur nous déconnecte. Le jeu s'arrête derrière l'écran.
+    this.room.onMessage("replacedByBot", () => {
+      this.engine.stopRenderLoop();
+      this.keyboard.dispose();
+      hud.setStatus("replaced");
+    });
   }
 
   // Indicateur au-dessus de la tête. Le stun est montré en 3D (étoiles autour de la tête, voir StatusFx) ; le mez
@@ -418,6 +445,7 @@ export class Game {
   }
 
   private handleAction(action: KeyAction) {
+    if (this.loading.progress < 1) return;
     if (action.startsWith("group")) {
       const member = this.groupMembers()[Number(action.slice(5)) - 1];
       if (member) this.setTarget(member.sessionId);
@@ -643,14 +671,46 @@ export class Game {
           .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || Number(a.isBot) - Number(b.isBot))
       : [];
 
+    // Écran de chargement : tous les joueurs de la partie (le serveur les envoie tous, sans leur classe). Le sien est
+    // pris du suivi local, plus à jour.
+    const loadingState = (this.room.state as { loading?: Map<string, { name: string; team: number; isBot: boolean; progress: number }> })
+      .loading;
+    const loading: LoadingFrame[] = loadingState
+      ? [...loadingState.entries()].map(([id, entry]) => ({
+          id,
+          name: entry.name,
+          team: entry.team,
+          isBot: entry.isBot,
+          isSelf: id === this.room.sessionId,
+          progress: id === this.room.sessionId ? this.sentLoadPercent : entry.progress,
+        }))
+      : [];
+    const loaded = this.loading.progress >= 1;
+
     // On ne prévient React que si quelque chose a réellement changé.
-    const snapshot = JSON.stringify([selfFrame, targetFrame, group, matchFrame, teammates]);
+    const snapshot = JSON.stringify([selfFrame, targetFrame, group, matchFrame, teammates, loading, loaded]);
     if (snapshot === this.lastHudSnapshot) return;
     this.lastHudSnapshot = snapshot;
     const hud = useHudStore.getState();
     hud.setFrames(selfFrame, targetFrame, group);
     hud.setMatch(matchFrame, teammates);
+    hud.setLoading(loading, loaded);
   }
+}
+
+// Sons des pistes de compétence réglées (animationTuning.json), à charger avant la partie.
+function soundRecipes(tuning: unknown): Set<string> {
+  const recipes = new Set<string>();
+  const visit = (value: unknown) => {
+    if (Array.isArray(value)) value.forEach(visit);
+    else if (value && typeof value === "object") {
+      const item = value as { type?: unknown; recipe?: unknown };
+      if (item.type === "sound" && typeof item.recipe === "string") recipes.add(item.recipe);
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(tuning);
+  return recipes;
 }
 
 function unitFrame(state: PlayerView, nameOf: (id: string) => string) {

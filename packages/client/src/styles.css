@@ -338,7 +338,8 @@ body,
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* safe : un contenu plus haut que l'écran (téléphone) défile au lieu d'être coupé en haut. */
+  justify-content: safe center;
   gap: 12px;
   padding: 16px;
   box-sizing: border-box;
@@ -2375,4 +2376,67 @@ body,
   flex: none;
   border-radius: 2px;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+/* Écran de chargement : les deux équipes côte à côte, une barre par joueur. */
+.loading-teams {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 860px;
+}
+
+.loading-team {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loading-team h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.loading-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.loading-line .roster-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loading-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.loading-fill {
+  display: block;
+  height: 100%;
+  background: #d9b44a;
+  transition: width 0.2s linear;
+}
+
+.loading-fill.loading-done {
+  background: #5cb85c;
+}
+
+.loading-percent {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  opacity: 0.8;
 }

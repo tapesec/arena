@@ -48,6 +48,13 @@ export const en = {
   "punct.colon": ": ",
 
   // Combat
+  "loading.title": "Loading",
+  "loading.startsIn": "The match starts once everyone is ready, at most in",
+  "loading.hint": "Loading models and sounds…",
+  "loading.late": "The fight starts in",
+  "loading.lateHint": "Your game is still loading: if it is not ready when the fight starts, a bot will take your place.",
+  "loading.percent": "{value}%",
+  "loading.replaced": "Your game took too long to load: a bot took your place in this match.",
   "match.preparation": "Preparation: the fight starts in",
   "match.dead": "You are dead",
   "match.spectator": "Spectator mode",

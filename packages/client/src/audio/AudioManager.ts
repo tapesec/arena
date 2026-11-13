@@ -280,22 +280,55 @@ export class AudioManager {
     return this.protectedSounds;
   }
 
+  // Écran de chargement : télécharge à l'avance tous les sons du jeu ; track suit chaque téléchargement. Seuls ceux des
+  // pistes de compétence (recipes) sont décodés ; les autres sons enregistrés et la musique sont seulement téléchargés
+  // (tout décoder garderait des dizaines de Mo en mémoire), le navigateur les reprend de son cache au premier usage.
+  preloadGame(recipes: Iterable<string>, music: string[], track: <T>(task: Promise<T>, weight?: number) => Promise<T>) {
+    void track(
+      this.loadVariantCounts().then((counts) => {
+        for (const [id, count] of Object.entries(counts)) {
+          for (let i = 0; i < count; i++) void track(fetch(`${SOUNDS_URL}${id}_${i}.m4a`).then((r) => r.arrayBuffer()));
+        }
+      }),
+    );
+    for (const recipe of recipes) {
+      if (!recipe.startsWith(GAME_SOUND)) void track(this.loadCatalogSound(recipe));
+      else if (!(recipe.slice(GAME_SOUND.length) in SOUNDS)) void track(this.loadSample(recipe.slice(GAME_SOUND.length)));
+    }
+    for (const id of music) void track(fetch(`${MUSIC_URL}${id}.m4a`).then((r) => r.arrayBuffer()), 10);
+  }
+
+  // Nombre de variantes de chaque groupe de sons. Un échec n'est pas gardé : on réessaiera.
+  private loadVariantCounts(): Promise<Record<string, number>> {
+    this.variantCounts ??= fetch(`${SOUNDS_URL}index.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<Record<string, number>>) : Promise.reject(new Error(String(r.status)))))
+      .catch((error: unknown) => {
+        this.variantCounts = null;
+        throw error;
+      });
+    return this.variantCounts;
+  }
+
   // Charge toutes les variantes d'un groupe (une seule fois).
   loadSample(id: string): Promise<Variant[]> {
     let loading = this.samples.get(id);
     if (!loading) {
-      loading = this.loadVariants(id);
+      // Un échec n'est pas gardé : on réessaiera au prochain usage.
+      loading = this.loadVariants(id).catch((error: unknown) => {
+        this.samples.delete(id);
+        throw error;
+      });
       this.samples.set(id, loading);
     }
     return loading;
   }
 
   private async loadVariants(id: string): Promise<Variant[]> {
-    this.variantCounts ??= fetch(`${SOUNDS_URL}index.json`).then((r) => r.json() as Promise<Record<string, number>>);
-    const count = (await this.variantCounts)[id] ?? 0;
+    const count = (await this.loadVariantCounts())[id] ?? 0;
     const variants = await Promise.all(
       Array.from({ length: count }, async (_, i) => {
         const response = await fetch(`${SOUNDS_URL}${id}_${i}.m4a`);
+        if (!response.ok) throw new Error(String(response.status));
         const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
         return { buffer, start: soundStart(buffer) };
       }),

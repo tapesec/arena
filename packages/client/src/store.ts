@@ -4,7 +4,8 @@ import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type Match
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
-type ConnectionStatus = "connecting" | "connected" | "error";
+// replaced : un bot a pris la place du joueur, qui n'avait pas fini de charger au début du combat.
+type ConnectionStatus = "connecting" | "connected" | "error" | "replaced";
 
 export interface CastFrame {
   abilityName: string;
@@ -102,6 +103,17 @@ export interface TeammateFrame {
   leader: boolean;
 }
 
+// Joueur sur l'écran de chargement (adversaires compris, sans leur classe).
+export interface LoadingFrame {
+  id: string;
+  name: string;
+  team: number;
+  isBot: boolean;
+  isSelf: boolean;
+  // En pourcentage.
+  progress: number;
+}
+
 // Commandes que l'interface peut envoyer au serveur, fournies par le jeu une fois connecté.
 export interface GameActions {
   selectClass: (classId: ClassId) => void;
@@ -134,6 +146,9 @@ interface HudState {
   error: string | null;
   match: MatchFrame | null;
   teammates: TeammateFrame[];
+  // Écran de chargement : tous les joueurs, et la fin de son propre chargement.
+  loading: LoadingFrame[];
+  loaded: boolean;
   self: SelfFrame | null;
   target: TargetFrame | null;
   group: GroupMemberFrame[];
@@ -150,6 +165,7 @@ interface HudState {
   leaveGame: () => void;
   setStatus: (status: ConnectionStatus, error?: string) => void;
   setMatch: (match: MatchFrame, teammates: TeammateFrame[]) => void;
+  setLoading: (loading: LoadingFrame[], loaded: boolean) => void;
   setFrames: (self: SelfFrame | null, target: TargetFrame | null, group: GroupMemberFrame[]) => void;
   setActions: (actions: GameActions | null) => void;
   pushLog: (line: string) => void;
@@ -164,6 +180,8 @@ const freshGame = {
   error: null,
   match: null,
   teammates: [],
+  loading: [],
+  loaded: false,
   self: null,
   target: null,
   group: [],
@@ -207,8 +225,10 @@ export const useHudStore = create<HudState>((set) => ({
   ...freshGame,
   joinGame: () => set((s) => ({ ...freshGame, inGame: true, gameKey: s.gameKey + 1 })),
   leaveGame: () => set({ ...freshGame, inGame: false }),
-  setStatus: (status, error) => set({ status, error: error ?? null }),
+  // Remplacé par un bot : plus de partie (la musique revient à celle des menus).
+  setStatus: (status, error) => set(status === "replaced" ? { status, error: null, match: null } : { status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
+  setLoading: (loading, loaded) => set({ loading, loaded }),
   setFrames: (self, target, group) => set({ self, target, group }),
   setActions: (actions) => set({ actions }),
   pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),

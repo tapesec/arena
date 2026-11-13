@@ -1,7 +1,8 @@
-import { Room, type Client } from "colyseus";
+import { CloseCode, Room, type Client } from "colyseus";
 import { StateView } from "@colyseus/schema";
 import {
   FULL_LOBBY_COUNTDOWN,
+  LOADING_DURATION,
   LOBBY_DURATION,
   MATCH_SIZE,
   PREPARATION_DURATION,
@@ -15,6 +16,7 @@ import {
   type ClassId,
   type MatchPhase,
   type MoveInput,
+  NO_INPUT,
 } from "@arena/shared";
 import { BotBrain } from "./bots/BotBrain";
 import { createBotBrain } from "./bots/classBots";
@@ -22,7 +24,7 @@ import { botToReplace, initialBotClasses, pickBotClass } from "./bots/compositio
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime } from "./PlayerRuntime";
-import { ArenaState, PlayerState } from "./state";
+import { ArenaState, LoadingState, PlayerState } from "./state";
 import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
 
@@ -36,6 +38,9 @@ const TEAM_SIZE = Math.max(1, Math.floor(MATCH_PLAYERS / 2));
 const LOBBY_SECONDS = Number(process.env.LOBBY_DURATION ?? LOBBY_DURATION);
 const FULL_LOBBY_SECONDS = Number(process.env.FULL_LOBBY_COUNTDOWN ?? FULL_LOBBY_COUNTDOWN);
 const PREPARATION_SECONDS = Number(process.env.PREPARATION_DURATION ?? PREPARATION_DURATION);
+const LOADING_SECONDS = Number(process.env.LOADING_DURATION ?? LOADING_DURATION);
+// L'écran de chargement reste affiché au moins ce temps, même si tout le monde a déjà fini en salle d'attente.
+const LOADING_MIN_SECONDS = 2;
 
 // Une partie terminée ferme la salle après ce délai si les joueurs ne sont pas partis d'eux-mêmes.
 const ENDED_ROOM_LIFETIME_MS = 2 * 60 * 1000;
@@ -70,6 +75,16 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const abilityId = (message as { abilityId?: unknown } | null)?.abilityId;
       if (typeof abilityId === "string") this.combat.useAbility(client.sessionId, abilityId);
     },
+    // Avancement du chargement du client, en pourcentage. Retenu dès la salle d'attente : le client commence à
+    // charger en y arrivant.
+    loadProgress: (client: Client, message: unknown) => {
+      const progress = (message as { progress?: unknown } | null)?.progress;
+      if (typeof progress !== "number" || !Number.isFinite(progress)) return;
+      const percent = Math.max(0, Math.min(100, Math.floor(progress)));
+      this.loadProgress.set(client.sessionId, percent);
+      const entry = this.state.loading.get(client.sessionId);
+      if (entry) entry.progress = percent;
+    },
     selectClass: (client: Client, message: unknown) => {
       const classId = (message as { classId?: unknown } | null)?.classId;
       const classDef = typeof classId === "string" ? getClass(classId) : undefined;
@@ -89,7 +104,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     // En développement : lancer la partie sans attendre la fin du compte à rebours.
     forceStart: (client: Client) => {
       const player = this.state.players.get(client.sessionId);
-      if (IS_DEV && this.phase === "classSelect" && player?.leader) this.startPreparation();
+      if (IS_DEV && this.phase === "classSelect" && player?.leader) this.startLoading();
     },
   };
 
@@ -101,15 +116,21 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private filledOnce = false;
   // Ordre d'arrivée des joueurs : le premier de chaque équipe en est le chef.
   private arrivals: string[] = [];
+  // Avancement du chargement de chaque joueur, en pourcentage.
+  private loadProgress = new Map<string, number>();
+  // Joueurs remplacés par un bot faute d'avoir fini de charger : leur départ ne retire pas le personnage.
+  private replacedByBot = new Set<string>();
 
-  private addBot(team: number, classId: ClassId) {
+  private addBot(team: number, classId: ClassId): string {
     const player = new PlayerState();
     player.colorIndex = this.nextColorIndex();
     player.name = this.freshName();
     player.isBot = true;
     player.team = team;
     player.classId = classId;
-    this.state.players.set(`bot-${++this.botCount}`, player);
+    const id = `bot-${++this.botCount}`;
+    this.state.players.set(id, player);
+    return id;
   }
 
   private humans(team?: number): number {
@@ -184,16 +205,22 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   }
 
   onLeave(client: Client) {
+    this.loadProgress.delete(client.sessionId);
+    this.arrivals = this.arrivals.filter((id) => id !== client.sessionId);
+    // Remplacé par un bot (chargement trop long) : son personnage reste en jeu, joué par le bot.
+    if (this.replacedByBot.delete(client.sessionId)) return;
     const player = this.state.players.get(client.sessionId);
     this.combat.remove(client.sessionId);
     this.state.players.delete(client.sessionId);
-    this.arrivals = this.arrivals.filter((id) => id !== client.sessionId);
-    // Dans la salle d'attente, un bot reprend la place libérée, avec la classe qui manque le plus à l'équipe.
+    this.state.loading.delete(client.sessionId);
+    // Dans la salle d'attente, un bot reprend la place libérée, avec la classe qui manque le plus à l'équipe ;
+    // pendant le chargement, avec la classe du joueur parti.
     if (player && this.phase === "classSelect") this.addBot(player.team, pickBotClass(this.teamClasses(player.team)));
+    if (player && this.phase === "loading") this.addLoadingEntry(this.addBot(player.team, player.classId as ClassId));
     this.updateLeaders();
     this.state.playerCount = this.humans();
     console.log(`[arena ${this.roomId}] ${player?.name} est parti (${this.state.playerCount} joueurs)`);
-    if (this.phase !== "classSelect" && this.phase !== "ended") this.checkForWinner();
+    if (this.phase === "preparation" || this.phase === "fighting") this.checkForWinner();
   }
 
   private teamClasses(team: number): ClassId[] {
@@ -217,7 +244,12 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private update(dt: number) {
     switch (this.phase) {
       case "classSelect":
-        if (this.countdown(dt)) this.startPreparation();
+        if (this.countdown(dt)) this.startLoading();
+        break;
+      case "loading":
+        if (this.countdown(dt) || (LOADING_SECONDS - this.state.phaseTimeLeft >= LOADING_MIN_SECONDS && this.everyoneLoaded())) {
+          this.startPreparation();
+        }
         break;
       case "preparation":
         this.updateBots(dt);
@@ -241,20 +273,43 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
 
   // --- Phases ---
 
-  private startPreparation() {
+  // Fin de la salle d'attente : la partie est verrouillée et chacun finit de charger le jeu.
+  private startLoading() {
     // Plus personne ne peut rejoindre cette partie.
     void this.lock();
+    this.state.phase = "loading";
+    this.state.phaseTimeLeft = LOADING_SECONDS;
+    // Les joueurs qui n'ont pas choisi à temps prennent la classe qui manque le plus à leur équipe.
+    this.state.players.forEach((player) => {
+      if (!getClass(player.classId)) player.classId = pickBotClass(this.teamClasses(player.team));
+    });
+    this.state.players.forEach((_player, id) => this.addLoadingEntry(id));
+  }
+
+  private addLoadingEntry(id: string) {
+    const player = this.state.players.get(id);
+    if (!player) return;
+    const entry = new LoadingState();
+    entry.name = player.name;
+    entry.team = player.team;
+    entry.isBot = player.isBot;
+    entry.progress = player.isBot ? 100 : (this.loadProgress.get(id) ?? 0);
+    this.state.loading.set(id, entry);
+  }
+
+  private everyoneLoaded(): boolean {
+    let loaded = true;
+    this.state.loading.forEach((entry) => (loaded &&= entry.progress >= 100));
+    return loaded;
+  }
+
+  private startPreparation() {
     this.state.phase = "preparation";
     this.state.phaseTimeLeft = PREPARATION_SECONDS;
 
     const indexInTeam = [0, 0];
     const teamSizes = [0, 0];
     this.state.players.forEach((p) => teamSizes[p.team]++);
-
-    // Les joueurs qui n'ont pas choisi à temps prennent la classe qui manque le plus à leur équipe.
-    this.state.players.forEach((player) => {
-      if (!getClass(player.classId)) player.classId = pickBotClass(this.teamClasses(player.team));
-    });
 
     this.state.players.forEach((player, id) => {
       const classDef = getClass(player.classId)!;
@@ -282,6 +337,31 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     this.state.phase = "fighting";
     this.state.phaseTimeLeft = 0;
     this.combat.confine = null;
+    this.replaceUnloadedPlayers();
+    // L'écran de chargement ne sert plus : sans filtre, il montrerait encore les pseudos adverses.
+    this.state.loading.clear();
+  }
+
+  // Un joueur qui n'a toujours pas fini de charger au début du combat est remplacé par un bot : son personnage, sous
+  // un nom de bot, est joué par le serveur, et le joueur est renvoyé à l'accueil.
+  private replaceUnloadedPlayers() {
+    for (const client of [...this.clients]) {
+      const id = client.sessionId;
+      const player = this.state.players.get(id);
+      const runtime = this.combat.players.get(id);
+      if (!player || !runtime || player.isBot || (this.loadProgress.get(id) ?? 0) >= 100) continue;
+      console.log(`[arena ${this.roomId}] ${player.name} n'a pas fini de charger : un bot prend sa place`);
+      player.isBot = true;
+      player.leader = false;
+      player.name = this.freshName();
+      this.combat.setInput(id, NO_INPUT);
+      this.bots.push(createBotBrain(runtime, this.combat, this.pathfinder));
+      this.replacedByBot.add(id);
+      client.send("replacedByBot");
+      // Départ voulu : le client ne tente pas de se reconnecter.
+      client.leave(CloseCode.CONSENTED);
+    }
+    this.state.playerCount = this.humans();
   }
 
   // La partie se termine quand une équipe n'a plus aucun joueur vivant (ou plus aucun joueur).
@@ -315,9 +395,10 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     const units: { id: string; team: number; x: number; z: number; alive: boolean }[] = [];
     this.state.players.forEach((p, id) => units.push({ id, team: p.team, x: p.x, z: p.z, alive: p.hp > 0 }));
 
-    // Pendant le choix des classes, les positions ne sont pas encore définies : on ne voit que ses alliés.
+    // Pendant le choix des classes et le chargement, les positions ne sont pas encore définies : on ne voit que ses
+    // alliés.
     this.teamVisibility =
-      this.phase === "classSelect"
+      this.phase === "classSelect" || this.phase === "loading"
         ? computeTeamVisibility(units.map((u) => ({ ...u, alive: false })))
         : computeTeamVisibility(units);
 

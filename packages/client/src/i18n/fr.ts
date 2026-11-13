@@ -42,6 +42,13 @@ export const fr: Record<TextKey, string> = {
 
   "punct.colon": "\u00a0: ",
 
+  "loading.title": "Chargement",
+  "loading.startsIn": "La partie commence quand tout le monde est prêt, au plus tard dans",
+  "loading.hint": "Chargement des modèles et des sons…",
+  "loading.late": "Le combat commence dans",
+  "loading.lateHint": "Votre jeu n'a pas fini de charger\u00a0: s'il n'est pas prêt au début du combat, un bot prendra votre place.",
+  "loading.percent": "{value}\u00a0%",
+  "loading.replaced": "Votre jeu a mis trop de temps à charger\u00a0: un bot a pris votre place dans cette partie.",
   "match.preparation": "Préparation\u00a0: le combat commence dans",
   "match.dead": "Vous êtes mort",
   "match.spectator": "Mode spectateur",
