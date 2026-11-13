@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
+import { LanguageMenu } from "./LanguageMenu";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
-import { LANGUAGES, abilityDescription, abilityName, className, classRole, effectLabel, formatDecimal, moveKeys, quote, t, type Language } from "./i18n";
+import { abilityDescription, abilityName, className, classRole, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
 
 export function App() {
@@ -66,8 +67,6 @@ function HomeScreen() {
   const joinGame = useHudStore((s) => s.joinGame);
   const playerName = useHudStore((s) => s.playerName);
   const setPlayerName = useHudStore((s) => s.setPlayerName);
-  const language = useHudStore((s) => s.language);
-  const setLanguage = useHudStore((s) => s.setLanguage);
   const play = () => {
     if (!playerName) return;
     // Retenu par le navigateur, même s'il s'agit du pseudo proposé par défaut.
@@ -81,16 +80,7 @@ function HomeScreen() {
     <div className="screen">
       <h1>Arena</h1>
       <p className="screen-text">{t("home.tagline")}</p>
-      <label className="language-picker">
-        <span className="name-label">{t("home.language")}</span>
-        <select className="roster-select" value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
-          {LANGUAGES.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <LanguageMenu />
       <form
         className="name-form"
         onSubmit={(event) => {

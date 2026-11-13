@@ -2298,9 +2298,81 @@ body,
   pointer-events: none;
 }
 
-/* Choix de la langue, sur l'accueil */
-.language-picker {
+/* Choix de la langue : menu déroulant en haut à droite de l'accueil */
+.language-menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+}
+
+.language-current,
+.language-option {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: #e8e8e8;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.language-current {
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #3a414c;
+  border-radius: 6px;
+}
+
+.language-current:hover,
+.language-current[aria-expanded="true"] {
+  border-color: #ffd76a;
+}
+
+.language-caret {
+  color: #8a93a3;
+  font-size: 11px;
+}
+
+.language-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #1b2027;
+  border: 1px solid #3a414c;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.language-option:hover,
+.language-option:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.language-option.selected {
+  color: #ffd76a;
+}
+
+/* Petit écran : le menu passe au-dessus du contenu au lieu de chevaucher le titre. */
+@media (max-width: 480px) {
+  .language-menu {
+    position: static;
+    align-self: flex-end;
+  }
+}
+
+.flag {
+  width: 21px;
+  height: 14px;
+  flex: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
