@@ -8,3 +8,23 @@ packages/client/public/dev-models
 
 # Sons complets de la page des sons : node scripts/build-sound-catalog.mjs
 packages/client/public/dev-sounds
+
+# Terraform : état local, dossiers de travail, et variables personnelles (adresse e-mail…)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+# Plans enregistrés (ils contiennent les valeurs sensibles), journaux de plantage, surcharges locales
+*.tfplan
+tfplan
+*.plan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
