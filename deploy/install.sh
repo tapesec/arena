@@ -2,7 +2,8 @@
 # Installe une version du serveur de jeu sur l'EC2 (Amazon Linux 2023), lancé en root par la CI via Session Manager :
 #   install.sh <dossier de la version extraite>
 # Idempotent : installe Node 22 et nginx au premier passage, met le certificat Origin CA à jour depuis SSM
-# (/arena/origin/certificate et /arena/origin/private-key, créés à la main), installe les dépendances, bascule
+# (/arena/origin/certificate et /arena/origin/private-key, créés à la main) et le certificat client attendu de
+# Cloudflare (origin-pull.pem, joint à la version par la CI), installe les dépendances, bascule
 # /opt/arena/current sur la nouvelle version et redémarre le service. Si le serveur ne répond pas, revient à la
 # version précédente et échoue.
 set -euo pipefail
@@ -31,10 +32,22 @@ mv /etc/nginx/arena/origin.pem.new /etc/nginx/arena/origin.pem
 mv /etc/nginx/arena/origin.key.new /etc/nginx/arena/origin.key
 umask 022
 
+echo "== Certificat client de Cloudflare (Authenticated Origin Pulls)"
+openssl x509 -noout -in "$RELEASE_DIR/origin-pull.pem" || { echo "origin-pull.pem absent ou invalide"; exit 1; }
+install -m 644 "$RELEASE_DIR/origin-pull.pem" /etc/nginx/arena/origin-pull.pem
+
 echo "== nginx"
+# Une configuration refusée par nginx -t est retirée (l'ancienne est remise) : un redémarrage ultérieur de nginx ne
+# doit pas tomber sur un fichier invalide.
 install_nginx() {
-  install -m 644 "$1/deploy/nginx.conf" /etc/nginx/conf.d/arena.conf
-  nginx -t
+  local conf=/etc/nginx/conf.d/arena.conf
+  [ -f "$conf" ] && cp -p "$conf" "$conf.prev"
+  install -m 644 "$1/deploy/nginx.conf" "$conf"
+  if ! nginx -t; then
+    if [ -f "$conf.prev" ]; then mv -f "$conf.prev" "$conf"; else rm -f "$conf"; fi
+    return 1
+  fi
+  rm -f "$conf.prev"
   systemctl enable --now nginx
   systemctl reload nginx
 }

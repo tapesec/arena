@@ -56,9 +56,9 @@ puis supprimer les deux fichiers du poste.
 Dans Cloudflare : Manage account → Account API tokens → Create Token → Start from scratch, limités à la zone
 `winorwipe.com` (jamais la « Global API key ») :
 
-- `arena-terraform-read` : Zone, DNS, Zone Settings, Config Settings, Zone Transform Rules et Cache Settings en
-  **Read** ;
-- `arena-terraform-edit` : Zone en Read ; les cinq autres en **Edit**.
+- `arena-terraform-read` : Zone, DNS, Zone Settings, Config Settings, Zone Transform Rules, Cache Settings et
+  Zone SSL & Certificates en **Read** ;
+- `arena-terraform-edit` : Zone en Read ; les six autres en **Edit**.
 
 Le nom du compte Cloudflare est lu par Terraform : ne pas y laisser d'adresse e-mail (nom par défaut « …'s Account »,
 à changer dans Manage account → Configurations).
@@ -82,7 +82,12 @@ sinon l'apply échoue sur un doublon) :
 - SSL **Full (strict)** et redirection vers HTTPS ;
 - règle de configuration : SSL **Flexible** pour `assets.winorwipe.com` (l'adresse site web de S3 ne parle que HTTP) ;
 - règle d'en-têtes de réponse : `Access-Control-Allow-Origin: https://winorwipe.com` sur `assets.winorwipe.com` ;
-- règle de cache : tout `assets.winorwipe.com` en cache (noms à empreinte), pour la durée annoncée par S3.
+- règle de cache : tout `assets.winorwipe.com` en cache (noms à empreinte), pour la durée annoncée par S3 ;
+- Authenticated Origin Pulls (`infra/main/origin_pull.tf`) : Cloudflare présente au serveur un certificat client
+  propre à la zone, signé par une autorité générée par Terraform ; nginx n'accepte que les certificats de cette
+  autorité. La pipeline attend que Cloudflare ait activé le certificat, puis joint l'autorité (publique) à la version
+  installée. Le certificat (cinq ans) est renouvelé par un plan ordinaire trente jours avant son expiration, sans
+  changer l'autorité (vingt ans).
 
 Une règle ajoutée à la main dans le tableau de bord dans ces phases (configuration, en-têtes de réponse, cache) est
 effacée au prochain apply : passer par `cloudflare.tf`. L'IP du serveur est masquée dans les journaux
