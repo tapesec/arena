@@ -21,7 +21,7 @@ echo "== Paquets système"
 # AL2023 reste sinon figé sur les dépôts de son image : « latest » pour recevoir les correctifs (installation et mises
 # à jour automatiques ci-dessous).
 echo latest > /etc/dnf/vars/releasever
-dnf install -y -q nodejs22 nodejs22-npm nginx dnf-automatic dnf-plugins-core jq
+dnf install -y -q nodejs22 nodejs22-npm nginx dnf-automatic dnf-plugins-core jq amazon-cloudwatch-agent logrotate
 # « node » (scripts d'installation des dépendances) = Node 22.
 alternatives --set node /usr/bin/node-22 >/dev/null 2>&1 || true
 [ "$(node -v)" = "$(node-22 -v)" ] || { echo "« node » n'est pas Node 22"; exit 1; }
@@ -32,6 +32,13 @@ install -m 755 "$RELEASE_DIR/deploy/alerts/arena-alert.sh" /usr/local/sbin/arena
 install -m 644 "$RELEASE_DIR/deploy/alerts/arena-alert@.service" /etc/systemd/system/
 install -d /etc/systemd/system/dnf-automatic.service.d
 install -m 644 "$RELEASE_DIR/deploy/alerts/on-failure.conf" /etc/systemd/system/dnf-automatic.service.d/arena-alert.conf
+
+echo "== Observabilité (événements de jeu vers CloudWatch Logs, groupe /arena/events)"
+install -m 644 "$RELEASE_DIR/deploy/observability/logrotate.conf" /etc/logrotate.d/arena
+systemctl enable --now logrotate.timer
+install -m 644 "$RELEASE_DIR/deploy/observability/cloudwatch-agent.json" /opt/aws/amazon-cloudwatch-agent/etc/arena.json
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/arena.json >/dev/null
 
 echo "== Mises à jour de sécurité automatiques (3 h 30, redémarrage si nécessaire à 4 h, heure de Paris)"
 install -m 644 "$RELEASE_DIR/deploy/maintenance/automatic.conf" /etc/dnf/automatic.conf

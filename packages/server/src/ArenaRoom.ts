@@ -1,4 +1,4 @@
-import { CloseCode, Room, type Client } from "colyseus";
+import { CloseCode, Room, type AuthContext, type Client } from "colyseus";
 import { StateView } from "@colyseus/schema";
 import {
   FULL_LOBBY_COUNTDOWN,
@@ -30,6 +30,7 @@ import { ArenaState, LoadingState, PlayerState } from "./state";
 import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
 import { envNumber } from "./settings";
+import { ACTIVE_PLAYER_ACTIONS, ActionCounter, browserFamily, telemetry, trackRoom, untrackRoom } from "./telemetry";
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -67,13 +68,19 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     input: (client: Client, message: unknown) => {
       const seq = (message as { seq?: unknown } | null)?.seq;
       const validSeq = typeof seq === "number" && Number.isInteger(seq) && seq >= 0 && seq <= 0xffffffff ? seq : undefined;
-      this.combat.setInput(client.sessionId, sanitizeInput(message), validSeq);
+      const input = sanitizeInput(message);
+      if (this.inMatch) this.actions.move(client.sessionId, input);
+      this.combat.setInput(client.sessionId, input, validSeq);
     },
     target: (client: Client, message: unknown) => {
       const targetId = (message as { targetId?: unknown } | null)?.targetId;
+      if (typeof targetId === "string") this.countAction(client.sessionId);
       this.combat.setTarget(client.sessionId, typeof targetId === "string" ? targetId : null);
     },
-    toggleAttack: (client: Client) => this.combat.toggleAttack(client.sessionId),
+    toggleAttack: (client: Client) => {
+      this.countAction(client.sessionId);
+      this.combat.toggleAttack(client.sessionId);
+    },
     faceLock: (client: Client) => this.combat.lockOnTarget(client.sessionId, "face"),
     stick: (client: Client) => this.combat.lockOnTarget(client.sessionId, "stick"),
     // Ordre aux bots de son équipe (roue de la molette) : pendant le combat, même sous contrôle, pas mort.
@@ -81,12 +88,15 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const order = (message as { order?: unknown } | null)?.order;
       const issuer = this.combat.players.get(client.sessionId);
       if (!isOrderId(order) || this.phase !== "fighting" || !issuer?.alive) return;
+      this.countAction(client.sessionId);
       const visible = this.teamVisibility.get(issuer.state.team) ?? new Set<string>();
       for (const reply of dispatchOrder(order, issuer, this.bots, this.combat.players, visible)) client.send("botReply", reply);
     },
     cast: (client: Client, message: unknown) => {
       const abilityId = (message as { abilityId?: unknown } | null)?.abilityId;
-      if (typeof abilityId === "string") this.combat.useAbility(client.sessionId, abilityId);
+      if (typeof abilityId !== "string") return;
+      this.countAction(client.sessionId);
+      this.combat.useAbility(client.sessionId, abilityId);
     },
     // Avancement du chargement du client, en pourcentage. Retenu dès la salle d'attente : le client commence à
     // charger en y arrivant.
@@ -136,6 +146,18 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   // Temps de simulation écoulé (ms), non arrondi.
   private elapsedMs = 0;
 
+  // --- Observabilité (telemetry.ts) ---
+  private actions = new ActionCounter();
+  private browsers = new Map<string, { browser: string; mobile: boolean }>();
+  // Début de la partie (préparation), en temps de simulation ; null tant qu'elle n'a pas commencé.
+  private matchStartedAt: number | null = null;
+  private humansAtStart = 0;
+  private activeHumans = 0;
+  // Joueurs dont le résultat est déjà enregistré (départ, remplacement par un bot).
+  private reported = new Set<string>();
+  // Arrêt du serveur (déploiement) : les départs qui suivent ne sont pas des abandons.
+  private shuttingDown = false;
+
   private addBot(team: number, classId: ClassId): string {
     const player = new PlayerState();
     player.colorIndex = this.nextColorIndex();
@@ -178,7 +200,44 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     return this.state.phase as MatchPhase;
   }
 
+  // Préparation ou combat : les actions des joueurs comptent.
+  private get inMatch(): boolean {
+    return this.phase === "preparation" || this.phase === "fighting";
+  }
+
+  private countAction(id: string) {
+    if (this.inMatch) this.actions.add(id);
+  }
+
+  // Résultat d'un joueur humain : à son départ, à son remplacement par un bot, ou à la fin de la partie.
+  private reportPlayer(id: string, player: PlayerState, left: "parti" | "chargement" | "arret" | "fin", winner?: number) {
+    if (this.matchStartedAt === null || this.reported.has(id)) return;
+    this.reported.add(id);
+    const actions = this.actions.get(id);
+    const active = actions >= ACTIVE_PLAYER_ACTIONS;
+    if (active) this.activeHumans++;
+    telemetry("player_result", {
+      room: this.roomId,
+      class: player.classId,
+      team: player.team,
+      actions,
+      // 1 ou 0 (et non true/false) : comparé tel quel par les filtres de métriques et Logs Insights.
+      active: active ? 1 : 0,
+      seconds: Math.round((this.elapsedMs - this.matchStartedAt) / 1000),
+      won: left === "fin" && winner !== undefined && winner >= 0 ? Number(winner === player.team) : null,
+      left,
+      ...(this.browsers.get(id) ?? browserFamily(undefined)),
+    });
+  }
+
+  // Aucune authentification : seule la famille de navigateur est retenue, pour l'observabilité.
+  onAuth(client: Client, _options: unknown, context: AuthContext) {
+    this.browsers.set(client.sessionId, browserFamily(context.headers?.get?.("user-agent")));
+    return true;
+  }
+
   onCreate() {
+    trackRoom(this.roomId, () => ({ humans: this.humans(), inMatch: this.inMatch }));
     this.state.matchSize = MATCH_PLAYERS;
     this.state.phaseTimeLeft = LOBBY_SECONDS;
     for (const team of [0, 1]) for (const classId of initialBotClasses(TEAM_SIZE)) this.addBot(team, classId);
@@ -210,6 +269,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     client.view = new StateView();
     client.view.add(player);
     console.log(`[arena ${this.roomId}] ${player.name} a rejoint (${this.state.playerCount}/${MATCH_PLAYERS})`);
+    telemetry("join", { room: this.roomId, ...(this.browsers.get(client.sessionId) ?? browserFamily(undefined)) });
 
     // Salle pleine : la partie part bientôt, le temps que le dernier arrivé choisisse sa classe.
     // Seulement la première fois : un joueur qui part et revient ne peut pas retarder la partie sans fin.
@@ -223,8 +283,13 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     this.loadProgress.delete(client.sessionId);
     this.arrivals = this.arrivals.filter((id) => id !== client.sessionId);
     // Remplacé par un bot (chargement trop long) : son personnage reste en jeu, joué par le bot.
-    if (this.replacedByBot.delete(client.sessionId)) return;
+    if (this.replacedByBot.delete(client.sessionId)) {
+      this.browsers.delete(client.sessionId);
+      return;
+    }
     const player = this.state.players.get(client.sessionId);
+    if (player && !player.isBot && this.inMatch) this.reportPlayer(client.sessionId, player, this.shuttingDown ? "arret" : "parti");
+    this.browsers.delete(client.sessionId);
     this.combat.remove(client.sessionId);
     this.state.players.delete(client.sessionId);
     this.state.loading.delete(client.sessionId);
@@ -323,6 +388,9 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private startPreparation() {
     this.state.phase = "preparation";
     this.state.phaseTimeLeft = PREPARATION_SECONDS;
+    this.matchStartedAt = this.elapsedMs;
+    this.humansAtStart = this.humans();
+    telemetry("match_start", { room: this.roomId, humans: this.humansAtStart, bots: this.state.players.size - this.humansAtStart });
 
     const indexInTeam = [0, 0];
     const teamSizes = [0, 0];
@@ -368,6 +436,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       const runtime = this.combat.players.get(id);
       if (!player || !runtime || player.isBot || (this.loadProgress.get(id) ?? 0) >= 100) continue;
       console.log(`[arena ${this.roomId}] ${player.name} n'a pas fini de charger : un bot prend sa place`);
+      this.reportPlayer(id, player, "chargement");
       player.isBot = true;
       player.leader = false;
       player.name = this.freshName();
@@ -402,6 +471,40 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     }
     this.clock.setTimeout(() => this.disconnect(), ENDED_ROOM_LIFETIME_MS);
     console.log(`[arena ${this.roomId}] fin de partie, vainqueur : équipe ${winner + 1}`);
+    if (this.matchStartedAt === null) return;
+    this.state.players.forEach((player, id) => {
+      if (!player.isBot) this.reportPlayer(id, player, "fin", winner);
+    });
+    telemetry("match_end", {
+      room: this.roomId,
+      winner,
+      seconds: Math.round((this.elapsedMs - this.matchStartedAt) / 1000),
+      humans_start: this.humansAtStart,
+      active_humans: this.activeHumans,
+      reason: "fin",
+    });
+  }
+
+  // Arrêt du serveur (déploiement) : comportement par défaut (déconnexion de tous), après avoir noté la raison.
+  onBeforeShutdown() {
+    this.shuttingDown = true;
+    super.onBeforeShutdown();
+  }
+
+  onDispose() {
+    untrackRoom(this.roomId);
+    // Partie commencée mais jamais terminée : abandonnée par tous les humains (les bots restent en vie) ou interrompue
+    // par l'arrêt du serveur.
+    if (this.matchStartedAt !== null && this.phase !== "ended") {
+      telemetry("match_end", {
+        room: this.roomId,
+        winner: null,
+        reason: this.shuttingDown ? "arret" : "abandon",
+        seconds: Math.round((this.elapsedMs - this.matchStartedAt) / 1000),
+        humans_start: this.humansAtStart,
+        active_humans: this.activeHumans,
+      });
+    }
   }
 
   // --- Brouillard de guerre ---

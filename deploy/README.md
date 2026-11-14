@@ -31,6 +31,19 @@ Amazon Linux 2023 suit les dépôts `latest` (`/etc/dnf/vars/releasever`) ; `dep
 
 Journaux : `journalctl -u dnf-automatic -u arena-maintenance` (Session Manager).
 
+## Observabilité
+
+Le serveur écrit ses événements de jeu (`packages/server/src/telemetry.ts`) dans `/var/log/arena/events.log`, une ligne
+JSON par événement : `join` (clic sur « Jouer »), `match_start`, `player_result` (classe, actions, actif à partir de 5
+actions, présence, victoire, départ anticipé), `match_end`, et `snapshot` chaque minute (joueurs connectés et en
+partie). Ni IP, ni pseudo, ni identifiant durable : seulement la famille de navigateur.
+
+L'agent CloudWatch (`deploy/observability/`) les envoie dans le groupe `/arena/events` (gardé 30 jours). Des filtres en
+tirent cinq métriques (espace `WinOrWipe` : `PlayersOnline`, `PlayersInMatch`, `PlayClicks`, `MatchesStarted`,
+`ActivePlayers`), affichées avec des tableaux Logs Insights sur le tableau de bord CloudWatch **win-or-wipe**
+(`infra/main/observability.tf`). Les visiteurs du site sont comptés par Cloudflare Web Analytics (activé à la main dans
+Cloudflare, script injecté automatiquement).
+
 ## Alertes
 
 Si les mises à jour, la maintenance de 4 h ou le serveur de jeu (5 démarrages en 5 minutes : il reste alors arrêté,
