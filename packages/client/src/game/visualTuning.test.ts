@@ -15,6 +15,7 @@ import { BUILTIN_OBJECTS } from "./objects3d";
 import overlays2d from "./overlays2d.json";
 import soundCatalog from "../audio/soundCatalog.json";
 import samples from "../audio/samples.json";
+import { parseSoundKey, scramble } from "../audio/scramble";
 import { SOUNDS } from "../audio/sounds";
 import { BUILTIN_OVERLAYS } from "./overlays2d";
 import { MIXAMO_ANIMATIONS } from "./mixamo";
@@ -100,28 +101,29 @@ test("Intervention divine : l'impact du code (sur chaque allié relevé) est cel
   assert.deepEqual(VISUALS.divineIntervention, { area: ["healField"] });
 });
 
-// Sons protégés (licence), et index du conteneur brouillé public/sounds/tuned/protected.bin (voir build-sounds.mjs).
+// Sons protégés (licence), et index du conteneur brouillé public/sounds/tuned/protected.bin (voir build-sounds.mjs),
+// lu avec la clé du poste (packages/client/.env.local, non versionné).
+const TUNED_DIR = fileURLToPath(new URL("../../public/sounds/tuned/", import.meta.url));
+const ENV_LOCAL = fileURLToPath(new URL("../../.env.local", import.meta.url));
+const SOUND_KEY = parseSoundKey(
+  process.env.VITE_SOUND_KEY ?? (existsSync(ENV_LOCAL) ? /^VITE_SOUND_KEY=(.*)$/m.exec(readFileSync(ENV_LOCAL, "utf8"))?.[1] : undefined),
+);
 const protectedNames = new Set((soundCatalog as { name: string; protected?: boolean }[]).filter((s) => s.protected).map((s) => s.name));
 function containerIndex(): Record<string, [number, number]> {
-  const file = fileURLToPath(new URL("../../public/sounds/tuned/protected.bin", import.meta.url));
-  if (!existsSync(file)) return {};
+  const file = `${TUNED_DIR}protected.bin`;
+  if (!existsSync(file) || !SOUND_KEY) return {};
   const data = readFileSync(file);
   const indexLength = data.readUInt32LE(4);
   const body = Uint8Array.from(data.subarray(8, 8 + indexLength));
-  let state = 0x5eed1234;
-  for (let i = 0; i < body.length; i++) {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    state >>>= 0;
-    body[i] ^= state & 0xff;
-  }
+  scramble(body, SOUND_KEY);
   return JSON.parse(new TextDecoder().decode(body)) as Record<string, [number, number]>;
 }
 
-test("chaque son du catalogue utilisé par une compétence est prêt pour le jeu publié", () => {
+// Les assets ne sont pas dans le dépôt (licences) : sans eux (CI) ou sans la clé, ce test ne peut rien vérifier.
+const ASSETS_MISSING = !existsSync(TUNED_DIR) ? "assets absents (dépôt sans assets)" : !SOUND_KEY ? "clé des sons absente (.env.local)" : false;
+test("chaque son du catalogue utilisé par une compétence est prêt pour le jeu publié", { skip: ASSETS_MISSING }, () => {
   // public/sounds/tuned/<nom>.m4a : produit par « node scripts/build-sounds.mjs --tuned ».
-  const tuned = fileURLToPath(new URL("../../public/sounds/tuned/", import.meta.url));
+  const tuned = TUNED_DIR;
   for (const [classId, entries] of Object.entries(tuning)) {
     for (const [abilityId, entry] of Object.entries(entries)) {
       for (const [moment, effects] of allEffects(entry)) {

@@ -66,6 +66,10 @@ function excludeDevAssets(): Plugin {
     apply: "build",
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);
+      // Sans la clé (.env.local sur le poste, secret en CI), les sons protégés seraient muets dans le jeu publié.
+      if (!/^\s*(0x[0-9a-f]{1,8}|\d+)\s*$/i.test(config.env.VITE_SOUND_KEY ?? "")) {
+        throw new Error("VITE_SOUND_KEY manquante : clé des sons protégés (packages/client/.env.local ou secret de la CI)");
+      }
     },
     async closeBundle() {
       for (const folder of DEV_ONLY_PUBLIC) await rm(resolve(outDir, folder), { recursive: true, force: true });

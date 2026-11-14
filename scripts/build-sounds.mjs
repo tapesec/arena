@@ -5,7 +5,7 @@
 //         node scripts/build-sounds.mjs --tuned : seulement les sons des pistes de compétences réglées (public/sounds/tuned),
 //         sans réencoder le reste (l'encodeur ne donne pas deux fois exactement le même fichier).
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -156,10 +156,20 @@ function soundEnd(input) {
   return (last - offset) / 2 / SAMPLE_RATE + 0.05;
 }
 
-// Brouille (ou débrouille : même opération) les octets, par une suite pseudo-aléatoire fixe — identique à
-// unscramble() de packages/client/src/audio/AudioManager.ts.
+// Clé du conteneur des sons protégés : VITE_SOUND_KEY, dans packages/client/.env.local (non versionné : le dépôt est
+// public) ou dans l'environnement.
+function soundKey() {
+  const envFile = path.join(ROOT, "packages/client/.env.local");
+  const value = process.env.VITE_SOUND_KEY ?? (existsSync(envFile) ? /^VITE_SOUND_KEY=(.*)$/m.exec(readFileSync(envFile, "utf8"))?.[1] : undefined);
+  const key = Number(value?.trim());
+  if (!Number.isInteger(key) || key <= 0 || key > 0xffffffff) throw new Error("Clé des sons protégés absente ou invalide : VITE_SOUND_KEY dans packages/client/.env.local");
+  return key;
+}
+
+// Brouille (ou débrouille : même opération) les octets, par une suite pseudo-aléatoire tirée de la clé — identique à
+// scramble() de packages/client/src/audio/scramble.ts.
 function scramble(bytes) {
-  let state = 0x5eed1234;
+  let state = soundKey() >>> 0;
   for (let i = 0; i < bytes.length; i++) {
     state ^= state << 13;
     state ^= state >>> 17;

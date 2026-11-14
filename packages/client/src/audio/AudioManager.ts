@@ -2,6 +2,7 @@ import { ZZFX } from "zzfx";
 import samples from "./samples.json";
 import { SOUNDS, type SoundId } from "./sounds";
 import { assetUrl } from "../assets";
+import { parseSoundKey, scramble } from "./scramble";
 import { GAME_SOUND } from "./soundEdits";
 
 // Groupe de sons enregistrés (voir samples.json).
@@ -16,6 +17,9 @@ export const MIN_REPEAT_INTERVAL = 0.06;
 
 const VOLUME_KEY = "arena.volume";
 const MUTED_KEY = "arena.muted";
+
+// Clé du conteneur des sons protégés (voir scramble.ts) ; sans elle, ces sons restent muets.
+const SOUND_KEY = parseSoundKey(import.meta.env.VITE_SOUND_KEY);
 
 // Sons enregistrés (voir samples.json et scripts/build-sounds.mjs) : un groupe = plusieurs variantes.
 const SOUNDS_URL = "sounds/";
@@ -265,12 +269,12 @@ export class AudioManager {
       .then((response) => (response.ok ? response.arrayBuffer() : null))
       .then((buffer) => {
         const sounds = new Map<string, ArrayBuffer>();
-        if (!buffer || buffer.byteLength < 8) return sounds;
+        if (!buffer || buffer.byteLength < 8 || !SOUND_KEY) return sounds;
         const head = new DataView(buffer);
         if (String.fromCharCode(head.getUint8(0), head.getUint8(1), head.getUint8(2), head.getUint8(3)) !== "ARSP") return sounds;
         const indexLength = head.getUint32(4, true);
         const body = new Uint8Array(buffer.slice(8));
-        unscramble(body);
+        scramble(body, SOUND_KEY);
         const index = JSON.parse(new TextDecoder().decode(body.subarray(0, indexLength))) as Record<string, [number, number]>;
         for (const [name, [start, length]] of Object.entries(index)) {
           sounds.set(name, body.slice(indexLength + start, indexLength + start + length).buffer);
@@ -399,18 +403,6 @@ export class AudioManager {
 }
 
 // Instant où le son commence vraiment, après le silence de tête (un peu avant, pour garder l'attaque).
-// Débrouille le conteneur des sons protégés : même suite que scramble() de scripts/build-sounds.mjs.
-function unscramble(bytes: Uint8Array) {
-  let state = 0x5eed1234;
-  for (let i = 0; i < bytes.length; i++) {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    state >>>= 0;
-    bytes[i] ^= state & 0xff;
-  }
-}
-
 function soundStart(buffer: AudioBuffer): number {
   const data = buffer.getChannelData(0);
   let i = 0;

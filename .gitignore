@@ -1,5 +1,15 @@
 node_modules
 dist
+# Assets sous licence (non redistribuables dans un dépôt public) : sur le poste seulement, publiés sur le CDN par
+# npm run deploy-assets (voir scripts/import-assets.sh et scripts/build-sounds.mjs pour les régénérer)
+packages/client/public/models
+packages/client/public/sounds
+packages/client/public/music
+
+# Variables locales (clé des sons protégés VITE_SOUND_KEY…)
+.env.local
+.env.*.local
+
 # Assets bruts extraits des archives Quaternius (trop lourds) : régénérer avec scripts/import-assets.sh
 assets-source
 
