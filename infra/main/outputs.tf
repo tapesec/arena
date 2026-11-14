@@ -17,3 +17,8 @@ output "assets_origin" {
   description = "Adresse site web du bucket (entrée DNS « CNAME » assets de Cloudflare)."
   value       = aws_s3_bucket_website_configuration.assets.website_endpoint
 }
+
+output "releases_bucket" {
+  description = "Bucket des versions du serveur de jeu (archives envoyées par la CI)."
+  value       = aws_s3_bucket.releases.bucket
+}

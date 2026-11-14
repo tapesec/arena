@@ -1,0 +1,32 @@
+# Serveur de jeu (Colyseus + client), lancé par systemd sur l'EC2. Installé par deploy/install.sh.
+[Unit]
+Description=Win or Wipe game server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=arena
+Group=arena
+WorkingDirectory=/opt/arena/current/packages/server
+Environment=PORT=2567
+ExecStart=/usr/bin/node-22 /opt/arena/current/node_modules/tsx/dist/cli.mjs src/start.ts
+Restart=always
+RestartSec=2
+# Durcissement : le service n'écrit nulle part, ne voit pas /home ni les autres processus.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# Pas d'accès aux métadonnées de l'instance (donc aux identifiants de son rôle) : une faille du jeu ne donnerait pas
+# accès aux paramètres SSM (certificat) ni aux versions.
+IPAddressDeny=169.254.169.254
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
