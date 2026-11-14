@@ -452,11 +452,13 @@ function EndScreen() {
   );
 }
 
+// Son propre cadre : cliquable pour se cibler (F1 au clavier), par exemple pour se lancer un buff.
 function SelfPanel() {
   const self = useHudStore((s) => s.self);
+  const actions = useHudStore((s) => s.actions);
   if (!self) return null;
   return (
-    <div className="hud-panel unit-frame">
+    <div className="hud-panel unit-frame unit-frame-self" onClick={() => actions?.selectSelf()} title={`${self.name} (F1)`}>
       <div className="unit-name">
         <span>
           {self.name} <span className="unit-class">{self.className}</span>

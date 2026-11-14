@@ -222,6 +222,7 @@ export class Game {
       forceStart: () => this.room.send("forceStart"),
       setBotClass: (botId, classId) => this.room.send("setBotClass", { botId, classId }),
       selectTarget: (playerId) => this.setTarget(playerId),
+      selectSelf: () => this.setTarget(this.room.sessionId),
       castAbility: (abilityId) => this.room.send("cast", { abilityId }),
     });
 
