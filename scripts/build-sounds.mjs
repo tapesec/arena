@@ -161,7 +161,7 @@ function soundEnd(input) {
 function soundKey() {
   const envFile = path.join(ROOT, "packages/client/.env.local");
   const value = process.env.VITE_SOUND_KEY ?? (existsSync(envFile) ? /^VITE_SOUND_KEY=(.*)$/m.exec(readFileSync(envFile, "utf8"))?.[1] : undefined);
-  const key = Number(value?.trim());
+  const key = Number(value?.trim().replace(/^(["'])(.*)\1$/, "$2"));
   if (!Number.isInteger(key) || key <= 0 || key > 0xffffffff) throw new Error("Clé des sons protégés absente ou invalide : VITE_SOUND_KEY dans packages/client/.env.local");
   return key;
 }

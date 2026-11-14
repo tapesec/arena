@@ -190,10 +190,11 @@ test("animationTuning.json est au format actuel (suite d'animations)", () => {
 // Le jeu n'embarque qu'une partie des bibliothèques d'animations (scripts/build-assets.mjs) : chaque animation
 // choisie dans animation-lab.html doit y être, sinon elle ne se joue pas en jeu. Si ce test échoue après un
 // réglage : node scripts/build-assets.mjs --animations.
-test("les animations réglées sont chargées par le jeu", () => {
+const ANIMATIONS_DIR = fileURLToPath(new URL("../../public/models/animations/", import.meta.url));
+test("les animations réglées sont chargées par le jeu", { skip: !existsSync(ANIMATIONS_DIR) && "assets absents (dépôt sans assets)" }, () => {
   const available = new Set(Object.keys(MIXAMO_ANIMATIONS));
   for (const file of ["UAL1.glb", "UAL2.glb"]) {
-    const glb = readFileSync(fileURLToPath(new URL(`../../public/models/animations/${file}`, import.meta.url)));
+    const glb = readFileSync(`${ANIMATIONS_DIR}${file}`);
     const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString("utf8")) as { animations?: { name: string }[] };
     for (const animation of json.animations ?? []) available.add(animation.name);
   }

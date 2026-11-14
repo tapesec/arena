@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { parseSoundKey } from "./src/audio/scramble";
 
 // Serveur de jeu Colyseus vers lequel Vite redirige les requêtes /colyseus.
 const GAME_SERVER_URL = process.env.GAME_SERVER_URL ?? "http://localhost:2567";
@@ -67,7 +68,7 @@ function excludeDevAssets(): Plugin {
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);
       // Sans la clé (.env.local sur le poste, secret en CI), les sons protégés seraient muets dans le jeu publié.
-      if (!/^\s*(0x[0-9a-f]{1,8}|\d+)\s*$/i.test(config.env.VITE_SOUND_KEY ?? "")) {
+      if (!parseSoundKey(config.env.VITE_SOUND_KEY)) {
         throw new Error("VITE_SOUND_KEY manquante : clé des sons protégés (packages/client/.env.local ou secret de la CI)");
       }
     },

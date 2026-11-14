@@ -14,8 +14,8 @@ export function scramble(bytes: Uint8Array, key: number) {
   }
 }
 
-// Clé valide : un entier de 32 bits non nul (« 0x1234abcd » ou décimal).
+// Clé valide : un entier de 32 bits non nul (« 0x1234abcd » ou décimal), éventuellement entre guillemets (.env).
 export function parseSoundKey(value: string | undefined): number | null {
-  const key = Number(value?.trim());
+  const key = Number(value?.trim().replace(/^(["'])(.*)\1$/, "$2"));
   return Number.isInteger(key) && key > 0 && key <= 0xffffffff ? key : null;
 }
