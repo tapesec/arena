@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { NO_INPUT } from "@arena/shared";
-import { ActionCounter, browserFamily, snapshot, trackRoom, untrackRoom } from "./telemetry";
+import { ActionCounter, browserFamily, sanitizePerf, snapshot, trackRoom, untrackRoom } from "./telemetry";
 
 describe("télémétrie", () => {
   it("reconnaît la famille de navigateur, sans garder le User-Agent", () => {
@@ -49,5 +49,19 @@ describe("télémétrie", () => {
     untrackRoom("salon");
     untrackRoom("partie");
     assert.deepEqual(snapshot(), { online: 0, in_match: 0, matches: 0, rooms: 0 });
+  });
+
+  it("garde les performances d'affichage envoyées par le client, bornées et arrondies", () => {
+    assert.deepEqual(sanitizePerf({ dpr: 2, scale: 1.5, fps: 57.4, fpsLow: 41.6, drops: 1, reverted: 1, extra: "x" }), {
+      dpr: 2,
+      scale: 1.5,
+      fps: 57,
+      fps_low: 42,
+      drops: 1,
+      reverted: 1,
+    });
+    assert.equal(sanitizePerf({ dpr: 2, scale: 1.5, fps: 1e9, fpsLow: 40, drops: 0, reverted: 0 }), null);
+    assert.equal(sanitizePerf({ dpr: "2", scale: 1.5, fps: 60, fpsLow: 40, drops: 0, reverted: 0 }), null);
+    assert.equal(sanitizePerf(null), null);
   });
 });

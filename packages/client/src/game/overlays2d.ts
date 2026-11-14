@@ -363,7 +363,9 @@ export class Overlays2D {
       const engine = this.scene.getEngine();
       if (camera) {
         const distance = Vector3.Distance(camera.globalPosition, position);
-        height = (def.size * 2 * distance * Math.tan(camera.fov / 2)) / Math.max(1, engine.getRenderHeight(true));
+        // Hauteur du canvas en pixels CSS : la résolution du rendu varie avec la densité de l'écran (renderScale.ts).
+        const cssHeight = engine.getRenderHeight(true) * engine.getHardwareScalingLevel();
+        height = (def.size * 2 * distance * Math.tan(camera.fov / 2)) / Math.max(1, cssHeight);
       }
     }
     // La hauteur réglée est celle des lettres : la texture est plus haute (marges, police à 80 %, majuscule à ~70 %).
