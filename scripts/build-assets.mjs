@@ -1,6 +1,7 @@
 // Produit, à partir des fichiers bruts de assets-source/ (voir import-assets.sh), les modèles optimisés
 // chargés par le jeu, dans packages/client/public/models/ (ceux-là sont versionnés).
 // Usage : node scripts/build-assets.mjs              (tout)
+//         node scripts/build-assets.mjs --characters (seulement les personnages et leurs tenues d'équipe)
 //         node scripts/build-assets.mjs --animations (seulement les bibliothèques d'animations, après un réglage
 //                                                     de animation-lab.html qui utilise une nouvelle animation)
 import { copyFile, mkdir, readFile } from "node:fs/promises";
@@ -17,6 +18,12 @@ const OUT = path.join(ROOT, "packages/client/public/models");
 
 // Textures réduites (les originales font 4096 px) et converties en WebP : bien plus légères à télécharger.
 const TEXTURE_SIZE = 1024;
+
+// Personnages, vus de près : compression plus douce. Les normal maps supportent mal la perte (le relief se couvre de
+// petits blocs sous la lumière) : qualité 95 ; les couleurs en qualité 90. Le reste (décor, armes) garde la qualité
+// par défaut de sharp (80). Les deux passes supposent qu'aucune image ne sert à la fois de normal map et à un autre slot
+// (sinon elle serait compressée deux fois) : c'est le cas des sources actuelles.
+const CHARACTER_QUALITY = { normal: 95, color: 90 };
 
 // Animations gardées, par bibliothèque. Les autres (pêche, zombies, nage…) sont retirées.
 const ANIMATIONS = {
@@ -150,13 +157,19 @@ const FBX_WEAPONS = {
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ sharp });
 
-async function optimize(doc) {
+async function optimize(doc, quality) {
   // Retire les sommets devenus inutiles (corps découpé autour de la tête).
   for (const mesh of doc.getRoot().listMeshes()) for (const primitive of mesh.listPrimitives()) compactPrimitive(primitive);
+  const webp = { encoder: sharp, targetFormat: "webp", resize: [TEXTURE_SIZE, TEXTURE_SIZE] };
   await doc.transform(
     dedup(),
     prune(),
-    textureCompress({ encoder: sharp, targetFormat: "webp", resize: [TEXTURE_SIZE, TEXTURE_SIZE] }),
+    ...(quality
+      ? [
+          textureCompress({ ...webp, slots: /^normalTexture$/, quality: quality.normal }),
+          textureCompress({ ...webp, slots: /^(?!normalTexture$)/, quality: quality.color }),
+        ]
+      : [textureCompress(webp)]),
     // Un seul tampon de données, comme l'exige le format GLB (les fichiers fusionnés en apportent chacun un).
     unpartition(),
   );
@@ -166,7 +179,7 @@ async function buildModel(source, target) {
   const doc = await io.read(path.join(SOURCE, source));
   await optimize(doc);
   await io.write(path.join(OUT, target), doc);
-  report(target);
+  await report(target);
 }
 
 // Personnage complet : tenue, plus tête, yeux, sourcils et cheveux rattachés au squelette de la tenue.
@@ -193,10 +206,10 @@ async function buildCharacter(id, def) {
   const outfitMaterial = root.listMaterials().find((m) => m.getName() === `MI_${style}`);
   if (!outfitMaterial) throw new Error(`${id} : matériau introuvable MI_${style}`);
   outfitMaterial.setBaseColorTexture(null);
-  await optimize(doc);
+  await optimize(doc, CHARACTER_QUALITY);
   const target = `characters/${id}.glb`;
   await io.write(path.join(OUT, target), doc);
-  report(target);
+  await report(target);
 }
 
 // Fusionne les maillages articulés d'un autre fichier sur le squelette du personnage.
@@ -266,8 +279,8 @@ async function buildTeamOutfits(id, teams) {
       image = sharp(data, { raw: info });
     }
     const target = `characters/${id}-${team}.webp`;
-    await image.webp().toFile(path.join(OUT, target));
-    report(target);
+    await image.webp({ quality: CHARACTER_QUALITY.color }).toFile(path.join(OUT, target));
+    await report(target);
   }
 }
 
@@ -406,7 +419,7 @@ async function buildPieceLibrary(target, groups) {
   }
   await optimize(doc);
   await io.write(path.join(OUT, target), doc);
-  report(target);
+  await report(target);
 }
 
 // Regroupe le contenu d'une scène sous un nœud portant le nom de la pièce : le jeu la retrouve par ce nom.
@@ -441,11 +454,11 @@ async function buildGround() {
     }
     const target = `ground/${name}.webp`;
     await sharp(pixels, { raw: { width: GROUND_SIZE, height: GROUND_SIZE, channels: 3 } }).webp().toFile(path.join(OUT, target));
-    report(target);
+    await report(target);
   }
   const target = "ground/paving.webp";
   await sharp(path.join(SOURCE, "ground/T_UnevenBrick_BaseColor.png")).resize(TEXTURE_SIZE, TEXTURE_SIZE).webp().toFile(path.join(OUT, target));
-  report(target);
+  await report(target);
 }
 
 function hexToRgb(hex) {
@@ -474,7 +487,7 @@ async function buildAnimations(file, keep) {
   await doc.transform(resample(), prune({ keepLeaves: true }), dedup());
   const target = `animations/${path.basename(file, ".glb")}.glb`;
   await io.write(path.join(OUT, target), doc);
-  report(target);
+  await report(target);
 }
 
 const sizes = [];
@@ -484,6 +497,12 @@ async function report(target) {
   console.log(`${target.padEnd(32)} ${(size / 1024 / 1024).toFixed(2)} Mo`);
 }
 
+if (process.argv.includes("--characters")) {
+  await mkdir(path.join(OUT, "characters"), { recursive: true });
+  for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
+  for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
+  process.exit(0);
+}
 await mkdir(path.join(OUT, "animations"), { recursive: true });
 const onlyAnimations = process.argv.includes("--animations");
 if (!onlyAnimations) {
@@ -502,6 +521,6 @@ if (!onlyAnimations) {
   for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`);
   for (const [id, source] of Object.entries(FBX_WEAPONS)) {
     await copyFile(path.join(SOURCE, source), path.join(OUT, `weapons/${id}.fbx`));
-    report(`weapons/${id}.fbx`);
+    await report(`weapons/${id}.fbx`);
   }
 }
