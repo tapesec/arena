@@ -31,6 +31,15 @@ Amazon Linux 2023 suit les dépôts `latest` (`/etc/dnf/vars/releasever`) ; `dep
 
 Journaux : `journalctl -u dnf-automatic -u arena-maintenance` (Session Manager).
 
+## Alertes
+
+Si les mises à jour, la maintenance de 4 h ou le serveur de jeu (5 démarrages en 5 minutes : il reste alors arrêté,
+relance par `systemctl reset-failed arena && systemctl start arena` ou par un déploiement) échouent, systemd
+lance `arena-alert` (`deploy/alerts/`), qui publie le nom du service et la fin de son journal sur le sujet SNS
+`arena-alerts`. Le sujet et l'abonnement e-mail sont dans `infra/bootstrap` (adresse dans `terraform.tfvars`, non
+versionné) ; l'abonnement se confirme une fois par le lien de l'e-mail d'AWS. Essai :
+`systemctl start arena-alert@essai.service` (Session Manager). Un plantage isolé, relancé seul, ne prévient pas.
+
 ## Réglages à faire une fois
 
 ### GitHub (Settings du dépôt)

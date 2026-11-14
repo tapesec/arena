@@ -1,0 +1,9 @@
+# Alerte par e-mail quand le service %i échoue (OnFailure=arena-alert@%n.service). Installé par deploy/install.sh.
+[Unit]
+Description=Win or Wipe - alerte d'échec de %i
+
+[Service]
+Type=oneshot
+# Jamais bloquée : une alerte suivante pour le même service partirait sinon dans la tâche en cours, sans e-mail.
+TimeoutStartSec=2min
+ExecStart=/usr/local/sbin/arena-alert %i

@@ -63,7 +63,8 @@ resource "aws_s3_bucket_policy" "releases" {
 }
 
 # Le serveur lit les archives des versions et le certificat Origin CA de Cloudflare (paramètres SSM chiffrés
-# /arena/origin/*, créés à la main : ils ne passent ni par Terraform ni par la CI).
+# /arena/origin/*, créés à la main : ils ne passent ni par Terraform ni par la CI), et publie ses alertes (sujet SNS
+# arena-alerts, créé par infra/bootstrap).
 resource "aws_iam_role_policy" "server_deploy" {
   name = "deploiement"
   role = aws_iam_role.server.id
@@ -91,6 +92,12 @@ resource "aws_iam_role_policy" "server_deploy" {
         Condition = {
           StringEquals = { "kms:ViaService" = "ssm.${var.region}.amazonaws.com" }
         }
+      },
+      {
+        Sid      = "PublishAlerts"
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.current.account_id}:arena-alerts"
       },
     ]
   })

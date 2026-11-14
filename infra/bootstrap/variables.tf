@@ -21,7 +21,7 @@ variable "budget_limit_usd" {
 
 # Donnée personnelle : renseignée dans terraform.tfvars (non versionné), jamais dans le dépôt public.
 variable "budget_email" {
-  description = "Adresse qui reçoit les alertes de budget."
+  description = "Adresse qui reçoit les alertes de budget et du serveur de jeu."
   type        = string
   sensitive   = true
 }

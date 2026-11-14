@@ -2,6 +2,7 @@
 Description=Win or Wipe - redémarrage après mises à jour, si nécessaire
 # Attend la fin d'une installation de mises à jour en cours (jamais de redémarrage au milieu d'une transaction rpm).
 After=dnf-automatic.service
+OnFailure=arena-alert@%n.service
 
 [Service]
 Type=oneshot

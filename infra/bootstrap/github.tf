@@ -72,15 +72,20 @@ data "aws_iam_policy_document" "plan_deny_secrets" {
       "logs:GetLogEvents",
       "logs:FilterLogEvents",
       "logs:StartQuery",
+      # Adresse e-mail des abonnements aux alertes.
+      "sns:GetSubscriptionAttributes",
+      "sns:ListSubscriptions",
+      "sns:ListSubscriptionsByTopic",
     ]
     resources = ["*"]
   }
 
+  # Seul l'état de infra/main : celui du socle contient l'adresse e-mail des alertes.
   statement {
     sid           = "S3SeulementEtat"
     effect        = "Deny"
     actions       = ["s3:GetObject", "s3:GetObjectVersion"]
-    not_resources = ["${aws_s3_bucket.state.arn}/*"]
+    not_resources = ["${aws_s3_bucket.state.arn}/main/*"]
   }
 }
 
@@ -126,7 +131,7 @@ resource "aws_iam_role_policy_attachment" "deploy_admin" {
 }
 
 # Le déploiement ne peut pas toucher au socle : ses propres rôles et leur confiance, la connexion OIDC, la
-# configuration du bucket d'état, ni l'alerte de budget. Seul l'administrateur le fait, depuis infra/bootstrap.
+# configuration du bucket d'état, l'alerte de budget, ni le sujet des alertes et son abonnement. Seul l'administrateur le fait, depuis infra/bootstrap.
 data "aws_iam_policy_document" "deploy_protect_bootstrap" {
   statement {
     sid     = "RolesEtOidc"
@@ -152,6 +157,42 @@ data "aws_iam_policy_document" "deploy_protect_bootstrap" {
       "s3:PutBucketOwnershipControls",
     ]
     resources = [aws_s3_bucket.state.arn]
+  }
+
+  statement {
+    sid    = "AlertesSujet"
+    effect = "Deny"
+    actions = [
+      "sns:DeleteTopic",
+      "sns:SetTopicAttributes",
+      "sns:AddPermission",
+      "sns:RemovePermission",
+      "sns:PutDataProtectionPolicy",
+      "sns:Subscribe",
+      "sns:ListSubscriptionsByTopic",
+    ]
+    resources = [aws_sns_topic.alerts.arn]
+  }
+
+  # Actions sur les abonnements (ressource = abonnement, ou aucune) : infra/main n'utilise pas SNS.
+  statement {
+    sid    = "AlertesAbonnements"
+    effect = "Deny"
+    actions = [
+      "sns:Unsubscribe",
+      "sns:SetSubscriptionAttributes",
+      "sns:GetSubscriptionAttributes",
+      "sns:ListSubscriptions",
+    ]
+    resources = ["*"]
+  }
+
+  # L'état du socle (adresse e-mail des alertes) : jamais lu par la CI.
+  statement {
+    sid       = "EtatDuSocle"
+    effect    = "Deny"
+    actions   = ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.state.arn}/bootstrap/*"]
   }
 
   statement {

@@ -21,11 +21,17 @@ echo "== Paquets système"
 # AL2023 reste sinon figé sur les dépôts de son image : « latest » pour recevoir les correctifs (installation et mises
 # à jour automatiques ci-dessous).
 echo latest > /etc/dnf/vars/releasever
-dnf install -y -q nodejs22 nodejs22-npm nginx dnf-automatic dnf-plugins-core
+dnf install -y -q nodejs22 nodejs22-npm nginx dnf-automatic dnf-plugins-core jq
 # « node » (scripts d'installation des dépendances) = Node 22.
 alternatives --set node /usr/bin/node-22 >/dev/null 2>&1 || true
 [ "$(node -v)" = "$(node-22 -v)" ] || { echo "« node » n'est pas Node 22"; exit 1; }
 id arena >/dev/null 2>&1 || useradd --system --home-dir "$BASE" --shell /sbin/nologin arena
+
+echo "== Alertes par e-mail en cas d'échec (sujet SNS arena-alerts)"
+install -m 755 "$RELEASE_DIR/deploy/alerts/arena-alert.sh" /usr/local/sbin/arena-alert
+install -m 644 "$RELEASE_DIR/deploy/alerts/arena-alert@.service" /etc/systemd/system/
+install -d /etc/systemd/system/dnf-automatic.service.d
+install -m 644 "$RELEASE_DIR/deploy/alerts/on-failure.conf" /etc/systemd/system/dnf-automatic.service.d/arena-alert.conf
 
 echo "== Mises à jour de sécurité automatiques (3 h 30, redémarrage si nécessaire à 4 h, heure de Paris)"
 install -m 644 "$RELEASE_DIR/deploy/maintenance/automatic.conf" /etc/dnf/automatic.conf
@@ -83,6 +89,9 @@ activate() {
   systemctl daemon-reload
   ln -sfn "$1" "$BASE/current.new" && mv -T "$BASE/current.new" "$BASE/current"
   systemctl enable arena
+  # Une version qui plante épuise la limite de démarrages (arena.service) : remise à zéro, sinon systemd refuserait
+  # de relancer la version précédente.
+  systemctl reset-failed arena 2>/dev/null || true
   systemctl restart arena
 }
 activate "$RELEASE_DIR"

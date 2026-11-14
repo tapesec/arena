@@ -3,6 +3,11 @@
 Description=Win or Wipe game server
 After=network-online.target
 Wants=network-online.target
+# Redémarré à chaque plantage ; après 5 démarrages en 5 minutes, systemd l'arrête (état « failed ») et une alerte
+# part par e-mail (deploy/alerts). Relance : systemctl reset-failed arena && systemctl start arena (ou un déploiement).
+StartLimitIntervalSec=300
+StartLimitBurst=5
+OnFailure=arena-alert@%n.service
 
 [Service]
 User=arena
