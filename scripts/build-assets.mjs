@@ -2,6 +2,7 @@
 // chargés par le jeu, dans packages/client/public/models/ (ceux-là sont versionnés).
 // Usage : node scripts/build-assets.mjs              (tout)
 //         node scripts/build-assets.mjs --characters (seulement les personnages, leurs tenues d'équipe et leurs armes)
+//         node scripts/build-assets.mjs --ground     (seulement les textures du sol)
 //         node scripts/build-assets.mjs --animations (seulement les bibliothèques d'animations, après un réglage
 //                                                     de animation-lab.html qui utilise une nouvelle animation)
 import { copyFile, mkdir, readFile } from "node:fs/promises";
@@ -432,37 +433,26 @@ function wrapScene(doc, scene, name) {
   scene.addChild(node);
 }
 
-// Textures du sol, répétées sur le terrain : herbe et terre teintées à partir d'un bruit, pavés de la place.
-const GROUND_TINTS = {
-  grass: ["#41702a", "#7aa646"],
-  dirt: ["#6e5034", "#a88660"],
+// Textures du sol, répétées sur le terrain : herbe et terre peintes à l'aquarelle (pack « Watercolor Terrain Textures »
+// de Voxel Core Lab, CC0), pavés de la place. Herbe et terre en qualité 90 : la compression par défaut (80) délave les
+// nuances de l'aquarelle. Les pavés, plus contrastés, la supportent bien.
+const GROUND_TEXTURES = {
+  grass: "ground/Grass_01.png",
+  dirt: "ground/Dirt_03.png",
 };
-const GROUND_SIZE = 512;
 
 async function buildGround() {
-  const noise = await sharp(path.join(SOURCE, "ground/T_Noise_Terrain.png"))
-    .resize(GROUND_SIZE, GROUND_SIZE)
-    .greyscale()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  for (const [name, [dark, light]] of Object.entries(GROUND_TINTS)) {
-    const [a, b] = [hexToRgb(dark), hexToRgb(light)];
-    const pixels = Buffer.alloc(GROUND_SIZE * GROUND_SIZE * 3);
-    for (let i = 0; i < GROUND_SIZE * GROUND_SIZE; i++) {
-      const t = noise.data[i * noise.info.channels] / 255;
-      for (let c = 0; c < 3; c++) pixels[i * 3 + c] = a[c] + (b[c] - a[c]) * t;
-    }
+  for (const [name, source] of Object.entries(GROUND_TEXTURES)) {
     const target = `ground/${name}.webp`;
-    await sharp(pixels, { raw: { width: GROUND_SIZE, height: GROUND_SIZE, channels: 3 } }).webp().toFile(path.join(OUT, target));
+    await sharp(path.join(SOURCE, source))
+      .resize(TEXTURE_SIZE, TEXTURE_SIZE)
+      .webp({ quality: 90 })
+      .toFile(path.join(OUT, target));
     await report(target);
   }
   const target = "ground/paving.webp";
   await sharp(path.join(SOURCE, "ground/T_UnevenBrick_BaseColor.png")).resize(TEXTURE_SIZE, TEXTURE_SIZE).webp().toFile(path.join(OUT, target));
   await report(target);
-}
-
-function hexToRgb(hex) {
-  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 }
 
 // Bibliothèque d'animations : on retire le mannequin (seul le squelette sert) et les animations inutiles.
@@ -497,6 +487,11 @@ async function report(target) {
   console.log(`${target.padEnd(32)} ${(size / 1024 / 1024).toFixed(2)} Mo`);
 }
 
+if (process.argv.includes("--ground")) {
+  await mkdir(path.join(OUT, "ground"), { recursive: true });
+  await buildGround();
+  process.exit(0);
+}
 if (process.argv.includes("--characters")) {
   await mkdir(path.join(OUT, "characters"), { recursive: true });
   for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
