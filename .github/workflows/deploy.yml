@@ -20,6 +20,11 @@ concurrency:
 permissions:
   contents: read
 
+# bash explicite : GitHub ajoute alors « -o pipefail » (sinon « terraform plan | tee » réussit même en échec).
+defaults:
+  run:
+    shell: bash
+
 env:
   AWS_REGION: eu-west-3
   TF_VERSION: 1.17.2
@@ -56,15 +61,28 @@ jobs:
       - run: terraform init -input=false -backend-config="bucket=$TF_STATE_BUCKET"
         env:
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      # Jeton Cloudflare en lecture seule ; il n'est pas enregistré dans tfplan (lu dans l'environnement).
       - run: terraform plan -input=false -lock=false -no-color -out=tfplan | tee plan.txt
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_READ }}
       - name: Résumé (à relire avant de valider le déploiement)
         if: always()
         run: |
           { echo '```'; tail -n 200 plan.txt 2>/dev/null || echo "(aucun plan : voir l'étape en échec)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # Le plan enregistré contient l'état et les données lues (numéro de compte, IP du serveur, compte Cloudflare) ;
+      # les artefacts d'un dépôt public sont téléchargeables par tous : il n'est envoyé que chiffré (gpg, intègre).
+      - name: Chiffrement du plan
+        env:
+          TFPLAN_KEY: ${{ secrets.TFPLAN_KEY }}
+        run: |
+          [ -n "$TFPLAN_KEY" ] || { echo "::error::Secret TFPLAN_KEY manquant."; exit 1; }
+          gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 \
+            --output tfplan.gpg tfplan <<< "$TFPLAN_KEY"
+          rm -f tfplan
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tfplan
-          path: infra/main/tfplan
+          path: infra/main/tfplan.gpg
           retention-days: 1
 
   build:
@@ -143,7 +161,12 @@ jobs:
         working-directory: infra/main
         env:
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          # Jeton d'écriture : secret de l'environnement production, disponible seulement après validation.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TFPLAN_KEY: ${{ secrets.TFPLAN_KEY }}
         run: |
+          gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 0 --decrypt --output tfplan tfplan.gpg \
+            <<< "$TFPLAN_KEY"
           terraform init -input=false -backend-config="bucket=$TF_STATE_BUCKET"
           terraform apply -input=false -no-color tfplan
           {

@@ -13,6 +13,11 @@ permissions:
   contents: read
   id-token: write
 
+# bash explicite : GitHub ajoute alors « -o pipefail » (sinon « terraform plan | tee » réussit même en échec).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -39,8 +44,11 @@ jobs:
         env:
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
       - run: terraform fmt -check
+      # Jeton Cloudflare en lecture seule (le jeton d'écriture n'est donné qu'à l'apply, dans l'environnement production).
       - run: terraform plan -input=false -lock=false -no-color | tee plan.txt
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN_READ }}
       - name: Résumé
         if: always()
         run: |
-          { echo '```'; tail -n 200 plan.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '```'; tail -n 200 plan.txt 2>/dev/null || echo "(aucun plan : voir l'étape en échec)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

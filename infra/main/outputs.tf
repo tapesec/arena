@@ -1,6 +1,9 @@
+# Masquée dans les journaux (publics) : derrière le proxy de Cloudflare, l'adresse d'origine ne doit pas circuler.
+# Lecture : terraform output -raw server_ip.
 output "server_ip" {
   description = "Adresse publique du serveur de jeu (entrée DNS « A » de Cloudflare)."
   value       = aws_eip.server.public_ip
+  sensitive   = true
 }
 
 output "server_instance_id" {

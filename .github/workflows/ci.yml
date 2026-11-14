@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# bash explicite : GitHub ajoute alors « -o pipefail » (sinon « terraform plan | tee » réussit même en échec).
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     runs-on: ubuntu-latest

@@ -5,7 +5,8 @@ bucket S3 `assets.winorwipe.com`, servis par Cloudflare. L'infrastructure est d�
 
 - `infra/bootstrap` : socle (bucket de l'état, accès OIDC de GitHub Actions, alerte de budget), appliqué à la main
   depuis le poste ;
-- `infra/main` : réseau, serveur, buckets des assets et des versions, appliqué par la pipeline.
+- `infra/main` : réseau, serveur, buckets des assets et des versions, réglages de la zone Cloudflare (DNS, SSL,
+  règles), appliqué par la pipeline.
 
 ## Pipeline (GitHub Actions)
 
@@ -26,7 +27,13 @@ bucket S3 `assets.winorwipe.com`, servis par Cloudflare. L'infrastructure est d�
    secrets du dépôt (masqués dans les journaux, qui sont publics) :
    - `AWS_PLAN_ROLE_ARN`, `AWS_DEPLOY_ROLE_ARN` et `TF_STATE_BUCKET` (sorties de `terraform output` dans
      `infra/bootstrap`) ;
-   - `VITE_SOUND_KEY` (clé des sons protégés, la même que dans `packages/client/.env.local`).
+   - `VITE_SOUND_KEY` (clé des sons protégés, la même que dans `packages/client/.env.local`) ;
+   - `CLOUDFLARE_API_TOKEN_READ` (jeton Cloudflare de lecture, pour les plans) ;
+   - `TFPLAN_KEY` (phrase de chiffrement du plan enregistré, aléatoire : les artefacts d'un dépôt public sont
+     téléchargeables par tous).
+
+   Secret de l'**environnement** `production` (donné seulement après validation du déploiement) :
+   - `CLOUDFLARE_API_TOKEN` (jeton Cloudflare d'écriture, pour l'apply).
 4. **Actions → General** : « Require approval for all external contributors » (les pull requests venues de forks
    n'exécutent rien sans accord).
 
@@ -44,21 +51,49 @@ aws ssm put-parameter --profile lionnel-perso --region eu-west-3 --type SecureSt
 
 puis supprimer les deux fichiers du poste.
 
-### Cloudflare (une fois l'infrastructure créée)
+### Jetons d'API Cloudflare
 
-- DNS, en mode proxy (nuage orange) : `winorwipe.com` → enregistrement `A` vers `terraform output server_ip` ;
-  `assets` → `CNAME` vers `terraform output assets_origin`.
-- SSL/TLS : mode **Full (strict)**.
-- Règle de configuration pour `assets.winorwipe.com` : SSL **Flexible** (l'adresse site web de S3 ne parle que HTTP).
-- Règle de modification des en-têtes de réponse pour `assets.winorwipe.com` :
-  `Access-Control-Allow-Origin: https://winorwipe.com`.
+Dans Cloudflare : Manage account → Account API tokens → Create Token → Start from scratch, limités à la zone
+`winorwipe.com` (jamais la « Global API key ») :
+
+- `arena-terraform-read` : Zone, DNS, Zone Settings, Config Rules (parfois nommé « Config Settings »), Transform
+  Rules et Cache Rules en **Read** ;
+- `arena-terraform-edit` : Zone en Read ; les cinq autres en **Edit**.
+
+Le nom du compte Cloudflare est lu par Terraform : ne pas y laisser d'adresse e-mail (nom par défaut « …'s Account »,
+à changer dans Manage account → Configurations).
+
+Pour les plans sur le poste, le jeton de lecture est rangé dans le trousseau macOS (jeton copié dans le
+presse-papiers) :
+
+```sh
+security add-generic-password -U -a arena -s cloudflare-api-token-read -w "$(pbpaste)" && pbcopy < /dev/null
+```
+
+puis, pour un plan : `CLOUDFLARE_API_TOKEN=$(security find-generic-password -a arena -s cloudflare-api-token-read -w)
+terraform plan -lock=false`.
+
+### Cloudflare (géré par Terraform, `infra/main/cloudflare.tf`)
+
+La zone `winorwipe.com` est créée à la main avec le domaine ; Terraform gère son contenu (rien à créer à la main,
+sinon l'apply échoue sur un doublon) :
+
+- DNS en mode proxy : `winorwipe.com` (`A` vers l'IP du serveur) et `assets` (`CNAME` vers le bucket) ;
+- SSL **Full (strict)** et redirection vers HTTPS ;
+- règle de configuration : SSL **Flexible** pour `assets.winorwipe.com` (l'adresse site web de S3 ne parle que HTTP) ;
+- règle d'en-têtes de réponse : `Access-Control-Allow-Origin: https://winorwipe.com` sur `assets.winorwipe.com` ;
+- règle de cache : tout `assets.winorwipe.com` en cache (noms à empreinte), pour la durée annoncée par S3.
+
+Une règle ajoutée à la main dans le tableau de bord dans ces phases (configuration, en-têtes de réponse, cache) est
+effacée au prochain apply : passer par `cloudflare.tf`. L'IP du serveur est masquée dans les journaux
+(`terraform output -raw server_ip` pour la lire).
 
 ## Ordre du premier déploiement
 
-1. Environnement `production`, variables, secret et certificat ci-dessus **avant le premier push** (sinon GitHub
+1. Environnement `production`, secrets, jetons et certificat ci-dessus **avant le premier push** (sinon GitHub
    crée l'environnement à la volée, sans validation obligatoire), puis protection de `main` une fois la branche
    poussée.
-2. Push sur `main` : la pipeline crée l'infrastructure (le serveur n'est pas encore installé : manifeste des assets
-   vide).
+2. Push sur `main` : la pipeline crée l'infrastructure et règle Cloudflare (le serveur n'est pas encore installé :
+   manifeste des assets vide).
 3. `npm run deploy-assets`, puis commit et push du manifeste : la pipeline installe le serveur.
-4. Réglages Cloudflare, puis https://winorwipe.com.
+4. https://winorwipe.com.

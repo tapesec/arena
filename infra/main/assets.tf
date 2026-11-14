@@ -1,12 +1,7 @@
 # Assets de production (modèles, sons, musique), envoyés par le script deploy-assets. Servis aux joueurs par
 # Cloudflare depuis l'adresse « site web » du bucket : son nom doit être le nom d'hôte (assets.<domaine>) pour que
 # Cloudflare le serve sans réécrire l'en-tête Host. Lecture publique, mais seulement depuis les adresses de Cloudflare.
-#
-# Réglages Cloudflare indispensables pour assets.<domaine> (faits à la main pour l'instant) :
-# - règle de configuration SSL « Flexible » pour ce seul nom : l'adresse site web de S3 ne répond qu'en HTTP (le reste
-#   de la zone est en « Full (strict) ») ;
-# - règle de modification des en-têtes de réponse « Access-Control-Allow-Origin: https://<domaine> » : Cloudflare ne
-#   distingue pas les réponses selon l'en-tête Origin, une version sans CORS mise en cache casserait le client.
+# Côté Cloudflare (SSL Flexible et en-tête CORS pour assets.<domaine>) : voir cloudflare.tf.
 resource "aws_s3_bucket" "assets" {
   bucket = "assets.${var.domain}"
 }
