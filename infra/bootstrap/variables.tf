@@ -5,9 +5,12 @@ variable "region" {
 }
 
 variable "github_repository" {
-  description = "Dépôt GitHub autorisé à déployer (propriétaire/nom)."
+  description = <<-EOT
+    Dépôt GitHub autorisé à déployer, tel que GitHub le nomme dans le sujet de ses jetons OIDC :
+    « propriétaire@id/nom@id » (identifiants numériques immuables : un dépôt recréé sous le même nom n'y a pas accès).
+  EOT
   type        = string
-  default     = "tapesec/arena"
+  default     = "tapesec@4386903/arena@1456928709"
 }
 
 variable "budget_limit_usd" {
