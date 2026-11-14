@@ -11,13 +11,13 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
+import { assetUrl } from "../assets";
 import { MIXAMO_ANIMATIONS, retargetMixamo } from "./mixamo";
 import type { Shadows } from "./shadows";
 import { TUNING } from "./tuning";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 
 // Modèles 3D produits par scripts/build-assets.mjs, servis depuis public/models/.
-const MODELS_URL = "/models/";
 
 // Agrandissement des personnages (le modèle d'origine mesure 1,84 m).
 const CHARACTER_SCALE = 1.2;
@@ -31,7 +31,7 @@ const METALLIC = 0.25;
 const TEAM_PAINT = ["#2c5cb8", "#b8302c"];
 
 // Bibliothèques d'animations : un squelette sans maillage et ses animations.
-const ANIMATION_LIBRARIES = ["animations/UAL1.glb", "animations/UAL2.glb"];
+export const ANIMATION_LIBRARIES = ["animations/UAL1.glb", "animations/UAL2.glb"];
 
 // Arme tenue dans une main : os du squelette auquel elle est attachée, et placement dans la main
 // (position en mètres, rotation en radians, dans le repère de l'os).
@@ -347,6 +347,11 @@ export const CHARACTERS: Record<string, CharacterDef> = {
 
 // Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations), et de celles
 // choisies dans animation-lab.html (geste du lanceur, réaction de la cible).
+// Texture de tenue d'une classe pour une équipe (0 ou 1).
+export function teamTexture(classId: string, team: number): string {
+  return `models/characters/${classId}-${team}.webp`;
+}
+
 export function usedAnimations(): Set<string> {
   const names = new Set<string>();
   for (const { animations: set } of Object.values(CHARACTERS)) {
@@ -425,7 +430,7 @@ export class CharacterAssets {
     for (const [classId, def] of Object.entries(CHARACTERS)) {
       void track(this.load(def.model), 10);
       for (const weapon of def.weapons) void track(this.load(weapon.model), 2);
-      for (const team of [0, 1]) void track(fetch(`${MODELS_URL}characters/${classId}-${team}.webp`).then((r) => r.blob()));
+      for (const team of [0, 1]) void track(fetch(assetUrl(teamTexture(classId, team))).then((r) => r.blob()));
     }
   }
 
@@ -435,7 +440,7 @@ export class CharacterAssets {
       // Aucune animation lancée au chargement : elles sont jouées sur les personnages, pas sur les modèles d'origine.
       const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
       // Un chemin absolu (commençant par /) est pris tel quel, les autres sont relatifs à public/models/.
-      container = LoadAssetContainerAsync(url.startsWith("/") ? url : MODELS_URL + url, this.scene, options).then((loaded) => {
+      container = LoadAssetContainerAsync(url.startsWith("/") ? url : assetUrl(`models/${url}`), this.scene, options).then((loaded) => {
         // Sans image d'environnement à refléter, le métal sort presque noir : on l'atténue.
         for (const material of loaded.materials) {
           if (material.getClassName() === "PBRMaterial") (material as unknown as { metallic: number }).metallic = METALLIC;
@@ -667,7 +672,7 @@ export class CharacterAssets {
     let material = this.outfits.get(key);
     if (!material) {
       material = base.clone(`${base.name}-${team}`);
-      material.albedoTexture = new Texture(`${MODELS_URL}characters/${key}.webp`, this.scene, false, false);
+      material.albedoTexture = new Texture(assetUrl(teamTexture(classId, team)), this.scene, false, false);
       this.outfits.set(key, material);
     }
     return material;

@@ -7,8 +7,9 @@ import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLo
 import { ARENA_SIZE, OPEN_AREAS, isInsideObstacle, terrainHeight } from "@arena/shared";
 import { GROUND_SIZE, isGrass } from "./environment";
 import { extendedHeight } from "./terrainMesh";
+import { assetUrl } from "../assets";
 
-const NATURE_URL = "/models/village/nature.glb";
+export const NATURE_MODEL = "models/village/nature.glb";
 // Graine du tirage : le décor est le même pour tous les joueurs, à chaque partie.
 const SEED = 20261108;
 
@@ -101,7 +102,7 @@ export class Nature {
   async load() {
     this.scatter();
     const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
-    const container = await LoadAssetContainerAsync(NATURE_URL, this.scene, options);
+    const container = await LoadAssetContainerAsync(assetUrl(NATURE_MODEL), this.scene, options);
     container.addAllToScene();
     const root = container.rootNodes[0];
     for (const node of root.getChildren()) {

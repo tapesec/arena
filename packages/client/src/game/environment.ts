@@ -10,9 +10,11 @@ import { Scene } from "@babylonjs/core/scene";
 import { SkyMaterial } from "@babylonjs/materials/sky/skyMaterial";
 import { TerrainMaterial } from "@babylonjs/materials/terrain/terrainMaterial";
 import { PLAZA, START_ZONES } from "@arena/shared";
+import { assetUrl } from "../assets";
 import { createTerrainMesh } from "./terrainMesh";
 
-const GROUND_URL = "/models/ground/";
+// Textures du sol (dans public/models/ground/).
+export const GROUND_TEXTURES = { grass: "grass.webp", dirt: "dirt.webp", paving: "paving.webp" };
 // Le sol déborde largement de l'arène (100 m) : la forêt des bords y sera posée.
 export const GROUND_SIZE = 200;
 // Taille, en mètres, d'une répétition des textures de sol.
@@ -111,16 +113,16 @@ export function createGround(scene: Scene): Mesh {
 
   const material = new TerrainMaterial("groundMaterial", scene);
   material.mixTexture = createMixTexture(scene);
-  material.diffuseTexture1 = tiled(scene, "grass.webp", GRASS_TILE);
-  material.diffuseTexture2 = tiled(scene, "dirt.webp", GRASS_TILE);
-  material.diffuseTexture3 = tiled(scene, "paving.webp", PAVING_TILE);
+  material.diffuseTexture1 = tiled(scene, GROUND_TEXTURES.grass, GRASS_TILE);
+  material.diffuseTexture2 = tiled(scene, GROUND_TEXTURES.dirt, GRASS_TILE);
+  material.diffuseTexture3 = tiled(scene, GROUND_TEXTURES.paving, PAVING_TILE);
   material.specularColor = Color3.Black();
   ground.material = material;
   return ground;
 }
 
 function tiled(scene: Scene, file: string, tile: number): Texture {
-  const texture = new Texture(GROUND_URL + file, scene);
+  const texture = new Texture(assetUrl(`models/ground/${file}`), scene);
   texture.uScale = texture.vScale = GROUND_SIZE / tile;
   return texture;
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -53,8 +54,11 @@ function devFilesEndpoint(): Plugin {
 }
 
 // Dossiers de public/ réservés aux pages de développement (bibliothèques complètes d'animations et de sons) : retirés
-// de la version de production.
-const DEV_ONLY_PUBLIC = ["dev-models", "dev-sounds"];
+// de la version de production. Une fois les assets publiés sur le CDN (manifeste non vide, voir src/assets.ts), les
+// modèles, sons et musiques en sont retirés aussi : un asset oublié par scripts/deploy-assets.ts se voit (404) au lieu
+// d'être servi en douce par le serveur du jeu.
+const PUBLISHED = Object.keys(JSON.parse(readFileSync(new URL("./src/assets-manifest.json", import.meta.url), "utf8")) as object).length > 0;
+const DEV_ONLY_PUBLIC = ["dev-models", "dev-sounds", ...(PUBLISHED ? ["models", "sounds", "music"] : [])];
 function excludeDevAssets(): Plugin {
   let outDir = "";
   return {

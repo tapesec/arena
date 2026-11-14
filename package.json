@@ -11,7 +11,8 @@
     "start": "npm run start -w @arena/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "dev:server:duo": "MATCH_SIZE=2 npm run dev -w @arena/server"
+    "dev:server:duo": "MATCH_SIZE=2 npm run dev -w @arena/server",
+    "deploy-assets": "tsx scripts/deploy-assets.ts"
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.5.1",

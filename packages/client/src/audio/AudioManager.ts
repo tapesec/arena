@@ -1,6 +1,7 @@
 import { ZZFX } from "zzfx";
 import samples from "./samples.json";
 import { SOUNDS, type SoundId } from "./sounds";
+import { assetUrl } from "../assets";
 import { GAME_SOUND } from "./soundEdits";
 
 // Groupe de sons enregistrés (voir samples.json).
@@ -17,14 +18,14 @@ const VOLUME_KEY = "arena.volume";
 const MUTED_KEY = "arena.muted";
 
 // Sons enregistrés (voir samples.json et scripts/build-sounds.mjs) : un groupe = plusieurs variantes.
-const SOUNDS_URL = "/sounds/";
+const SOUNDS_URL = "sounds/";
 // Écart de vitesse de lecture tiré au hasard, pour qu'une même variante ne sonne jamais deux fois pareil.
 export const RATE_JITTER = 0.06;
 // En dessous de ce niveau, le début d'un son est du silence (ajouté par l'encodeur AAC) : il est sauté.
 const SILENCE = 0.002;
 
 // Musiques (voir scripts/build-sounds.mjs) : boucles jouées sur leur durée d'origine.
-const MUSIC_URL = "/music/";
+const MUSIC_URL = "music/";
 // Volume de la musique : doux pendant la préparation, normal en combat et dans les menus (sous les bruitages).
 export type MusicLevel = "soft" | "normal";
 export const MUSIC_LEVELS: Record<MusicLevel, number> = { soft: 0.18, normal: 0.5 };
@@ -233,7 +234,7 @@ export class AudioManager {
   private loadCatalogSound(name: string): Promise<AudioBuffer | null> {
     let loading = this.catalogSounds.get(name);
     if (!loading) {
-      const url = import.meta.env.DEV ? `/dev-sounds/${encodeURIComponent(name)}.m4a` : `${SOUNDS_URL}tuned/${encodeURIComponent(name)}.m4a`;
+      const url = import.meta.env.DEV ? `/dev-sounds/${encodeURIComponent(name)}.m4a` : assetUrl(`${SOUNDS_URL}tuned/${name}.m4a`);
       // Jeu publié : un son protégé vient du conteneur brouillé, les autres de leur fichier.
       const fromContainer = import.meta.env.DEV ? Promise.resolve(undefined) : this.loadProtected().then((sounds) => sounds.get(name));
       loading = fromContainer
@@ -260,7 +261,7 @@ export class AudioManager {
   }
 
   private loadProtected(): Promise<Map<string, ArrayBuffer>> {
-    this.protectedSounds ??= fetch(`${SOUNDS_URL}tuned/protected.bin`)
+    this.protectedSounds ??= fetch(assetUrl(`${SOUNDS_URL}tuned/protected.bin`))
       .then((response) => (response.ok ? response.arrayBuffer() : null))
       .then((buffer) => {
         const sounds = new Map<string, ArrayBuffer>();
@@ -287,7 +288,7 @@ export class AudioManager {
     void track(
       this.loadVariantCounts().then((counts) => {
         for (const [id, count] of Object.entries(counts)) {
-          for (let i = 0; i < count; i++) void track(fetch(`${SOUNDS_URL}${id}_${i}.m4a`).then((r) => r.arrayBuffer()));
+          for (let i = 0; i < count; i++) void track(fetch(assetUrl(`${SOUNDS_URL}${id}_${i}.m4a`)).then((r) => r.arrayBuffer()));
         }
       }),
     );
@@ -295,12 +296,12 @@ export class AudioManager {
       if (!recipe.startsWith(GAME_SOUND)) void track(this.loadCatalogSound(recipe));
       else if (!(recipe.slice(GAME_SOUND.length) in SOUNDS)) void track(this.loadSample(recipe.slice(GAME_SOUND.length)));
     }
-    for (const id of music) void track(fetch(`${MUSIC_URL}${id}.m4a`).then((r) => r.arrayBuffer()), 10);
+    for (const id of music) void track(fetch(assetUrl(`${MUSIC_URL}${id}.m4a`)).then((r) => r.arrayBuffer()), 10);
   }
 
   // Nombre de variantes de chaque groupe de sons. Un échec n'est pas gardé : on réessaiera.
   private loadVariantCounts(): Promise<Record<string, number>> {
-    this.variantCounts ??= fetch(`${SOUNDS_URL}index.json`)
+    this.variantCounts ??= fetch(assetUrl(`${SOUNDS_URL}index.json`))
       .then((r) => (r.ok ? (r.json() as Promise<Record<string, number>>) : Promise.reject(new Error(String(r.status)))))
       .catch((error: unknown) => {
         this.variantCounts = null;
@@ -327,7 +328,7 @@ export class AudioManager {
     const count = (await this.loadVariantCounts())[id] ?? 0;
     const variants = await Promise.all(
       Array.from({ length: count }, async (_, i) => {
-        const response = await fetch(`${SOUNDS_URL}${id}_${i}.m4a`);
+        const response = await fetch(assetUrl(`${SOUNDS_URL}${id}_${i}.m4a`));
         if (!response.ok) throw new Error(String(response.status));
         const buffer = await this.context.decodeAudioData(await response.arrayBuffer());
         return { buffer, start: soundStart(buffer) };
@@ -349,10 +350,10 @@ export class AudioManager {
     track.gain.connect(this.master);
     this.music = track;
 
-    this.musicIndex ??= fetch(`${MUSIC_URL}index.json`).then((r) => r.json() as Promise<Record<string, { duration: number }>>);
+    this.musicIndex ??= fetch(assetUrl(`${MUSIC_URL}index.json`)).then((r) => r.json() as Promise<Record<string, { duration: number }>>);
     const [index, buffer] = await Promise.all([
       this.musicIndex,
-      fetch(`${MUSIC_URL}${id}.m4a`)
+      fetch(assetUrl(`${MUSIC_URL}${id}.m4a`))
         .then((r) => r.arrayBuffer())
         .then((data) => this.context.decodeAudioData(data)),
     ]);

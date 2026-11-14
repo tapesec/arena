@@ -13,10 +13,11 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
 import { OBSTACLES, PLAZA, terrainHeight, type Obstacle } from "@arena/shared";
+import { assetUrl } from "../assets";
 import { Camps } from "./camps";
 import type { Shadows } from "./shadows";
 
-const VILLAGE_URL = "/models/village/village.glb";
+export const VILLAGE_MODEL = "models/village/village.glb";
 
 // Les pièces du village sont modulaires : murs de 2 m de large, étages de 3 m.
 const MODULE = 2;
@@ -96,7 +97,7 @@ export class Village {
 
   async load() {
     const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
-    const container: AssetContainer = await LoadAssetContainerAsync(VILLAGE_URL, this.scene, options);
+    const container: AssetContainer = await LoadAssetContainerAsync(assetUrl(VILLAGE_MODEL), this.scene, options);
     container.addAllToScene();
     // Le nœud racine du chargeur convertit le repère glTF ; les pièces sont ses enfants, rangées par nom.
     this.root = container.rootNodes[0] as TransformNode;
