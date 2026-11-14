@@ -56,8 +56,8 @@ puis supprimer les deux fichiers du poste.
 Dans Cloudflare : Manage account → Account API tokens → Create Token → Start from scratch, limités à la zone
 `winorwipe.com` (jamais la « Global API key ») :
 
-- `arena-terraform-read` : Zone, DNS, Zone Settings, Config Rules (parfois nommé « Config Settings »), Transform
-  Rules et Cache Rules en **Read** ;
+- `arena-terraform-read` : Zone, DNS, Zone Settings, Config Settings, Zone Transform Rules et Cache Settings en
+  **Read** ;
 - `arena-terraform-edit` : Zone en Read ; les cinq autres en **Edit**.
 
 Le nom du compte Cloudflare est lu par Terraform : ne pas y laisser d'adresse e-mail (nom par défaut « …'s Account »,
