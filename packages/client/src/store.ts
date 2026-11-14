@@ -131,6 +131,8 @@ export interface GameActions {
   setBotClass: (botId: string, classId: ClassId) => void;
   // Cibler un joueur (clic dans la fenêtre de groupe).
   selectTarget: (playerId: string) => void;
+  // Se cibler soi-même (clic sur son propre cadre, comme F1).
+  selectSelf: () => void;
   // Lancer une compétence (clic sur la barre d'action).
   castAbility: (abilityId: string) => void;
 }
