@@ -14,10 +14,13 @@ User=arena
 Group=arena
 WorkingDirectory=/opt/arena/current/packages/server
 Environment=PORT=2567
+# Événements de jeu pour l'observabilité (packages/server/src/telemetry.ts), envoyés à CloudWatch par l'agent.
+Environment=TELEMETRY_FILE=/var/log/arena/events.log
+LogsDirectory=arena
 ExecStart=/usr/bin/node-22 /opt/arena/current/node_modules/tsx/dist/cli.mjs src/start.ts
 Restart=always
 RestartSec=2
-# Durcissement : le service n'écrit nulle part, ne voit pas /home ni les autres processus.
+# Durcissement : le service n'écrit que dans /var/log/arena (LogsDirectory), ne voit pas /home ni les autres processus.
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true

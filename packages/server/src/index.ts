@@ -4,6 +4,7 @@ import { defineRoom, defineServer, listen } from "colyseus";
 import { SERVER_PORT } from "@arena/shared";
 import { ArenaRoom } from "./ArenaRoom";
 import { CLIENT_DIST, createClientServer } from "./staticClient";
+import { startSnapshots } from "./telemetry";
 
 // Production (NODE_ENV=production, `npm start`) : le serveur sert aussi la page du jeu construite par `npm run build`.
 // Développement : Vite sert la page et redirige /colyseus vers ce serveur.
@@ -22,3 +23,4 @@ const server = defineServer({
 
 // PORT permet de lancer une autre instance à côté (tests, mise en ligne).
 await listen(server, Number(process.env.PORT ?? SERVER_PORT));
+startSnapshots();
