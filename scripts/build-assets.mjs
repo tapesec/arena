@@ -1,7 +1,7 @@
 // Produit, à partir des fichiers bruts de assets-source/ (voir import-assets.sh), les modèles optimisés
 // chargés par le jeu, dans packages/client/public/models/ (ceux-là sont versionnés).
 // Usage : node scripts/build-assets.mjs              (tout)
-//         node scripts/build-assets.mjs --characters (seulement les personnages et leurs tenues d'équipe)
+//         node scripts/build-assets.mjs --characters (seulement les personnages, leurs tenues d'équipe et leurs armes)
 //         node scripts/build-assets.mjs --animations (seulement les bibliothèques d'animations, après un réglage
 //                                                     de animation-lab.html qui utilise une nouvelle animation)
 import { copyFile, mkdir, readFile } from "node:fs/promises";
@@ -19,9 +19,9 @@ const OUT = path.join(ROOT, "packages/client/public/models");
 // Textures réduites (les originales font 4096 px) et converties en WebP : bien plus légères à télécharger.
 const TEXTURE_SIZE = 1024;
 
-// Personnages, vus de près : compression plus douce. Les normal maps supportent mal la perte (le relief se couvre de
-// petits blocs sous la lumière) : qualité 95 ; les couleurs en qualité 90. Le reste (décor, armes) garde la qualité
-// par défaut de sharp (80). Les deux passes supposent qu'aucune image ne sert à la fois de normal map et à un autre slot
+// Personnages et armes, vus de près : compression plus douce. Les normal maps supportent mal la perte (le relief se couvre de
+// petits blocs sous la lumière) : qualité 95 ; les couleurs en qualité 90. Le décor garde la qualité par défaut de
+// sharp (80). Les deux passes supposent qu'aucune image ne sert à la fois de normal map et à un autre slot
 // (sinon elle serait compressée deux fois) : c'est le cas des sources actuelles.
 const CHARACTER_QUALITY = { normal: 95, color: 90 };
 
@@ -175,9 +175,9 @@ async function optimize(doc, quality) {
   );
 }
 
-async function buildModel(source, target) {
+async function buildModel(source, target, quality) {
   const doc = await io.read(path.join(SOURCE, source));
-  await optimize(doc);
+  await optimize(doc, quality);
   await io.write(path.join(OUT, target), doc);
   await report(target);
 }
@@ -501,6 +501,8 @@ if (process.argv.includes("--characters")) {
   await mkdir(path.join(OUT, "characters"), { recursive: true });
   for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
   for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
+  await mkdir(path.join(OUT, "weapons"), { recursive: true });
+  for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`, CHARACTER_QUALITY);
   process.exit(0);
 }
 await mkdir(path.join(OUT, "animations"), { recursive: true });
@@ -518,7 +520,7 @@ for (const [file, keep] of Object.entries(ANIMATIONS)) await buildAnimations(fil
 if (!onlyAnimations) {
   for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
   for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
-  for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`);
+  for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`, CHARACTER_QUALITY);
   for (const [id, source] of Object.entries(FBX_WEAPONS)) {
     await copyFile(path.join(SOURCE, source), path.join(OUT, `weapons/${id}.fbx`));
     await report(`weapons/${id}.fbx`);
