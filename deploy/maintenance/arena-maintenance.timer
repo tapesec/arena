@@ -1,0 +1,10 @@
+[Unit]
+Description=Win or Wipe - maintenance de 4 h (heure de Paris)
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 Europe/Paris
+# Pas de rattrapage : un redémarrage en pleine journée couperait les parties.
+Persistent=false
+
+[Install]
+WantedBy=timers.target

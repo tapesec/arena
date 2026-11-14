@@ -1,0 +1,9 @@
+[Unit]
+Description=Win or Wipe - redémarrage après mises à jour, si nécessaire
+# Attend la fin d'une installation de mises à jour en cours (jamais de redémarrage au milieu d'une transaction rpm).
+After=dnf-automatic.service
+
+[Service]
+Type=oneshot
+# Verrou partagé avec deploy/install.sh : ni redémarrage ni relance du jeu pendant un déploiement.
+ExecStart=/usr/bin/flock /run/arena-deploy.lock /usr/local/sbin/arena-maintenance

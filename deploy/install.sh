@@ -8,17 +8,34 @@
 # version précédente et échoue.
 set -euo pipefail
 
+# Verrou partagé avec la maintenance de nuit (arena-maintenance) : pas de redémarrage pendant un déploiement.
+exec 9>/run/arena-deploy.lock
+flock 9
+
 RELEASE_DIR=$(realpath "$1")
 BASE=/opt/arena
 REGION=$(TOKEN=$(curl -sS -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 60") \
   && curl -sS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region)
 
 echo "== Paquets système"
-dnf install -y -q nodejs22 nodejs22-npm nginx
+# AL2023 reste sinon figé sur les dépôts de son image : « latest » pour recevoir les correctifs (installation et mises
+# à jour automatiques ci-dessous).
+echo latest > /etc/dnf/vars/releasever
+dnf install -y -q nodejs22 nodejs22-npm nginx dnf-automatic dnf-plugins-core
 # « node » (scripts d'installation des dépendances) = Node 22.
 alternatives --set node /usr/bin/node-22 >/dev/null 2>&1 || true
 [ "$(node -v)" = "$(node-22 -v)" ] || { echo "« node » n'est pas Node 22"; exit 1; }
 id arena >/dev/null 2>&1 || useradd --system --home-dir "$BASE" --shell /sbin/nologin arena
+
+echo "== Mises à jour de sécurité automatiques (3 h 30, redémarrage si nécessaire à 4 h, heure de Paris)"
+install -m 644 "$RELEASE_DIR/deploy/maintenance/automatic.conf" /etc/dnf/automatic.conf
+install -d /etc/systemd/system/dnf-automatic.timer.d
+install -m 644 "$RELEASE_DIR/deploy/maintenance/dnf-automatic.timer.conf" /etc/systemd/system/dnf-automatic.timer.d/arena.conf
+install -m 755 "$RELEASE_DIR/deploy/maintenance/arena-maintenance.sh" /usr/local/sbin/arena-maintenance
+install -m 644 "$RELEASE_DIR/deploy/maintenance/arena-maintenance.service" "$RELEASE_DIR/deploy/maintenance/arena-maintenance.timer" \
+  /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now dnf-automatic.timer arena-maintenance.timer
 
 echo "== Certificat Origin CA"
 install -d -m 750 -o root -g nginx /etc/nginx/arena

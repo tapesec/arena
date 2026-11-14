@@ -14,7 +14,22 @@ bucket S3 `assets.winorwipe.com`, servis par Cloudflare. L'infrastructure est d�
 - `terraform-plan.yml` : plan de `infra/main` en lecture seule sur les pull requests qui le touchent.
 - `deploy.yml` : à chaque push sur `main`, tests puis plan (à relire dans le résumé du run), puis, après validation
   dans l'environnement `production`, apply de `infra/main`, build du client et installation du serveur
-  (`deploy/install.sh`, lancé par Session Manager : Node 22, nginx en HTTPS, service systemd `arena`).
+  (`deploy/install.sh`, lancé par Session Manager : Node 22, nginx en HTTPS, service systemd `arena`, mises à jour
+  automatiques).
+
+## Mises à jour du serveur
+
+Amazon Linux 2023 suit les dépôts `latest` (`/etc/dnf/vars/releasever`) ; `deploy/maintenance/` :
+
+- chaque nuit à 3 h 30 (heure de Paris), `dnf-automatic` installe les correctifs de sécurité ;
+- à 4 h, `arena-maintenance` redémarre la machine si une mise à jour l'exige (noyau, glibc, systemd…), sinon
+  seulement nginx et le serveur de jeu s'ils utilisent une bibliothèque remplacée. Les parties en cours sont coupées.
+  Elle attend la fin des mises à jour et d'un déploiement en cours (verrou `/run/arena-deploy.lock`, pris aussi par
+  `install.sh`) ; en cas d'erreur, elle échoue sans rien redémarrer.
+- si la machine était éteinte à 3 h 30, les correctifs s'installent à son démarrage ; le redémarrage éventuel des
+  services attend 4 h.
+
+Journaux : `journalctl -u dnf-automatic -u arena-maintenance` (Session Manager).
 
 ## Réglages à faire une fois
 
