@@ -60,7 +60,7 @@ jobs:
       - name: Résumé (à relire avant de valider le déploiement)
         if: always()
         run: |
-          { echo '```'; tail -n 200 plan.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo '```'; tail -n 200 plan.txt 2>/dev/null || echo "(aucun plan : voir l'étape en échec)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tfplan
