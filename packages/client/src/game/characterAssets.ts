@@ -1,3 +1,4 @@
+import { Animation } from "@babylonjs/core/Animations/animation";
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { AnimatorAvatar } from "@babylonjs/core/Animations/animatorAvatar";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
@@ -1077,7 +1078,8 @@ export class CharacterAssets {
 
   // Recible nos animations sur le squelette Mixamo d'un monstre (poses de repos différentes), une seule fois, sur un
   // exemplaire caché : les animations obtenues visent ses os par leur nom et se clonent sur chaque personnage. Les
-  // déplacements d'os sont retirés (le bassin reste à sa hauteur, les os Mixamo n'ont pas nos proportions).
+  // déplacements d'os sont retirés (les os Mixamo n'ont pas nos proportions), sauf celui du bassin, mis à l'échelle du
+  // monstre (voir scaledHipsAnimation).
   private monsterAnimationsOf(model: string, base: AssetContainer, sources: AnimationGroup[]): Promise<AnimationGroup[]> {
     let groups = this.monsterAnimations.get(model);
     if (!groups) {
@@ -1089,11 +1091,19 @@ export class CharacterAssets {
       const avatar = new AnimatorAvatar(`avatar-${model}`, root, false, false);
       // Les os de nos personnages absents chez le monstre (doigts…) sont simplement ignorés.
       avatar.showWarnings = false;
+      // Bassin : sa hauteur et ses déplacements suivent ceux de nos animations, à l'échelle du monstre (il descend au sol
+      // quand on meurt) ; les positions des autres os (à nos proportions) sont retirées.
+      const hips = names.get("pelvis");
+      const hipsNode = hips ? root.getDescendants(false).find((node) => node.name === hips) : undefined;
       groups = Promise.resolve(
         sources.map((group) => {
           const retargeted = avatar.retargetAnimationGroup(group, { mapNodeNames: names, animationGroupName: group.name, fixRootPosition: false });
           for (const target of [...retargeted.targetedAnimations]) {
             if (target.animation.targetProperty === "position") retargeted.removeTargetedAnimation(target.animation);
+          }
+          const pelvis = group.targetedAnimations.find((t) => t.animation.targetProperty === "position" && (t.target as { name?: string }).name === "pelvis");
+          if (pelvis && hipsNode instanceof TransformNode) {
+            retargeted.addTargetedAnimation(scaledHipsAnimation(pelvis.animation, pelvis.target as TransformNode, hipsNode), hipsNode);
           }
           retargeted.stop();
           return retargeted;
@@ -1103,6 +1113,31 @@ export class CharacterAssets {
     }
     return groups;
   }
+}
+
+// Position du bassin d'une de nos animations, rapportée au bassin d'un monstre : chaque déplacement par rapport à la
+// pose de repos est passé dans le repère du monde, mis à l'échelle (hauteur du bassin du monstre sur la nôtre), puis
+// ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas.
+function scaledHipsAnimation(source: Animation, pelvis: TransformNode, hips: TransformNode): Animation {
+  const sourceParent = pelvis.parent as TransformNode | null;
+  const targetParent = hips.parent as TransformNode | null;
+  sourceParent?.computeWorldMatrix(true);
+  targetParent?.computeWorldMatrix(true);
+  pelvis.computeWorldMatrix(true);
+  hips.computeWorldMatrix(true);
+  const ratio = hips.absolutePosition.y / (pelvis.absolutePosition.y || 1);
+  const toWorld = sourceParent?.getWorldMatrix() ?? Matrix.IdentityReadOnly;
+  const fromWorld = targetParent ? targetParent.getWorldMatrix().clone().invert() : Matrix.Identity();
+  const sourceRest = pelvis.position.clone();
+  const targetRest = hips.position.clone();
+  const animation = new Animation(`${source.name}-hips`, "position", source.framePerSecond, Animation.ANIMATIONTYPE_VECTOR3, source.loopMode);
+  animation.setKeys(
+    source.getKeys().map((key) => {
+      const delta = Vector3.TransformNormal((key.value as Vector3).subtract(sourceRest), toWorld).scaleInPlace(ratio);
+      return { frame: key.frame, value: targetRest.add(Vector3.TransformNormal(delta, fromWorld)) };
+    }),
+  );
+  return animation;
 }
 
 // Couleurs choisies d'une arme ou d'un accessoire de l'éditeur d'apparence, sur des copies de ses matériaux (partagés avec
