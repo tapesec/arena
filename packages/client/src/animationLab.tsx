@@ -195,6 +195,8 @@ class Stage {
   private abilityId = "";
   private entry: AbilityAnimation | null = null;
   private mode: "play" | "scrub" = "scrub";
+  // Pose d'attente en boucle, sans compétence (bouton « Idle » des onglets Apparence et Placement).
+  private resting = false;
   // Instant montré en pose figée, pour chaque moment (secondes depuis le début du geste du lanceur, ou depuis
   // l'impact, le début de l'état, l'apparition de la zone).
   private scrubTimes: Record<Moment, number> = { caster: 0, projectile: 0, impact: 0, status: 0, zone: 0 };
@@ -411,6 +413,23 @@ class Stage {
   // Lecture comme en jeu : pose normale, incantation, départ du sort, impact, état, puis on recommence.
   play() {
     this.mode = "play";
+    this.resting = false;
+    this.restart();
+  }
+
+  // Arrête la boucle de la compétence : le personnage reste dans sa pose d'attente.
+  rest() {
+    if (this.resting) return;
+    this.mode = "play";
+    this.resting = true;
+    this.restart();
+  }
+
+  // Retour aux autres onglets : la pose figée habituelle.
+  leaveRest() {
+    if (!this.resting) return;
+    this.resting = false;
+    this.mode = "scrub";
     this.restart();
   }
 
@@ -424,6 +443,7 @@ class Stage {
       this.projectileFx.stopAll();
     }
     this.mode = "scrub";
+    this.resting = false;
     this.scrubTimes[this.moment] = time;
     this.showFrame();
   }
@@ -773,6 +793,12 @@ class Stage {
       if (this.objectPreview) this.tickObject(instance);
       if (this.overlayPreview) this.tickOverlay(instance);
       this.onFrame?.({ playhead: null, cast: null, labels: this.fxLabels() });
+      return;
+    }
+    if (this.resting) {
+      if (!instance || !animator) return;
+      animator.update(this.idleInput());
+      this.onFrame?.({ playhead: null, cast: null });
       return;
     }
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
@@ -1988,16 +2014,35 @@ function AnimationLab() {
     if (entry) {
       stageRef.current?.play();
       setPlaying(true);
-    }
+      setResting(false);
+    } else rest();
     setPendingPlay(null);
   }, [pendingPlay, entry, abilityId, instance]);
+  // Onglets Apparence et Placement : le personnage attend, sans boucle de compétence, jusqu'au choix d'une compétence.
+  const [resting, setResting] = useState(false);
+  const rest = () => {
+    setPendingPlay(null);
+    stageRef.current?.rest();
+    setPlaying(false);
+    setResting(true);
+  };
+  const appearanceTab = tab === "apparence" || tab === "placement";
+  useEffect(() => {
+    if (appearanceTab) rest();
+    else {
+      stageRef.current?.leaveRest();
+      setResting(false);
+    }
+    // À chaque onglet (d'Apparence à Placement aussi), on repart de la pose d'attente.
+  }, [tab]);
   const abilityButtons = {
     abilities: ids.map((id) => ({ id, name: abilityName(id) })),
-    current: abilityId,
+    current: resting ? null : abilityId,
     onPlay: (id: string) => {
       setAbilityId(id);
       setPendingPlay(id);
     },
+    onRest: rest,
   };
   const zoom = useMemo(
     () => ({

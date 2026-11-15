@@ -83,8 +83,10 @@ function appearanceAssets(appearance: Appearance): string[] {
 
 interface AbilityButtonsProps {
   abilities: { id: string; name: string }[];
-  current: string;
+  // Compétence jouée en boucle ; null : pose d'attente.
+  current: string | null;
   onPlay: (id: string) => void;
+  onRest: () => void;
 }
 
 // Réglette de zoom : distance de la caméra au personnage (la molette de la souris la change aussi).
@@ -120,11 +122,14 @@ function ZoomSlider({ zoom }: { zoom: ZoomControl }) {
   );
 }
 
-function AbilityButtons({ abilities, current, onPlay }: AbilityButtonsProps) {
+function AbilityButtons({ abilities, current, onPlay, onRest }: AbilityButtonsProps) {
   return (
     <>
       <h4>Compétences</h4>
       <div className="appearance-abilities">
+        <button className={current === null ? "lab-tab-active" : ""} onClick={onRest} title="Arrêter la compétence : pose d'attente">
+          Idle
+        </button>
         {abilities.map(({ id, name }) => (
           <button key={id} className={id === current ? "lab-tab-active" : ""} onClick={() => onPlay(id)}>
             {name}
@@ -183,6 +188,7 @@ export function AppearancePanel(props: {
         </button>
       </div>
       <ZoomSlider zoom={props.zoom} />
+      <AbilityButtons {...props.abilities} />
       {!appearance ? (
         <div>
           <p className="lab-note">Pas encore d'apparence pour ce camp : le personnage actuel du jeu est affiché.</p>
@@ -363,8 +369,6 @@ export function AppearancePanel(props: {
           </div>
           <p className="lab-note">Placez armes et accessoires sur ce modèle dans l'onglet « Placement ».</p>
 
-          <AbilityButtons {...props.abilities} />
-
           <h4>Assets nécessaires</h4>
           <ul className="appearance-assets">
             {appearanceAssets(appearance).map((asset) => (
@@ -499,6 +503,7 @@ export function PlacementPanel(props: {
         </button>
       </div>
       <ZoomSlider zoom={props.zoom} />
+      <AbilityButtons {...props.abilities} />
       <label className="appearance-row">
         Modèle
         <select value={selection.model} onChange={(e) => setSelection({ ...selection, model: e.target.value })}>
@@ -640,7 +645,6 @@ export function PlacementPanel(props: {
           )}
         </>
       )}
-      <AbilityButtons {...props.abilities} />
     </div>
   );
 }
