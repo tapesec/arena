@@ -30,7 +30,7 @@ import { ArenaState, LoadingState, PlayerState } from "./state";
 import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
 import { envNumber } from "./settings";
-import { ACTIVE_PLAYER_ACTIONS, ActionCounter, browserFamily, telemetry, trackRoom, untrackRoom } from "./telemetry";
+import { ACTIVE_PLAYER_ACTIONS, ActionCounter, type RenderPerf, browserFamily, sanitizePerf, telemetry, trackRoom, untrackRoom } from "./telemetry";
 
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -124,6 +124,11 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       if (this.phase !== "classSelect" || !leader?.leader || !bot?.isBot || bot.team !== leader.team || !classDef) return;
       bot.classId = classDef.id;
     },
+    // Images/s et résolution du client (télémétrie), pendant la partie : le dernier envoi est joint au résultat.
+    perf: (client: Client, message: unknown) => {
+      const perf = sanitizePerf(message);
+      if (perf && this.inMatch) this.perf.set(client.sessionId, perf);
+    },
     // En développement : lancer la partie sans attendre la fin du compte à rebours.
     forceStart: (client: Client) => {
       const player = this.state.players.get(client.sessionId);
@@ -149,6 +154,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   // --- Observabilité (telemetry.ts) ---
   private actions = new ActionCounter();
   private browsers = new Map<string, { browser: string; mobile: boolean }>();
+  private perf = new Map<string, RenderPerf>();
   // Début de la partie (préparation), en temps de simulation ; null tant qu'elle n'a pas commencé.
   private matchStartedAt: number | null = null;
   private humansAtStart = 0;
@@ -227,6 +233,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       won: left === "fin" && winner !== undefined && winner >= 0 ? Number(winner === player.team) : null,
       left,
       ...(this.browsers.get(id) ?? browserFamily(undefined)),
+      // Absent si aucune mesure n'a été reçue pendant la partie (envoi toutes les 30 s, et au départ du joueur).
+      ...this.perf.get(id),
     });
   }
 
@@ -285,11 +293,13 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     // Remplacé par un bot (chargement trop long) : son personnage reste en jeu, joué par le bot.
     if (this.replacedByBot.delete(client.sessionId)) {
       this.browsers.delete(client.sessionId);
+      this.perf.delete(client.sessionId);
       return;
     }
     const player = this.state.players.get(client.sessionId);
     if (player && !player.isBot && this.inMatch) this.reportPlayer(client.sessionId, player, this.shuttingDown ? "arret" : "parti");
     this.browsers.delete(client.sessionId);
+    this.perf.delete(client.sessionId);
     this.combat.remove(client.sessionId);
     this.state.players.delete(client.sessionId);
     this.state.loading.delete(client.sessionId);

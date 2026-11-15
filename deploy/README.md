@@ -35,7 +35,8 @@ Journaux : `journalctl -u dnf-automatic -u arena-maintenance` (Session Manager).
 
 Le serveur écrit ses événements de jeu (`packages/server/src/telemetry.ts`) dans `/var/log/arena/events.log`, une ligne
 JSON par événement : `join` (clic sur « Jouer »), `match_start`, `player_result` (classe, actions, actif à partir de 5
-actions, présence, victoire, départ anticipé), `match_end`, et `snapshot` chaque minute (joueurs connectés et en
+actions, présence, victoire, départ anticipé, et performances d'affichage envoyées par le client : densité de l'écran,
+densité du rendu, images/s moyennes et basses, baisses automatiques de résolution tentées et annulées), `match_end`, et `snapshot` chaque minute (joueurs connectés et en
 partie). Ni IP, ni pseudo, ni identifiant durable : seulement la famille de navigateur.
 
 L'agent CloudWatch (`deploy/observability/`) les envoie dans le groupe `/arena/events` (gardé 30 jours). Des filtres en

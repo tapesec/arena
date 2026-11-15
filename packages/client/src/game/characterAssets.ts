@@ -1,8 +1,11 @@
+import { Animation } from "@babylonjs/core/Animations/animation";
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { AnimatorAvatar } from "@babylonjs/core/Animations/animatorAvatar";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -12,7 +15,22 @@ import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { assetUrl } from "../assets";
-import { MIXAMO_ANIMATIONS, retargetMixamo } from "./mixamo";
+import { MIXAMO_ANIMATIONS, UAL_TO_MIXAMO, retargetMixamo } from "./mixamo";
+import {
+  appearanceUrl,
+  boneName,
+  isHairCut,
+  isMonster,
+  modelFile,
+  PLAY_FRAME,
+  type Appearance,
+  type DefaultSocket,
+  type Mount,
+  type MountedItem,
+  type Recolor,
+} from "./appearance";
+import { gameCharacterFiles, hasBothCamps, raceBody } from "./gameAppearances";
+import { paintCells, tintImage } from "./textureTint";
 import type { Shadows } from "./shadows";
 import { TUNING } from "./tuning";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
@@ -22,13 +40,10 @@ import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLo
 // Agrandissement des personnages (le modèle d'origine mesure 1,84 m).
 const CHARACTER_SCALE = 1.2;
 // Pièces de tenue sans ombre portée (voir plus bas, à l'appel des ombres).
-const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_Beard)|_Acc_|Belt|Bracer/;
+const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))|_Acc_|Belt|Bracer/;
 
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
-
-// Peinture des équipes (0 bleu, 1 rouge), proche de l'anneau au sol.
-const TEAM_PAINT = ["#2c5cb8", "#b8302c"];
 
 // Bibliothèques d'animations : un squelette sans maillage et ses animations.
 export const ANIMATION_LIBRARIES = ["animations/UAL1.glb", "animations/UAL2.glb"];
@@ -46,8 +61,6 @@ interface WeaponMount {
   // Les matériaux listés dans glow brillent légèrement (gemme, glace).
   colors?: Record<string, string>;
   glow?: string[];
-  // Matériaux peints à la couleur de l'équipe (la texture est retirée, le relief gardé).
-  teamPaint?: string[];
   // Où ranger l'arme quand le personnage lance un sort (le bâton passe dans le dos).
   stow?: Placement;
   // Instrument (luth) : pendant une animation de jeu (INSTRUMENT_ANIMATIONS), il passe entre les mains (voir
@@ -99,8 +112,6 @@ export interface CastGesture {
 
 interface CharacterDef {
   model: string;
-  // Matériau de la tenue, dont la couleur dépend de l'équipe (textures characters/<classe>-<équipe>.webp).
-  outfit: string;
   // Teinte des cheveux et sourcils (leur texture est grise, faite pour être teintée).
   hairColor?: string;
   weapons: WeaponMount[];
@@ -156,32 +167,86 @@ function staffStow(middle: number): Placement {
 // droite, un peu vers le ventre ; le manche (-y du modèle) vers la paume gauche ; la table vers l'avant du personnage. Les mains
 // viennent de l'image précédente (une image de retard, invisible).
 function holdInstrument(attach: TransformNode, bones: Map<string, TransformNode>) {
-  const parent = attach.parent as TransformNode | null;
+  if (!followHands(attach, bones, new Vector3(...TORSO_FORWARD))) return;
+  const face = new Vector3(0, 0, 1).applyRotationQuaternion(attach.rotationQuaternion!);
+  const strum = LUTE_STRUM_POINT.scale(attach.scaling.x).applyRotationQuaternion(attach.rotationQuaternion!);
+  attach.position.subtractInPlace(face.scale(LUTE_BEHIND_HAND)).subtractInPlace(strum);
+}
+
+// Repère qui suit les mains, dans celui de son parent : origine sur la paume droite, y de la paume gauche vers la droite,
+// z vers l'avant du buste (forward, dans le repère du parent). Mains confondues ou alignées sur l'avant du buste : pas
+// d'orientation possible, on garde celle de l'image précédente (et on rend false).
+function followHands(node: TransformNode, bones: Map<string, TransformNode>, forward: Vector3): boolean {
+  const parent = node.parent as TransformNode | null;
   const right = palmOf(bones, "r");
   const left = palmOf(bones, "l");
-  if (!parent || !right || !left) return;
+  if (!parent || !right || !left) return false;
   const toParent = parent.getWorldMatrix().clone().invert();
   const r = Vector3.TransformCoordinates(right, toParent);
   const l = Vector3.TransformCoordinates(left, toParent);
-  // Axe y du modèle : de la main gauche (manche) vers la main droite (caisse). Mains confondues ou alignées sur
-  // l'avant du buste : pas d'orientation possible, on garde celle de l'image précédente.
   const up = r.subtract(l);
-  if (up.lengthSquared() < 1e-6) return;
+  if (up.lengthSquared() < 1e-6) return false;
   up.normalize();
-  const forward = new Vector3(...TORSO_FORWARD);
   const face = forward.subtract(up.scale(Vector3.Dot(forward, up)));
-  if (face.lengthSquared() < 1e-6) return;
+  if (face.lengthSquared() < 1e-6) return false;
   face.normalize();
   const side = Vector3.Cross(up, face);
-  const rotation = Quaternion.FromRotationMatrix(Matrix.FromValues(
+  node.rotationQuaternion = Quaternion.FromRotationMatrix(Matrix.FromValues(
     side.x, side.y, side.z, 0,
     up.x, up.y, up.z, 0,
     face.x, face.y, face.z, 0,
     0, 0, 0, 1,
   ));
-  attach.rotationQuaternion = rotation;
-  const strum = LUTE_STRUM_POINT.scale(attach.scaling.x).applyRotationQuaternion(rotation);
-  attach.position.copyFrom(r.subtract(face.scale(LUTE_BEHIND_HAND)).subtract(strum));
+  node.position.copyFrom(r);
+  return true;
+}
+
+// Instrument d'un personnage de l'éditeur d'apparence (voir createCustom) : son attache, le repère qui suit les mains,
+// l'os de sa place (home) et ses placements à sa place (rest, relevé au départ) et joué (play), dans leur repère.
+// releasedAt : instant (s) où l'on a cessé de jouer ; from : placement au début du retour à sa place.
+interface Snapshot {
+  position: Vector3;
+  rotation: Quaternion;
+  scale: number;
+}
+interface PlayedInstrument {
+  node: TransformNode;
+  frame: TransformNode;
+  home: TransformNode;
+  rest: Snapshot | null;
+  play: Snapshot;
+  releasedAt: number | null;
+  from: Snapshot | null;
+}
+
+function snapshot(node: TransformNode): Snapshot {
+  return {
+    position: node.position.clone(),
+    rotation: node.rotationQuaternion?.clone() ?? node.rotation.toQuaternion(),
+    scale: node.scaling.x,
+  };
+}
+
+// Remet un placement, en angles d'Euler (comme ceux réglés dans l'éditeur).
+function applySnapshot(node: TransformNode, { position, rotation, scale }: Snapshot) {
+  node.rotationQuaternion = null;
+  node.position.copyFrom(position);
+  node.rotation.copyFrom(rotation.toEulerAngles());
+  node.scaling.setAll(scale);
+}
+
+// Placement « joué » par défaut d'un luth Quaternius (caisse vers +y du modèle, manche vers -y, table vers +z) : manche
+// tourné vers la main gauche, point gratté (bas de la caisse) sous la paume droite, un peu vers le ventre ; même taille à
+// l'écran qu'à sa place.
+const QUATERNIUS_LUTE_STRUM = new Vector3(0, 0.55, 0.03);
+function defaultPlay(node: TransformNode, torso: TransformNode): Snapshot {
+  node.computeWorldMatrix(true);
+  const torsoScale = torso.absoluteScaling.x || 1;
+  const scale = node.absoluteScaling.x / torsoScale;
+  const rotation = Quaternion.Identity();
+  const strum = QUATERNIUS_LUTE_STRUM.scale(scale).applyRotationQuaternion(rotation);
+  const behind = (LUTE_BEHIND_HAND * CHARACTER_SCALE) / torsoScale;
+  return { position: strum.negate().subtractInPlace(new Vector3(0, 0, behind)), rotation, scale };
 }
 
 // Milieu de la paume : entre le poignet (os de la main) et la base du majeur.
@@ -211,7 +276,6 @@ const GARDIEN_GESTURE_RATE = 2.33 / 1.5;
 export const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
     model: "characters/gardien.glb",
-    outfit: "MI_Knight",
     weapons: [
       { model: "weapons/sword.glb", ...grip("r", SWORD_HANDLE) },
       {
@@ -219,8 +283,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
         bone: "lowerarm_l",
         position: [0, 0.15, 0],
         rotation: [0, -Math.PI / 2, 0],
-        // Le Gardien est presque tout en armure : son bouclier porte la couleur de l'équipe.
-        teamPaint: ["MI_Trim_Furniture"],
       },
     ],
     animations: {
@@ -247,7 +309,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   lame: {
     model: "characters/lame.glb",
-    outfit: "MI_Ranger",
     hairColor: "#3b2a1e",
     weapons: [
       { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35 },
@@ -271,7 +332,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   arcaniste: {
     model: "characters/arcaniste.glb",
-    outfit: "MI_Wizard",
     hairColor: "#7a2418",
     weapons: [
       {
@@ -303,7 +363,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   pretre: {
     model: "characters/pretre.glb",
-    outfit: "MI_Noble",
     hairColor: "#d8b46a",
     weapons: [
       {
@@ -326,7 +385,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   barde: {
     model: "characters/barde.glb",
-    outfit: "MI_Peasant",
     hairColor: "#5a3a22",
     weapons: [
       { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35, hiddenWhilePlaying: true },
@@ -347,11 +405,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
 
 // Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations), et de celles
 // choisies dans animation-lab.html (geste du lanceur, réaction de la cible).
-// Texture de tenue d'une classe pour une équipe (0 ou 1).
-export function teamTexture(classId: string, team: number): string {
-  return `models/characters/${classId}-${team}.webp`;
-}
-
 export function usedAnimations(): Set<string> {
   const names = new Set<string>();
   for (const { animations: set } of Object.values(CHARACTERS)) {
@@ -390,8 +443,9 @@ export interface CharacterInstance {
   hands: TransformNode[];
   // Os du squelette par nom (points d'accroche des effets).
   bones: Map<string, TransformNode>;
-  // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
-  setTeam(team: number): void;
+  // Personnage assemblé dans l'éditeur d'apparence : armes et accessoires par clé de placement (voir appearance.ts),
+  // pour les régler à la souris.
+  attachments?: { key: string; node: TransformNode }[];
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
   setStowed(stowed: boolean): void;
   // Joue de son instrument (luth entre les mains, dague cachée) ou le remet en bandoulière. À appeler à chaque image :
@@ -400,17 +454,28 @@ export interface CharacterInstance {
   dispose(): void;
 }
 
+// Gabarit du reciblage Mixamo : un corps de race des personnages du jeu, sinon le modèle du Prêtre (tous partagent le
+// squelette de nos bibliothèques d'animations).
+export function mixamoTemplate(): string {
+  return raceBody() ?? CHARACTERS.pretre.model;
+}
+
+// Personnage assemblé (voir CharacterAssets.create) : apparence, objets, placements et couleurs des tenues ; body : corps
+// déjà assemblé d'un personnage du jeu.
+export type CustomCharacter = { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount>; recolors: Recolor[]; body?: string };
+
 // Charge une seule fois chaque fichier, puis crée autant d'instances que de joueurs.
 export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
   // Ombres portées : chaque personnage créé (et ses armes) projette son ombre.
   shadows: Shadows | null = null;
-  // Matériaux de tenue par classe et par équipe, partagés par tous les personnages concernés.
-  private outfits = new Map<string, PBRMaterial>();
-  // Matériaux d'arme peints, par matériau d'origine et par équipe.
-  private paints = new Map<string, PBRMaterial>();
   // Animations Mixamo, reciblées une fois sur un personnage modèle invisible (voir mixamo.ts).
   private mixamo: Promise<AnimationGroup[]> | null = null;
+  // Éditeur d'apparence : textures de couleur (variantes, teintes), chargées une fois par fichier et par teinte, avec le
+  // nombre de personnages qui s'en servent (une texture teinte est libérée quand plus personne ne l'utilise).
+  private colorTextures = new Map<string, { texture: Promise<Texture>; uses: number }>();
+  // Éditeur d'apparence : animations reciblées une fois par monstre, sur un exemplaire caché (voir createCustom).
+  private monsterAnimations = new Map<string, Promise<AnimationGroup[]>>();
 
   // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
   constructor(
@@ -421,16 +486,16 @@ export class CharacterAssets {
   }
 
   // Lance le téléchargement de tout ce qui est connu, pour qu'il soit prêt à l'apparition des joueurs.
-  // track : suivi du chargement (écran de chargement). Les textures de tenue, créées à l'apparition des personnages,
-  // sont seulement téléchargées : le navigateur les reprend ensuite de son cache.
-  // Poids : un modèle compte pour 10 sons environ dans la barre de chargement.
+  // track : suivi du chargement (écran de chargement). Poids : un modèle compte pour 10 sons environ dans la barre de chargement.
   preload(track: <T>(task: Promise<T>, weight?: number) => Promise<T> = (task) => task) {
     for (const url of this.libraries) void track(this.load(url), 10);
     void track(this.loadMixamo(), 20);
+    // Personnages des deux camps (corps et objets) ; le modèle d'une classe seulement s'il sert encore.
+    for (const file of gameCharacterFiles()) void track(this.load(file), file.includes("/items/") ? 2 : 10);
     for (const [classId, def] of Object.entries(CHARACTERS)) {
+      if (hasBothCamps(classId)) continue;
       void track(this.load(def.model), 10);
       for (const weapon of def.weapons) void track(this.load(weapon.model), 2);
-      for (const team of [0, 1]) void track(fetch(assetUrl(teamTexture(classId, team))).then((r) => r.blob()));
     }
   }
 
@@ -458,7 +523,7 @@ export class CharacterAssets {
   // le même squelette) reste caché ; les animations obtenues se clonent ensuite sur chaque personnage, par nom d'os.
   private loadMixamo(): Promise<AnimationGroup[]> {
     this.mixamo ??= (async () => {
-      const model = await this.load(CHARACTERS.pretre.model);
+      const model = await this.load(mixamoTemplate());
       const template = model.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
       const root = template.rootNodes[0] as TransformNode;
       root.setEnabled(false);
@@ -477,9 +542,13 @@ export class CharacterAssets {
     return this.mixamo;
   }
 
-  async create(classId: string, parent: TransformNode, only?: ReadonlySet<string>): Promise<CharacterInstance | null> {
+  // custom : personnage assemblé dans l'éditeur d'apparence (développement), à la place du modèle de la classe, avec
+  // ses objets à accrocher (voir mountedItems) et leurs placements réglés pour ce modèle (par clé) ; ou personnage du
+  // jeu construit d'après lui (GameAppearance : corps préassemblé, voir scripts/build-appearances.ts).
+  async create(classId: string, parent: TransformNode, only?: ReadonlySet<string>, custom?: CustomCharacter): Promise<CharacterInstance | null> {
     const def = CHARACTERS[classId];
     if (!def) return null;
+    if (custom) return this.createCustom(def, custom, parent, only);
     const [character, libraries, weaponContainers, mixamo] = await Promise.all([
       this.load(def.model),
       Promise.all(this.libraries.map((url) => this.load(url))),
@@ -529,7 +598,6 @@ export class CharacterAssets {
       from: { position: Vector3; rotation: Quaternion } | null;
     }[] = [];
     const hiddenWhilePlaying: TransformNode[] = [];
-    const teamPainted: { mesh: AbstractMesh; base: PBRMaterial }[] = [];
     def.weapons.forEach((mount, i) => {
       const bone = bones.get(mount.bone);
       if (!bone) return;
@@ -560,10 +628,6 @@ export class CharacterAssets {
         });
       }
       if (mount.hiddenWhilePlaying) hiddenWhilePlaying.push(attach);
-      const paintable = mount.teamPaint ?? [];
-      for (const mesh of attach.getChildMeshes(false)) {
-        if (mesh.material && paintable.includes(mesh.material.name)) teamPainted.push({ mesh, base: mesh.material as PBRMaterial });
-      }
       weapons.push(attach);
     });
 
@@ -575,8 +639,6 @@ export class CharacterAssets {
         if (material?.name.startsWith("MI_Hair")) material.albedoColor = color;
       }
     }
-    const outfitMeshes = meshes.filter((mesh) => mesh.material?.name === def.outfit);
-    const baseOutfit = outfitMeshes[0]?.material as PBRMaterial | undefined;
     for (const attach of weapons) meshes.push(...attach.getChildMeshes(false));
     // Les petites pièces posées sur le corps (yeux, accessoires, ceintures…) ne projettent pas d'ombre : vue du soleil,
     // elles restent dans la silhouette du corps, et chacune coûterait un appel de dessin de plus à chaque image.
@@ -590,13 +652,6 @@ export class CharacterAssets {
       weapons,
       hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
       bones,
-      setTeam: (team) => {
-        if (baseOutfit) {
-          const material = this.outfitMaterial(classId, team, baseOutfit);
-          for (const mesh of outfitMeshes) mesh.material = material;
-        }
-        for (const { mesh, base } of teamPainted) mesh.material = this.paintMaterial(base, team);
-      },
       setStowed: (stowed) => {
         for (const weapon of stowable) {
           const placement = stowed ? weapon.stowed : weapon.held;
@@ -655,28 +710,490 @@ export class CharacterAssets {
     };
   }
 
-  private paintMaterial(base: PBRMaterial, team: number): PBRMaterial {
-    const key = `${base.uniqueId}-${team}`;
-    let material = this.paints.get(key);
-    if (!material) {
-      material = base.clone(`${base.name}-${team}`);
-      material.albedoTexture = null;
-      material.albedoColor = Color3.FromHexString(TEAM_PAINT[team] ?? TEAM_PAINT[0]).toLinearSpace();
-      this.paints.set(key, material);
+  // Personnage de l'éditeur d'apparence : corps d'une race et pièces de tenue (toutes sur le même squelette), ou
+  // monstre (squelette Mixamo, animations reciblées), plus ses armes et accessoires aux placements réglés. Il garde
+  // les animations de sa classe ; pas d'arme rangée. Avec body (personnage du jeu), le corps est ce fichier déjà
+  // assemblé et les fichiers sont relatifs à public/models/ ; sinon, ce sont ceux de l'éditeur.
+  private async createCustom(
+    def: CharacterDef,
+    { appearance, items, mounts, recolors, body }: CustomCharacter,
+    parent: TransformNode,
+    only?: ReadonlySet<string>,
+  ): Promise<CharacterInstance> {
+    const url = body ? (file: string) => file : appearanceUrl;
+    const monster = isMonster(appearance.model);
+    const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
+    // Textures de couleur réservées dès le départ : rendues si la création échoue. Pour chaque objet dont des cases de
+    // la palette Hearthfold sont repeintes, sa palette repeinte.
+    const colorKeys = recolors.map((recolor) => this.acquireColorTexture(recolor));
+    const itemKeys = items.map((item) => {
+      const cells = Object.fromEntries(
+        Object.entries(item.colors ?? {})
+          .filter(([zone]) => /^c\d+$/.test(zone))
+          .map(([zone, color]) => [Number(zone.slice(1)), color]),
+      );
+      if (!item.palette || !Object.keys(cells).length) return null;
+      return this.acquireColorTexture({ material: item.palette.material, texture: item.palette.texture, cells: { grid: item.palette.grid, colors: cells } });
+    });
+    const releaseAll = () => {
+      for (const key of [...colorKeys, ...itemKeys]) if (key) this.releaseColorTexture(key);
+    };
+    let loaded;
+    try {
+      loaded = await Promise.all([
+        Promise.all(colorKeys.map((key) => this.colorTextures.get(key)!.texture)),
+        Promise.all(itemKeys.map((key) => (key ? this.colorTextures.get(key)!.texture : null))),
+        this.load(body ?? appearanceUrl(modelFile(appearance))),
+      Promise.all(this.libraries.map((url) => this.load(url))),
+      this.loadMixamo(),
+      Promise.all(pieceFiles.map((file) => this.load(appearanceUrl(file)))),
+        Promise.all(items.map((item) => this.load(url(item.file)))),
+      ]);
+    } catch (error) {
+      releaseAll();
+      throw error;
     }
-    return material;
+    const [textures, itemTextures, base, libraries, mixamo, pieces, held] = loaded;
+
+    const entries = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+    const root = entries.rootNodes[0] as TransformNode;
+    root.parent = parent;
+    root.scaling.scaleInPlace(CHARACTER_SCALE);
+    const nodes = new Map<string, TransformNode>();
+    for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
+    const cleanup: (() => void)[] = [releaseAll];
+    const meshes = root.getChildMeshes(false);
+
+    // Pièces de tenue et coiffures : chacune arrive avec sa copie du squelette ; ses os suivent ceux du corps.
+    for (const piece of pieces) {
+      const pieceEntries = piece.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const pieceRoot = pieceEntries.rootNodes[0] as TransformNode;
+      pieceRoot.parent = parent;
+      pieceRoot.scaling.scaleInPlace(CHARACTER_SCALE);
+      for (const skeleton of pieceEntries.skeletons) {
+        for (const bone of skeleton.bones) {
+          const node = nodes.get(bone.name);
+          if (node) bone.linkTransformNode(node);
+        }
+      }
+      meshes.push(...pieceRoot.getChildMeshes(false));
+      cleanup.push(() => {
+        pieceRoot.dispose(false, false);
+        for (const skeleton of pieceEntries.skeletons) skeleton.dispose();
+      });
+    }
+
+    // Cheveux : ceux d'une race retirés (crâne rasé, ou une autre coupe les remplace), et teinte choisie des coiffures
+    // humaines et des sourcils (sur une copie des matériaux, partagés avec les autres personnages du même fichier).
+    if (appearance.raceHair === false || appearance.hair.some(isHairCut)) {
+      for (const mesh of meshes.filter((m) => m.name.endsWith("_Hair") && m.isDescendantOf(root))) {
+        meshes.splice(meshes.indexOf(mesh), 1);
+        mesh.dispose();
+      }
+    }
+    if (appearance.hairColor) {
+      const color = Color3.FromHexString(appearance.hairColor);
+      const tinted = new Map<PBRMaterial, PBRMaterial>();
+      for (const mesh of meshes) {
+        const material = mesh.material as PBRMaterial | null;
+        if (!material || !material.name.startsWith("MI_Hair")) continue;
+        let copy = tinted.get(material);
+        if (!copy) {
+          copy = material.clone(`${material.name}-tinted`);
+          copy.albedoColor = color;
+          tinted.set(material, copy);
+        }
+        mesh.material = copy;
+      }
+      cleanup.push(() => {
+        // Les textures des copies sont partagées avec les matériaux d'origine : seule la copie est libérée.
+        for (const copy of tinted.values()) copy.dispose(false, true);
+      });
+    }
+
+    // Couleurs : la texture de couleur des matériaux concernés est remplacée, sur une copie du matériau (partagé avec les
+    // autres personnages du même fichier). Les textures, elles, sont partagées entre personnages.
+    recolors.forEach((recolor, i) => {
+      const copies = new Map<PBRMaterial, PBRMaterial>();
+      for (const mesh of meshes) {
+        const material = mesh.material as PBRMaterial | null;
+        if (material?.name !== recolor.material) continue;
+        let copy = copies.get(material);
+        if (!copy) {
+          copy = material.clone(`${material.name}-recolor`);
+          copy.albedoTexture?.dispose();
+          copy.albedoTexture = textures[i];
+          copies.set(material, copy);
+        }
+        mesh.material = copy;
+      }
+      cleanup.push(() => {
+        for (const copy of copies.values()) {
+          copy.albedoTexture = null;
+          copy.dispose(false, true);
+        }
+      });
+    });
+
+    // Os par nom : ceux du modèle, plus nos noms d'os pour un monstre (points d'accroche des effets).
+    const bones = new Map(nodes);
+    if (monster) {
+      for (const [ours, mixamoName] of UAL_TO_MIXAMO) {
+        const node = nodes.get(mixamoName);
+        if (node && !bones.has(ours)) bones.set(ours, node);
+      }
+    }
+
+    // Armes et accessoires, placés avant les animations : un placement par défaut se calcule sur la pose de repos.
+    for (const node of [root, ...root.getDescendants(false)]) (node as TransformNode).computeWorldMatrix?.(true);
+    const attachments: { key: string; node: TransformNode }[] = [];
+    items.forEach((item, i) => {
+      const fbx = item.file.endsWith(".fbx");
+      // Arme en main d'un corps Quaternius : la prise des armes du jeu (lame vers le haut du modèle, poignée au point
+      // d'origine) ; sinon, posé droit au point d'accroche.
+      const hand = !monster && /@(right|left)$/.test(item.key);
+      const mount =
+        mounts[item.key] ??
+        (hand
+          ? { ...grip(item.socket.bone.endsWith("r") ? "r" : "l", 0), scale: fbx ? 0.01 : 1 }
+          : item.hang
+            ? defaultHangMount(root, nodes, appearance.model, item.socket)
+            : defaultMount(root, nodes, appearance.model, item.socket, fbx));
+      const bone = mount && nodes.get(mount.bone);
+      if (!mount || !bone) return;
+      const attach = new TransformNode(`attach-${item.key}`, this.scene);
+      if (item.hang) {
+        // Cape : un cadre suit l'os en restant droit et tourné comme le personnage, avec son balancement ; le placement
+        // réglé (position, rotation, taille) se fait dans ce cadre.
+        const frame = new TransformNode(`hang-${item.key}`, this.scene);
+        frame.parent = parent;
+        attach.parent = frame;
+        attach.metadata = { mountBone: bone.name };
+        const observer = hangCape(this.scene, frame, root, bone);
+        cleanup.push(() => {
+          observer.remove();
+          frame.dispose(false, false);
+        });
+      } else attach.parent = bone;
+      attach.position.set(...mount.position);
+      attach.rotation.set(...mount.rotation);
+      attach.scaling.setAll(mount.scale);
+      const instance = held[i].instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      for (const node of instance.rootNodes) {
+        if (node.name === "__root__" || node.name === "__fbx_root__") {
+          for (const child of node.getChildren()) (child as TransformNode).parent = attach;
+          node.dispose();
+        } else (node as TransformNode).parent = attach;
+      }
+      // Paire : la pièce droite est à la racine, la gauche en enfant « _L » (décalée comme portée) ; on garde l'une
+      // ou l'autre, la gauche ramenée sur son propre point d'accroche.
+      if (item.part) {
+        const left = attach.getDescendants(false).find((node) => node.name.endsWith("_L")) as TransformNode | undefined;
+        if (item.part === "right") left?.dispose();
+        else if (left) {
+          const right = attach.getChildren();
+          left.parent = attach;
+          left.position.setAll(0);
+          for (const node of right) if (node !== left) node.dispose();
+        }
+      }
+      if (item.colors) {
+        const copies = paintItem(this.scene, attach, item.colors, item.palette?.material, itemTextures[i]);
+        cleanup.push(() => copies.forEach(disposePainted));
+      }
+      meshes.push(...attach.getChildMeshes(false));
+      attachments.push({ key: item.key, node: attach });
+    });
+
+    // Instruments : pendant une animation de jeu, le luth quitte sa place (dans le dos) pour un repère qui suit les mains
+    // (voir followHands), accroché au buste ; son placement « joué » s'y règle (onglet Placement, clé playKey). L'avant du
+    // buste est mesuré ici, sur la pose de repos : la droite du personnage (de la paume gauche à la droite) croisée avec
+    // le haut.
+    const torso = bones.get("spine_03") ?? root;
+    const restRightPalm = palmOf(bones, "r");
+    const restLeftPalm = palmOf(bones, "l");
+    const forward =
+      restRightPalm && restLeftPalm
+        ? Vector3.TransformNormal(Vector3.Cross(restRightPalm.subtract(restLeftPalm), Vector3.Up()), torso.getWorldMatrix().clone().invert()).normalize()
+        : new Vector3(...TORSO_FORWARD);
+    const players: PlayedInstrument[] = [];
+    for (const item of items) {
+      const node = item.playKey && attachments.find((a) => a.key === item.key)?.node;
+      if (!item.playKey || !node) continue;
+      const frame = new TransformNode(PLAY_FRAME, this.scene);
+      frame.parent = torso;
+      cleanup.push(() => frame.dispose(false, false));
+      const tuned = mounts[item.playKey];
+      players.push({
+        node,
+        frame,
+        home: node.parent as TransformNode,
+        rest: null,
+        play: tuned
+          ? { position: new Vector3(...tuned.position), rotation: Quaternion.FromEulerAngles(...tuned.rotation), scale: tuned.scale }
+          : defaultPlay(node, torso),
+        releasedAt: null,
+        from: null,
+      });
+      attachments.push({ key: item.playKey, node });
+    }
+    // Armes tenues en main, cachées pendant qu'on joue (la main qui gratte).
+    const instrumentNodes = new Set(players.map((p) => p.node));
+    const hiddenWhilePlaying = attachments
+      .filter((a) => /@(right|left)$/.test(a.key) && !instrumentNodes.has(a.node))
+      .map((a) => a.node);
+
+    // Animations rebranchées par nom d'os : celles de nos bibliothèques pour un corps (même squelette), celles
+    // reciblées une fois pour ce monstre sinon.
+    let sources = [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
+    if (monster) {
+      try {
+        sources = await this.monsterAnimationsOf(appearance.model, base, sources);
+      } catch (error) {
+        // Échec : tout ce qui a déjà été créé (pièces, capes et leur balancement, objets, corps) est libéré.
+        for (const { node } of attachments) node.dispose(false, false);
+        for (const run of cleanup) run();
+        root.dispose(false, false);
+        for (const skeleton of entries.skeletons) skeleton.dispose();
+        throw error;
+      }
+    }
+    const animations = new Map<string, AnimationGroup>();
+    for (const group of sources) {
+      if (only && !only.has(group.name)) continue;
+      const clone = group.clone(group.name, (target: { name: string }) => nodes.get(target.name) ?? null);
+      clone.stop();
+      animations.set(group.name, clone);
+    }
+
+    this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
+    // Points d'accroche « arme » des effets : armes et accessoires tenus par un os, pas les capes (qui se balancent).
+    const weapons = attachments.filter((a) => !items.find((item) => item.key === a.key)?.hang).map((a) => a.node);
+    return {
+      root,
+      set: def.animations,
+      meshes,
+      animations,
+      weapons,
+      attachments,
+      hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
+      bones,
+      setStowed: () => undefined,
+      setPlaying: (playing, instant = false) => {
+        const now = performance.now() / 1000;
+        // Sans instrument, rien n'est caché.
+        let busy = playing && players.length > 0;
+        for (const p of players) {
+          const { node, frame } = p;
+          if (playing) {
+            // Reprise pendant le retour : le luth est à mi-chemin, sa place reste celle relevée au départ.
+            const returning = !!p.from;
+            p.releasedAt = null;
+            p.from = null;
+            if (node.parent !== frame) {
+              // Sa place dans le dos est relevée à chaque départ (elle a pu être réglée entre-temps).
+              if (!returning || !p.rest) p.rest = snapshot(node);
+              node.parent = frame;
+              applySnapshot(node, p.play);
+            }
+            followHands(frame, bones, forward);
+            continue;
+          }
+          // Déjà à sa place.
+          if (node.parent !== frame && !p.from) continue;
+          p.releasedAt ??= now;
+          const elapsed = now - p.releasedAt;
+          if (node.parent === frame) {
+            if (!instant && elapsed < INSTRUMENT_FOLLOW) {
+              followHands(frame, bones, forward);
+              busy = true;
+              continue;
+            }
+            // Le placement « joué » (réglé entre-temps peut-être) est gardé pour la prochaine fois ; le luth repart de là
+            // où il est à l'écran, dans le repère de sa place.
+            p.play = snapshot(node);
+            node.rotationQuaternion ??= node.rotation.toQuaternion();
+            frame.computeWorldMatrix(true);
+            node.computeWorldMatrix(true);
+            node.setParent(p.home);
+            p.from = snapshot(node);
+          }
+          const rest = p.rest ?? snapshot(node);
+          const progress = instant ? 1 : Math.min(1, (elapsed - INSTRUMENT_FOLLOW) / INSTRUMENT_RETURN);
+          if (progress >= 1 || !p.from) {
+            applySnapshot(node, rest);
+            p.releasedAt = null;
+            p.from = null;
+            continue;
+          }
+          const eased = progress * progress * (3 - 2 * progress);
+          Vector3.LerpToRef(p.from.position, rest.position, eased, node.position);
+          node.rotationQuaternion ??= new Quaternion();
+          Quaternion.SlerpToRef(p.from.rotation, rest.rotation, eased, node.rotationQuaternion);
+          node.scaling.setAll(p.from.scale + (rest.scale - p.from.scale) * eased);
+          busy = true;
+        }
+        // Les armes en main reviennent une fois le luth rangé.
+        for (const node of hiddenWhilePlaying) node.setEnabled(!busy);
+      },
+      dispose() {
+        for (const group of animations.values()) group.dispose();
+        for (const { node } of attachments) node.dispose(false, false);
+        for (const run of cleanup) run();
+        root.dispose(false, false);
+        for (const skeleton of entries.skeletons) skeleton.dispose();
+      },
+    };
   }
 
-  private outfitMaterial(classId: string, team: number, base: PBRMaterial): PBRMaterial {
-    const key = `${classId}-${team}`;
-    let material = this.outfits.get(key);
-    if (!material) {
-      material = base.clone(`${base.name}-${team}`);
-      material.albedoTexture = new Texture(assetUrl(teamTexture(classId, team)), this.scene, false, false);
-      this.outfits.set(key, material);
+  // Réserve la texture de couleur d'un matériau (éditeur d'apparence), teinte au besoin, et rend sa clé. Mêmes réglages
+  // que les textures des glTF (pas d'inversion verticale). Un échec de chargement n'est pas gardé : on réessaiera.
+  private acquireColorTexture({ texture, tint, cells }: Recolor): string {
+    const painted = cells
+      ? Object.entries(cells.colors)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([cell, color]) => `${cell}=${color}`)
+          .join(",")
+      : "";
+    const key = `${texture}|${tint ? `${tint.from}>${tint.color}` : ""}${painted}`;
+    let entry = this.colorTextures.get(key);
+    if (!entry) {
+      const source = async () => (cells ? paintCells(texture, cells.grid, cells.colors) : tint ? tintImage(texture, tint.color, tint.from) : texture);
+      const promise = (async () => new Texture(await source(), this.scene, false, false))();
+      entry = { texture: promise, uses: 0 };
+      this.colorTextures.set(key, entry);
+      promise.catch(() => this.colorTextures.delete(key));
     }
-    return material;
+    entry.uses++;
+    return key;
   }
+
+  // Rend une texture de couleur : une teinte que plus personne n'utilise est libérée (les variantes du pack restent).
+  private releaseColorTexture(key: string) {
+    const entry = this.colorTextures.get(key);
+    if (!entry || --entry.uses > 0 || key.endsWith("|")) return;
+    this.colorTextures.delete(key);
+    void entry.texture.then((texture) => texture.dispose()).catch(() => undefined);
+  }
+
+  // Recible nos animations sur le squelette Mixamo d'un monstre (poses de repos différentes), une seule fois, sur un
+  // exemplaire caché : les animations obtenues visent ses os par leur nom et se clonent sur chaque personnage. Les
+  // déplacements d'os sont retirés (les os Mixamo n'ont pas nos proportions), sauf celui du bassin, mis à l'échelle du
+  // monstre (voir scaledHipsAnimation).
+  private monsterAnimationsOf(model: string, base: AssetContainer, sources: AnimationGroup[]): Promise<AnimationGroup[]> {
+    let groups = this.monsterAnimations.get(model);
+    if (!groups) {
+      const template = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const root = template.rootNodes[0] as TransformNode;
+      root.setEnabled(false);
+      const present = new Set(root.getDescendants(false).map((node) => node.name));
+      const names = new Map([...UAL_TO_MIXAMO].filter(([, mixamoName]) => present.has(mixamoName)));
+      const avatar = new AnimatorAvatar(`avatar-${model}`, root, false, false);
+      // Les os de nos personnages absents chez le monstre (doigts…) sont simplement ignorés.
+      avatar.showWarnings = false;
+      // Bassin : sa hauteur et ses déplacements suivent ceux de nos animations, à l'échelle du monstre (il descend au sol
+      // quand on meurt) ; les positions des autres os (à nos proportions) sont retirées.
+      const hips = names.get("pelvis");
+      const hipsNode = hips ? root.getDescendants(false).find((node) => node.name === hips) : undefined;
+      groups = Promise.resolve(
+        sources.map((group) => {
+          const retargeted = avatar.retargetAnimationGroup(group, { mapNodeNames: names, animationGroupName: group.name, fixRootPosition: false });
+          for (const target of [...retargeted.targetedAnimations]) {
+            if (target.animation.targetProperty === "position") retargeted.removeTargetedAnimation(target.animation);
+          }
+          const pelvis = group.targetedAnimations.find((t) => t.animation.targetProperty === "position" && (t.target as { name?: string }).name === "pelvis");
+          if (pelvis && hipsNode instanceof TransformNode) {
+            retargeted.addTargetedAnimation(scaledHipsAnimation(pelvis.animation, pelvis.target as TransformNode, hipsNode), hipsNode);
+          }
+          retargeted.stop();
+          return retargeted;
+        }),
+      );
+      this.monsterAnimations.set(model, groups);
+    }
+    return groups;
+  }
+}
+
+// Position du bassin d'une de nos animations, rapportée au bassin d'un monstre : chaque déplacement par rapport à la
+// pose de repos est passé dans le repère du monde, mis à l'échelle (hauteur du bassin du monstre sur la nôtre), puis
+// ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas.
+function scaledHipsAnimation(source: Animation, pelvis: TransformNode, hips: TransformNode): Animation {
+  const sourceParent = pelvis.parent as TransformNode | null;
+  const targetParent = hips.parent as TransformNode | null;
+  sourceParent?.computeWorldMatrix(true);
+  targetParent?.computeWorldMatrix(true);
+  pelvis.computeWorldMatrix(true);
+  hips.computeWorldMatrix(true);
+  const ratio = hips.absolutePosition.y / (pelvis.absolutePosition.y || 1);
+  const toWorld = sourceParent?.getWorldMatrix() ?? Matrix.IdentityReadOnly;
+  const fromWorld = targetParent ? targetParent.getWorldMatrix().clone().invert() : Matrix.Identity();
+  const sourceRest = pelvis.position.clone();
+  const targetRest = hips.position.clone();
+  const animation = new Animation(`${source.name}-hips`, "position", source.framePerSecond, Animation.ANIMATIONTYPE_VECTOR3, source.loopMode);
+  animation.setKeys(
+    source.getKeys().map((key) => {
+      const delta = Vector3.TransformNormal((key.value as Vector3).subtract(sourceRest), toWorld).scaleInPlace(ratio);
+      return { frame: key.frame, value: targetRest.add(Vector3.TransformNormal(delta, fromWorld)) };
+    }),
+  );
+  return animation;
+}
+
+// Couleurs choisies d'une arme ou d'un accessoire de l'éditeur d'apparence, sur des copies de ses matériaux (partagés avec
+// les autres exemplaires du même fichier) : une zone « m:<nom> » donne sa couleur au matériau de ce nom (couleur unie
+// d'un FBX, ou teinte multipliée par la texture d'un glTF ; blanc : inchangé), et la palette repeinte remplace la texture du matériau de la
+// palette. Rend les copies (à libérer avec disposePainted).
+function paintItem(scene: Scene, attach: TransformNode, colors: Record<string, string>, paletteMaterial: string | undefined, palette: Texture | null): Material[] {
+  const copies = new Map<Material, Material>();
+  const copyOf = (material: Material): Material => {
+    let copy = copies.get(material);
+    if (copy) return copy;
+    if (material instanceof MultiMaterial) {
+      // Copiée seulement si un de ses sous-matériaux change.
+      const subs = material.subMaterials.map((sub) => sub && copyOf(sub));
+      if (subs.every((sub, i) => sub === material.subMaterials[i])) {
+        copies.set(material, material);
+        return material;
+      }
+      const multi = new MultiMaterial(`${material.name}-painted`, scene);
+      multi.subMaterials = subs;
+      copy = multi;
+    } else {
+      // Le chargeur FBX renomme les copies qu'il fait d'un matériau (couleurs de sommets, faces visibles des deux côtés).
+      const name = material.name.replace(/(_CullingOff|_VertexColor)+$/, "");
+      const color = colors[`m:${name}`];
+      const repaint = !!palette && name === paletteMaterial;
+      const clone = color || repaint ? material.clone(`${material.name}-painted`) : null;
+      if (!clone) {
+        copies.set(material, material);
+        return material;
+      }
+      copy = clone;
+      // Couleurs des matériaux : linéaires (celles du fichier) ; la couleur choisie est en sRGB.
+      const linear = color && Color3.FromHexString(color).toLinearSpace();
+      if (linear && copy instanceof StandardMaterial) copy.diffuseColor = linear;
+      else if (linear) (copy as PBRMaterial).albedoColor = linear;
+      if (repaint) {
+        const pbr = copy as PBRMaterial;
+        pbr.albedoTexture?.dispose();
+        pbr.albedoTexture = palette;
+        copy.metadata = { paintedPalette: true };
+      }
+    }
+    copies.set(material, copy);
+    return copy;
+  };
+  for (const mesh of attach.getChildMeshes(false)) if (mesh.material) mesh.material = copyOf(mesh.material);
+  return [...copies].filter(([source, copy]) => source !== copy).map(([, copy]) => copy);
+}
+
+// Libère une copie de paintItem : la palette repeinte est partagée (rendue à part), les autres textures de la copie
+// aussi (libérées avec elle, elles ne font que baisser le compteur de la texture d'origine).
+function disposePainted(copy: Material) {
+  if (copy instanceof MultiMaterial) return copy.dispose(false, false, false);
+  if (copy.metadata?.paintedPalette) (copy as PBRMaterial).albedoTexture = null;
+  copy.dispose(false, true);
 }
 
 // Colore les matériaux d'une arme d'après leur nom (sous-matériaux compris).
@@ -693,4 +1210,112 @@ function paintWeapon(attach: TransformNode, colors: Record<string, string>, glow
       if (glow.includes(sub.name)) sub.emissiveColor = color.scale(0.45);
     }
   }
+}
+
+// Balancement des capes : angle d'envol vers l'arrière (radians) par unité du modèle par seconde du haut de la cape vers
+// l'avant (une unité vaut CHARACTER_SCALE mètres dans la scène), et de côté par unité par seconde de côté ; angles
+// maximaux ; ressort amorti qui les suit (raideur, amortissement : un léger dépassement, la cape revient en se
+// balançant). Au-delà de CAPE_JUMP unités par seconde, c'est un saut (animation qui reboucle, téléportation) : ignoré.
+const CAPE_LIFT = 0.35;
+const CAPE_SIDE = 0.25;
+const CAPE_MAX_LIFT = 1;
+const CAPE_MAX_SIDE = 0.4;
+const CAPE_STIFFNESS = 30;
+const CAPE_DAMPING = 7;
+const CAPE_JUMP = 10;
+
+// Tient une cape droite à chaque image : son cadre (enfant de parent, le support du personnage) se place à l'os, tourné
+// comme le personnage mais sans suivre l'inclinaison du buste, et s'incline avec le mouvement du haut de la cape. Les
+// positions sont celles de l'image précédente (un décalage invisible).
+function hangCape(scene: Scene, frame: TransformNode, root: TransformNode, bone: TransformNode) {
+  const swing = { lift: 0, liftSpeed: 0, side: 0, sideSpeed: 0 };
+  // Objets de calcul réutilisés à chaque image.
+  const last = new Vector3();
+  let started = false;
+  const at = new Vector3();
+  const velocity = new Vector3();
+  const rootScale = new Vector3();
+  const rootRotation = new Quaternion();
+  const inverse = new Matrix();
+  const tilt = new Matrix();
+  const placed = new Matrix();
+  const world = new Matrix();
+  frame.rotationQuaternion ??= new Quaternion();
+  return scene.onBeforeRenderObservable.add(() => {
+    const elapsed = scene.getEngine().getDeltaTime() / 1000;
+    // Pas du ressort borné (stabilité après un à-coup) ; la vitesse, elle, se mesure sur le temps réel écoulé.
+    const dt = Math.min(elapsed, 0.05);
+    at.copyFrom(bone.getAbsolutePosition());
+    const rootWorld = root.getWorldMatrix();
+    rootWorld.decompose(rootScale, rootRotation);
+    let lift = 0;
+    let side = 0;
+    if (started && elapsed > 0) {
+      // Vitesse du haut de la cape dans le repère du personnage (z vers l'avant, x sur le côté).
+      rootWorld.invertToRef(inverse);
+      at.subtractToRef(last, velocity).scaleInPlace(1 / elapsed);
+      Vector3.TransformNormalToRef(velocity, inverse, velocity);
+      if (velocity.length() < CAPE_JUMP) {
+        lift = Math.max(0, Math.min(CAPE_MAX_LIFT, velocity.z * CAPE_LIFT));
+        side = Math.max(-CAPE_MAX_SIDE, Math.min(CAPE_MAX_SIDE, -velocity.x * CAPE_SIDE));
+      }
+    }
+    last.copyFrom(at);
+    started = true;
+    swing.liftSpeed += ((lift - swing.lift) * CAPE_STIFFNESS - swing.liftSpeed * CAPE_DAMPING) * dt;
+    swing.sideSpeed += ((side - swing.side) * CAPE_STIFFNESS - swing.sideSpeed * CAPE_DAMPING) * dt;
+    swing.lift += swing.liftSpeed * dt;
+    swing.side += swing.sideSpeed * dt;
+    // Inclinaison dans le repère du personnage (le bas part vers l'arrière, -z), puis repère du personnage posé à l'os.
+    Matrix.RotationYawPitchRollToRef(0, swing.lift, swing.side, tilt);
+    Matrix.ComposeToRef(rootScale, rootRotation, at, placed);
+    tilt.multiplyToRef(placed, world);
+    const parent = frame.parent as TransformNode | null;
+    if (parent) {
+      parent.getWorldMatrix().invertToRef(inverse);
+      world.multiplyToRef(inverse, world);
+    }
+    world.decompose(frame.scaling, frame.rotationQuaternion!, frame.position);
+  });
+}
+
+// Placement par défaut d'une cape, dans son cadre (repère du personnage posé sur l'os) : le point d'accroche, un peu en
+// arrière comme le prévoit le pack (6 cm derrière l'axe du corps, à l'échelle du modèle), droite, à sa taille d'origine.
+function defaultHangMount(root: TransformNode, nodes: Map<string, TransformNode>, model: string, socket: DefaultSocket): Mount | null {
+  const bone = nodes.get(boneName(model, socket.bone));
+  const at = nodes.get(boneName(model, socket.at ?? socket.bone));
+  if (!bone || !at) return null;
+  const rootScale = new Vector3();
+  const rootRotation = new Quaternion();
+  root.getWorldMatrix().decompose(rootScale, rootRotation);
+  const frame = Matrix.Compose(rootScale, rootRotation, bone.getAbsolutePosition());
+  const point = Vector3.TransformCoordinates(at.getAbsolutePosition(), frame.invert());
+  return { bone: bone.name, position: [point.x, point.y, point.z - 0.06], rotation: [0, 0, 0], scale: 1 };
+}
+
+// Placement par défaut d'un objet de l'éditeur d'apparence : posé au point d'accroche, droit et tourné comme le
+// personnage dans sa pose de repos, à sa taille d'origine (centimètres pour un FBX).
+function defaultMount(root: TransformNode, nodes: Map<string, TransformNode>, model: string, socket: DefaultSocket, fbx: boolean): Mount | null {
+  const bone = nodes.get(boneName(model, socket.bone));
+  const at = nodes.get(boneName(model, socket.at ?? socket.bone));
+  if (!bone || !at) return null;
+  const rootScale = new Vector3();
+  const rootRotation = new Quaternion();
+  root.getWorldMatrix().decompose(rootScale, rootRotation);
+  const point = at.getAbsolutePosition().clone();
+  if (socket.ground) point.y = root.getAbsolutePosition().y;
+  const unit = fbx ? 0.01 : 1;
+  const world = Matrix.Compose(rootScale.scale(unit), rootRotation, point);
+  const local = world.multiply(bone.getWorldMatrix().clone().invert());
+  const scale = new Vector3();
+  const rotation = new Quaternion();
+  const position = new Vector3();
+  local.decompose(scale, rotation, position);
+  const euler = rotation.toEulerAngles();
+  return {
+    bone: bone.name,
+    position: [position.x, position.y, position.z],
+    rotation: [euler.x, euler.y, euler.z],
+    scale: Math.abs(scale.x),
+  };
 }

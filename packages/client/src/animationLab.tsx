@@ -94,6 +94,17 @@ import soundCatalog from "./audio/soundCatalog.json";
 import { EMPTY_EDITS, GAME_SOUND, gameGroupIdsUsing, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
 import { SoundEditor, SoundList, SoundPending, soundPlayer } from "./soundLab";
 import { CommonSoundsPane } from "./commonSoundsLab";
+import {
+  AppearancePanel,
+  DEFAULT_PLACEMENT,
+  PlacementPanel,
+  placementAppearance,
+  placementFor,
+  placementKey,
+  type PlacementSelection,
+} from "./appearanceLab";
+import { mountedItems, recolorsOf, sanitizedAppearance } from "./appearanceData";
+import { EMPTY_APPEARANCES, PLAY_SLOT, type Appearance, type AppearanceFile } from "./game/appearance";
 
 // L'éditeur a sa propre sourdine : celle du jeu (même adresse, donc même stockage) ne le coupe pas.
 audio.useMutedKey("arena.lab.muted");
@@ -135,7 +146,7 @@ const SOUNDS = soundCatalog as CatalogSound[];
 type OverlayDefs = Record<string, OverlayDef>;
 type MarkDefs = Record<string, GroundMarkDef>;
 type ObjectDefs = Record<string, ObjectDef>;
-type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons" | "communs";
+type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons" | "communs" | "apparence" | "placement";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -175,6 +186,9 @@ class Stage {
   private holder: TransformNode;
   private fx: ParticleFactory;
   private instance: CharacterInstance | null = null;
+  // Onglets Apparence et Placement : personnage assemblé à montrer à la place de celui de la classe (voir load).
+  appearance: Appearance | null = null;
+  private mounts: AppearanceFile["mounts"] = {};
   private animator: CharacterAnimator | null = null;
   private build = 0;
   // Réglage montré, partagé avec l'animateur (le même objet est modifié à chaque changement).
@@ -182,6 +196,10 @@ class Stage {
   private abilityId = "";
   private entry: AbilityAnimation | null = null;
   private mode: "play" | "scrub" = "scrub";
+  // Pose d'attente en boucle, sans compétence (bouton « Idle » des onglets Apparence et Placement).
+  private resting = false;
+  // Pendant la pose d'attente : pose de jeu figée, l'instrument entre les mains (place « joué » de l'onglet Placement).
+  private playPose = false;
   // Instant montré en pose figée, pour chaque moment (secondes depuis le début du geste du lanceur, ou depuis
   // l'impact, le début de l'état, l'apparition de la zone).
   private scrubTimes: Record<Moment, number> = { caster: 0, projectile: 0, impact: 0, status: 0, zone: 0 };
@@ -320,13 +338,16 @@ class Stage {
     this.frozen = null;
     this.instance?.dispose();
     this.instance = null;
-    const instance = await this.assets.create(classId, this.holder);
+    const appearance = this.appearance && sanitizedAppearance(this.appearance);
+    const custom = appearance
+      ? { appearance, items: mountedItems(appearance), mounts: this.mounts[appearance.model] ?? {}, recolors: recolorsOf(appearance) }
+      : undefined;
+    const instance = await this.assets.create(classId, this.holder, undefined, custom);
     if (build !== this.build) {
       instance?.dispose();
       return null;
     }
     if (!instance) return null;
-    instance.setTeam(0);
     this.instance = instance;
     this.restart();
     return instance;
@@ -346,7 +367,6 @@ class Stage {
       return;
     }
     if (!instance) return;
-    instance.setTeam(this.targetAlly() ? 0 : 1);
     this.target = instance;
     this.targetAnimator = new CharacterAnimator(instance.animations, instance.set, {});
     this.updateTargetVisibility();
@@ -385,8 +405,6 @@ class Stage {
     if (switched) {
       this.updateTargetVisibility();
       this.frameMoment();
-      // Le mannequin porte la tenue de son camp : allié pour un soin ou un buff, ennemi sinon.
-      this.target?.setTeam(this.targetAlly() ? 0 : 1);
     }
     if (this.mode === "scrub") this.showFrame();
     else if (changed) this.restart();
@@ -395,6 +413,42 @@ class Stage {
   // Lecture comme en jeu : pose normale, incantation, départ du sort, impact, état, puis on recommence.
   play() {
     this.mode = "play";
+    this.resting = false;
+    this.restart();
+  }
+
+  // Arrête la boucle de la compétence : le personnage reste dans sa pose d'attente.
+  rest() {
+    if (this.resting) return;
+    this.mode = "play";
+    this.resting = true;
+    this.restart();
+  }
+
+  // Pose de jeu figée (réglage de la place « joué » d'un instrument), à la place de la pose d'attente.
+  setPlayPose(on: boolean) {
+    if (this.playPose === on) return;
+    this.playPose = on;
+    if (this.resting) this.restart();
+  }
+
+  private showPlayPose(instance: CharacterInstance) {
+    const group = [...INSTRUMENT_ANIMATIONS].map((name) => instance.animations.get(name)).find((g) => !!g);
+    if (!group) return;
+    for (const other of instance.animations.values()) other.stop();
+    group.enableBlending = false;
+    group.start(false, 1, group.from, group.to);
+    group.pause();
+    // Au milieu du morceau : les mains sont en place.
+    group.goToFrame((group.from + group.to) / 2);
+    this.frozen = group;
+  }
+
+  // Retour aux autres onglets : la pose figée habituelle.
+  leaveRest() {
+    if (!this.resting) return;
+    this.resting = false;
+    this.mode = "scrub";
     this.restart();
   }
 
@@ -408,8 +462,31 @@ class Stage {
       this.projectileFx.stopAll();
     }
     this.mode = "scrub";
+    this.resting = false;
     this.scrubTimes[this.moment] = time;
     this.showFrame();
+  }
+
+  get babylonScene(): Scene {
+    return this.scene;
+  }
+
+  get character(): CharacterInstance | null {
+    return this.instance;
+  }
+
+  // Placements réglés des objets (onglet Placement), pris au prochain chargement.
+  setMounts(mounts: AppearanceFile["mounts"]) {
+    this.mounts = mounts;
+  }
+
+  // Distance de la caméra au personnage (réglette de zoom des onglets Apparence et Placement).
+  get zoom(): number {
+    return this.camera.radius;
+  }
+
+  set zoom(radius: number) {
+    this.camera.radius = radius;
   }
 
   get playing(): boolean {
@@ -641,6 +718,7 @@ class Stage {
     instance.setPlaying(false, true);
     // Nouvel animateur : il remet les fondus que la pose figée retire.
     this.animator = new CharacterAnimator(instance.animations, instance.set, this.tuning);
+    if (this.resting && this.playPose) this.showPlayPose(instance);
     this.unfreezeTarget();
     this.cycle = { phase: "idle", time: IDLE_PAUSE - 0.3 };
     if (this.mode === "scrub" && !this.workshop) this.showFrame();
@@ -735,6 +813,18 @@ class Stage {
       if (this.objectPreview) this.tickObject(instance);
       if (this.overlayPreview) this.tickOverlay(instance);
       this.onFrame?.({ playhead: null, cast: null, labels: this.fxLabels() });
+      return;
+    }
+    if (this.resting) {
+      if (!instance || !animator) return;
+      if (this.playPose && this.frozen) {
+        // Les os ne sont à jour qu'au rendu : le luth est replacé à chaque image.
+        instance.setPlaying(true, true);
+        this.onFrame?.({ playhead: null, cast: null });
+        return;
+      }
+      animator.update(this.idleInput());
+      this.onFrame?.({ playhead: null, cast: null });
       return;
     }
     // Pose figée : les effets actifs à cet instant sont montrés à leur place.
@@ -1376,6 +1466,54 @@ function AnimationLab() {
   const [reactionFilter, setReactionFilter] = useState("Hit");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Onglets Apparence et Placement : apparences et placements (appearances.json), camp montré, objet placé.
+  const [appearancesSaved, setAppearancesSaved] = useState<AppearanceFile | null>(null);
+  const [appearances, setAppearances] = useState<AppearanceFile>(EMPTY_APPEARANCES);
+  const [camp, setCamp] = useState(0);
+  const [placement, setPlacement] = useState<PlacementSelection>(DEFAULT_PLACEMENT);
+  const [reloads, setReloads] = useState(0);
+  // Compétence à jouer dès qu'elle est choisie (boutons des onglets Apparence et Placement).
+  const [pendingPlay, setPendingPlay] = useState<string | null>(null);
+  // Personnage composé pour la classe et le camp affichés : montré dans l'onglet Apparence, et repris dans l'onglet
+  // Placement quand on y règle son modèle.
+  const campAppearance = appearances.variants[classId]?.[camp] ?? null;
+  const shownAppearance = tab === "apparence" ? campAppearance : tab === "placement" ? placementAppearance(placement, campAppearance) : null;
+  const appearanceKey = JSON.stringify(shownAppearance);
+  // Onglet Placement : on y règle les objets du personnage de la classe et du camp affichés (voir placementFor). La
+  // sélection change avec l'onglet ou la classe, dans le même rendu (un seul chargement du personnage).
+  const goToPlacement = () => {
+    setPlacement((current) => placementFor(current, campAppearance));
+    setTab("placement");
+  };
+  const changeClass = (next: ClassId) => {
+    if (tab === "placement") setPlacement((current) => placementFor(current, appearances.variants[next]?.[camp] ?? null));
+    setClassId(next);
+  };
+  // Page rouverte sur l'onglet Placement : la sélection se fait à l'arrivée du fichier des apparences.
+  const placementReady = useRef(false);
+  useEffect(() => {
+    if (!appearancesSaved || placementReady.current) return;
+    placementReady.current = true;
+    if (tab === "placement") setPlacement((current) => placementFor(current, appearancesSaved.variants[classId]?.[camp] ?? null));
+    // Une seule fois, à l'arrivée du fichier.
+  }, [appearancesSaved]);
+  const appearancesUnsaved = appearancesSaved !== null && JSON.stringify(appearances) !== JSON.stringify(appearancesSaved);
+  useEffect(() => {
+    void fetch("/__dev-file/appearances")
+      .then((r) => r.json())
+      .then((file: AppearanceFile | null) => {
+        const value = { ...EMPTY_APPEARANCES, ...file };
+        setAppearancesSaved(value);
+        setAppearances(value);
+      })
+      .catch(() => setMessage("Impossible de lire appearances.json : les onglets Apparence et Placement sont indisponibles."));
+  }, []);
+  const saveAppearances = async () => {
+    const response = await fetch("/__dev-file/appearances", { method: "POST", body: JSON.stringify(appearances) });
+    if (response.ok) setAppearancesSaved(appearances);
+    setMessage(response.ok ? "Apparences enregistrées." : `Échec de l'enregistrement : ${await response.text()}`);
+    setTimeout(() => setMessage(null), 4000);
+  };
 
   const set = instance?.set ?? null;
   const castTime = castTimeOf(abilityId);
@@ -1826,9 +1964,16 @@ function AnimationLab() {
     setTimeout(() => setMessage(null), 5000);
   };
 
+  // Les placements servent au prochain chargement du personnage (sans le recharger : on vient de les régler sur lui).
+  useEffect(() => stageRef.current?.setMounts(appearances.mounts), [appearances.mounts]);
+
+  // Onglets Apparence et Placement : on attend le fichier (ses placements) avant de charger le personnage.
+  const waitingAppearances = (tab === "apparence" || tab === "placement") && appearancesSaved === null;
   useEffect(() => {
+    if (waitingAppearances) return;
     setInstance(null);
     const stage = stageRef.current;
+    if (stage) stage.appearance = appearanceKey === "null" ? null : (JSON.parse(appearanceKey) as Appearance);
     void stage?.load(classId).then(
       (loaded) => loaded && setInstance(loaded),
       // Un chargement abandonné (scène fermée, classe changée) n'est pas une erreur.
@@ -1837,7 +1982,7 @@ function AnimationLab() {
         !stage?.disposed &&
         setError("Bibliothèques complètes introuvables : lancez « node scripts/build-animation-catalog.mjs » à la racine du projet."),
     );
-  }, [classId]);
+  }, [classId, appearanceKey, reloads, waitingAppearances]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -1909,6 +2054,56 @@ function AnimationLab() {
   useEffect(() => {
     stageRef.current?.select(abilityId, entry);
   }, [abilityId, entry]);
+  // Après le choix de la compétence (effet ci-dessus) : on la joue.
+  // Une compétence sans geste (rien à jouer) ne reste pas en attente.
+  useEffect(() => {
+    if (pendingPlay !== abilityId || !instance) return;
+    if (entry) {
+      stageRef.current?.play();
+      setPlaying(true);
+      setResting(false);
+    } else rest();
+    setPendingPlay(null);
+  }, [pendingPlay, entry, abilityId, instance]);
+  // Onglets Apparence et Placement : le personnage attend, sans boucle de compétence, jusqu'au choix d'une compétence.
+  const [resting, setResting] = useState(false);
+  const rest = () => {
+    setPendingPlay(null);
+    stageRef.current?.rest();
+    setPlaying(false);
+    setResting(true);
+  };
+  const appearanceTab = tab === "apparence" || tab === "placement";
+  useEffect(() => {
+    if (appearanceTab) rest();
+    else {
+      stageRef.current?.leaveRest();
+      setResting(false);
+    }
+    // À chaque onglet (d'Apparence à Placement aussi), on repart de la pose d'attente.
+  }, [tab]);
+  const abilityButtons = {
+    abilities: ids.map((id) => ({ id, name: abilityName(id) })),
+    current: resting ? null : abilityId,
+    onPlay: (id: string) => {
+      setAbilityId(id);
+      setPendingPlay(id);
+    },
+    onRest: rest,
+  };
+  const zoom = useMemo(
+    () => ({
+      get: () => stageRef.current?.zoom ?? 5.5,
+      set: (radius: number) => {
+        if (stageRef.current) stageRef.current.zoom = radius;
+      },
+    }),
+    [],
+  );
+  // Place « joué » d'un instrument : le personnage tient la pose de jeu.
+  const playPose = tab === "placement" && placement.kind === "weapon" && placement.slot === PLAY_SLOT;
+  useEffect(() => stageRef.current?.setPlayPose(playPose), [playPose, stage]);
+  const placementNode = tab === "placement" ? (instance?.attachments?.find((a) => a.key === placementKey(placement))?.node ?? null) : null;
 
   const animations = useMemo(() => {
     if (!instance) return [];
@@ -2173,13 +2368,19 @@ function AnimationLab() {
           <button className={tab === "communs" ? "lab-tab-active" : ""} onClick={() => setTab("communs")}>
             Sons communs
           </button>
+          <button className={tab === "apparence" ? "lab-tab-active" : ""} onClick={() => setTab("apparence")}>
+            Apparence
+          </button>
+          <button className={tab === "placement" ? "lab-tab-active" : ""} onClick={goToPlacement}>
+            Placement
+          </button>
         </span>
         <button onClick={toggleMuted} title={muted ? "Rétablir le son de l'éditeur" : "Couper le son de l'éditeur (le jeu garde son propre réglage)"}>
           {muted ? "🔇 Son coupé" : "🔊 Son"}
         </button>
         <label>
           Classe
-          <select value={classId} onChange={(e) => setClassId(e.target.value as ClassId)}>
+          <select value={classId} onChange={(e) => changeClass(e.target.value as ClassId)}>
             {CLASS_LIST.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -2321,6 +2522,35 @@ function AnimationLab() {
           {!instance && !error && <div className="lab-loading">Chargement des animations…</div>}
           {error && <div className="anim-error">{error}</div>}
         </div>
+        {tab === "apparence" && (
+          <AppearancePanel
+            classId={classId}
+            camp={camp}
+            setCamp={setCamp}
+            file={appearances}
+            onChange={setAppearances}
+            unsaved={appearancesUnsaved}
+            onSave={() => void saveAppearances()}
+            abilities={abilityButtons}
+            zoom={zoom}
+          />
+        )}
+        {tab === "placement" && (
+          <PlacementPanel
+            selection={placement}
+            setSelection={setPlacement}
+            file={appearances}
+            onChange={setAppearances}
+            unsaved={appearancesUnsaved}
+            onSave={() => void saveAppearances()}
+            scene={stage?.babylonScene ?? null}
+            node={placementNode}
+            reload={() => setReloads((n) => n + 1)}
+            abilities={abilityButtons}
+            zoom={zoom}
+            base={campAppearance}
+          />
+        )}
         {tab === "2d" && overlayDefShown && (
           <div className="fx-side">
             <RequestsPanel

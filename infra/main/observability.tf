@@ -74,6 +74,10 @@ locals {
       title = "Navigateurs (clics sur « Jouer »)"
       query = "filter event = \"join\" | stats count(*) as clics by browser, mobile | sort clics desc"
     },
+    {
+      title = "Affichage : images/s selon la densité de l'écran (rendu final, baisses de résolution, annulées faute d'effet)"
+      query = "filter event = \"player_result\" and ispresent(fps) | stats count(*) as joueurs, avg(fps) as ips_moyen, avg(fps_low) as ips_bas, avg(scale) as densite_rendu, sum(drops) as baisses, sum(reverted) as baisses_annulees by dpr, browser | sort joueurs desc"
+    },
   ]
 }
 

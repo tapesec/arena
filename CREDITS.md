@@ -27,6 +27,8 @@ importées par `scripts/import-assets.sh`.
 - **Modèles 3D** (personnages, tenues, armes, village, nature, accessoires) et **animations** — [Quaternius](https://quaternius.com), CC0.
   Packs : Modular Character Outfits – Fantasy (Source), Universal Base Characters, Universal Animation Library 1 et 2 (Source),
   Medieval Village MegaKit, Stylized Nature MegaKit, Fantasy Props MegaKit, Pirate Kit, RPG Asset Pack.
+- **Textures d'herbe et de terre du sol** — « Hand-Painted Watercolor Terrain Texture Pack », Jonas Voland / Voxel Core Lab
+  ([itch.io](https://voxelcorelab.itch.io/watercolor-terrain-textures)), CC0.
 - **Bruitages d'impacts et de pas** — [Kenney](https://kenney.nl), Impact Sounds, CC0.
 - **Sons de mêlée** (épée, coups) — qubodup / Iwan Gabovitch, édités par remaxim, OpenGameArt, CC0.
 - **Autres sons** (impacts « hits », voix de femme RPG Voice Starter Pack de Cici Fyre, cris d'homme, sorts de glace,

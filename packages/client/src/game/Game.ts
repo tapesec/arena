@@ -78,6 +78,7 @@ import { MovementPredictor, VelocityTracker } from "./prediction";
 import { TUNING } from "./tuning";
 import { MUSIC } from "./commonSounds";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
+import { RenderScale } from "./renderScale";
 
 // Textes flottants des événements de combat : contrôles et affaiblissements affichés (nom de l'effet), et
 // issues d'un coup. Pas de texte pour l'Oubli : la cible ne doit pas le voir venir.
@@ -102,6 +103,7 @@ const SMOOTHING = 15;
 const HUD_REFRESH_MS = 100;
 // Mesure de l'aller-retour avec le serveur (affiché à côté du son).
 const PING_INTERVAL_MS = 2000;
+const PERF_REPORT_MS = 30_000;
 
 // Quand la caméra tourne pendant un déplacement, on renvoie la direction au plus 20 fois par seconde.
 const YAW_RESEND_MS = 50;
@@ -157,6 +159,7 @@ export class Game {
   private loading: LoadingTracker;
   private sentLoadPercent = -1;
   private pingTimer: ReturnType<typeof setInterval>;
+  private perfTimer: ReturnType<typeof setInterval>;
   // Prédiction du déplacement de son propre personnage.
   private predictor = new MovementPredictor();
   private targetVelocity = new VelocityTracker();
@@ -174,6 +177,10 @@ export class Game {
     private room: Room,
   ) {
     this.engine = new Engine(canvas, true);
+    this.renderScale = new RenderScale(this.engine, () => {
+      const phase = (this.room.state as { phase?: MatchPhase }).phase;
+      return phase === "preparation" || phase === "fighting";
+    });
     this.scene = new Scene(this.engine);
     // Le chargement commence dès la salle d'attente ; le serveur attend que chacun ait fini avant la préparation.
     this.loading = new LoadingTracker(() => this.sendLoadProgress());
@@ -234,6 +241,8 @@ export class Game {
 
     this.measurePing();
     this.pingTimer = setInterval(() => this.measurePing(), PING_INTERVAL_MS);
+    // Images/s et résolution, pour la télémétrie : le serveur garde le dernier envoi et le joint au résultat du joueur.
+    this.perfTimer = setInterval(() => this.sendPerf(), PERF_REPORT_MS);
 
     this.engine.runRenderLoop(() => this.renderFrame());
     window.addEventListener("resize", this.handleResize);
@@ -242,6 +251,7 @@ export class Game {
   dispose() {
     this.disposed = true;
     clearInterval(this.pingTimer);
+    clearInterval(this.perfTimer);
     useHudStore.getState().setActions(null);
     window.removeEventListener("resize", this.handleResize);
     this.canvas.removeEventListener("pointerenter", this.handlePointerEnter);
@@ -254,10 +264,17 @@ export class Game {
     this.fog.dispose();
     this.shadows?.dispose();
     this.gameAudio.dispose();
+    this.sendPerf();
     this.room.leave();
+    this.renderScale.dispose();
     this.engine.dispose();
   }
 
+  private renderScale: RenderScale;
+  private sendPerf() {
+    const stats = this.renderScale.stats();
+    if (stats) this.room.send("perf", stats);
+  }
   private handleResize = () => this.engine.resize();
   private handlePointerEnter = () => (this.pointerInside = true);
   private handlePointerLeave = () => (this.pointerInside = false);
@@ -445,6 +462,8 @@ export class Game {
     this.room.onMessage("replacedByBot", () => {
       this.disposed = true;
       clearInterval(this.pingTimer);
+      clearInterval(this.perfTimer);
+      this.renderScale.dispose();
       hud.setPing(null);
       this.engine.stopRenderLoop();
       this.keyboard.dispose();
@@ -742,8 +761,6 @@ export class Game {
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
-      // Comme les textes, les tenues dépendent du point de vue : alliés en bleu, ennemis en rouge.
-      player.setOutfitColor(enemy ? 1 : 0);
     }
     this.overlay.update(dt);
     this.orderWheel.update();

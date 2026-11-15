@@ -17,6 +17,8 @@ const DEV_FILES: Record<string, URL> = {
   particleEffects: new URL("./src/game/particleEffects.json", import.meta.url),
   groundMarks: new URL("./src/game/groundMarks.json", import.meta.url),
   objects3d: new URL("./src/game/objects3d.json", import.meta.url),
+  // Éditeur d'apparence (onglets Apparence et Placement) : apparences des classes et placements des objets.
+  appearances: new URL("./src/game/appearances.json", import.meta.url),
   overlays2d: new URL("./src/game/overlays2d.json", import.meta.url),
   soundEdits: new URL("./src/audio/soundEdits.json", import.meta.url),
   particleRequests: new URL("./particle-requests.json", import.meta.url),

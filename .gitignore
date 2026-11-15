@@ -10,7 +10,7 @@ packages/client/public/music
 .env.local
 .env.*.local
 
-# Assets bruts extraits des archives Quaternius (trop lourds) : régénérer avec scripts/import-assets.sh
+# Assets bruts extraits des archives téléchargées (Quaternius, aquarelles Voxel Core Lab ; trop lourds) : régénérer avec scripts/import-assets.sh
 assets-source
 
 # Bibliothèques d'animations complètes de la page de visualisation : node scripts/build-animation-catalog.mjs

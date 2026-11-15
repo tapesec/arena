@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Extrait, depuis les archives Quaternius téléchargées, uniquement les fichiers utiles au jeu
-# vers assets-source/ (fichiers bruts, non versionnés : trop lourds).
+# Extrait, depuis les archives Quaternius et le pack d'aquarelles de Voxel Core Lab téléchargés, uniquement les
+# fichiers utiles au jeu vers assets-source/ (fichiers bruts, non versionnés : trop lourds).
 # Usage : scripts/import-assets.sh [dossier des archives, par défaut ~/Downloads]
 set -euo pipefail
 
@@ -12,8 +12,10 @@ ALL="$SRC/All in One - Quaternius[Patreon].zip"
 OUTFITS="$SRC/Modular Character Outfits - Fantasy[Source].zip"
 UAL1="$SRC/Universal Animation Library[Pro].zip"
 UAL2="$SRC/Universal Animation Library 2[Source].zip"
+# Gratuit (prix libre), CC0 : https://voxelcorelab.itch.io/watercolor-terrain-textures
+WATERCOLOR="$SRC/VoxelCoreLab_Watercolor_Terrain_Textures_1024px.zip"
 
-for f in "$ALL" "$OUTFITS" "$UAL1" "$UAL2"; do
+for f in "$ALL" "$OUTFITS" "$UAL1" "$UAL2" "$WATERCOLOR"; do
   [[ -f "$f" ]] || { echo "Archive introuvable : $f" >&2; exit 1; }
 done
 
@@ -58,9 +60,10 @@ extract "$ALL" "$OUT/weapons" \
 PROPS='Medieval/Fantasy Props MegaKit\[Standard\] - June 2025/Exports/glTF'
 extract "$ALL" "$OUT/weapons" "$PROPS/Sword_Bronze.*" "$PROPS/Shield_Wooden.*" "$PROPS/T_Trim_*"
 
-# Sol : bruit de terrain (base de l'herbe et de la terre) et pavés, tirés du village médiéval.
+# Sol : herbe et terre peintes à l'aquarelle (Voxel Core Lab), pavés tirés du village médiéval.
 VILLAGE='Medieval/Medieval Village MegaKit\[Standard\] - Jan 2025'
-extract "$ALL" "$OUT/ground" "$VILLAGE/Textures/T_Noise_Terrain.png" "$VILLAGE/Textures/T_UnevenBrick_BaseColor.png"
+extract "$WATERCOLOR" "$OUT/ground" '*/Grass_01.png' '*/Dirt_03.png' '*/LICENCE.txt'
+extract "$ALL" "$OUT/ground" "$VILLAGE/Textures/T_UnevenBrick_BaseColor.png"
 
 # Hameau : pièces modulaires du village (murs, toits, portes, fenêtres…) avec leurs textures,
 # et accessoires du Fantasy Props (étals, caisses, tonneaux, bannières).

@@ -29,6 +29,8 @@ export const MIXAMO_ANIMATIONS: Record<string, string> = {
 
 // Os de Mixamo -> os de nos personnages (même anatomie, noms différents).
 const BONE_MAP = buildBoneMap();
+// Et dans l'autre sens : os de nos personnages -> os Mixamo (monstres de l'éditeur d'apparence, squelette Mixamo).
+export const UAL_TO_MIXAMO = new Map([...BONE_MAP].map(([mixamo, ours]) => [ours, mixamo]));
 
 function buildBoneMap(): Map<string, string> {
   const map = new Map<string, string>();

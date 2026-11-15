@@ -15,6 +15,7 @@ import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { INSTRUMENT_ANIMATIONS, hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
+import { gameCharacter } from "./gameAppearances";
 
 export interface EffectView {
   kind: string;
@@ -92,7 +93,6 @@ export class PlayerVisual {
   private aliveColor: Color3;
   private wasAlive = true;
   private team: number;
-  private outfitColor = 0;
   // Zone de clic (cylindre invisible) et couleur du contour de survol (null sans survol).
   readonly hitbox: Mesh;
   private hovered: Color3 | null = null;
@@ -100,6 +100,8 @@ export class PlayerVisual {
   private model: CharacterInstance | null = null;
   private animator: CharacterAnimator | null = null;
   private modelClass = "";
+  // Équipe du personnage chargé (son camp, voir gameCharacter).
+  private modelTeam = -1;
   private loadToken = 0;
   private disposed = false;
   // Vitesse mesurée à l'écran, dans le repère du personnage.
@@ -197,15 +199,9 @@ export class PlayerVisual {
 
 
 
-    if (this.state.classId !== this.modelClass) this.loadModel();
+    // Classe ou équipe changée : le personnage de sa classe et de son camp.
+    if (this.state.classId !== this.modelClass || this.team !== this.modelTeam) this.loadModel();
     this.updateAnimation();
-  }
-
-  // Couleur de tenue vue par le joueur local : 0 (bleu) pour ses alliés, 1 (rouge) pour ses ennemis.
-  setOutfitColor(color: number) {
-    if (color === this.outfitColor) return;
-    this.outfitColor = color;
-    this.model?.setTeam(color);
   }
 
   // Coup d'auto-attaque porté par ce joueur.
@@ -253,6 +249,7 @@ export class PlayerVisual {
   // Charge le personnage animé de la classe (la classe est choisie après l'arrivée du joueur).
   private loadModel() {
     this.modelClass = this.state.classId;
+    this.modelTeam = this.team;
     this.animator?.dispose();
     this.model?.dispose();
     this.model = null;
@@ -262,7 +259,8 @@ export class PlayerVisual {
     if (this.hovered) this.setHovered(this.hovered);
     if (!hasCharacterModel(this.modelClass)) return;
     const token = ++this.loadToken;
-    void this.assets.create(this.modelClass, this.root).then((model) => {
+    // Apparence de son camp, fixe par équipe (voir gameCharacter).
+    void this.assets.create(this.modelClass, this.root, undefined, gameCharacter(this.modelClass, this.team)).then((model) => {
       if (!model) return;
       // Le joueur a changé de classe ou a disparu pendant le chargement.
       if (token !== this.loadToken || this.disposed) {
@@ -270,13 +268,15 @@ export class PlayerVisual {
         return;
       }
       this.model = model;
-      model.setTeam(this.outfitColor);
       // Le clic passe par la zone de clic, pas par le modèle.
       for (const mesh of model.meshes) mesh.isPickable = false;
       if (this.hovered) this.setHovered(this.hovered);
       // Calage des animations de compétence réglé sur la page animation-lab.html.
       this.animator = new CharacterAnimator(model.animations, model.set, TUNING[this.modelClass]);
       this.showCapsule(false);
+    }).catch((error: unknown) => {
+      // Fichier introuvable ou illisible : le joueur garde sa capsule.
+      console.error(`Personnage ${this.modelClass} : chargement impossible`, error);
     });
   }
 

@@ -135,3 +135,30 @@ export function startSnapshots(): void {
   if (fileDescriptor() === null) return;
   setInterval(() => telemetry("snapshot", snapshot()), SNAPSHOT_INTERVAL_MS).unref();
 }
+
+// Performances d'affichage envoyées par le client (packages/client/src/game/renderScale.ts) : densité de l'écran,
+// densité du rendu, images/s moyennes et basses (10e centile), baisses de résolution tentées et annulation de la
+// dernière (1 : sans effet, le processeur freine). Valeurs bornées et arrondies ; null si le message est invalide.
+export interface RenderPerf {
+  dpr: number;
+  scale: number;
+  fps: number;
+  fps_low: number;
+  drops: number;
+  reverted: number;
+}
+
+export function sanitizePerf(message: unknown): RenderPerf | null {
+  const m = (message ?? {}) as Record<string, unknown>;
+  const num = (value: unknown, min: number, max: number, digits = 0) =>
+    typeof value === "number" && Number.isFinite(value) && value >= min && value <= max ? Number(value.toFixed(digits)) : null;
+  const perf = {
+    dpr: num(m.dpr, 0.25, 8, 2),
+    scale: num(m.scale, 0.25, 8, 2),
+    fps: num(m.fps, 0, 1000),
+    fps_low: num(m.fpsLow, 0, 1000),
+    drops: num(m.drops, 0, 10),
+    reverted: num(m.reverted, 0, 1),
+  };
+  return Object.values(perf).every((v) => v !== null) ? (perf as RenderPerf) : null;
+}
