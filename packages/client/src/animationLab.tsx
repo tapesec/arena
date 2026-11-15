@@ -99,6 +99,7 @@ import {
   DEFAULT_PLACEMENT,
   PlacementPanel,
   placementAppearance,
+  placementFor,
   placementKey,
   type PlacementSelection,
 } from "./appearanceLab";
@@ -1445,8 +1446,29 @@ function AnimationLab() {
   const [reloads, setReloads] = useState(0);
   // Compétence à jouer dès qu'elle est choisie (boutons des onglets Apparence et Placement).
   const [pendingPlay, setPendingPlay] = useState<string | null>(null);
-  const shownAppearance = tab === "apparence" ? (appearances.variants[classId]?.[camp] ?? null) : tab === "placement" ? placementAppearance(placement) : null;
+  // Personnage composé pour la classe et le camp affichés : montré dans l'onglet Apparence, et repris dans l'onglet
+  // Placement quand on y règle son modèle.
+  const campAppearance = appearances.variants[classId]?.[camp] ?? null;
+  const shownAppearance = tab === "apparence" ? campAppearance : tab === "placement" ? placementAppearance(placement, campAppearance) : null;
   const appearanceKey = JSON.stringify(shownAppearance);
+  // Onglet Placement : on y règle les objets du personnage de la classe et du camp affichés (voir placementFor). La
+  // sélection change avec l'onglet ou la classe, dans le même rendu (un seul chargement du personnage).
+  const goToPlacement = () => {
+    setPlacement((current) => placementFor(current, campAppearance));
+    setTab("placement");
+  };
+  const changeClass = (next: ClassId) => {
+    if (tab === "placement") setPlacement((current) => placementFor(current, appearances.variants[next]?.[camp] ?? null));
+    setClassId(next);
+  };
+  // Page rouverte sur l'onglet Placement : la sélection se fait à l'arrivée du fichier des apparences.
+  const placementReady = useRef(false);
+  useEffect(() => {
+    if (!appearancesSaved || placementReady.current) return;
+    placementReady.current = true;
+    if (tab === "placement") setPlacement((current) => placementFor(current, appearancesSaved.variants[classId]?.[camp] ?? null));
+    // Une seule fois, à l'arrivée du fichier.
+  }, [appearancesSaved]);
   const appearancesUnsaved = appearancesSaved !== null && JSON.stringify(appearances) !== JSON.stringify(appearancesSaved);
   useEffect(() => {
     void fetch("/__dev-file/appearances")
@@ -2318,7 +2340,7 @@ function AnimationLab() {
           <button className={tab === "apparence" ? "lab-tab-active" : ""} onClick={() => setTab("apparence")}>
             Apparence
           </button>
-          <button className={tab === "placement" ? "lab-tab-active" : ""} onClick={() => setTab("placement")}>
+          <button className={tab === "placement" ? "lab-tab-active" : ""} onClick={goToPlacement}>
             Placement
           </button>
         </span>
@@ -2327,7 +2349,7 @@ function AnimationLab() {
         </button>
         <label>
           Classe
-          <select value={classId} onChange={(e) => setClassId(e.target.value as ClassId)}>
+          <select value={classId} onChange={(e) => changeClass(e.target.value as ClassId)}>
             {CLASS_LIST.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -2495,6 +2517,7 @@ function AnimationLab() {
             reload={() => setReloads((n) => n + 1)}
             abilities={abilityButtons}
             zoom={zoom}
+            base={campAppearance}
           />
         )}
         {tab === "2d" && overlayDefShown && (

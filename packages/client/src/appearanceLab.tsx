@@ -595,8 +595,20 @@ export interface PlacementSelection {
 
 export const DEFAULT_PLACEMENT: PlacementSelection = { model: "Human_Male", kind: "weapon", item: CATALOG.weapons[0]?.id ?? "", slot: "right" };
 
-// Apparence montrée pendant le placement : le modèle nu (corps entier), avec le seul objet réglé.
-export function placementAppearance(selection: PlacementSelection): Appearance {
+// Apparence montrée pendant le placement : le personnage composé dans l'onglet Apparence (base) s'il a ce modèle, avec
+// l'objet réglé en plus s'il ne le porte pas ; sinon le modèle nu (corps entier), avec le seul objet réglé.
+export function placementAppearance(selection: PlacementSelection, base?: Appearance | null): Appearance {
+  if (base && base.model === selection.model) {
+    const weapon = { item: selection.item, slot: selection.slot as WeaponSlot };
+    // Une arme portée qu'on règle à une autre place n'apparaît qu'une fois, à cette place.
+    const weapons =
+      selection.kind === "weapon" && !base.weapons.some((w) => w.item === weapon.item && w.slot === weapon.slot)
+        ? [...base.weapons.filter((w) => w.slot !== weapon.slot && w.item !== weapon.item), weapon]
+        : base.weapons;
+    const accessories =
+      selection.kind === "accessory" && !base.accessories.includes(selection.item) ? [...base.accessories, selection.item] : base.accessories;
+    return { ...base, weapons, accessories };
+  }
   return {
     model: selection.model,
     headOnly: false,
@@ -605,6 +617,35 @@ export function placementAppearance(selection: PlacementSelection): Appearance {
     weapons: selection.kind === "weapon" ? [{ item: selection.item, slot: selection.slot as WeaponSlot }] : [],
     accessories: selection.kind === "accessory" ? [selection.item] : [],
   };
+}
+
+// Objets d'une apparence, à régler un par un dans l'onglet Placement (une paire : chaque côté).
+export function placementItems(appearance: Appearance): { selection: PlacementSelection; label: string }[] {
+  const items: { selection: PlacementSelection; label: string }[] = [];
+  for (const weapon of appearance.weapons) {
+    items.push({
+      selection: { model: appearance.model, kind: "weapon", item: weapon.item, slot: weapon.slot },
+      label: `${weaponLabel(weapon.item)} · ${WEAPON_SLOTS[weapon.slot].toLowerCase()}`,
+    });
+  }
+  for (const id of appearance.accessories) {
+    const def = CATALOG.accessories.find((a) => a.id === id);
+    if (!def) continue;
+    const sides: [string, string][] = PAIRED_SOCKETS.has(def.socket) ? [["r", " · droite"], ["l", " · gauche"]] : [["c", ""]];
+    for (const [slot, suffix] of sides) {
+      items.push({ selection: { model: appearance.model, kind: "accessory", item: id, slot }, label: `${accessoryLabel(id)}${suffix}` });
+    }
+  }
+  return items;
+}
+
+// Objet à régler en arrivant sur l'onglet Placement avec ce personnage : celui qu'on réglait s'il le porte encore, sinon
+// son premier objet (ou son modèle, sans objet).
+export function placementFor(current: PlacementSelection, appearance: Appearance | null): PlacementSelection {
+  if (!appearance) return current;
+  const items = placementItems(appearance).map((item) => item.selection);
+  if (current.model === appearance.model && items.some((item) => placementKey(item) === placementKey(current))) return current;
+  return items[0] ?? { ...current, model: appearance.model };
 }
 
 export function placementKey(selection: PlacementSelection): string {
@@ -637,6 +678,8 @@ export function PlacementPanel(props: {
   reload: () => void;
   abilities: AbilityButtonsProps;
   zoom: ZoomControl;
+  // Personnage de l'onglet Apparence (classe et camp affichés), montré tel quel s'il a le modèle choisi.
+  base: Appearance | null;
 }) {
   const { selection, setSelection, file, onChange, node, scene } = props;
   const key = placementKey(selection);
@@ -719,6 +762,22 @@ export function PlacementPanel(props: {
         </select>
       </label>
       <p className="lab-note">{placedCount} objet(s) déjà placé(s) sur ce modèle.</p>
+      {props.base?.model === selection.model && (
+        <>
+          <p className="lab-note">Personnage de l'onglet Apparence (classe et camp affichés), avec sa tenue et tous ses objets.</p>
+          <div className="appearance-abilities">
+            {placementItems(props.base).map(({ selection: item, label }, i) => (
+              <button
+                key={`${placementKey(item)}-${i}`}
+                className={placementKey(item) === key ? "lab-tab-active" : ""}
+                onClick={() => setSelection(item)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       <label className="appearance-row">
         Objet
         <select
