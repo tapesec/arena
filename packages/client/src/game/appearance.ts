@@ -42,9 +42,15 @@ export interface Appearance {
   model: string;
   // Corps d'une race : seulement la tête et le cou (les pièces de tenue couvrent le reste), ou le corps entier.
   headOnly?: boolean;
-  // Pièces de tenue Quaternius (du même genre que le corps) et coiffures ; ignorées pour un monstre.
+  // Pièces de tenue Quaternius (du même genre que le corps) et coiffures (une coupe, plus barbe ou moustache) ;
+  // ignorées pour un monstre.
   parts: string[];
   hair: string[];
+  // Races du pack Fantasy Races : leurs propres cheveux, gardés sauf si false (crâne rasé) ou si une coupe les remplace.
+  raceHair?: boolean;
+  // Teinte des coiffures humaines et des sourcils (couleur CSS) ; sans elle, leur texture grise. Les cheveux d'une race
+  // gardent leurs couleurs (texture déjà colorée).
+  hairColor?: string;
   weapons: HeldWeapon[];
   // Accessoires portés par-dessus la tenue (pack Hearthfold), qu'on ait un corps ou un monstre.
   accessories: string[];
@@ -59,7 +65,27 @@ export interface AppearanceFile {
 
 export const EMPTY_APPEARANCES: AppearanceFile = { variants: {}, mounts: {} };
 
-export const RACES: Record<string, string> = { Human: "Humain", Elf: "Elfe", Orc: "Orc" };
+export const RACES: Record<string, string> = {
+  Human: "Humain athlétique",
+  HumanRegular: "Humain",
+  HumanTeen: "Humain jeune",
+  Elf: "Elfe",
+  WaterElfEars: "Elfe aquatique (oreilles)",
+  WaterElfFins: "Elfe aquatique (nageoires)",
+  Orc: "Orc",
+  Dragonborn: "Draconien",
+  Ape: "Homme-singe",
+};
+
+// Coupe de cheveux (une seule à la fois), par opposition aux poils du visage (barbe, moustache), cumulables.
+export function isHairCut(id: string): boolean {
+  return id.startsWith("Hair_") && !/^Hair_(Beard|Moustache|MuttonChops)/.test(id);
+}
+
+// Races du pack Fantasy Races (elles ont leurs propres cheveux) ; les autres corps sont humains.
+export function isFantasyRace(race: string): boolean {
+  return !race.startsWith("Human");
+}
 export const GENDERS: Record<string, string> = { Male: "Homme", Female: "Femme" };
 export const PART_SLOTS: Record<string, string> = {
   Head: "Tête",

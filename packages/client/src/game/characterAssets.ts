@@ -17,6 +17,7 @@ import { MIXAMO_ANIMATIONS, UAL_TO_MIXAMO, retargetMixamo } from "./mixamo";
 import {
   appearanceUrl,
   boneName,
+  isHairCut,
   isMonster,
   modelFile,
   type Appearance,
@@ -33,7 +34,7 @@ import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLo
 // Agrandissement des personnages (le modèle d'origine mesure 1,84 m).
 const CHARACTER_SCALE = 1.2;
 // Pièces de tenue sans ombre portée (voir plus bas, à l'appel des ombres).
-const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_Beard)|_Acc_|Belt|Bracer/;
+const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))|_Acc_|Belt|Bracer/;
 
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
@@ -723,6 +724,34 @@ export class CharacterAssets {
       cleanup.push(() => {
         pieceRoot.dispose(false, false);
         for (const skeleton of pieceEntries.skeletons) skeleton.dispose();
+      });
+    }
+
+    // Cheveux : ceux d'une race retirés (crâne rasé, ou une autre coupe les remplace), et teinte choisie des coiffures
+    // humaines et des sourcils (sur une copie des matériaux, partagés avec les autres personnages du même fichier).
+    if (appearance.raceHair === false || appearance.hair.some(isHairCut)) {
+      for (const mesh of meshes.filter((m) => m.name.endsWith("_Hair") && m.isDescendantOf(root))) {
+        meshes.splice(meshes.indexOf(mesh), 1);
+        mesh.dispose();
+      }
+    }
+    if (appearance.hairColor) {
+      const color = Color3.FromHexString(appearance.hairColor);
+      const tinted = new Map<PBRMaterial, PBRMaterial>();
+      for (const mesh of meshes) {
+        const material = mesh.material as PBRMaterial | null;
+        if (!material || !material.name.startsWith("MI_Hair")) continue;
+        let copy = tinted.get(material);
+        if (!copy) {
+          copy = material.clone(`${material.name}-tinted`);
+          copy.albedoColor = color;
+          tinted.set(material, copy);
+        }
+        mesh.material = copy;
+      }
+      cleanup.push(() => {
+        // Les textures des copies sont partagées avec les matériaux d'origine : seule la copie est libérée.
+        for (const copy of tinted.values()) copy.dispose(false, true);
       });
     }
 

@@ -5,7 +5,7 @@ import { GizmoManager } from "@babylonjs/core/Gizmos/gizmoManager";
 import { UtilityLayerRenderer } from "@babylonjs/core/Rendering/utilityLayerRenderer";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { CATALOG, genderOf } from "./appearanceData";
+import { CATALOG, genderOf, hairFor, sanitizedAppearance } from "./appearanceData";
 import {
   ACCESSORY_SOCKETS,
   GENDERS,
@@ -14,6 +14,7 @@ import {
   RACES,
   WEAPON_SLOTS,
   accessoryKey,
+  isFantasyRace,
   isMonster,
   monsterModel,
   weaponKey,
@@ -39,6 +40,12 @@ const CLASS_OUTFITS: Record<string, string> = {
 // Emplacements où l'on ne porte qu'une pièce à la fois (les accessoires se cumulent).
 const SINGLE_SLOTS = ["Head", "Body", "Arms", "Legs", "Feet"];
 const WEAPON_PACKS = [...new Set(CATALOG.weapons.map((w) => w.pack))];
+const BODY_RACES = [...new Set(CATALOG.bodies.map((b) => b.race))];
+// Teinte proposée quand on choisit une couleur de cheveux (les coiffures des humains sont grises, faites pour être
+// teintées).
+const DEFAULT_HAIR_COLOR = "#5a3a22";
+
+
 
 // Sans casque ni capuche : la tête du corps reste visible.
 function newAppearance(classId: string): Appearance {
@@ -75,6 +82,7 @@ function appearanceAssets(appearance: Appearance): string[] {
   if (!isMonster(appearance.model)) {
     for (const part of appearance.parts) assets.push(`Pièce ${part} (Modular Character Outfits – Fantasy)`);
     for (const hair of appearance.hair) assets.push(`Coiffure ${hair} (Universal Base Characters)`);
+    if (appearance.hairColor) assets.push(`Cheveux teints en ${appearance.hairColor}`);
   }
   for (const weapon of appearance.weapons) assets.push(`Arme ${weaponLabel(weapon.item)}, ${WEAPON_SLOTS[weapon.slot].toLowerCase()}`);
   for (const id of appearance.accessories) assets.push(`Accessoire ${accessoryLabel(id)} (Hearthfold Armor & Wearables)`);
@@ -171,7 +179,13 @@ export function AppearancePanel(props: {
     const parts = appearance.parts
       .map((id) => (gender && gender !== nextGender ? id.replace(`${gender}_`, `${nextGender}_`) : id))
       .filter((id) => CATALOG.parts.some((p) => p.id === id));
-    patch({ model: `${race}_${nextGender}`, parts });
+    // Coiffures gardées si elles vont au nouveau corps : la version « Teen » pour le corps jeune, la version adulte
+    // sinon, à condition d'exister dans ce genre.
+    const valid = hairFor(race, nextGender);
+    const hair = appearance.hair
+      .map((id) => id.replace(/_Teen$/, "") + (race === "HumanTeen" ? "_Teen" : ""))
+      .filter((id) => valid.some((h) => h.id === id));
+    patch({ model: `${race}_${nextGender}`, parts, hair });
   };
 
   return (
@@ -206,7 +220,7 @@ export function AppearancePanel(props: {
                 // Retour à une race : la tenue de départ de la classe, en gardant armes et accessoires.
                 e.target.value === "monster"
                   ? patch({ model: monsterModel(CATALOG.monsters[0].id), parts: [], hair: [] })
-                  : patch({ ...newAppearance(classId), weapons: appearance.weapons, accessories: appearance.accessories })
+                  : patch({ ...newAppearance(classId), raceHair: undefined, hairColor: undefined, weapons: appearance.weapons, accessories: appearance.accessories })
               }
             >
               <option value="body">Race (Quaternius)</option>
@@ -218,9 +232,9 @@ export function AppearancePanel(props: {
               <label className="appearance-row">
                 Race
                 <select value={body.race} onChange={(e) => setBody(e.target.value, body.gender)}>
-                  {Object.entries(RACES).map(([id, label]) => (
+                  {BODY_RACES.map((id) => (
                     <option key={id} value={id}>
-                      {label}
+                      {RACES[id] ?? id}
                     </option>
                   ))}
                 </select>
@@ -278,19 +292,7 @@ export function AppearancePanel(props: {
                     </label>
                   ))}
               </div>
-              <div className="appearance-checks">
-                <span>Coiffure</span>
-                {CATALOG.hair.map(({ id }) => (
-                  <label key={id}>
-                    <input
-                      type="checkbox"
-                      checked={appearance.hair.includes(id)}
-                      onChange={(e) => patch({ hair: e.target.checked ? [...appearance.hair, id] : appearance.hair.filter((h) => h !== id) })}
-                    />
-                    {id.replace(/_/g, " ")}
-                  </label>
-                ))}
-              </div>
+              <HairControls appearance={sanitizedAppearance(appearance)} race={body.race} gender={body.gender} patch={patch} />
             </>
           ) : (
             <label className="appearance-row">
@@ -379,6 +381,67 @@ export function AppearancePanel(props: {
         </>
       )}
     </div>
+  );
+}
+
+// Coupe de cheveux (une seule), barbe et moustache, et teinte. Une race du pack Fantasy Races a ses propres cheveux :
+// une autre coupe les remplace, « Aucune » les retire (raceHair: false).
+function HairControls({ appearance, race, gender, patch }: { appearance: Appearance; race: string; gender: string; patch: (changes: Partial<Appearance>) => void }) {
+  const options = hairFor(race, gender);
+  const cuts = options.filter((h) => h.kind === "cut");
+  const facial = options.filter((h) => h.kind === "facial");
+  const ownHair = isFantasyRace(race);
+  const cut = appearance.hair.find((id) => cuts.some((h) => h.id === id)) ?? (ownHair && appearance.raceHair !== false ? "race" : "");
+  const setCut = (value: string) => {
+    const others = appearance.hair.filter((id) => !cuts.some((h) => h.id === id));
+    patch({ hair: value && value !== "race" ? [...others, value] : others, raceHair: ownHair && value === "" ? false : undefined });
+  };
+  const label = (id: string) => id.replace(/^Hair_/, "").replace(/_Teen$/, "").replace(/_/g, " ");
+  return (
+    <>
+      <h4>Cheveux</h4>
+      <label className="appearance-row">
+        Coupe
+        <select value={cut} onChange={(e) => setCut(e.target.value)}>
+          {ownHair && <option value="race">Celle de la race</option>}
+          <option value="">Aucune (crâne rasé)</option>
+          {cuts.map((h) => (
+            <option key={h.id} value={h.id}>
+              {label(h.id)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {facial.length > 0 && (
+        <div className="appearance-checks">
+          <span>Barbe et moustache</span>
+          {facial.map((h) => (
+            <label key={h.id}>
+              <input
+                type="checkbox"
+                checked={appearance.hair.includes(h.id)}
+                onChange={(e) => patch({ hair: e.target.checked ? [...appearance.hair, h.id] : appearance.hair.filter((id) => id !== h.id) })}
+              />
+              {label(h.id)}
+            </label>
+          ))}
+        </div>
+      )}
+      <label className="appearance-row">
+        Couleur
+        {appearance.hairColor ? (
+          <>
+            <input type="color" value={appearance.hairColor} onChange={(e) => patch({ hairColor: e.target.value })} />
+            <button onClick={() => patch({ hairColor: undefined })} title="Revenir à la texture grise d'origine">
+              D'origine
+            </button>
+          </>
+        ) : (
+          <button onClick={() => patch({ hairColor: DEFAULT_HAIR_COLOR })}>Teindre</button>
+        )}
+      </label>
+      {cut === "race" && <p className="lab-note">Les cheveux de la race gardent leurs couleurs ; la teinte vaut pour les sourcils et les poils ajoutés.</p>}
+    </>
   );
 }
 
@@ -485,7 +548,7 @@ export function PlacementPanel(props: {
 
   const models = useMemo(
     () => [
-      ...CATALOG.bodies.map((b) => ({ id: b.id, label: `${RACES[b.race]} ${GENDERS[b.gender].toLowerCase()}` })),
+      ...CATALOG.bodies.map((b) => ({ id: b.id, label: `${RACES[b.race] ?? b.race} ${GENDERS[b.gender].toLowerCase()}` })),
       ...CATALOG.monsters.map((m) => ({ id: monsterModel(m.id), label: `Monstre ${m.id}` })),
     ],
     [],

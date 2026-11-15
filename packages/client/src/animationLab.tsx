@@ -102,7 +102,7 @@ import {
   placementKey,
   type PlacementSelection,
 } from "./appearanceLab";
-import { mountedItems } from "./appearanceData";
+import { mountedItems, sanitizedAppearance } from "./appearanceData";
 import { EMPTY_APPEARANCES, type Appearance, type AppearanceFile } from "./game/appearance";
 
 // L'éditeur a sa propre sourdine : celle du jeu (même adresse, donc même stockage) ne le coupe pas.
@@ -335,9 +335,8 @@ class Stage {
     this.frozen = null;
     this.instance?.dispose();
     this.instance = null;
-    const custom = this.appearance
-      ? { appearance: this.appearance, items: mountedItems(this.appearance), mounts: this.mounts[this.appearance.model] ?? {} }
-      : undefined;
+    const appearance = this.appearance && sanitizedAppearance(this.appearance);
+    const custom = appearance ? { appearance, items: mountedItems(appearance), mounts: this.mounts[appearance.model] ?? {} } : undefined;
     const instance = await this.assets.create(classId, this.holder, undefined, custom);
     if (build !== this.build) {
       instance?.dispose();

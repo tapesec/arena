@@ -11,8 +11,43 @@
       "gender": "Female"
     },
     {
-      "id": "Elf_Male",
-      "race": "Elf",
+      "id": "HumanRegular_Male",
+      "race": "HumanRegular",
+      "gender": "Male"
+    },
+    {
+      "id": "HumanRegular_Female",
+      "race": "HumanRegular",
+      "gender": "Female"
+    },
+    {
+      "id": "HumanTeen_Male",
+      "race": "HumanTeen",
+      "gender": "Male"
+    },
+    {
+      "id": "HumanTeen_Female",
+      "race": "HumanTeen",
+      "gender": "Female"
+    },
+    {
+      "id": "Ape_Female",
+      "race": "Ape",
+      "gender": "Female"
+    },
+    {
+      "id": "Ape_Male",
+      "race": "Ape",
+      "gender": "Male"
+    },
+    {
+      "id": "Dragonborn_Female",
+      "race": "Dragonborn",
+      "gender": "Female"
+    },
+    {
+      "id": "Dragonborn_Male",
+      "race": "Dragonborn",
       "gender": "Male"
     },
     {
@@ -21,14 +56,39 @@
       "gender": "Female"
     },
     {
-      "id": "Orc_Male",
-      "race": "Orc",
+      "id": "Elf_Male",
+      "race": "Elf",
       "gender": "Male"
     },
     {
       "id": "Orc_Female",
       "race": "Orc",
       "gender": "Female"
+    },
+    {
+      "id": "Orc_Male",
+      "race": "Orc",
+      "gender": "Male"
+    },
+    {
+      "id": "WaterElfEars_Female",
+      "race": "WaterElfEars",
+      "gender": "Female"
+    },
+    {
+      "id": "WaterElfFins_Female",
+      "race": "WaterElfFins",
+      "gender": "Female"
+    },
+    {
+      "id": "WaterElfEars_Male",
+      "race": "WaterElfEars",
+      "gender": "Male"
+    },
+    {
+      "id": "WaterElfFins_Male",
+      "race": "WaterElfFins",
+      "gender": "Male"
     }
   ],
   "parts": [
@@ -419,28 +479,196 @@
   ],
   "hair": [
     {
-      "id": "Eyebrows_Female"
+      "id": "Hair_Balding",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
     },
     {
-      "id": "Eyebrows_Regular"
+      "id": "Hair_Balding_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
     },
     {
-      "id": "Hair_Beard"
+      "id": "Hair_Beard",
+      "gender": "Male",
+      "kind": "facial",
+      "teen": false
     },
     {
-      "id": "Hair_Buns"
+      "id": "Hair_Beard_Teen",
+      "gender": "Male",
+      "kind": "facial",
+      "teen": true
     },
     {
-      "id": "Hair_Buzzed"
+      "id": "Hair_Buzzed",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
     },
     {
-      "id": "Hair_BuzzedFemale"
+      "id": "Hair_Buzzed_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
     },
     {
-      "id": "Hair_Long"
+      "id": "Hair_Dreads",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
     },
     {
-      "id": "Hair_SimpleParted"
+      "id": "Hair_Dreads_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Mohawk",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_Mohawk_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Moustache",
+      "gender": "Male",
+      "kind": "facial",
+      "teen": false
+    },
+    {
+      "id": "Hair_Moustache_Teen",
+      "gender": "Male",
+      "kind": "facial",
+      "teen": true
+    },
+    {
+      "id": "Hair_MuttonChops",
+      "gender": "Male",
+      "kind": "facial",
+      "teen": false
+    },
+    {
+      "id": "Hair_MuttonChops_Teen",
+      "gender": "Male",
+      "kind": "facial",
+      "teen": true
+    },
+    {
+      "id": "Hair_Ponytail",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_Ponytail_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_SimpleParted",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_SimpleParted_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_SlickBack",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_SlickBack_Teen",
+      "gender": "Male",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Bob",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_Bob_Teen",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Buns",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_Buns_Teen",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_BuzzedFemale",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_BuzzedFemale_Teen",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Long",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_LongDreads",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_LongDreads_Teen",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Long_Teen",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": true
+    },
+    {
+      "id": "Hair_Ponytail_2",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": false
+    },
+    {
+      "id": "Hair_Ponytail_2_Teen",
+      "gender": "Female",
+      "kind": "cut",
+      "teen": true
     }
   ],
   "monsters": [

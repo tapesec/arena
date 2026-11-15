@@ -2,7 +2,7 @@
 // développement seulement : corps et têtes des races, pièces de tenue, cheveux, monstres, armes et accessoires, dans
 // packages/client/public/dev-models/appearance/ (non versionné), plus leur catalogue dans
 // packages/client/src/appearanceCatalog.json (versionné : seulement des noms de fichiers).
-// Usage : node scripts/prepare-appearance-lab.mjs   (après import-assets.sh ; les packs sont dans assets-source/)
+// Usage : node scripts/prepare-appearance-lab.mjs   (après import-assets.sh et import-appearance-assets.sh)
 import { copyFile, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,16 +20,12 @@ const TEXTURE_SIZE = 1024;
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ sharp });
 
-// Corps complets par race et genre. Les humains sont les corps de base de Quaternius (Universal Base Characters), les
-// autres races viennent du pack Fantasy Races.
-const BODIES = {
-  Human_Male: "base/bodies/Superhero_Male_FullBody.gltf",
-  Human_Female: "base/bodies/Superhero_Female_FullBody.gltf",
-  Elf_Male: "races/Elf_Male.glb",
-  Elf_Female: "races/Elf_Female.glb",
-  Orc_Male: "races/Orc_Male.glb",
-  Orc_Female: "races/Orc_Female.glb",
-};
+// Corps complets par race et genre (voir bodySources) : les humains sont les corps de Universal Base Characters
+// (trois morphologies, la « Superhero » garde l'identifiant Human déjà enregistré), les autres races viennent du pack
+// Fantasy Races (scripts/import-appearance-assets.sh).
+const HUMAN_BODIES = { Superhero: "Human", Regular: "HumanRegular", Teen: "HumanTeen" };
+// Coiffures : poils du visage (cumulables avec une coupe) ; les sourcils restent ceux du corps.
+const FACIAL_HAIR = /^Hair_(Beard|Moustache|MuttonChops)/;
 // Os dont la tête découpée dans le corps garde les triangles (comme build-assets.mjs).
 const HEAD_BONES = new Set(["Head", "neck_01"]);
 
@@ -67,8 +63,7 @@ async function main() {
   await rm(OUT, { recursive: true, force: true });
   const catalog = { bodies: [], parts: [], hair: [], monsters: [], weapons: [], accessories: [] };
 
-  for (const [id, source] of Object.entries(BODIES)) {
-    const [race, gender] = id.split("_");
+  for (const { id, race, gender, source } of await bodySources()) {
     await writeOptimized(await io.read(path.join(SOURCE, source)), `bodies/${id}.glb`);
     const head = await io.read(path.join(SOURCE, source));
     keepHeadOnly(head);
@@ -84,10 +79,13 @@ async function main() {
     catalog.parts.push({ id, gender, outfit, slot });
   }
 
-  for (const file of (await readdir(path.join(SOURCE, "base/hair"))).filter((f) => f.endsWith(".gltf")).sort()) {
-    const id = file.replace(/\.gltf$/, "");
-    await writeOptimized(await io.read(path.join(SOURCE, "base/hair", file)), `hair/${id}.glb`);
-    catalog.hair.push({ id });
+  for (const gender of ["Male", "Female"]) {
+    const dir = path.join(SOURCE, "base-full/hair", gender);
+    for (const file of (await readdir(dir)).filter((f) => f.endsWith(".gltf") && !f.startsWith("Eyebrows")).sort()) {
+      const id = file.replace(/\.gltf$/, "");
+      await writeOptimized(await io.read(path.join(dir, file)), `hair/${id}.glb`);
+      catalog.hair.push({ id, gender, kind: FACIAL_HAIR.test(id) ? "facial" : "cut", teen: id.endsWith("_Teen") });
+    }
   }
 
   // Monstres : le fichier désigne un os de doigt comme racine du squelette (erreur d'export) ; le chargeur de Babylon
@@ -133,6 +131,22 @@ async function main() {
   await writeFile(CATALOG, `${JSON.stringify(catalog, null, 2)}\n`);
   const counts = Object.entries(catalog).map(([key, list]) => `${list.length} ${key}`);
   console.log(`Catalogue écrit : ${counts.join(", ")}`);
+}
+
+// Corps : morphologies humaines, puis races (« WaterElf_Male_Fins » : race WaterElfFins).
+async function bodySources() {
+  const bodies = [];
+  for (const [type, race] of Object.entries(HUMAN_BODIES)) {
+    for (const gender of ["Male", "Female"]) {
+      bodies.push({ id: `${race}_${gender}`, race, gender, source: `base-full/bodies/${type}_${gender}_FullBody.gltf` });
+    }
+  }
+  for (const file of (await readdir(path.join(SOURCE, "races"))).filter((f) => f.endsWith(".glb")).sort()) {
+    const [name, gender, variant = ""] = file.replace(/\.glb$/, "").split("_");
+    const race = name + variant;
+    bodies.push({ id: `${race}_${gender}`, race, gender, source: `races/${file}` });
+  }
+  return bodies;
 }
 
 async function listFiles(dir, ext, recursive) {

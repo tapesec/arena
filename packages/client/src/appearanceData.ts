@@ -39,12 +39,26 @@ export interface CatalogAccessory {
 export interface AppearanceCatalog {
   bodies: CatalogBody[];
   parts: CatalogPart[];
-  hair: { id: string }[];
+  // kind : coupe, ou poils du visage (cumulables avec une coupe) ; teen : version pour le corps « Teen ».
+  hair: { id: string; gender: string; kind: "cut" | "facial"; teen: boolean }[];
   monsters: { id: string }[];
   weapons: CatalogWeapon[];
   accessories: CatalogAccessory[];
 }
 export const CATALOG = catalogJson as AppearanceCatalog;
+
+// Coiffures qui vont à un corps : son genre, et la version « Teen » pour le corps jeune.
+export function hairFor(race: string, gender: string): AppearanceCatalog["hair"] {
+  return CATALOG.hair.filter((h) => h.gender === gender && h.teen === (race === "HumanTeen"));
+}
+
+// Apparence affichable : coiffures qui existent et vont au corps (une apparence enregistrée avec un ancien catalogue
+// peut en citer d'autres), aucune pour un monstre.
+export function sanitizedAppearance(appearance: Appearance): Appearance {
+  const body = CATALOG.bodies.find((b) => b.id === appearance.model);
+  const valid = body ? hairFor(body.race, body.gender) : [];
+  return { ...appearance, hair: appearance.hair.filter((id) => valid.some((h) => h.id === id)) };
+}
 
 export function genderOf(model: string): string | null {
   return isMonster(model) ? null : (CATALOG.bodies.find((b) => b.id === model)?.gender ?? null);
