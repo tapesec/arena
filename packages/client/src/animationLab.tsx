@@ -104,7 +104,7 @@ import {
   type PlacementSelection,
 } from "./appearanceLab";
 import { mountedItems, recolorsOf, sanitizedAppearance } from "./appearanceData";
-import { EMPTY_APPEARANCES, type Appearance, type AppearanceFile } from "./game/appearance";
+import { EMPTY_APPEARANCES, PLAY_SLOT, type Appearance, type AppearanceFile } from "./game/appearance";
 
 // L'éditeur a sa propre sourdine : celle du jeu (même adresse, donc même stockage) ne le coupe pas.
 audio.useMutedKey("arena.lab.muted");
@@ -198,6 +198,8 @@ class Stage {
   private mode: "play" | "scrub" = "scrub";
   // Pose d'attente en boucle, sans compétence (bouton « Idle » des onglets Apparence et Placement).
   private resting = false;
+  // Pendant la pose d'attente : pose de jeu figée, l'instrument entre les mains (place « joué » de l'onglet Placement).
+  private playPose = false;
   // Instant montré en pose figée, pour chaque moment (secondes depuis le début du geste du lanceur, ou depuis
   // l'impact, le début de l'état, l'apparition de la zone).
   private scrubTimes: Record<Moment, number> = { caster: 0, projectile: 0, impact: 0, status: 0, zone: 0 };
@@ -421,6 +423,25 @@ class Stage {
     this.mode = "play";
     this.resting = true;
     this.restart();
+  }
+
+  // Pose de jeu figée (réglage de la place « joué » d'un instrument), à la place de la pose d'attente.
+  setPlayPose(on: boolean) {
+    if (this.playPose === on) return;
+    this.playPose = on;
+    if (this.resting) this.restart();
+  }
+
+  private showPlayPose(instance: CharacterInstance) {
+    const group = [...INSTRUMENT_ANIMATIONS].map((name) => instance.animations.get(name)).find((g) => !!g);
+    if (!group) return;
+    for (const other of instance.animations.values()) other.stop();
+    group.enableBlending = false;
+    group.start(false, 1, group.from, group.to);
+    group.pause();
+    // Au milieu du morceau : les mains sont en place.
+    group.goToFrame((group.from + group.to) / 2);
+    this.frozen = group;
   }
 
   // Retour aux autres onglets : la pose figée habituelle.
@@ -697,6 +718,7 @@ class Stage {
     instance.setPlaying(false, true);
     // Nouvel animateur : il remet les fondus que la pose figée retire.
     this.animator = new CharacterAnimator(instance.animations, instance.set, this.tuning);
+    if (this.resting && this.playPose) this.showPlayPose(instance);
     this.unfreezeTarget();
     this.cycle = { phase: "idle", time: IDLE_PAUSE - 0.3 };
     if (this.mode === "scrub" && !this.workshop) this.showFrame();
@@ -795,6 +817,12 @@ class Stage {
     }
     if (this.resting) {
       if (!instance || !animator) return;
+      if (this.playPose && this.frozen) {
+        // Les os ne sont à jour qu'au rendu : le luth est replacé à chaque image.
+        instance.setPlaying(true, true);
+        this.onFrame?.({ playhead: null, cast: null });
+        return;
+      }
       animator.update(this.idleInput());
       this.onFrame?.({ playhead: null, cast: null });
       return;
@@ -2072,6 +2100,9 @@ function AnimationLab() {
     }),
     [],
   );
+  // Place « joué » d'un instrument : le personnage tient la pose de jeu.
+  const playPose = tab === "placement" && placement.kind === "weapon" && placement.slot === PLAY_SLOT;
+  useEffect(() => stageRef.current?.setPlayPose(playPose), [playPose, stage]);
   const placementNode = tab === "placement" ? (instance?.attachments?.find((a) => a.key === placementKey(placement))?.node ?? null) : null;
 
   const animations = useMemo(() => {

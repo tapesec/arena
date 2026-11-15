@@ -41,6 +41,9 @@ export interface MountedItem {
   // Couleurs choisies, par zone ; palette : la palette Hearthfold (pour les zones « c<case> ») et son matériau.
   colors?: ItemColors;
   palette?: { texture: string; grid: number; material: string };
+  // Instrument (luth) : clé de son placement « joué », entre les mains pendant les animations de jeu (voir
+  // INSTRUMENT_ANIMATIONS) ; les armes tenues en main sont cachées pendant ce temps.
+  playKey?: string;
 }
 
 // Placement d'une arme ou d'un accessoire sur un os : position (m), rotation (radians, angles d'Euler) et échelle, dans
@@ -166,6 +169,17 @@ export function appearanceUrl(file: string): string {
 // Clé d'un placement : l'objet et sa place (main, côté d'une paire).
 export function weaponKey(weapon: HeldWeapon): string {
   return `${weapon.item}@${weapon.slot}`;
+}
+// Instruments du catalogue : le Barde en joue pendant ses chants (voir MountedItem.playKey).
+export function isInstrument(item: string): boolean {
+  return /(^|\/)Weapon_Lute$/.test(item);
+}
+// Placement d'un instrument pendant qu'on en joue : dans un repère qui suit les deux mains (voir createCustom).
+export const PLAY_SLOT = "play";
+// Nom de ce repère (l'éditeur le lit comme os du placement « joué »).
+export const PLAY_FRAME = "mains (chant)";
+export function playKey(item: string): string {
+  return `${item}@${PLAY_SLOT}`;
 }
 export function accessoryKey(item: string, side: "r" | "l" | "c"): string {
   return `${item}@${side}`;

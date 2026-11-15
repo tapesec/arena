@@ -21,6 +21,7 @@ import {
   isHairCut,
   isMonster,
   modelFile,
+  PLAY_FRAME,
   type Appearance,
   type DefaultSocket,
   type Mount,
@@ -164,32 +165,86 @@ function staffStow(middle: number): Placement {
 // droite, un peu vers le ventre ; le manche (-y du modèle) vers la paume gauche ; la table vers l'avant du personnage. Les mains
 // viennent de l'image précédente (une image de retard, invisible).
 function holdInstrument(attach: TransformNode, bones: Map<string, TransformNode>) {
-  const parent = attach.parent as TransformNode | null;
+  if (!followHands(attach, bones, new Vector3(...TORSO_FORWARD))) return;
+  const face = new Vector3(0, 0, 1).applyRotationQuaternion(attach.rotationQuaternion!);
+  const strum = LUTE_STRUM_POINT.scale(attach.scaling.x).applyRotationQuaternion(attach.rotationQuaternion!);
+  attach.position.subtractInPlace(face.scale(LUTE_BEHIND_HAND)).subtractInPlace(strum);
+}
+
+// Repère qui suit les mains, dans celui de son parent : origine sur la paume droite, y de la paume gauche vers la droite,
+// z vers l'avant du buste (forward, dans le repère du parent). Mains confondues ou alignées sur l'avant du buste : pas
+// d'orientation possible, on garde celle de l'image précédente (et on rend false).
+function followHands(node: TransformNode, bones: Map<string, TransformNode>, forward: Vector3): boolean {
+  const parent = node.parent as TransformNode | null;
   const right = palmOf(bones, "r");
   const left = palmOf(bones, "l");
-  if (!parent || !right || !left) return;
+  if (!parent || !right || !left) return false;
   const toParent = parent.getWorldMatrix().clone().invert();
   const r = Vector3.TransformCoordinates(right, toParent);
   const l = Vector3.TransformCoordinates(left, toParent);
-  // Axe y du modèle : de la main gauche (manche) vers la main droite (caisse). Mains confondues ou alignées sur
-  // l'avant du buste : pas d'orientation possible, on garde celle de l'image précédente.
   const up = r.subtract(l);
-  if (up.lengthSquared() < 1e-6) return;
+  if (up.lengthSquared() < 1e-6) return false;
   up.normalize();
-  const forward = new Vector3(...TORSO_FORWARD);
   const face = forward.subtract(up.scale(Vector3.Dot(forward, up)));
-  if (face.lengthSquared() < 1e-6) return;
+  if (face.lengthSquared() < 1e-6) return false;
   face.normalize();
   const side = Vector3.Cross(up, face);
-  const rotation = Quaternion.FromRotationMatrix(Matrix.FromValues(
+  node.rotationQuaternion = Quaternion.FromRotationMatrix(Matrix.FromValues(
     side.x, side.y, side.z, 0,
     up.x, up.y, up.z, 0,
     face.x, face.y, face.z, 0,
     0, 0, 0, 1,
   ));
-  attach.rotationQuaternion = rotation;
-  const strum = LUTE_STRUM_POINT.scale(attach.scaling.x).applyRotationQuaternion(rotation);
-  attach.position.copyFrom(r.subtract(face.scale(LUTE_BEHIND_HAND)).subtract(strum));
+  node.position.copyFrom(r);
+  return true;
+}
+
+// Instrument d'un personnage de l'éditeur d'apparence (voir createCustom) : son attache, le repère qui suit les mains,
+// l'os de sa place (home) et ses placements à sa place (rest, relevé au départ) et joué (play), dans leur repère.
+// releasedAt : instant (s) où l'on a cessé de jouer ; from : placement au début du retour à sa place.
+interface Snapshot {
+  position: Vector3;
+  rotation: Quaternion;
+  scale: number;
+}
+interface PlayedInstrument {
+  node: TransformNode;
+  frame: TransformNode;
+  home: TransformNode;
+  rest: Snapshot | null;
+  play: Snapshot;
+  releasedAt: number | null;
+  from: Snapshot | null;
+}
+
+function snapshot(node: TransformNode): Snapshot {
+  return {
+    position: node.position.clone(),
+    rotation: node.rotationQuaternion?.clone() ?? node.rotation.toQuaternion(),
+    scale: node.scaling.x,
+  };
+}
+
+// Remet un placement, en angles d'Euler (comme ceux réglés dans l'éditeur).
+function applySnapshot(node: TransformNode, { position, rotation, scale }: Snapshot) {
+  node.rotationQuaternion = null;
+  node.position.copyFrom(position);
+  node.rotation.copyFrom(rotation.toEulerAngles());
+  node.scaling.setAll(scale);
+}
+
+// Placement « joué » par défaut d'un luth Quaternius (caisse vers +y du modèle, manche vers -y, table vers +z) : manche
+// tourné vers la main gauche, point gratté (bas de la caisse) sous la paume droite, un peu vers le ventre ; même taille à
+// l'écran qu'à sa place.
+const QUATERNIUS_LUTE_STRUM = new Vector3(0, 0.55, 0.03);
+function defaultPlay(node: TransformNode, torso: TransformNode): Snapshot {
+  node.computeWorldMatrix(true);
+  const torsoScale = torso.absoluteScaling.x || 1;
+  const scale = node.absoluteScaling.x / torsoScale;
+  const rotation = Quaternion.Identity();
+  const strum = QUATERNIUS_LUTE_STRUM.scale(scale).applyRotationQuaternion(rotation);
+  const behind = (LUTE_BEHIND_HAND * CHARACTER_SCALE) / torsoScale;
+  return { position: strum.negate().subtractInPlace(new Vector3(0, 0, behind)), rotation, scale };
 }
 
 // Milieu de la paume : entre le poignet (os de la main) et la base du majeur.
@@ -837,6 +892,44 @@ export class CharacterAssets {
       attachments.push({ key: item.key, node: attach });
     });
 
+    // Instruments : pendant une animation de jeu, le luth quitte sa place (dans le dos) pour un repère qui suit les mains
+    // (voir followHands), accroché au buste ; son placement « joué » s'y règle (onglet Placement, clé playKey). L'avant du
+    // buste est mesuré ici, sur la pose de repos : la droite du personnage (de la paume gauche à la droite) croisée avec
+    // le haut.
+    const torso = bones.get("spine_03") ?? root;
+    const restRightPalm = palmOf(bones, "r");
+    const restLeftPalm = palmOf(bones, "l");
+    const forward =
+      restRightPalm && restLeftPalm
+        ? Vector3.TransformNormal(Vector3.Cross(restRightPalm.subtract(restLeftPalm), Vector3.Up()), torso.getWorldMatrix().clone().invert()).normalize()
+        : new Vector3(...TORSO_FORWARD);
+    const players: PlayedInstrument[] = [];
+    for (const item of items) {
+      const node = item.playKey && attachments.find((a) => a.key === item.key)?.node;
+      if (!item.playKey || !node) continue;
+      const frame = new TransformNode(PLAY_FRAME, this.scene);
+      frame.parent = torso;
+      cleanup.push(() => frame.dispose(false, false));
+      const tuned = mounts[item.playKey];
+      players.push({
+        node,
+        frame,
+        home: node.parent as TransformNode,
+        rest: null,
+        play: tuned
+          ? { position: new Vector3(...tuned.position), rotation: Quaternion.FromEulerAngles(...tuned.rotation), scale: tuned.scale }
+          : defaultPlay(node, torso),
+        releasedAt: null,
+        from: null,
+      });
+      attachments.push({ key: item.playKey, node });
+    }
+    // Armes tenues en main, cachées pendant qu'on joue (la main qui gratte).
+    const instrumentNodes = new Set(players.map((p) => p.node));
+    const hiddenWhilePlaying = attachments
+      .filter((a) => /@(right|left)$/.test(a.key) && !instrumentNodes.has(a.node))
+      .map((a) => a.node);
+
     // Animations rebranchées par nom d'os : celles de nos bibliothèques pour un corps (même squelette), celles
     // reciblées une fois pour ce monstre sinon.
     let sources = [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
@@ -873,7 +966,63 @@ export class CharacterAssets {
       hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
       bones,
       setStowed: () => undefined,
-      setPlaying: () => undefined,
+      setPlaying: (playing, instant = false) => {
+        const now = performance.now() / 1000;
+        // Sans instrument, rien n'est caché.
+        let busy = playing && players.length > 0;
+        for (const p of players) {
+          const { node, frame } = p;
+          if (playing) {
+            // Reprise pendant le retour : le luth est à mi-chemin, sa place reste celle relevée au départ.
+            const returning = !!p.from;
+            p.releasedAt = null;
+            p.from = null;
+            if (node.parent !== frame) {
+              // Sa place dans le dos est relevée à chaque départ (elle a pu être réglée entre-temps).
+              if (!returning || !p.rest) p.rest = snapshot(node);
+              node.parent = frame;
+              applySnapshot(node, p.play);
+            }
+            followHands(frame, bones, forward);
+            continue;
+          }
+          // Déjà à sa place.
+          if (node.parent !== frame && !p.from) continue;
+          p.releasedAt ??= now;
+          const elapsed = now - p.releasedAt;
+          if (node.parent === frame) {
+            if (!instant && elapsed < INSTRUMENT_FOLLOW) {
+              followHands(frame, bones, forward);
+              busy = true;
+              continue;
+            }
+            // Le placement « joué » (réglé entre-temps peut-être) est gardé pour la prochaine fois ; le luth repart de là
+            // où il est à l'écran, dans le repère de sa place.
+            p.play = snapshot(node);
+            node.rotationQuaternion ??= node.rotation.toQuaternion();
+            frame.computeWorldMatrix(true);
+            node.computeWorldMatrix(true);
+            node.setParent(p.home);
+            p.from = snapshot(node);
+          }
+          const rest = p.rest ?? snapshot(node);
+          const progress = instant ? 1 : Math.min(1, (elapsed - INSTRUMENT_FOLLOW) / INSTRUMENT_RETURN);
+          if (progress >= 1 || !p.from) {
+            applySnapshot(node, rest);
+            p.releasedAt = null;
+            p.from = null;
+            continue;
+          }
+          const eased = progress * progress * (3 - 2 * progress);
+          Vector3.LerpToRef(p.from.position, rest.position, eased, node.position);
+          node.rotationQuaternion ??= new Quaternion();
+          Quaternion.SlerpToRef(p.from.rotation, rest.rotation, eased, node.rotationQuaternion);
+          node.scaling.setAll(p.from.scale + (rest.scale - p.from.scale) * eased);
+          busy = true;
+        }
+        // Les armes en main reviennent une fois le luth rangé.
+        for (const node of hiddenWhilePlaying) node.setEnabled(!busy);
+      },
       dispose() {
         for (const group of animations.values()) group.dispose();
         for (const { node } of attachments) node.dispose(false, false);

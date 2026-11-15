@@ -6,7 +6,9 @@ import {
   isFantasyRace,
   accessoryKey,
   accessorySocket,
+  isInstrument,
   isMonster,
+  playKey,
   weaponKey,
   weaponSocket,
   type Appearance,
@@ -130,7 +132,16 @@ export function mountedItems(appearance: Appearance): MountedItem[] {
   const items: MountedItem[] = [];
   for (const weapon of appearance.weapons) {
     const def = CATALOG.weapons.find((w) => w.id === weapon.item);
-    if (def) items.push({ key: weaponKey(weapon), file: def.file, socket: weaponSocket(weapon.slot), ...itemPaint(appearance, weapon.item) });
+    if (!def) continue;
+    // Un instrument tenu deux fois n'a qu'un placement « joué » : seul le premier en joue.
+    const plays = isInstrument(weapon.item) && appearance.weapons.find((w) => w.item === weapon.item) === weapon;
+    items.push({
+      key: weaponKey(weapon),
+      file: def.file,
+      socket: weaponSocket(weapon.slot),
+      ...itemPaint(appearance, weapon.item),
+      ...(plays ? { playKey: playKey(weapon.item) } : {}),
+    });
   }
   for (const id of appearance.accessories) {
     const def = CATALOG.accessories.find((a) => a.id === id);

@@ -12,12 +12,16 @@ import {
   GENDERS,
   PAIRED_SOCKETS,
   PART_SLOTS,
+  PLAY_FRAME,
+  PLAY_SLOT,
   RACES,
   WEAPON_SLOTS,
   accessoryKey,
   isFantasyRace,
+  isInstrument,
   isMonster,
   monsterModel,
+  playKey,
   weaponKey,
   type Appearance,
   type AppearanceFile,
@@ -758,6 +762,9 @@ function ZoneColorRow(props: {
   );
 }
 
+// Place d'un instrument pendant qu'on en joue (onglet Placement).
+const PLAY_LABEL = "Joué (chants)";
+
 // Objet placé dans l'onglet « Placement » : le modèle, l'objet, et sa place (main, côté d'une paire).
 export interface PlacementSelection {
   model: string;
@@ -771,8 +778,11 @@ export const DEFAULT_PLACEMENT: PlacementSelection = { model: "Human_Male", kind
 // Apparence montrée pendant le placement : le personnage composé dans l'onglet Apparence (base) s'il a ce modèle, avec
 // l'objet réglé en plus s'il ne le porte pas ; sinon le modèle nu (corps entier), avec le seul objet réglé.
 export function placementAppearance(selection: PlacementSelection, base?: Appearance | null): Appearance {
+  // Place « joué » d'un instrument : l'instrument à sa place habituelle (celle du personnage, sinon dans le dos).
+  const playing = selection.kind === "weapon" && selection.slot === PLAY_SLOT;
+  const slot = (playing ? (base?.model === selection.model && base.weapons.find((w) => w.item === selection.item)?.slot) || "back" : selection.slot) as WeaponSlot;
   if (base && base.model === selection.model) {
-    const weapon = { item: selection.item, slot: selection.slot as WeaponSlot };
+    const weapon = { item: selection.item, slot };
     // Une arme portée qu'on règle à une autre place n'apparaît qu'une fois, à cette place.
     const weapons =
       selection.kind === "weapon" && !base.weapons.some((w) => w.item === weapon.item && w.slot === weapon.slot)
@@ -787,7 +797,7 @@ export function placementAppearance(selection: PlacementSelection, base?: Appear
     headOnly: false,
     parts: [],
     hair: [],
-    weapons: selection.kind === "weapon" ? [{ item: selection.item, slot: selection.slot as WeaponSlot }] : [],
+    weapons: selection.kind === "weapon" ? [{ item: selection.item, slot }] : [],
     accessories: selection.kind === "accessory" ? [selection.item] : [],
   };
 }
@@ -800,6 +810,13 @@ export function placementItems(appearance: Appearance): { selection: PlacementSe
       selection: { model: appearance.model, kind: "weapon", item: weapon.item, slot: weapon.slot },
       label: `${weaponLabel(weapon.item)} · ${WEAPON_SLOTS[weapon.slot].toLowerCase()}`,
     });
+    // Un instrument : aussi sa place pendant les chants (une seule fois s'il est tenu deux fois).
+    if (isInstrument(weapon.item) && appearance.weapons.find((w) => w.item === weapon.item) === weapon) {
+      items.push({
+        selection: { model: appearance.model, kind: "weapon", item: weapon.item, slot: PLAY_SLOT },
+        label: `${weaponLabel(weapon.item)} · ${PLAY_LABEL.toLowerCase()}`,
+      });
+    }
   }
   for (const id of appearance.accessories) {
     const def = CATALOG.accessories.find((a) => a.id === id);
@@ -822,6 +839,7 @@ export function placementFor(current: PlacementSelection, appearance: Appearance
 }
 
 export function placementKey(selection: PlacementSelection): string {
+  if (selection.kind === "weapon" && selection.slot === PLAY_SLOT) return playKey(selection.item);
   return selection.kind === "weapon" ? weaponKey({ item: selection.item, slot: selection.slot as WeaponSlot }) : accessoryKey(selection.item, selection.slot as "r" | "l" | "c");
 }
 
@@ -868,8 +886,20 @@ export function PlacementPanel(props: {
     const { file: current, onChange: change, model, key: itemKey } = latest.current;
     change({ ...current, mounts: { ...current.mounts, [model]: { ...current.mounts[model], [itemKey]: mount } } });
   };
+  // Placement lu sur l'objet, gardé seulement s'il est à la place réglée : un instrument entre les mains (chant en
+  // cours) ne change pas sa place habituelle, ni l'inverse.
+  const storeFrom = (target: TransformNode) => {
+    const mount = readMount(target);
+    if ((mount.bone === PLAY_FRAME) === latest.current.key.endsWith(`@${PLAY_SLOT}`)) store(mount);
+  };
 
-  useEffect(() => setScale(node?.scaling.x ?? 1), [node]);
+  // Taille lue une image plus tard : un instrument ne passe à sa place « joué » (ou n'en revient) qu'à l'image suivante,
+  // et ses deux places partagent le même nœud.
+  useEffect(() => {
+    setScale(node?.scaling.x ?? 1);
+    const frame = requestAnimationFrame(() => setScale(node?.scaling.x ?? 1));
+    return () => cancelAnimationFrame(frame);
+  }, [node, key]);
 
   // Poignées de la souris : déplacer ou tourner l'objet dans le repère de son os ; chaque geste est gardé.
   useEffect(() => {
@@ -887,7 +917,7 @@ export function PlacementPanel(props: {
     const rotation = gizmos.gizmos.rotationGizmo;
     if (position) position.updateGizmoRotationToMatchAttachedMesh = true;
     if (rotation) rotation.updateGizmoRotationToMatchAttachedMesh = true;
-    const done = () => store(readMount(node));
+    const done = () => storeFrom(node);
     const observers = [position?.onDragEndObservable.add(done), rotation?.onDragEndObservable.add(done)];
     // La caméra ne tourne pas pendant qu'on tire une poignée.
     const camera = scene.activeCamera;
@@ -911,7 +941,14 @@ export function PlacementPanel(props: {
     [],
   );
   const accessory = selection.kind === "accessory" ? CATALOG.accessories.find((a) => a.id === selection.item) : null;
-  const sides = accessory ? (PAIRED_SOCKETS.has(accessory.socket) ? { r: "Droite", l: "Gauche" } : { c: "Unique" }) : WEAPON_SLOTS;
+  const sides = accessory
+    ? PAIRED_SOCKETS.has(accessory.socket)
+      ? { r: "Droite", l: "Gauche" }
+      : { c: "Unique" }
+    : isInstrument(selection.item)
+      ? { ...WEAPON_SLOTS, [PLAY_SLOT]: PLAY_LABEL }
+      : WEAPON_SLOTS;
+  const playing = selection.kind === "weapon" && selection.slot === PLAY_SLOT;
   const placedCount = Object.keys(file.mounts[selection.model] ?? {}).length;
 
   return (
@@ -985,7 +1022,10 @@ export function PlacementPanel(props: {
           </label>
           <label className="appearance-row">
             Arme
-            <select value={selection.item} onChange={(e) => setSelection({ ...selection, item: e.target.value })}>
+            <select
+              value={selection.item}
+              onChange={(e) => setSelection({ ...selection, item: e.target.value, slot: selection.slot === PLAY_SLOT && !isInstrument(e.target.value) ? "back" : selection.slot })}
+            >
               {CATALOG.weapons
                 .filter((w) => w.pack === weaponPack)
                 .map((w) => (
@@ -1058,13 +1098,16 @@ export function PlacementPanel(props: {
                 setScale(value);
                 node.scaling.setAll(value);
               }}
-              onPointerUp={() => store(readMount(node))}
-              onKeyUp={() => store(readMount(node))}
+              onPointerUp={() => storeFrom(node)}
+              onKeyUp={() => storeFrom(node)}
             />
             <span>{scale.toPrecision(3)}</span>
           </label>
           <p className="lab-note">
-            Tirez les flèches (déplacer) ou les anneaux (tourner) sur l'objet. Os : {readMount(node).bone}.{" "}
+            Tirez les flèches (déplacer) ou les anneaux (tourner) sur l'objet.{" "}
+            {playing
+              ? "Pose de jeu figée : l'instrument suit les mains pendant les animations de jeu (chants), les armes en main sont cachées."
+              : `Os : ${readMount(node).bone}.`}{" "}
             {saved ? "Placement réglé." : "Placement par défaut (pas encore réglé)."}
           </p>
           {saved && (
