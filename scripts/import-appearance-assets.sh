@@ -34,6 +34,8 @@ rm -rf "$OUT/races" "$OUT/base-full" "$OUT/monsters" "$OUT/hearthfold-weapons" "
 
 # Races : un GLB par race et par genre (textures incluses).
 extract "$RACES" "$OUT/races" '*/Exports/GLB (Godot-Unreal)/*.glb' '*/License_Source.txt'
+# Variantes de couleur de la peau et des cheveux de chaque race (3 chacune ; la 1 est celle des GLB).
+extract "$RACES" "$OUT/races/textures" '*/Blends/Textures/T_*_BaseColor_*.png' '*/Blends/Textures/Variations/T_*_BaseColor_*.png'
 
 # Corps humains (Superhero, Regular, Teen) et coiffures attachées à l'os de la tête. Les corps référencent deux
 # textures sous un nom qui n'existe pas dans l'archive (comme la version gratuite, voir import-assets.sh).

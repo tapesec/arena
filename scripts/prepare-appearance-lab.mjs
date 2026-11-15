@@ -61,14 +61,31 @@ const SOCKETS = [
 
 async function main() {
   await rm(OUT, { recursive: true, force: true });
-  const catalog = { bodies: [], parts: [], hair: [], monsters: [], weapons: [], accessories: [] };
+  const catalog = { bodies: [], parts: [], hair: [], monsters: [], weapons: [], accessories: [], outfitColors: {}, raceHairColors: [] };
 
-  for (const { id, race, gender, source } of await bodySources()) {
+  for (const { id, race, gender, source, skin } of await bodySources()) {
     await writeOptimized(await io.read(path.join(SOURCE, source)), `bodies/${id}.glb`);
     const head = await io.read(path.join(SOURCE, source));
     keepHeadOnly(head);
     await writeOptimized(head, `bodies/${id}_Head.glb`);
-    catalog.bodies.push({ id, race, gender });
+    // Races : trois couleurs de peau (la 1 est celle du GLB), sur le matériau MI_<texture>.
+    const skins = skin ? await variantTextures(`races/textures/T_${skin}_BaseColor_`, `skins/${skin}_`) : [];
+    catalog.bodies.push({ id, race, gender, ...(skin && { skinMaterial: `MI_${skin}`, skins }) });
+  }
+
+  // Cheveux des races : trois couleurs (matériau MI_FantasyHair).
+  catalog.raceHairColors = await variantTextures("races/textures/T_FantasyHair_BaseColor_", "skins/FantasyHair_");
+
+  // Couleurs des tenues : les trois variantes du pack (T_<Tenue>_BaseColor, _2, _3), sur le matériau MI_<Tenue>.
+  for (const outfit of (await readdir(path.join(SOURCE, "outfits/textures"))).sort()) {
+    const files = [];
+    for (const [i, suffix] of ["", "_2", "_3"].entries()) {
+      const source = path.join(SOURCE, "outfits/textures", outfit, `T_${outfit}${suffix}_BaseColor.png`);
+      const target = `outfit-colors/${outfit}_${i + 1}.webp`;
+      await writeTexture(source, target);
+      files.push(target);
+    }
+    catalog.outfitColors[outfit] = files;
   }
 
   // Pièces de tenue : <Genre>_<Tenue>_<Emplacement>[_<Variante>].
@@ -129,7 +146,7 @@ async function main() {
   }
 
   await writeFile(CATALOG, `${JSON.stringify(catalog, null, 2)}\n`);
-  const counts = Object.entries(catalog).map(([key, list]) => `${list.length} ${key}`);
+  const counts = Object.entries(catalog).map(([key, list]) => `${Array.isArray(list) ? list.length : Object.keys(list).length} ${key}`);
   console.log(`Catalogue écrit : ${counts.join(", ")}`);
 }
 
@@ -144,9 +161,24 @@ async function bodySources() {
   for (const file of (await readdir(path.join(SOURCE, "races"))).filter((f) => f.endsWith(".glb")).sort()) {
     const [name, gender, variant = ""] = file.replace(/\.glb$/, "").split("_");
     const race = name + variant;
-    bodies.push({ id: `${race}_${gender}`, race, gender, source: `races/${file}` });
+    bodies.push({ id: `${race}_${gender}`, race, gender, source: `races/${file}`, skin: `${name}_${gender}` });
   }
   return bodies;
+}
+
+// Variantes 1 à 3 d'une texture (<prefix>1.png…), réduites en WebP sous <target>1.webp….
+async function variantTextures(prefix, target) {
+  const files = [];
+  for (const n of [1, 2, 3]) {
+    await writeTexture(path.join(SOURCE, `${prefix}${n}.png`), `${target}${n}.webp`);
+    files.push(`${target}${n}.webp`);
+  }
+  return files;
+}
+
+async function writeTexture(source, target) {
+  await mkdir(path.dirname(path.join(OUT, target)), { recursive: true });
+  await sharp(source).resize(TEXTURE_SIZE, TEXTURE_SIZE).webp({ quality: 90 }).toFile(path.join(OUT, target));
 }
 
 async function listFiles(dir, ext, recursive) {

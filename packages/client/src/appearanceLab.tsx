@@ -5,7 +5,8 @@ import { GizmoManager } from "@babylonjs/core/Gizmos/gizmoManager";
 import { UtilityLayerRenderer } from "@babylonjs/core/Rendering/utilityLayerRenderer";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { CATALOG, genderOf, hairFor, sanitizedAppearance } from "./appearanceData";
+import { CATALOG, genderOf, hairFor, outfitTexture, outfitsOf, sanitizedAppearance } from "./appearanceData";
+import { mainHues } from "./game/textureTint";
 import {
   ACCESSORY_SOCKETS,
   GENDERS,
@@ -21,6 +22,7 @@ import {
   type Appearance,
   type AppearanceFile,
   type Mount,
+  type OutfitColor,
   type WeaponSlot,
 } from "./game/appearance";
 
@@ -83,6 +85,11 @@ function appearanceAssets(appearance: Appearance): string[] {
     for (const part of appearance.parts) assets.push(`Pièce ${part} (Modular Character Outfits – Fantasy)`);
     for (const hair of appearance.hair) assets.push(`Coiffure ${hair} (Universal Base Characters)`);
     if (appearance.hairColor) assets.push(`Cheveux teints en ${appearance.hairColor}`);
+    for (const [outfit, color] of Object.entries(appearance.outfitColors ?? {})) {
+      if (outfitsOf(appearance).includes(outfit)) assets.push(`Tenue ${outfit} : couleur ${color.variant}${color.tint ? `, teinte ${color.tint}` : ""}`);
+    }
+    if (appearance.skin) assets.push(`Peau : couleur ${appearance.skin}`);
+    if (appearance.raceHairColor) assets.push(`Cheveux de la race : couleur ${appearance.raceHairColor}`);
   }
   for (const weapon of appearance.weapons) assets.push(`Arme ${weaponLabel(weapon.item)}, ${WEAPON_SLOTS[weapon.slot].toLowerCase()}`);
   for (const id of appearance.accessories) assets.push(`Accessoire ${accessoryLabel(id)} (Hearthfold Armor & Wearables)`);
@@ -219,8 +226,26 @@ export function AppearancePanel(props: {
               onChange={(e) =>
                 // Retour à une race : la tenue de départ de la classe, en gardant armes et accessoires.
                 e.target.value === "monster"
-                  ? patch({ model: monsterModel(CATALOG.monsters[0].id), parts: [], hair: [] })
-                  : patch({ ...newAppearance(classId), raceHair: undefined, hairColor: undefined, weapons: appearance.weapons, accessories: appearance.accessories })
+                  ? patch({
+                      model: monsterModel(CATALOG.monsters[0].id),
+                      parts: [],
+                      hair: [],
+                      skin: undefined,
+                      raceHairColor: undefined,
+                      outfitColors: undefined,
+                      hairColor: undefined,
+                      raceHair: undefined,
+                    })
+                  : patch({
+                      ...newAppearance(classId),
+                      raceHair: undefined,
+                      hairColor: undefined,
+                      skin: undefined,
+                      raceHairColor: undefined,
+                      outfitColors: undefined,
+                      weapons: appearance.weapons,
+                      accessories: appearance.accessories,
+                    })
               }
             >
               <option value="body">Race (Quaternius)</option>
@@ -293,6 +318,7 @@ export function AppearancePanel(props: {
                   ))}
               </div>
               <HairControls appearance={sanitizedAppearance(appearance)} race={body.race} gender={body.gender} patch={patch} />
+              <ColorControls appearance={appearance} race={body.race} hasSkins={!!body.skins} patch={patch} />
             </>
           ) : (
             <label className="appearance-row">
@@ -373,7 +399,7 @@ export function AppearancePanel(props: {
 
           <h4>Assets nécessaires</h4>
           <ul className="appearance-assets">
-            {appearanceAssets(appearance).map((asset) => (
+            {appearanceAssets(sanitizedAppearance(appearance)).map((asset) => (
               <li key={asset}>{asset}</li>
             ))}
           </ul>
@@ -442,6 +468,120 @@ function HairControls({ appearance, race, gender, patch }: { appearance: Appeara
       </label>
       {cut === "race" && <p className="lab-note">Les cheveux de la race gardent leurs couleurs ; la teinte vaut pour les sourcils et les poils ajoutés.</p>}
     </>
+  );
+}
+
+// Noms des tenues dans l'éditeur.
+const OUTFIT_NAMES: Record<string, string> = { Knight: "Chevalier", Noble: "Noble", Peasant: "Paysan", Ranger: "Rôdeur", Wizard: "Mage" };
+// Couleur proposée quand on active la teinte libre d'une tenue.
+const DEFAULT_TINT = "#3a6fd8";
+
+// Trois boutons pour choisir une variante de couleur du pack (1 à 3).
+function VariantButtons({ value, onChange }: { value: number; onChange: (variant: number) => void }) {
+  return (
+    <span className="appearance-variants">
+      {[1, 2, 3].map((n) => (
+        <button key={n} className={value === n ? "lab-tab-active" : ""} onClick={() => onChange(n)}>
+          {n}
+        </button>
+      ))}
+    </span>
+  );
+}
+
+// Couleurs : variante de chaque tenue portée (et teinte libre par-dessus), peau et cheveux d'une race.
+function ColorControls({ appearance, race, hasSkins, patch }: { appearance: Appearance; race: string; hasSkins: boolean; patch: (changes: Partial<Appearance>) => void }) {
+  const outfits = outfitsOf(appearance);
+  const setOutfit = (outfit: string, color: OutfitColor) => patch({ outfitColors: { ...appearance.outfitColors, [outfit]: color } });
+  // Toujours proposée pour une race : ses cheveux, et chez les elfes leurs cornes (même matériau).
+  const raceHairShown = isFantasyRace(race);
+  return (
+    <>
+      <h4>Couleurs</h4>
+      {outfits.map((outfit) => (
+        <OutfitColorRow key={outfit} outfit={outfit} color={appearance.outfitColors?.[outfit] ?? { variant: 1 }} onChange={(color) => setOutfit(outfit, color)} />
+      ))}
+      {hasSkins && (
+        <div className="appearance-row">
+          <span>Peau</span>
+          <VariantButtons value={appearance.skin ?? 1} onChange={(skin) => patch({ skin })} />
+        </div>
+      )}
+      {raceHairShown && (
+        <div className="appearance-row">
+          <span>Cheveux de la race</span>
+          <VariantButtons value={appearance.raceHairColor ?? 1} onChange={(raceHairColor) => patch({ raceHairColor })} />
+        </div>
+      )}
+      {outfits.length > 0 && <p className="lab-note">Une couleur de tenue vaut pour toutes ses pièces (elles partagent une texture).</p>}
+    </>
+  );
+}
+
+// Couleur d'une tenue : variante du pack, puis teinte libre : on choisit la couleur du tissu à remplacer parmi ses
+// couleurs principales (pastilles), puis la nouvelle couleur.
+function OutfitColorRow({ outfit, color, onChange }: { outfit: string; color: OutfitColor; onChange: (color: OutfitColor) => void }) {
+  const [hues, setHues] = useState<{ hue: number; color: string }[]>([]);
+  const texture = outfitTexture(outfit, color.variant);
+  useEffect(() => {
+    let current = true;
+    setHues([]);
+    if (texture) {
+      void mainHues(texture)
+        .then((list) => current && setHues(list))
+        .catch(() => undefined);
+    }
+    return () => {
+      current = false;
+    };
+  }, [texture]);
+  // La pipette envoie une couleur à chaque mouvement : on n'applique que la dernière, après une courte pause (chaque
+  // couleur recalcule une texture et reconstruit le personnage).
+  const [tint, setTint] = useState(color.tint);
+  useEffect(() => setTint(color.tint), [color.tint]);
+  useEffect(() => {
+    if (!tint || tint === color.tint) return;
+    const timer = setTimeout(() => onChange({ ...color, tint }), 300);
+    return () => clearTimeout(timer);
+    // color et onChange changent à chaque rendu ; seule la couleur en cours de choix relance l'attente.
+  }, [tint]);
+  return (
+    <div className="appearance-outfit-color">
+      <div className="appearance-row">
+        <span>Tenue {OUTFIT_NAMES[outfit] ?? outfit}</span>
+        <VariantButtons value={color.variant} onChange={(variant) => onChange({ variant })} />
+        {!color.tint && (
+          <button
+            disabled={!hues.length}
+            onClick={() => onChange({ ...color, tint: DEFAULT_TINT, tintFrom: hues[0].hue })}
+            title="Remplacer une couleur du tissu"
+          >
+            Teinte libre
+          </button>
+        )}
+      </div>
+      {color.tint && (
+        <div className="appearance-row">
+          <span>Remplacer</span>
+          <span className="appearance-variants">
+            {hues.map((h) => (
+              <button
+                key={h.hue}
+                className={`appearance-swatch ${color.tintFrom === h.hue ? "appearance-swatch-active" : ""}`}
+                style={{ background: h.color }}
+                title="Couleur du tissu à remplacer"
+                onClick={() => onChange({ ...color, tintFrom: h.hue })}
+              />
+            ))}
+            par
+            <input type="color" value={tint ?? color.tint} onChange={(e) => setTint(e.target.value)} />
+            <button onClick={() => onChange({ variant: color.variant })} title="Retirer la teinte">
+              ×
+            </button>
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 

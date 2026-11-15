@@ -10,6 +10,19 @@ export type Vec3 = [number, number, number];
 
 export type Socket = "head" | "chest" | "neck" | "shoulder" | "wrist" | "hip" | "foot" | "back" | "cape";
 
+export interface OutfitColor {
+  variant: number;
+  tint?: string;
+  tintFrom?: number;
+}
+
+// Texture de couleur qui remplace celle d'un matériau (variante du pack), éventuellement teinte (voir textureTint.ts).
+export interface Recolor {
+  material: string;
+  texture: string;
+  tint?: { color: string; from: number };
+}
+
 // Objet à accrocher au personnage : sa clé de placement, son fichier, son point d'accroche par défaut, et pour une
 // paire la pièce gardée.
 export interface MountedItem {
@@ -50,6 +63,12 @@ export interface Appearance {
   hair: string[];
   // Races du pack Fantasy Races : leurs propres cheveux, gardés sauf si false (crâne rasé) ou si une coupe les remplace.
   raceHair?: boolean;
+  // Couleur de chaque tenue portée (clé : Knight, Ranger…) : variante du pack (1 à 3) et teinte libre éventuelle : la
+  // teinte tintFrom (degrés, une des couleurs principales de la texture) devient la couleur CSS tint.
+  outfitColors?: Record<string, OutfitColor>;
+  // Races du pack Fantasy Races : variante de couleur de la peau et de leurs cheveux (1 à 3 ; 1 par défaut).
+  skin?: number;
+  raceHairColor?: number;
   // Teinte des coiffures humaines et des sourcils (couleur CSS) ; sans elle, leur texture grise. Les cheveux d'une race
   // gardent leurs couleurs (texture déjà colorée).
   hairColor?: string;

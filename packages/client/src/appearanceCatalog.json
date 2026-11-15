@@ -33,62 +33,134 @@
     {
       "id": "Ape_Female",
       "race": "Ape",
-      "gender": "Female"
+      "gender": "Female",
+      "skinMaterial": "MI_Ape_Female",
+      "skins": [
+        "skins/Ape_Female_1.webp",
+        "skins/Ape_Female_2.webp",
+        "skins/Ape_Female_3.webp"
+      ]
     },
     {
       "id": "Ape_Male",
       "race": "Ape",
-      "gender": "Male"
+      "gender": "Male",
+      "skinMaterial": "MI_Ape_Male",
+      "skins": [
+        "skins/Ape_Male_1.webp",
+        "skins/Ape_Male_2.webp",
+        "skins/Ape_Male_3.webp"
+      ]
     },
     {
       "id": "Dragonborn_Female",
       "race": "Dragonborn",
-      "gender": "Female"
+      "gender": "Female",
+      "skinMaterial": "MI_Dragonborn_Female",
+      "skins": [
+        "skins/Dragonborn_Female_1.webp",
+        "skins/Dragonborn_Female_2.webp",
+        "skins/Dragonborn_Female_3.webp"
+      ]
     },
     {
       "id": "Dragonborn_Male",
       "race": "Dragonborn",
-      "gender": "Male"
+      "gender": "Male",
+      "skinMaterial": "MI_Dragonborn_Male",
+      "skins": [
+        "skins/Dragonborn_Male_1.webp",
+        "skins/Dragonborn_Male_2.webp",
+        "skins/Dragonborn_Male_3.webp"
+      ]
     },
     {
       "id": "Elf_Female",
       "race": "Elf",
-      "gender": "Female"
+      "gender": "Female",
+      "skinMaterial": "MI_Elf_Female",
+      "skins": [
+        "skins/Elf_Female_1.webp",
+        "skins/Elf_Female_2.webp",
+        "skins/Elf_Female_3.webp"
+      ]
     },
     {
       "id": "Elf_Male",
       "race": "Elf",
-      "gender": "Male"
+      "gender": "Male",
+      "skinMaterial": "MI_Elf_Male",
+      "skins": [
+        "skins/Elf_Male_1.webp",
+        "skins/Elf_Male_2.webp",
+        "skins/Elf_Male_3.webp"
+      ]
     },
     {
       "id": "Orc_Female",
       "race": "Orc",
-      "gender": "Female"
+      "gender": "Female",
+      "skinMaterial": "MI_Orc_Female",
+      "skins": [
+        "skins/Orc_Female_1.webp",
+        "skins/Orc_Female_2.webp",
+        "skins/Orc_Female_3.webp"
+      ]
     },
     {
       "id": "Orc_Male",
       "race": "Orc",
-      "gender": "Male"
+      "gender": "Male",
+      "skinMaterial": "MI_Orc_Male",
+      "skins": [
+        "skins/Orc_Male_1.webp",
+        "skins/Orc_Male_2.webp",
+        "skins/Orc_Male_3.webp"
+      ]
     },
     {
       "id": "WaterElfEars_Female",
       "race": "WaterElfEars",
-      "gender": "Female"
+      "gender": "Female",
+      "skinMaterial": "MI_WaterElf_Female",
+      "skins": [
+        "skins/WaterElf_Female_1.webp",
+        "skins/WaterElf_Female_2.webp",
+        "skins/WaterElf_Female_3.webp"
+      ]
     },
     {
       "id": "WaterElfFins_Female",
       "race": "WaterElfFins",
-      "gender": "Female"
+      "gender": "Female",
+      "skinMaterial": "MI_WaterElf_Female",
+      "skins": [
+        "skins/WaterElf_Female_1.webp",
+        "skins/WaterElf_Female_2.webp",
+        "skins/WaterElf_Female_3.webp"
+      ]
     },
     {
       "id": "WaterElfEars_Male",
       "race": "WaterElfEars",
-      "gender": "Male"
+      "gender": "Male",
+      "skinMaterial": "MI_WaterElf_Male",
+      "skins": [
+        "skins/WaterElf_Male_1.webp",
+        "skins/WaterElf_Male_2.webp",
+        "skins/WaterElf_Male_3.webp"
+      ]
     },
     {
       "id": "WaterElfFins_Male",
       "race": "WaterElfFins",
-      "gender": "Male"
+      "gender": "Male",
+      "skinMaterial": "MI_WaterElf_Male",
+      "skins": [
+        "skins/WaterElf_Male_1.webp",
+        "skins/WaterElf_Male_2.webp",
+        "skins/WaterElf_Male_3.webp"
+      ]
     }
   ],
   "parts": [
@@ -2585,5 +2657,37 @@
       "socket": "shoulder",
       "file": "accessories/HF_Amr_Pauldrons_Plate_Steel_01.glb"
     }
+  ],
+  "outfitColors": {
+    "Knight": [
+      "outfit-colors/Knight_1.webp",
+      "outfit-colors/Knight_2.webp",
+      "outfit-colors/Knight_3.webp"
+    ],
+    "Noble": [
+      "outfit-colors/Noble_1.webp",
+      "outfit-colors/Noble_2.webp",
+      "outfit-colors/Noble_3.webp"
+    ],
+    "Peasant": [
+      "outfit-colors/Peasant_1.webp",
+      "outfit-colors/Peasant_2.webp",
+      "outfit-colors/Peasant_3.webp"
+    ],
+    "Ranger": [
+      "outfit-colors/Ranger_1.webp",
+      "outfit-colors/Ranger_2.webp",
+      "outfit-colors/Ranger_3.webp"
+    ],
+    "Wizard": [
+      "outfit-colors/Wizard_1.webp",
+      "outfit-colors/Wizard_2.webp",
+      "outfit-colors/Wizard_3.webp"
+    ]
+  },
+  "raceHairColors": [
+    "skins/FantasyHair_1.webp",
+    "skins/FantasyHair_2.webp",
+    "skins/FantasyHair_3.webp"
   ]
 }

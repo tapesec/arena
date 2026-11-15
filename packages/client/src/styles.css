@@ -2619,3 +2619,21 @@ body,
   padding-left: 18px;
   color: #c9c2b0;
 }
+
+.appearance-variants {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.appearance-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.appearance-swatch-active {
+  border-color: #ffd76a;
+}

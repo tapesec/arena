@@ -7,6 +7,7 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
@@ -23,7 +24,9 @@ import {
   type DefaultSocket,
   type Mount,
   type MountedItem,
+  type Recolor,
 } from "./appearance";
+import { tintImage } from "./textureTint";
 import type { Shadows } from "./shadows";
 import { TUNING } from "./tuning";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
@@ -400,6 +403,9 @@ export class CharacterAssets {
   shadows: Shadows | null = null;
   // Animations Mixamo, reciblées une fois sur un personnage modèle invisible (voir mixamo.ts).
   private mixamo: Promise<AnimationGroup[]> | null = null;
+  // Éditeur d'apparence : textures de couleur (variantes, teintes), chargées une fois par fichier et par teinte, avec le
+  // nombre de personnages qui s'en servent (une texture teinte est libérée quand plus personne ne l'utilise).
+  private colorTextures = new Map<string, { texture: Promise<Texture>; uses: number }>();
   // Éditeur d'apparence : animations reciblées une fois par monstre, sur un exemplaire caché (voir createCustom).
   private monsterAnimations = new Map<string, Promise<AnimationGroup[]>>();
 
@@ -471,7 +477,7 @@ export class CharacterAssets {
     classId: string,
     parent: TransformNode,
     only?: ReadonlySet<string>,
-    custom?: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount> },
+    custom?: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount>; recolors: Recolor[] },
   ): Promise<CharacterInstance | null> {
     const def = CHARACTERS[classId];
     if (!def) return null;
@@ -642,19 +648,29 @@ export class CharacterAssets {
   // les animations de sa classe ; ni arme rangée ni instrument.
   private async createCustom(
     def: CharacterDef,
-    { appearance, items, mounts }: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount> },
+    { appearance, items, mounts, recolors }: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount>; recolors: Recolor[] },
     parent: TransformNode,
     only?: ReadonlySet<string>,
   ): Promise<CharacterInstance> {
     const monster = isMonster(appearance.model);
     const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
-    const [base, libraries, mixamo, pieces, held] = await Promise.all([
-      this.load(appearanceUrl(modelFile(appearance))),
+    // Textures de couleur réservées dès le départ : rendues si la création échoue.
+    const colorKeys = recolors.map((recolor) => this.acquireColorTexture(recolor));
+    let loaded;
+    try {
+      loaded = await Promise.all([
+        Promise.all(colorKeys.map((key) => this.colorTextures.get(key)!.texture)),
+        this.load(appearanceUrl(modelFile(appearance))),
       Promise.all(this.libraries.map((url) => this.load(url))),
       this.loadMixamo(),
       Promise.all(pieceFiles.map((file) => this.load(appearanceUrl(file)))),
-      Promise.all(items.map((item) => this.load(appearanceUrl(item.file)))),
-    ]);
+        Promise.all(items.map((item) => this.load(appearanceUrl(item.file)))),
+      ]);
+    } catch (error) {
+      for (const key of colorKeys) this.releaseColorTexture(key);
+      throw error;
+    }
+    const [textures, base, libraries, mixamo, pieces, held] = loaded;
 
     const entries = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
     const root = entries.rootNodes[0] as TransformNode;
@@ -662,7 +678,7 @@ export class CharacterAssets {
     root.scaling.scaleInPlace(CHARACTER_SCALE);
     const nodes = new Map<string, TransformNode>();
     for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
-    const cleanup: (() => void)[] = [];
+    const cleanup: (() => void)[] = [() => colorKeys.forEach((key) => this.releaseColorTexture(key))];
     const meshes = root.getChildMeshes(false);
 
     // Pièces de tenue et coiffures : chacune arrive avec sa copie du squelette ; ses os suivent ceux du corps.
@@ -711,6 +727,30 @@ export class CharacterAssets {
         for (const copy of tinted.values()) copy.dispose(false, true);
       });
     }
+
+    // Couleurs : la texture de couleur des matériaux concernés est remplacée, sur une copie du matériau (partagé avec les
+    // autres personnages du même fichier). Les textures, elles, sont partagées entre personnages.
+    recolors.forEach((recolor, i) => {
+      const copies = new Map<PBRMaterial, PBRMaterial>();
+      for (const mesh of meshes) {
+        const material = mesh.material as PBRMaterial | null;
+        if (material?.name !== recolor.material) continue;
+        let copy = copies.get(material);
+        if (!copy) {
+          copy = material.clone(`${material.name}-recolor`);
+          copy.albedoTexture?.dispose();
+          copy.albedoTexture = textures[i];
+          copies.set(material, copy);
+        }
+        mesh.material = copy;
+      }
+      cleanup.push(() => {
+        for (const copy of copies.values()) {
+          copy.albedoTexture = null;
+          copy.dispose(false, true);
+        }
+      });
+    });
 
     // Os par nom : ceux du modèle, plus nos noms d'os pour un monstre (points d'accroche des effets).
     const bones = new Map(nodes);
@@ -823,6 +863,29 @@ export class CharacterAssets {
         for (const skeleton of entries.skeletons) skeleton.dispose();
       },
     };
+  }
+
+  // Réserve la texture de couleur d'un matériau (éditeur d'apparence), teinte au besoin, et rend sa clé. Mêmes réglages
+  // que les textures des glTF (pas d'inversion verticale). Un échec de chargement n'est pas gardé : on réessaiera.
+  private acquireColorTexture({ texture, tint }: Recolor): string {
+    const key = `${texture}|${tint ? `${tint.from}>${tint.color}` : ""}`;
+    let entry = this.colorTextures.get(key);
+    if (!entry) {
+      const promise = (async () => new Texture(tint ? await tintImage(texture, tint.color, tint.from) : texture, this.scene, false, false))();
+      entry = { texture: promise, uses: 0 };
+      this.colorTextures.set(key, entry);
+      promise.catch(() => this.colorTextures.delete(key));
+    }
+    entry.uses++;
+    return key;
+  }
+
+  // Rend une texture de couleur : une teinte que plus personne n'utilise est libérée (les variantes du pack restent).
+  private releaseColorTexture(key: string) {
+    const entry = this.colorTextures.get(key);
+    if (!entry || --entry.uses > 0 || key.endsWith("|")) return;
+    this.colorTextures.delete(key);
+    void entry.texture.then((texture) => texture.dispose()).catch(() => undefined);
   }
 
   // Recible nos animations sur le squelette Mixamo d'un monstre (poses de repos différentes), une seule fois, sur un
