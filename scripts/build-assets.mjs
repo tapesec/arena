@@ -1,7 +1,7 @@
 // Produit, à partir des fichiers bruts de assets-source/ (voir import-assets.sh), les modèles optimisés
 // chargés par le jeu, dans packages/client/public/models/ (ceux-là sont versionnés).
 // Usage : node scripts/build-assets.mjs              (tout)
-//         node scripts/build-assets.mjs --characters (seulement les personnages, leurs tenues d'équipe et leurs armes)
+//         node scripts/build-assets.mjs --characters (seulement les personnages et leurs armes)
 //         node scripts/build-assets.mjs --ground     (seulement les textures du sol)
 //         node scripts/build-assets.mjs --animations (seulement les bibliothèques d'animations, après un réglage
 //                                                     de animation-lab.html qui utilise une nouvelle animation)
@@ -100,8 +100,9 @@ async function tunedAnimations() {
   return names;
 }
 
-// Personnages : une tenue complète par classe (déjà assemblée sur le squelette). Les tenues n'ont pas de tête :
-// on y greffe celle du corps de base (body), avec ses yeux et sourcils, et des cheveux (hair).
+// Personnages : une tenue complète par classe (déjà assemblée sur le squelette), dans sa couleur d'origine (la même dans
+// les deux équipes). Les tenues n'ont pas de tête : on y greffe celle du corps de base (body), avec ses yeux et
+// sourcils, et des cheveux (hair).
 // without : pièces de la tenue retirées.
 const CHARACTERS = {
   gardien: { outfit: "Male_Knight" },
@@ -109,28 +110,6 @@ const CHARACTERS = {
   arcaniste: { outfit: "Female_Wizard", body: "Female", hair: ["Hair_Long"] },
   pretre: { outfit: "Female_Noble", body: "Female", hair: ["Hair_Buns"], without: ["Female_Noble_Head_Crown"] },
   barde: { outfit: "Male_Peasant", body: "Male", hair: ["Hair_SimpleParted", "Hair_Beard"] },
-};
-
-// Couleur de tenue par équipe (0 bleu, 1 rouge, comme l'anneau au sol) : une des variantes fournies,
-// ou une variante recolorée quand le pack n'a pas la couleur voulue (recolor, voir recolorTexture).
-const TEAM_OUTFITS = {
-  // La variante bleue du Knight a une armure dorée : on garde l'armure argent de la rouge et on en recolore le tissu.
-  gardien: [
-    { texture: "Knight/T_Knight_BaseColor.png", recolor: { from: 355, width: 20, to: 215, minSaturation: 0.3, boost: 1.1 } },
-    { texture: "Knight/T_Knight_BaseColor.png" },
-  ],
-  pretre: [{ texture: "Noble/T_Noble_2_BaseColor.png" }, { texture: "Noble/T_Noble_BaseColor.png" }],
-  arcaniste: [{ texture: "Wizard/T_Wizard_BaseColor.png" }, { texture: "Wizard/T_Wizard_3_BaseColor.png" }],
-  // Le Ranger n'existe qu'en vert, noir ou beige : son vert devient bleu ou rouge.
-  lame: [
-    { texture: "Ranger/T_Ranger_BaseColor.png", recolor: { from: 115, width: 40, to: 215, minSaturation: 0.25 } },
-    { texture: "Ranger/T_Ranger_BaseColor.png", recolor: { from: 115, width: 40, to: 6, minSaturation: 0.25 } },
-  ],
-  // Le Peasant a une variante bleue, mais terne et sombre : on la ravive, et on en tire la rouge.
-  barde: [
-    { texture: "Peasant/T_Peasant_3_BaseColor.png", recolor: { from: 195, width: 40, to: 212, minSaturation: 0.08, boost: 1.8, lighten: 1.2 } },
-    { texture: "Peasant/T_Peasant_3_BaseColor.png", recolor: { from: 195, width: 40, to: 2, minSaturation: 0.08, boost: 2.6, lighten: 1.5 } },
-  ],
 };
 
 const BODIES = {
@@ -202,11 +181,6 @@ async function buildCharacter(id, def) {
   }
   for (const hair of def.hair ?? []) extras.push(await io.read(path.join(SOURCE, "base/hair", `${hair}.gltf`)));
   for (const extra of extras) attachToSkeleton(doc, skin, armature, extra);
-  // La couleur de la tenue est chargée à part, selon l'équipe : la texture d'origine ne sert plus.
-  const style = def.outfit.split("_")[1];
-  const outfitMaterial = root.listMaterials().find((m) => m.getName() === `MI_${style}`);
-  if (!outfitMaterial) throw new Error(`${id} : matériau introuvable MI_${style}`);
-  outfitMaterial.setBaseColorTexture(null);
   await optimize(doc, CHARACTER_QUALITY);
   const target = `characters/${id}.glb`;
   await io.write(path.join(OUT, target), doc);
@@ -268,47 +242,6 @@ function vertexCount(node) {
     .getMesh()
     .listPrimitives()
     .reduce((sum, p) => sum + p.getAttribute("POSITION").getCount(), 0);
-}
-
-// Textures de tenue des deux équipes d'une classe.
-async function buildTeamOutfits(id, teams) {
-  for (const [team, { texture, recolor }] of teams.entries()) {
-    let image = sharp(path.join(SOURCE, "outfits/textures", texture)).resize(TEXTURE_SIZE, TEXTURE_SIZE).removeAlpha();
-    if (recolor) {
-      const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
-      recolorTexture(data, recolor);
-      image = sharp(data, { raw: info });
-    }
-    const target = `characters/${id}-${team}.webp`;
-    await image.webp({ quality: CHARACTER_QUALITY.color }).toFile(path.join(OUT, target));
-    await report(target);
-  }
-}
-
-// Donne la teinte "to" (en degrés) aux pixels dont la teinte est à moins de "width" degrés de "from",
-// en gardant leur luminosité. Les pixels trop gris (cuir, peau, métal) ne changent pas ; boost ravive la couleur,
-// lighten éclaircit (un tissu sombre recoloré en rouge tirerait sur le brun).
-function recolorTexture(data, { from, width, to, minSaturation, boost = 1, lighten = 1 }) {
-  for (let i = 0; i < data.length; i += 3) {
-    const [r, g, b] = [data[i] / 255, data[i + 1] / 255, data[i + 2] / 255];
-    const max = Math.max(r, g, b);
-    const delta = max - Math.min(r, g, b);
-    const saturation = max ? delta / max : 0;
-    if (!delta || saturation < minSaturation) continue;
-    const sector = max === r ? ((g - b) / delta + 6) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
-    const offset = ((sector * 60 - from + 540) % 360) - 180;
-    if (Math.abs(offset) > width) continue;
-    // Une partie de l'écart d'origine est gardée, pour conserver les nuances du tissu.
-    const hue = (to + offset * 0.3 + 360) % 360;
-    const value = Math.min(1, max * lighten);
-    const chroma = value * Math.min(1, saturation * boost);
-    const x = chroma * (1 - Math.abs(((hue / 60) % 2) - 1));
-    const [rr, gg, bb] = [[chroma, x, 0], [x, chroma, 0], [0, chroma, x], [0, x, chroma], [x, 0, chroma], [chroma, 0, x]][Math.floor(hue / 60)];
-    const m = value - chroma;
-    data[i] = (rr + m) * 255;
-    data[i + 1] = (gg + m) * 255;
-    data[i + 2] = (bb + m) * 255;
-  }
 }
 
 // Pièces du hameau, réunies dans un seul fichier (elles partagent leurs textures) : le jeu assemble
@@ -495,7 +428,6 @@ if (process.argv.includes("--ground")) {
 if (process.argv.includes("--characters")) {
   await mkdir(path.join(OUT, "characters"), { recursive: true });
   for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
-  for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
   await mkdir(path.join(OUT, "weapons"), { recursive: true });
   for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`, CHARACTER_QUALITY);
   process.exit(0);
@@ -514,7 +446,6 @@ if (!onlyAnimations) {
 for (const [file, keep] of Object.entries(ANIMATIONS)) await buildAnimations(file, keep);
 if (!onlyAnimations) {
   for (const [id, def] of Object.entries(CHARACTERS)) await buildCharacter(id, def);
-  for (const [id, teams] of Object.entries(TEAM_OUTFITS)) await buildTeamOutfits(id, teams);
   for (const [id, source] of Object.entries(WEAPONS)) await buildModel(source, `weapons/${id}.glb`, CHARACTER_QUALITY);
   for (const [id, source] of Object.entries(FBX_WEAPONS)) {
     await copyFile(path.join(SOURCE, source), path.join(OUT, `weapons/${id}.fbx`));

@@ -7,7 +7,6 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
@@ -39,9 +38,6 @@ const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))|_A
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
 
-// Peinture des équipes (0 bleu, 1 rouge), proche de l'anneau au sol.
-const TEAM_PAINT = ["#2c5cb8", "#b8302c"];
-
 // Bibliothèques d'animations : un squelette sans maillage et ses animations.
 export const ANIMATION_LIBRARIES = ["animations/UAL1.glb", "animations/UAL2.glb"];
 
@@ -58,8 +54,6 @@ interface WeaponMount {
   // Les matériaux listés dans glow brillent légèrement (gemme, glace).
   colors?: Record<string, string>;
   glow?: string[];
-  // Matériaux peints à la couleur de l'équipe (la texture est retirée, le relief gardé).
-  teamPaint?: string[];
   // Où ranger l'arme quand le personnage lance un sort (le bâton passe dans le dos).
   stow?: Placement;
   // Instrument (luth) : pendant une animation de jeu (INSTRUMENT_ANIMATIONS), il passe entre les mains (voir
@@ -111,8 +105,6 @@ export interface CastGesture {
 
 interface CharacterDef {
   model: string;
-  // Matériau de la tenue, dont la couleur dépend de l'équipe (textures characters/<classe>-<équipe>.webp).
-  outfit: string;
   // Teinte des cheveux et sourcils (leur texture est grise, faite pour être teintée).
   hairColor?: string;
   weapons: WeaponMount[];
@@ -223,7 +215,6 @@ const GARDIEN_GESTURE_RATE = 2.33 / 1.5;
 export const CHARACTERS: Record<string, CharacterDef> = {
   gardien: {
     model: "characters/gardien.glb",
-    outfit: "MI_Knight",
     weapons: [
       { model: "weapons/sword.glb", ...grip("r", SWORD_HANDLE) },
       {
@@ -231,8 +222,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
         bone: "lowerarm_l",
         position: [0, 0.15, 0],
         rotation: [0, -Math.PI / 2, 0],
-        // Le Gardien est presque tout en armure : son bouclier porte la couleur de l'équipe.
-        teamPaint: ["MI_Trim_Furniture"],
       },
     ],
     animations: {
@@ -259,7 +248,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   lame: {
     model: "characters/lame.glb",
-    outfit: "MI_Ranger",
     hairColor: "#3b2a1e",
     weapons: [
       { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35 },
@@ -283,7 +271,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   arcaniste: {
     model: "characters/arcaniste.glb",
-    outfit: "MI_Wizard",
     hairColor: "#7a2418",
     weapons: [
       {
@@ -315,7 +302,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   pretre: {
     model: "characters/pretre.glb",
-    outfit: "MI_Noble",
     hairColor: "#d8b46a",
     weapons: [
       {
@@ -338,7 +324,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
   },
   barde: {
     model: "characters/barde.glb",
-    outfit: "MI_Peasant",
     hairColor: "#5a3a22",
     weapons: [
       { model: "weapons/dagger.glb", ...grip("r", DAGGER_HANDLE), scale: 0.35, hiddenWhilePlaying: true },
@@ -359,11 +344,6 @@ export const CHARACTERS: Record<string, CharacterDef> = {
 
 // Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations), et de celles
 // choisies dans animation-lab.html (geste du lanceur, réaction de la cible).
-// Texture de tenue d'une classe pour une équipe (0 ou 1).
-export function teamTexture(classId: string, team: number): string {
-  return `models/characters/${classId}-${team}.webp`;
-}
-
 export function usedAnimations(): Set<string> {
   const names = new Set<string>();
   for (const { animations: set } of Object.values(CHARACTERS)) {
@@ -405,8 +385,6 @@ export interface CharacterInstance {
   // Personnage assemblé dans l'éditeur d'apparence : armes et accessoires par clé de placement (voir appearance.ts),
   // pour les régler à la souris.
   attachments?: { key: string; node: TransformNode }[];
-  // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
-  setTeam(team: number): void;
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
   setStowed(stowed: boolean): void;
   // Joue de son instrument (luth entre les mains, dague cachée) ou le remet en bandoulière. À appeler à chaque image :
@@ -420,10 +398,6 @@ export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
   // Ombres portées : chaque personnage créé (et ses armes) projette son ombre.
   shadows: Shadows | null = null;
-  // Matériaux de tenue par classe et par équipe, partagés par tous les personnages concernés.
-  private outfits = new Map<string, PBRMaterial>();
-  // Matériaux d'arme peints, par matériau d'origine et par équipe.
-  private paints = new Map<string, PBRMaterial>();
   // Animations Mixamo, reciblées une fois sur un personnage modèle invisible (voir mixamo.ts).
   private mixamo: Promise<AnimationGroup[]> | null = null;
   // Éditeur d'apparence : animations reciblées une fois par monstre, sur un exemplaire caché (voir createCustom).
@@ -438,16 +412,13 @@ export class CharacterAssets {
   }
 
   // Lance le téléchargement de tout ce qui est connu, pour qu'il soit prêt à l'apparition des joueurs.
-  // track : suivi du chargement (écran de chargement). Les textures de tenue, créées à l'apparition des personnages,
-  // sont seulement téléchargées : le navigateur les reprend ensuite de son cache.
-  // Poids : un modèle compte pour 10 sons environ dans la barre de chargement.
+  // track : suivi du chargement (écran de chargement). Poids : un modèle compte pour 10 sons environ dans la barre de chargement.
   preload(track: <T>(task: Promise<T>, weight?: number) => Promise<T> = (task) => task) {
     for (const url of this.libraries) void track(this.load(url), 10);
     void track(this.loadMixamo(), 20);
-    for (const [classId, def] of Object.entries(CHARACTERS)) {
+    for (const def of Object.values(CHARACTERS)) {
       void track(this.load(def.model), 10);
       for (const weapon of def.weapons) void track(this.load(weapon.model), 2);
-      for (const team of [0, 1]) void track(fetch(assetUrl(teamTexture(classId, team))).then((r) => r.blob()));
     }
   }
 
@@ -554,7 +525,6 @@ export class CharacterAssets {
       from: { position: Vector3; rotation: Quaternion } | null;
     }[] = [];
     const hiddenWhilePlaying: TransformNode[] = [];
-    const teamPainted: { mesh: AbstractMesh; base: PBRMaterial }[] = [];
     def.weapons.forEach((mount, i) => {
       const bone = bones.get(mount.bone);
       if (!bone) return;
@@ -585,10 +555,6 @@ export class CharacterAssets {
         });
       }
       if (mount.hiddenWhilePlaying) hiddenWhilePlaying.push(attach);
-      const paintable = mount.teamPaint ?? [];
-      for (const mesh of attach.getChildMeshes(false)) {
-        if (mesh.material && paintable.includes(mesh.material.name)) teamPainted.push({ mesh, base: mesh.material as PBRMaterial });
-      }
       weapons.push(attach);
     });
 
@@ -600,8 +566,6 @@ export class CharacterAssets {
         if (material?.name.startsWith("MI_Hair")) material.albedoColor = color;
       }
     }
-    const outfitMeshes = meshes.filter((mesh) => mesh.material?.name === def.outfit);
-    const baseOutfit = outfitMeshes[0]?.material as PBRMaterial | undefined;
     for (const attach of weapons) meshes.push(...attach.getChildMeshes(false));
     // Les petites pièces posées sur le corps (yeux, accessoires, ceintures…) ne projettent pas d'ombre : vue du soleil,
     // elles restent dans la silhouette du corps, et chacune coûterait un appel de dessin de plus à chaque image.
@@ -615,13 +579,6 @@ export class CharacterAssets {
       weapons,
       hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
       bones,
-      setTeam: (team) => {
-        if (baseOutfit) {
-          const material = this.outfitMaterial(classId, team, baseOutfit);
-          for (const mesh of outfitMeshes) mesh.material = material;
-        }
-        for (const { mesh, base } of teamPainted) mesh.material = this.paintMaterial(base, team);
-      },
       setStowed: (stowed) => {
         for (const weapon of stowable) {
           const placement = stowed ? weapon.stowed : weapon.held;
@@ -682,7 +639,7 @@ export class CharacterAssets {
 
   // Personnage de l'éditeur d'apparence : corps d'une race et pièces de tenue (toutes sur le même squelette), ou
   // monstre (squelette Mixamo, animations reciblées), plus ses armes et accessoires aux placements réglés. Il garde
-  // les animations de sa classe ; pas de couleur d'équipe, ni d'arme rangée ou d'instrument.
+  // les animations de sa classe ; ni arme rangée ni instrument.
   private async createCustom(
     def: CharacterDef,
     { appearance, items, mounts }: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount> },
@@ -856,7 +813,6 @@ export class CharacterAssets {
       attachments,
       hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
       bones,
-      setTeam: () => undefined,
       setStowed: () => undefined,
       setPlaying: () => undefined,
       dispose() {
@@ -896,29 +852,6 @@ export class CharacterAssets {
       this.monsterAnimations.set(model, groups);
     }
     return groups;
-  }
-
-  private paintMaterial(base: PBRMaterial, team: number): PBRMaterial {
-    const key = `${base.uniqueId}-${team}`;
-    let material = this.paints.get(key);
-    if (!material) {
-      material = base.clone(`${base.name}-${team}`);
-      material.albedoTexture = null;
-      material.albedoColor = Color3.FromHexString(TEAM_PAINT[team] ?? TEAM_PAINT[0]).toLinearSpace();
-      this.paints.set(key, material);
-    }
-    return material;
-  }
-
-  private outfitMaterial(classId: string, team: number, base: PBRMaterial): PBRMaterial {
-    const key = `${classId}-${team}`;
-    let material = this.outfits.get(key);
-    if (!material) {
-      material = base.clone(`${base.name}-${team}`);
-      material.albedoTexture = new Texture(assetUrl(teamTexture(classId, team)), this.scene, false, false);
-      this.outfits.set(key, material);
-    }
-    return material;
   }
 }
 

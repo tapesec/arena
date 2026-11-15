@@ -343,7 +343,6 @@ class Stage {
       return null;
     }
     if (!instance) return null;
-    instance.setTeam(0);
     this.instance = instance;
     this.restart();
     return instance;
@@ -363,7 +362,6 @@ class Stage {
       return;
     }
     if (!instance) return;
-    instance.setTeam(this.targetAlly() ? 0 : 1);
     this.target = instance;
     this.targetAnimator = new CharacterAnimator(instance.animations, instance.set, {});
     this.updateTargetVisibility();
@@ -402,8 +400,6 @@ class Stage {
     if (switched) {
       this.updateTargetVisibility();
       this.frameMoment();
-      // Le mannequin porte la tenue de son camp : allié pour un soin ou un buff, ennemi sinon.
-      this.target?.setTeam(this.targetAlly() ? 0 : 1);
     }
     if (this.mode === "scrub") this.showFrame();
     else if (changed) this.restart();

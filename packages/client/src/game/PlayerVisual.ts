@@ -92,7 +92,6 @@ export class PlayerVisual {
   private aliveColor: Color3;
   private wasAlive = true;
   private team: number;
-  private outfitColor = 0;
   // Zone de clic (cylindre invisible) et couleur du contour de survol (null sans survol).
   readonly hitbox: Mesh;
   private hovered: Color3 | null = null;
@@ -201,13 +200,6 @@ export class PlayerVisual {
     this.updateAnimation();
   }
 
-  // Couleur de tenue vue par le joueur local : 0 (bleu) pour ses alliés, 1 (rouge) pour ses ennemis.
-  setOutfitColor(color: number) {
-    if (color === this.outfitColor) return;
-    this.outfitColor = color;
-    this.model?.setTeam(color);
-  }
-
   // Coup d'auto-attaque porté par ce joueur.
   playAttack() {
     this.animator?.attack();
@@ -270,7 +262,6 @@ export class PlayerVisual {
         return;
       }
       this.model = model;
-      model.setTeam(this.outfitColor);
       // Le clic passe par la zone de clic, pas par le modèle.
       for (const mesh of model.meshes) mesh.isPickable = false;
       if (this.hovered) this.setHovered(this.hovered);

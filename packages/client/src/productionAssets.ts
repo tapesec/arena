@@ -1,4 +1,4 @@
-import { ANIMATION_LIBRARIES, CHARACTERS, teamTexture, usedAnimations } from "./game/characterAssets";
+import { ANIMATION_LIBRARIES, CHARACTERS, usedAnimations } from "./game/characterAssets";
 import { MUSIC } from "./game/commonSounds";
 import { GROUND_TEXTURES } from "./game/environment";
 import { MIXAMO_ANIMATIONS } from "./game/mixamo";
@@ -23,7 +23,6 @@ export function productionModels(): string[] {
       if (model.startsWith("/")) throw new Error(`Modèle de ${classId} hors de public/models : ${model}`);
       paths.add(`models/${model}`);
     }
-    for (const team of [0, 1]) paths.add(teamTexture(classId, team));
   }
   return [...paths].sort();
 }

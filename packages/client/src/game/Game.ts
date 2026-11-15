@@ -761,8 +761,6 @@ export class Game {
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
-      // Comme les textes, les tenues dépendent du point de vue : alliés en bleu, ennemis en rouge.
-      player.setOutfitColor(enemy ? 1 : 0);
     }
     this.overlay.update(dt);
     this.orderWheel.update();

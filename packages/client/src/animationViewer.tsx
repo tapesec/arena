@@ -136,7 +136,6 @@ class Stage {
           return null;
         }
         if (!instance) continue;
-        instance.setTeam(0);
         this.instances.push(instance);
         const group = instance.animations.get(cell.entry.name);
         group?.start(true, speed);
