@@ -776,11 +776,25 @@ export class CharacterAssets {
         mounts[item.key] ??
         (hand
           ? { ...grip(item.socket.bone.endsWith("r") ? "r" : "l", 0), scale: fbx ? 0.01 : 1 }
-          : defaultMount(root, nodes, appearance.model, item.socket, fbx));
+          : item.hang
+            ? defaultHangMount(root, nodes, appearance.model, item.socket)
+            : defaultMount(root, nodes, appearance.model, item.socket, fbx));
       const bone = mount && nodes.get(mount.bone);
       if (!mount || !bone) return;
       const attach = new TransformNode(`attach-${item.key}`, this.scene);
-      attach.parent = bone;
+      if (item.hang) {
+        // Cape : un cadre suit l'os en restant droit et tourné comme le personnage, avec son balancement ; le placement
+        // réglé (position, rotation, taille) se fait dans ce cadre.
+        const frame = new TransformNode(`hang-${item.key}`, this.scene);
+        frame.parent = parent;
+        attach.parent = frame;
+        attach.metadata = { mountBone: bone.name };
+        const observer = hangCape(this.scene, frame, root, bone);
+        cleanup.push(() => {
+          observer.remove();
+          frame.dispose(false, false);
+        });
+      } else attach.parent = bone;
       attach.position.set(...mount.position);
       attach.rotation.set(...mount.rotation);
       attach.scaling.setAll(mount.scale);
@@ -809,9 +823,19 @@ export class CharacterAssets {
 
     // Animations rebranchées par nom d'os : celles de nos bibliothèques pour un corps (même squelette), celles
     // reciblées une fois pour ce monstre sinon.
-    const sources = monster
-      ? await this.monsterAnimationsOf(appearance.model, base, [...libraries.flatMap((library) => library.animationGroups), ...mixamo])
-      : [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
+    let sources = [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
+    if (monster) {
+      try {
+        sources = await this.monsterAnimationsOf(appearance.model, base, sources);
+      } catch (error) {
+        // Échec : tout ce qui a déjà été créé (pièces, capes et leur balancement, objets, corps) est libéré.
+        for (const { node } of attachments) node.dispose(false, false);
+        for (const run of cleanup) run();
+        root.dispose(false, false);
+        for (const skeleton of entries.skeletons) skeleton.dispose();
+        throw error;
+      }
+    }
     const animations = new Map<string, AnimationGroup>();
     for (const group of sources) {
       if (only && !only.has(group.name)) continue;
@@ -821,7 +845,8 @@ export class CharacterAssets {
     }
 
     this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
-    const weapons = attachments.map((a) => a.node);
+    // Points d'accroche « arme » des effets : armes et accessoires tenus par un os, pas les capes (qui se balancent).
+    const weapons = attachments.filter((a) => !items.find((item) => item.key === a.key)?.hang).map((a) => a.node);
     return {
       root,
       set: def.animations,
@@ -836,7 +861,7 @@ export class CharacterAssets {
       setPlaying: () => undefined,
       dispose() {
         for (const group of animations.values()) group.dispose();
-        for (const attach of weapons) attach.dispose(false, false);
+        for (const { node } of attachments) node.dispose(false, false);
         for (const run of cleanup) run();
         root.dispose(false, false);
         for (const skeleton of entries.skeletons) skeleton.dispose();
@@ -911,6 +936,87 @@ function paintWeapon(attach: TransformNode, colors: Record<string, string>, glow
       if (glow.includes(sub.name)) sub.emissiveColor = color.scale(0.45);
     }
   }
+}
+
+// Balancement des capes : angle d'envol vers l'arrière (radians) par unité du modèle par seconde du haut de la cape vers
+// l'avant (une unité vaut CHARACTER_SCALE mètres dans la scène), et de côté par unité par seconde de côté ; angles
+// maximaux ; ressort amorti qui les suit (raideur, amortissement : un léger dépassement, la cape revient en se
+// balançant). Au-delà de CAPE_JUMP unités par seconde, c'est un saut (animation qui reboucle, téléportation) : ignoré.
+const CAPE_LIFT = 0.35;
+const CAPE_SIDE = 0.25;
+const CAPE_MAX_LIFT = 1;
+const CAPE_MAX_SIDE = 0.4;
+const CAPE_STIFFNESS = 30;
+const CAPE_DAMPING = 7;
+const CAPE_JUMP = 10;
+
+// Tient une cape droite à chaque image : son cadre (enfant de parent, le support du personnage) se place à l'os, tourné
+// comme le personnage mais sans suivre l'inclinaison du buste, et s'incline avec le mouvement du haut de la cape. Les
+// positions sont celles de l'image précédente (un décalage invisible).
+function hangCape(scene: Scene, frame: TransformNode, root: TransformNode, bone: TransformNode) {
+  const swing = { lift: 0, liftSpeed: 0, side: 0, sideSpeed: 0 };
+  // Objets de calcul réutilisés à chaque image.
+  const last = new Vector3();
+  let started = false;
+  const at = new Vector3();
+  const velocity = new Vector3();
+  const rootScale = new Vector3();
+  const rootRotation = new Quaternion();
+  const inverse = new Matrix();
+  const tilt = new Matrix();
+  const placed = new Matrix();
+  const world = new Matrix();
+  frame.rotationQuaternion ??= new Quaternion();
+  return scene.onBeforeRenderObservable.add(() => {
+    const elapsed = scene.getEngine().getDeltaTime() / 1000;
+    // Pas du ressort borné (stabilité après un à-coup) ; la vitesse, elle, se mesure sur le temps réel écoulé.
+    const dt = Math.min(elapsed, 0.05);
+    at.copyFrom(bone.getAbsolutePosition());
+    const rootWorld = root.getWorldMatrix();
+    rootWorld.decompose(rootScale, rootRotation);
+    let lift = 0;
+    let side = 0;
+    if (started && elapsed > 0) {
+      // Vitesse du haut de la cape dans le repère du personnage (z vers l'avant, x sur le côté).
+      rootWorld.invertToRef(inverse);
+      at.subtractToRef(last, velocity).scaleInPlace(1 / elapsed);
+      Vector3.TransformNormalToRef(velocity, inverse, velocity);
+      if (velocity.length() < CAPE_JUMP) {
+        lift = Math.max(0, Math.min(CAPE_MAX_LIFT, velocity.z * CAPE_LIFT));
+        side = Math.max(-CAPE_MAX_SIDE, Math.min(CAPE_MAX_SIDE, -velocity.x * CAPE_SIDE));
+      }
+    }
+    last.copyFrom(at);
+    started = true;
+    swing.liftSpeed += ((lift - swing.lift) * CAPE_STIFFNESS - swing.liftSpeed * CAPE_DAMPING) * dt;
+    swing.sideSpeed += ((side - swing.side) * CAPE_STIFFNESS - swing.sideSpeed * CAPE_DAMPING) * dt;
+    swing.lift += swing.liftSpeed * dt;
+    swing.side += swing.sideSpeed * dt;
+    // Inclinaison dans le repère du personnage (le bas part vers l'arrière, -z), puis repère du personnage posé à l'os.
+    Matrix.RotationYawPitchRollToRef(0, swing.lift, swing.side, tilt);
+    Matrix.ComposeToRef(rootScale, rootRotation, at, placed);
+    tilt.multiplyToRef(placed, world);
+    const parent = frame.parent as TransformNode | null;
+    if (parent) {
+      parent.getWorldMatrix().invertToRef(inverse);
+      world.multiplyToRef(inverse, world);
+    }
+    world.decompose(frame.scaling, frame.rotationQuaternion!, frame.position);
+  });
+}
+
+// Placement par défaut d'une cape, dans son cadre (repère du personnage posé sur l'os) : le point d'accroche, un peu en
+// arrière comme le prévoit le pack (6 cm derrière l'axe du corps, à l'échelle du modèle), droite, à sa taille d'origine.
+function defaultHangMount(root: TransformNode, nodes: Map<string, TransformNode>, model: string, socket: DefaultSocket): Mount | null {
+  const bone = nodes.get(boneName(model, socket.bone));
+  const at = nodes.get(boneName(model, socket.at ?? socket.bone));
+  if (!bone || !at) return null;
+  const rootScale = new Vector3();
+  const rootRotation = new Quaternion();
+  root.getWorldMatrix().decompose(rootScale, rootRotation);
+  const frame = Matrix.Compose(rootScale, rootRotation, bone.getAbsolutePosition());
+  const point = Vector3.TransformCoordinates(at.getAbsolutePosition(), frame.invert());
+  return { bone: bone.name, position: [point.x, point.y, point.z - 0.06], rotation: [0, 0, 0], scale: 1 };
 }
 
 // Placement par défaut d'un objet de l'éditeur d'apparence : posé au point d'accroche, droit et tourné comme le

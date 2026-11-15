@@ -77,7 +77,7 @@ export function mountedItems(appearance: Appearance): MountedItem[] {
     if (PAIRED_SOCKETS.has(def.socket)) {
       items.push({ key: accessoryKey(id, "r"), file: def.file, socket: accessorySocket(def, "r"), part: "right" });
       items.push({ key: accessoryKey(id, "l"), file: def.file, socket: accessorySocket(def, "l"), part: "left" });
-    } else items.push({ key: accessoryKey(id, "c"), file: def.file, socket: accessorySocket(def, "c") });
+    } else items.push({ key: accessoryKey(id, "c"), file: def.file, socket: accessorySocket(def, "c"), hang: def.socket === "cape" });
   }
   return items;
 }

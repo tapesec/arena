@@ -17,6 +17,8 @@ export interface MountedItem {
   file: string;
   socket: DefaultSocket;
   part?: "right" | "left";
+  // Cape : elle pend toute seule, droite et avec un balancement (voir createCustom), au lieu de suivre l'os.
+  hang?: boolean;
 }
 
 // Placement d'une arme ou d'un accessoire sur un os : position (m), rotation (radians, angles d'Euler) et échelle, dans
@@ -169,8 +171,11 @@ export function accessorySocket(accessory: { id: string; socket: Socket }, side:
     case "foot":
       return { bone: `foot_${s}`, ground: true };
     case "back":
-    case "cape":
       return { bone: "spine_03" };
+    case "cape":
+      // Le haut de la cape (son point d'origine dans le pack) se pose à la base du cou, et le suit quand le buste se
+      // penche.
+      return { bone: "neck_01" };
   }
 }
 

@@ -475,7 +475,8 @@ function readMount(node: TransformNode): Mount {
   const rotation = node.rotationQuaternion ? node.rotationQuaternion.toEulerAngles() : node.rotation;
   const round = (v: number) => Math.round(v * 10000) / 10000;
   return {
-    bone: (node.parent as TransformNode | null)?.name ?? "",
+    // Une cape garde le nom de son os dans ses métadonnées (son parent direct est le cadre qui la tient droite).
+    bone: (node.metadata as { mountBone?: string } | null)?.mountBone ?? (node.parent as TransformNode | null)?.name ?? "",
     position: [round(node.position.x), round(node.position.y), round(node.position.z)],
     rotation: [round(rotation.x), round(rotation.y), round(rotation.z)],
     scale: round(node.scaling.x),
@@ -691,7 +692,7 @@ export function PlacementPanel(props: {
             <span>{scale.toPrecision(3)}</span>
           </label>
           <p className="lab-note">
-            Tirez les flèches (déplacer) ou les anneaux (tourner) sur l'objet. Os : {(node.parent as TransformNode | null)?.name}.{" "}
+            Tirez les flèches (déplacer) ou les anneaux (tourner) sur l'objet. Os : {readMount(node).bone}.{" "}
             {saved ? "Placement réglé." : "Placement par défaut (pas encore réglé)."}
           </p>
           {saved && (
