@@ -95,10 +95,17 @@ export async function mainHues(url: string, count = 4): Promise<{ hue: number; c
 // une couleur grise donne un tissu gris.
 export async function tintImage(url: string, color: string, from: number): Promise<string> {
   const { canvas, context, pixels } = await readPixels(url);
-  const data = pixels.data;
+  tintPixels(pixels.data, color, from);
+  context.putImageData(pixels, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+// Calcul de tintImage sur les pixels RGBA d'une image (modifiés sur place) : partagé avec la construction des personnages
+// du jeu (scripts/build-appearances.ts).
+export function tintPixels(data: Uint8ClampedArray, color: string, from: number) {
   const main = groups(data, 4);
   const chosen = main.reduce((best, group) => (hueDistance(group.hue, from) < hueDistance(best.hue, from) ? group : best), main[0]);
-  if (!chosen) return canvas.toDataURL("image/png");
+  if (!chosen) return;
   const [to, targetSaturation, targetValue] = rgbToHsv(...([1, 3, 5].map((k) => parseInt(color.slice(k, k + 2), 16) / 255) as [number, number, number]));
   const brightness = targetValue / Math.max(0.05, chosen.value);
   for (let i = 0; i < data.length; i += 4) {
@@ -114,8 +121,6 @@ export async function tintImage(url: string, color: string, from: number): Promi
     data[i + 1] = g * 255;
     data[i + 2] = b * 255;
   }
-  context.putImageData(pixels, 0, 0);
-  return canvas.toDataURL("image/png");
 }
 
 // Palette (grid × grid cases de couleur, comme celle des objets Hearthfold) dont des cases prennent une autre couleur,
@@ -123,7 +128,13 @@ export async function tintImage(url: string, color: string, from: number): Promi
 // deux fois plus sombre que la couleur choisie.
 export async function paintCells(url: string, grid: number, colors: Record<number, string>): Promise<string> {
   const { canvas, context, pixels } = await readPixels(url);
-  const { data, width } = pixels;
+  paintPixels(pixels.data, pixels.width, grid, colors);
+  context.putImageData(pixels, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+// Calcul de paintCells sur les pixels RGBA d'une image de cette largeur (modifiés sur place), partagé comme tintPixels.
+export function paintPixels(data: Uint8ClampedArray, width: number, grid: number, colors: Record<number, string>) {
   const size = Math.floor(width / grid);
   const luminance = (r: number, g: number, b: number) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
   for (const [cell, color] of Object.entries(colors)) {
@@ -147,6 +158,4 @@ export async function paintCells(url: string, grid: number, colors: Record<numbe
       }
     }
   }
-  context.putImageData(pixels, 0, 0);
-  return canvas.toDataURL("image/png");
 }

@@ -28,6 +28,7 @@ import {
   type MountedItem,
   type Recolor,
 } from "./appearance";
+import { gameCharacterFiles, hasBothCamps, raceBody } from "./gameAppearances";
 import { paintCells, tintImage } from "./textureTint";
 import type { Shadows } from "./shadows";
 import { TUNING } from "./tuning";
@@ -452,6 +453,16 @@ export interface CharacterInstance {
   dispose(): void;
 }
 
+// Gabarit du reciblage Mixamo : un corps de race des personnages du jeu, sinon le modèle du Prêtre (tous partagent le
+// squelette de nos bibliothèques d'animations).
+export function mixamoTemplate(): string {
+  return raceBody() ?? CHARACTERS.pretre.model;
+}
+
+// Personnage assemblé (voir CharacterAssets.create) : apparence, objets, placements et couleurs des tenues ; body : corps
+// déjà assemblé d'un personnage du jeu.
+export type CustomCharacter = { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount>; recolors: Recolor[]; body?: string };
+
 // Charge une seule fois chaque fichier, puis crée autant d'instances que de joueurs.
 export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
@@ -478,7 +489,10 @@ export class CharacterAssets {
   preload(track: <T>(task: Promise<T>, weight?: number) => Promise<T> = (task) => task) {
     for (const url of this.libraries) void track(this.load(url), 10);
     void track(this.loadMixamo(), 20);
-    for (const def of Object.values(CHARACTERS)) {
+    // Personnages des deux camps (corps et objets) ; le modèle d'une classe seulement s'il sert encore.
+    for (const file of gameCharacterFiles()) void track(this.load(file), file.includes("/items/") ? 2 : 10);
+    for (const [classId, def] of Object.entries(CHARACTERS)) {
+      if (hasBothCamps(classId)) continue;
       void track(this.load(def.model), 10);
       for (const weapon of def.weapons) void track(this.load(weapon.model), 2);
     }
@@ -508,7 +522,7 @@ export class CharacterAssets {
   // le même squelette) reste caché ; les animations obtenues se clonent ensuite sur chaque personnage, par nom d'os.
   private loadMixamo(): Promise<AnimationGroup[]> {
     this.mixamo ??= (async () => {
-      const model = await this.load(CHARACTERS.pretre.model);
+      const model = await this.load(mixamoTemplate());
       const template = model.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
       const root = template.rootNodes[0] as TransformNode;
       root.setEnabled(false);
@@ -528,13 +542,9 @@ export class CharacterAssets {
   }
 
   // custom : personnage assemblé dans l'éditeur d'apparence (développement), à la place du modèle de la classe, avec
-  // ses objets à accrocher (voir mountedItems) et leurs placements réglés pour ce modèle (par clé).
-  async create(
-    classId: string,
-    parent: TransformNode,
-    only?: ReadonlySet<string>,
-    custom?: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount>; recolors: Recolor[] },
-  ): Promise<CharacterInstance | null> {
+  // ses objets à accrocher (voir mountedItems) et leurs placements réglés pour ce modèle (par clé) ; ou personnage du
+  // jeu construit d'après lui (GameAppearance : corps préassemblé, voir scripts/build-appearances.ts).
+  async create(classId: string, parent: TransformNode, only?: ReadonlySet<string>, custom?: CustomCharacter): Promise<CharacterInstance | null> {
     const def = CHARACTERS[classId];
     if (!def) return null;
     if (custom) return this.createCustom(def, custom, parent, only);
@@ -701,13 +711,15 @@ export class CharacterAssets {
 
   // Personnage de l'éditeur d'apparence : corps d'une race et pièces de tenue (toutes sur le même squelette), ou
   // monstre (squelette Mixamo, animations reciblées), plus ses armes et accessoires aux placements réglés. Il garde
-  // les animations de sa classe ; ni arme rangée ni instrument.
+  // les animations de sa classe ; pas d'arme rangée. Avec body (personnage du jeu), le corps est ce fichier déjà
+  // assemblé et les fichiers sont relatifs à public/models/ ; sinon, ce sont ceux de l'éditeur.
   private async createCustom(
     def: CharacterDef,
-    { appearance, items, mounts, recolors }: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount>; recolors: Recolor[] },
+    { appearance, items, mounts, recolors, body }: CustomCharacter,
     parent: TransformNode,
     only?: ReadonlySet<string>,
   ): Promise<CharacterInstance> {
+    const url = body ? (file: string) => file : appearanceUrl;
     const monster = isMonster(appearance.model);
     const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
     // Textures de couleur réservées dès le départ : rendues si la création échoue. Pour chaque objet dont des cases de
@@ -730,11 +742,11 @@ export class CharacterAssets {
       loaded = await Promise.all([
         Promise.all(colorKeys.map((key) => this.colorTextures.get(key)!.texture)),
         Promise.all(itemKeys.map((key) => (key ? this.colorTextures.get(key)!.texture : null))),
-        this.load(appearanceUrl(modelFile(appearance))),
+        this.load(body ?? appearanceUrl(modelFile(appearance))),
       Promise.all(this.libraries.map((url) => this.load(url))),
       this.loadMixamo(),
       Promise.all(pieceFiles.map((file) => this.load(appearanceUrl(file)))),
-        Promise.all(items.map((item) => this.load(appearanceUrl(item.file)))),
+        Promise.all(items.map((item) => this.load(url(item.file)))),
       ]);
     } catch (error) {
       releaseAll();

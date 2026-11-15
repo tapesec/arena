@@ -99,6 +99,16 @@ export interface AppearanceFile {
   mounts: Record<string, Record<string, Mount>>;
 }
 
+// Personnage du jeu, construit d'après appearances.json par scripts/build-appearances.ts (gameAppearances.json) : corps
+// déjà assemblé (tenue, cheveux et couleurs compris), objets à accrocher avec leurs couleurs (palette déjà repeinte) et
+// placements réglés. Chemins relatifs à public/models/. appearance : seulement ce qui sert encore (modèle, objets).
+export interface GameAppearance {
+  appearance: Appearance;
+  body: string;
+  items: MountedItem[];
+  mounts: Record<string, Mount>;
+}
+
 export const EMPTY_APPEARANCES: AppearanceFile = { variants: {}, mounts: {} };
 
 export const RACES: Record<string, string> = {

@@ -1,5 +1,6 @@
-import { ANIMATION_LIBRARIES, CHARACTERS, usedAnimations } from "./game/characterAssets";
+import { ANIMATION_LIBRARIES, CHARACTERS, mixamoTemplate, usedAnimations } from "./game/characterAssets";
 import { MUSIC } from "./game/commonSounds";
+import { gameCharacterFiles, hasBothCamps } from "./game/gameAppearances";
 import { GROUND_TEXTURES } from "./game/environment";
 import { MIXAMO_ANIMATIONS } from "./game/mixamo";
 import { NATURE_MODEL } from "./game/nature";
@@ -17,7 +18,13 @@ export function productionModels(): string[] {
   for (const file of Object.values(GROUND_TEXTURES)) paths.add(`models/ground/${file}`);
   for (const library of ANIMATION_LIBRARIES) paths.add(`models/${library}`);
   for (const [name, file] of Object.entries(MIXAMO_ANIMATIONS)) if (animations.has(name)) paths.add(`models/${file}`);
+  // Personnages des deux camps (corps et objets), construits d'après l'éditeur d'apparence, et le gabarit des animations
+  // Mixamo.
+  for (const file of gameCharacterFiles()) paths.add(`models/${file}`);
+  paths.add(`models/${mixamoTemplate()}`);
   for (const [classId, def] of Object.entries(CHARACTERS)) {
+    // Modèle de la classe : seulement si un camp n'a pas d'apparence (il le remplace).
+    if (hasBothCamps(classId)) continue;
     for (const model of [def.model, ...def.weapons.map((weapon) => weapon.model)]) {
       // Un chemin absolu désigne un fichier hors de public/models (pages de développement) : jamais en production.
       if (model.startsWith("/")) throw new Error(`Modèle de ${classId} hors de public/models : ${model}`);
