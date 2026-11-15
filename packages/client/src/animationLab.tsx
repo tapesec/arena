@@ -94,6 +94,16 @@ import soundCatalog from "./audio/soundCatalog.json";
 import { EMPTY_EDITS, GAME_SOUND, gameGroupIdsUsing, sameEdits, type CatalogSound, type SoundEdits } from "./audio/soundEdits";
 import { SoundEditor, SoundList, SoundPending, soundPlayer } from "./soundLab";
 import { CommonSoundsPane } from "./commonSoundsLab";
+import {
+  AppearancePanel,
+  DEFAULT_PLACEMENT,
+  PlacementPanel,
+  placementAppearance,
+  placementKey,
+  type PlacementSelection,
+} from "./appearanceLab";
+import { mountedItems } from "./appearanceData";
+import { EMPTY_APPEARANCES, type Appearance, type AppearanceFile } from "./game/appearance";
 
 // L'éditeur a sa propre sourdine : celle du jeu (même adresse, donc même stockage) ne le coupe pas.
 audio.useMutedKey("arena.lab.muted");
@@ -135,7 +145,7 @@ const SOUNDS = soundCatalog as CatalogSound[];
 type OverlayDefs = Record<string, OverlayDef>;
 type MarkDefs = Record<string, GroundMarkDef>;
 type ObjectDefs = Record<string, ObjectDef>;
-type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons" | "communs";
+type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons" | "communs" | "apparence" | "placement";
 type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
@@ -175,6 +185,9 @@ class Stage {
   private holder: TransformNode;
   private fx: ParticleFactory;
   private instance: CharacterInstance | null = null;
+  // Onglets Apparence et Placement : personnage assemblé à montrer à la place de celui de la classe (voir load).
+  appearance: Appearance | null = null;
+  private mounts: AppearanceFile["mounts"] = {};
   private animator: CharacterAnimator | null = null;
   private build = 0;
   // Réglage montré, partagé avec l'animateur (le même objet est modifié à chaque changement).
@@ -320,7 +333,10 @@ class Stage {
     this.frozen = null;
     this.instance?.dispose();
     this.instance = null;
-    const instance = await this.assets.create(classId, this.holder);
+    const custom = this.appearance
+      ? { appearance: this.appearance, items: mountedItems(this.appearance), mounts: this.mounts[this.appearance.model] ?? {} }
+      : undefined;
+    const instance = await this.assets.create(classId, this.holder, undefined, custom);
     if (build !== this.build) {
       instance?.dispose();
       return null;
@@ -410,6 +426,28 @@ class Stage {
     this.mode = "scrub";
     this.scrubTimes[this.moment] = time;
     this.showFrame();
+  }
+
+  get babylonScene(): Scene {
+    return this.scene;
+  }
+
+  get character(): CharacterInstance | null {
+    return this.instance;
+  }
+
+  // Placements réglés des objets (onglet Placement), pris au prochain chargement.
+  setMounts(mounts: AppearanceFile["mounts"]) {
+    this.mounts = mounts;
+  }
+
+  // Distance de la caméra au personnage (réglette de zoom des onglets Apparence et Placement).
+  get zoom(): number {
+    return this.camera.radius;
+  }
+
+  set zoom(radius: number) {
+    this.camera.radius = radius;
   }
 
   get playing(): boolean {
@@ -1376,6 +1414,33 @@ function AnimationLab() {
   const [reactionFilter, setReactionFilter] = useState("Hit");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Onglets Apparence et Placement : apparences et placements (appearances.json), camp montré, objet placé.
+  const [appearancesSaved, setAppearancesSaved] = useState<AppearanceFile | null>(null);
+  const [appearances, setAppearances] = useState<AppearanceFile>(EMPTY_APPEARANCES);
+  const [camp, setCamp] = useState(0);
+  const [placement, setPlacement] = useState<PlacementSelection>(DEFAULT_PLACEMENT);
+  const [reloads, setReloads] = useState(0);
+  // Compétence à jouer dès qu'elle est choisie (boutons des onglets Apparence et Placement).
+  const [pendingPlay, setPendingPlay] = useState<string | null>(null);
+  const shownAppearance = tab === "apparence" ? (appearances.variants[classId]?.[camp] ?? null) : tab === "placement" ? placementAppearance(placement) : null;
+  const appearanceKey = JSON.stringify(shownAppearance);
+  const appearancesUnsaved = appearancesSaved !== null && JSON.stringify(appearances) !== JSON.stringify(appearancesSaved);
+  useEffect(() => {
+    void fetch("/__dev-file/appearances")
+      .then((r) => r.json())
+      .then((file: AppearanceFile | null) => {
+        const value = { ...EMPTY_APPEARANCES, ...file };
+        setAppearancesSaved(value);
+        setAppearances(value);
+      })
+      .catch(() => setMessage("Impossible de lire appearances.json : les onglets Apparence et Placement sont indisponibles."));
+  }, []);
+  const saveAppearances = async () => {
+    const response = await fetch("/__dev-file/appearances", { method: "POST", body: JSON.stringify(appearances) });
+    if (response.ok) setAppearancesSaved(appearances);
+    setMessage(response.ok ? "Apparences enregistrées." : `Échec de l'enregistrement : ${await response.text()}`);
+    setTimeout(() => setMessage(null), 4000);
+  };
 
   const set = instance?.set ?? null;
   const castTime = castTimeOf(abilityId);
@@ -1826,9 +1891,16 @@ function AnimationLab() {
     setTimeout(() => setMessage(null), 5000);
   };
 
+  // Les placements servent au prochain chargement du personnage (sans le recharger : on vient de les régler sur lui).
+  useEffect(() => stageRef.current?.setMounts(appearances.mounts), [appearances.mounts]);
+
+  // Onglets Apparence et Placement : on attend le fichier (ses placements) avant de charger le personnage.
+  const waitingAppearances = (tab === "apparence" || tab === "placement") && appearancesSaved === null;
   useEffect(() => {
+    if (waitingAppearances) return;
     setInstance(null);
     const stage = stageRef.current;
+    if (stage) stage.appearance = appearanceKey === "null" ? null : (JSON.parse(appearanceKey) as Appearance);
     void stage?.load(classId).then(
       (loaded) => loaded && setInstance(loaded),
       // Un chargement abandonné (scène fermée, classe changée) n'est pas une erreur.
@@ -1837,7 +1909,7 @@ function AnimationLab() {
         !stage?.disposed &&
         setError("Bibliothèques complètes introuvables : lancez « node scripts/build-animation-catalog.mjs » à la racine du projet."),
     );
-  }, [classId]);
+  }, [classId, appearanceKey, reloads, waitingAppearances]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -1909,6 +1981,34 @@ function AnimationLab() {
   useEffect(() => {
     stageRef.current?.select(abilityId, entry);
   }, [abilityId, entry]);
+  // Après le choix de la compétence (effet ci-dessus) : on la joue.
+  // Une compétence sans geste (rien à jouer) ne reste pas en attente.
+  useEffect(() => {
+    if (pendingPlay !== abilityId || !instance) return;
+    if (entry) {
+      stageRef.current?.play();
+      setPlaying(true);
+    }
+    setPendingPlay(null);
+  }, [pendingPlay, entry, abilityId, instance]);
+  const abilityButtons = {
+    abilities: ids.map((id) => ({ id, name: abilityName(id) })),
+    current: abilityId,
+    onPlay: (id: string) => {
+      setAbilityId(id);
+      setPendingPlay(id);
+    },
+  };
+  const zoom = useMemo(
+    () => ({
+      get: () => stageRef.current?.zoom ?? 5.5,
+      set: (radius: number) => {
+        if (stageRef.current) stageRef.current.zoom = radius;
+      },
+    }),
+    [],
+  );
+  const placementNode = tab === "placement" ? (instance?.attachments?.find((a) => a.key === placementKey(placement))?.node ?? null) : null;
 
   const animations = useMemo(() => {
     if (!instance) return [];
@@ -2173,6 +2273,12 @@ function AnimationLab() {
           <button className={tab === "communs" ? "lab-tab-active" : ""} onClick={() => setTab("communs")}>
             Sons communs
           </button>
+          <button className={tab === "apparence" ? "lab-tab-active" : ""} onClick={() => setTab("apparence")}>
+            Apparence
+          </button>
+          <button className={tab === "placement" ? "lab-tab-active" : ""} onClick={() => setTab("placement")}>
+            Placement
+          </button>
         </span>
         <button onClick={toggleMuted} title={muted ? "Rétablir le son de l'éditeur" : "Couper le son de l'éditeur (le jeu garde son propre réglage)"}>
           {muted ? "🔇 Son coupé" : "🔊 Son"}
@@ -2321,6 +2427,34 @@ function AnimationLab() {
           {!instance && !error && <div className="lab-loading">Chargement des animations…</div>}
           {error && <div className="anim-error">{error}</div>}
         </div>
+        {tab === "apparence" && (
+          <AppearancePanel
+            classId={classId}
+            camp={camp}
+            setCamp={setCamp}
+            file={appearances}
+            onChange={setAppearances}
+            unsaved={appearancesUnsaved}
+            onSave={() => void saveAppearances()}
+            abilities={abilityButtons}
+            zoom={zoom}
+          />
+        )}
+        {tab === "placement" && (
+          <PlacementPanel
+            selection={placement}
+            setSelection={setPlacement}
+            file={appearances}
+            onChange={setAppearances}
+            unsaved={appearancesUnsaved}
+            onSave={() => void saveAppearances()}
+            scene={stage?.babylonScene ?? null}
+            node={placementNode}
+            reload={() => setReloads((n) => n + 1)}
+            abilities={abilityButtons}
+            zoom={zoom}
+          />
+        )}
         {tab === "2d" && overlayDefShown && (
           <div className="fx-side">
             <RequestsPanel

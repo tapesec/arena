@@ -2554,3 +2554,68 @@ body,
 .ping-bad {
   color: #ef6b6b;
 }
+
+/* Onglets Apparence et Placement du labo (appearanceLab.tsx). */
+.appearance-side h4 {
+  margin: 14px 0 6px;
+}
+
+.appearance-camps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.appearance-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.appearance-row select,
+.appearance-add select {
+  min-width: 0;
+}
+
+.appearance-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 8px 0;
+}
+
+.appearance-checks > span {
+  width: 100%;
+  color: #9a9484;
+}
+
+.appearance-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  margin: 3px 0;
+}
+
+.appearance-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.appearance-abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.appearance-assets {
+  margin: 4px 0 12px;
+  padding-left: 18px;
+  color: #c9c2b0;
+}

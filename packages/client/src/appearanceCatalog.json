@@ -1,0 +1,2361 @@
+{
+  "bodies": [
+    {
+      "id": "Human_Male",
+      "race": "Human",
+      "gender": "Male"
+    },
+    {
+      "id": "Human_Female",
+      "race": "Human",
+      "gender": "Female"
+    },
+    {
+      "id": "Elf_Male",
+      "race": "Elf",
+      "gender": "Male"
+    },
+    {
+      "id": "Elf_Female",
+      "race": "Elf",
+      "gender": "Female"
+    },
+    {
+      "id": "Orc_Male",
+      "race": "Orc",
+      "gender": "Male"
+    },
+    {
+      "id": "Orc_Female",
+      "race": "Orc",
+      "gender": "Female"
+    }
+  ],
+  "parts": [
+    {
+      "id": "Female_Knight_Acc_Pauldrons_Round",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Knight_Acc_Pauldrons_Spike",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Knight_Acc_Scarf",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Knight_Arms",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Arms"
+    },
+    {
+      "id": "Female_Knight_Body_Armor",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Body"
+    },
+    {
+      "id": "Female_Knight_Body_Cloth",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Body"
+    },
+    {
+      "id": "Female_Knight_Feet",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Feet"
+    },
+    {
+      "id": "Female_Knight_Head_Armet",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Head"
+    },
+    {
+      "id": "Female_Knight_Head_Horns",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Head"
+    },
+    {
+      "id": "Female_Knight_Legs",
+      "gender": "Female",
+      "outfit": "Knight",
+      "slot": "Legs"
+    },
+    {
+      "id": "Female_Noble_Acc_Gorget",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Noble_Acc_Pauldron",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Noble_Acc_Pauldron_Lion",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Noble_Arms",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Arms"
+    },
+    {
+      "id": "Female_Noble_Body",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Body"
+    },
+    {
+      "id": "Female_Noble_Feet",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Feet"
+    },
+    {
+      "id": "Female_Noble_Head_Crown",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Head"
+    },
+    {
+      "id": "Female_Noble_Legs",
+      "gender": "Female",
+      "outfit": "Noble",
+      "slot": "Legs"
+    },
+    {
+      "id": "Female_Peasant_Arms",
+      "gender": "Female",
+      "outfit": "Peasant",
+      "slot": "Arms"
+    },
+    {
+      "id": "Female_Peasant_Body",
+      "gender": "Female",
+      "outfit": "Peasant",
+      "slot": "Body"
+    },
+    {
+      "id": "Female_Peasant_Feet",
+      "gender": "Female",
+      "outfit": "Peasant",
+      "slot": "Feet"
+    },
+    {
+      "id": "Female_Peasant_Legs",
+      "gender": "Female",
+      "outfit": "Peasant",
+      "slot": "Legs"
+    },
+    {
+      "id": "Female_Ranger_Acc_Pauldrons",
+      "gender": "Female",
+      "outfit": "Ranger",
+      "slot": "Acc"
+    },
+    {
+      "id": "Female_Ranger_Arms",
+      "gender": "Female",
+      "outfit": "Ranger",
+      "slot": "Arms"
+    },
+    {
+      "id": "Female_Ranger_Body",
+      "gender": "Female",
+      "outfit": "Ranger",
+      "slot": "Body"
+    },
+    {
+      "id": "Female_Ranger_Feet",
+      "gender": "Female",
+      "outfit": "Ranger",
+      "slot": "Feet"
+    },
+    {
+      "id": "Female_Ranger_Head_Hood",
+      "gender": "Female",
+      "outfit": "Ranger",
+      "slot": "Head"
+    },
+    {
+      "id": "Female_Ranger_Legs",
+      "gender": "Female",
+      "outfit": "Ranger",
+      "slot": "Legs"
+    },
+    {
+      "id": "Female_Wizard_Arms",
+      "gender": "Female",
+      "outfit": "Wizard",
+      "slot": "Arms"
+    },
+    {
+      "id": "Female_Wizard_Body",
+      "gender": "Female",
+      "outfit": "Wizard",
+      "slot": "Body"
+    },
+    {
+      "id": "Female_Wizard_Feet",
+      "gender": "Female",
+      "outfit": "Wizard",
+      "slot": "Feet"
+    },
+    {
+      "id": "Female_Wizard_Legs",
+      "gender": "Female",
+      "outfit": "Wizard",
+      "slot": "Legs"
+    },
+    {
+      "id": "Male_Knight_Acc_Pauldron_Round",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Knight_Acc_Pauldron_Spike",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Knight_Acc_Scarf",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Knight_Arms",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Arms"
+    },
+    {
+      "id": "Male_Knight_Body_Armor",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Body"
+    },
+    {
+      "id": "Male_Knight_Body_Cloth",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Body"
+    },
+    {
+      "id": "Male_Knight_Feet_Armor",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Feet"
+    },
+    {
+      "id": "Male_Knight_Head_Armet",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Head"
+    },
+    {
+      "id": "Male_Knight_Head_Horns",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Head"
+    },
+    {
+      "id": "Male_Knight_Legs_Armor",
+      "gender": "Male",
+      "outfit": "Knight",
+      "slot": "Legs"
+    },
+    {
+      "id": "Male_Noble_Acc_Gorget",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Noble_Acc_Pauldron",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Noble_Acc_Pauldron_Lion",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Noble_Arms",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Arms"
+    },
+    {
+      "id": "Male_Noble_Body",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Body"
+    },
+    {
+      "id": "Male_Noble_Feet",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Feet"
+    },
+    {
+      "id": "Male_Noble_Head_Crown",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Head"
+    },
+    {
+      "id": "Male_Noble_Legs",
+      "gender": "Male",
+      "outfit": "Noble",
+      "slot": "Legs"
+    },
+    {
+      "id": "Male_Peasant_Arms",
+      "gender": "Male",
+      "outfit": "Peasant",
+      "slot": "Arms"
+    },
+    {
+      "id": "Male_Peasant_Body",
+      "gender": "Male",
+      "outfit": "Peasant",
+      "slot": "Body"
+    },
+    {
+      "id": "Male_Peasant_Feet",
+      "gender": "Male",
+      "outfit": "Peasant",
+      "slot": "Feet"
+    },
+    {
+      "id": "Male_Peasant_Legs",
+      "gender": "Male",
+      "outfit": "Peasant",
+      "slot": "Legs"
+    },
+    {
+      "id": "Male_Ranger_Acc_Pauldron",
+      "gender": "Male",
+      "outfit": "Ranger",
+      "slot": "Acc"
+    },
+    {
+      "id": "Male_Ranger_Arms",
+      "gender": "Male",
+      "outfit": "Ranger",
+      "slot": "Arms"
+    },
+    {
+      "id": "Male_Ranger_Body",
+      "gender": "Male",
+      "outfit": "Ranger",
+      "slot": "Body"
+    },
+    {
+      "id": "Male_Ranger_Feet_Boots",
+      "gender": "Male",
+      "outfit": "Ranger",
+      "slot": "Feet"
+    },
+    {
+      "id": "Male_Ranger_Head_Hood",
+      "gender": "Male",
+      "outfit": "Ranger",
+      "slot": "Head"
+    },
+    {
+      "id": "Male_Ranger_Legs",
+      "gender": "Male",
+      "outfit": "Ranger",
+      "slot": "Legs"
+    },
+    {
+      "id": "Male_Wizard_Arms",
+      "gender": "Male",
+      "outfit": "Wizard",
+      "slot": "Arms"
+    },
+    {
+      "id": "Male_Wizard_Body",
+      "gender": "Male",
+      "outfit": "Wizard",
+      "slot": "Body"
+    },
+    {
+      "id": "Male_Wizard_Feet",
+      "gender": "Male",
+      "outfit": "Wizard",
+      "slot": "Feet"
+    },
+    {
+      "id": "Male_Wizard_Legs",
+      "gender": "Male",
+      "outfit": "Wizard",
+      "slot": "Legs"
+    }
+  ],
+  "hair": [
+    {
+      "id": "Eyebrows_Female"
+    },
+    {
+      "id": "Eyebrows_Regular"
+    },
+    {
+      "id": "Hair_Beard"
+    },
+    {
+      "id": "Hair_Buns"
+    },
+    {
+      "id": "Hair_Buzzed"
+    },
+    {
+      "id": "Hair_BuzzedFemale"
+    },
+    {
+      "id": "Hair_Long"
+    },
+    {
+      "id": "Hair_SimpleParted"
+    }
+  ],
+  "monsters": [
+    {
+      "id": "BarrowKnight"
+    },
+    {
+      "id": "BoneHusk"
+    },
+    {
+      "id": "BrambleWarden"
+    },
+    {
+      "id": "Brigand"
+    },
+    {
+      "id": "Corsair"
+    },
+    {
+      "id": "Cultist"
+    },
+    {
+      "id": "DeserterKnight"
+    },
+    {
+      "id": "FrostOgre"
+    },
+    {
+      "id": "FrostShard"
+    },
+    {
+      "id": "GoblinArcher"
+    },
+    {
+      "id": "GoblinWarlord"
+    },
+    {
+      "id": "GoblinWarrior"
+    },
+    {
+      "id": "GoblinWizard"
+    },
+    {
+      "id": "HillOgre"
+    },
+    {
+      "id": "HollowWidow"
+    },
+    {
+      "id": "KoboldBrute"
+    },
+    {
+      "id": "KoboldScout"
+    },
+    {
+      "id": "KoboldShaman"
+    },
+    {
+      "id": "KoboldWarrior"
+    },
+    {
+      "id": "LabyrinthGuardian"
+    },
+    {
+      "id": "LanternDrowned"
+    },
+    {
+      "id": "LichAcolyte"
+    },
+    {
+      "id": "OgreChieftain"
+    },
+    {
+      "id": "Poacher"
+    },
+    {
+      "id": "SealWarden"
+    },
+    {
+      "id": "SlagGolem"
+    },
+    {
+      "id": "SporeHulk"
+    },
+    {
+      "id": "Sporeling"
+    },
+    {
+      "id": "StoneSentinel"
+    },
+    {
+      "id": "TideDrowned"
+    }
+  ],
+  "weapons": [
+    {
+      "id": "Quaternius/Shield_Wooden",
+      "pack": "Quaternius",
+      "name": "Shield_Wooden",
+      "file": "weapons/Quaternius/Shield_Wooden.glb"
+    },
+    {
+      "id": "Quaternius/Sword_Bronze",
+      "pack": "Quaternius",
+      "name": "Sword_Bronze",
+      "file": "weapons/Quaternius/Sword_Bronze.glb"
+    },
+    {
+      "id": "Quaternius/Weapon_Dagger",
+      "pack": "Quaternius",
+      "name": "Weapon_Dagger",
+      "file": "weapons/Quaternius/Weapon_Dagger.glb"
+    },
+    {
+      "id": "Quaternius/Weapon_Lute",
+      "pack": "Quaternius",
+      "name": "Weapon_Lute",
+      "file": "weapons/Quaternius/Weapon_Lute.glb"
+    },
+    {
+      "id": "Quaternius/Weapon_Sword_1",
+      "pack": "Quaternius",
+      "name": "Weapon_Sword_1",
+      "file": "weapons/Quaternius/Weapon_Sword_1.glb"
+    },
+    {
+      "id": "Quaternius/Weapon_Sword_2",
+      "pack": "Quaternius",
+      "name": "Weapon_Sword_2",
+      "file": "weapons/Quaternius/Weapon_Sword_2.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Dagger_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Dagger_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Dagger_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Dagger_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Dagger_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Dagger_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Dagger_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Dagger_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Dagger_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Dagger_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sabre_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sabre_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sabre_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Broken_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Broken_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Broken_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Great_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Great_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Great_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Great_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Great_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Great_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Great_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Great_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Great_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Long_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Long_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Long_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Long_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Long_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Long_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Long_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Long_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Long_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Long_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Short_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Short_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Short_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Short_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Short_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Short_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Short_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Short_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Sword_Short_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Sword_Short_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_ThrowingKnives_Set_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_ThrowingKnives_Set_01",
+      "file": "weapons/Hearthfold/HF_Wep_ThrowingKnives_Set_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Great_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Great_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Great_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Great_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Great_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Great_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Great_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Great_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Great_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Great_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Hand_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Hand_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Hand_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Hand_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Hand_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Hand_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Hand_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Hand_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Axe_Hand_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Axe_Hand_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Flail_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Flail_01",
+      "file": "weapons/Hearthfold/HF_Wep_Flail_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Glaive_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Glaive_01",
+      "file": "weapons/Hearthfold/HF_Wep_Glaive_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Halberd_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Halberd_01",
+      "file": "weapons/Hearthfold/HF_Wep_Halberd_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Hammer_War_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Hammer_War_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Hammer_War_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Hammer_War_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Hammer_War_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Hammer_War_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Hammer_War_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Hammer_War_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Hammer_War_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Hammer_War_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Mace_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Mace_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Mace_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Mace_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Mace_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Mace_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Mace_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Mace_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Mace_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Mace_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Spear_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Spear_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Spear_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Spear_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Spear_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Spear_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Spear_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Spear_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Spear_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Spear_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Arrow_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Arrow_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Arrow_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Arrow_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Arrow_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Arrow_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Arrow_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Arrow_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Arrow_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Arrow_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Bow_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Bow_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Bow_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Bow_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Bow_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Bow_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Bow_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Bow_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Bow_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Bow_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Crossbow_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Crossbow_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Crossbow_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Crossbow_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Crossbow_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Crossbow_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Crossbow_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Crossbow_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Crossbow_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Crossbow_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Staff_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Staff_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Staff_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Staff_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Staff_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Staff_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Staff_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Staff_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Staff_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Staff_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Wand_Crystal_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Wand_Crystal_01",
+      "file": "weapons/Hearthfold/HF_Wep_Wand_Crystal_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Wand_Oak_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Wand_Oak_01",
+      "file": "weapons/Hearthfold/HF_Wep_Wand_Oak_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Buckler_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Buckler_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Buckler_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Buckler_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Buckler_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Buckler_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Buckler_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Buckler_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Buckler_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Buckler_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Heater_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Heater_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Heater_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Heater_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Heater_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Heater_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Heater_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Heater_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Heater_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Heater_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Kite_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Kite_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Kite_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Round_Crude_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Round_Crude_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Crude_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Round_Gold_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Round_Gold_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Gold_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Round_Iron_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Round_Iron_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Iron_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Round_Legendary_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Round_Legendary_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Legendary_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Round_Steel_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Round_Steel_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Steel_01.glb"
+    },
+    {
+      "id": "Hearthfold/HF_Wep_Shield_Tower_01",
+      "pack": "Hearthfold",
+      "name": "HF_Wep_Shield_Tower_01",
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb"
+    },
+    {
+      "id": "MedievalWeapons/Arrow",
+      "pack": "Medieval Weapons",
+      "name": "Arrow",
+      "file": "weapons/MedievalWeapons/Arrow.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Axe_Double",
+      "pack": "Medieval Weapons",
+      "name": "Axe_Double",
+      "file": "weapons/MedievalWeapons/Axe_Double.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Axe_Small",
+      "pack": "Medieval Weapons",
+      "name": "Axe_Small",
+      "file": "weapons/MedievalWeapons/Axe_Small.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Axe",
+      "pack": "Medieval Weapons",
+      "name": "Axe",
+      "file": "weapons/MedievalWeapons/Axe.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Bow_Evil",
+      "pack": "Medieval Weapons",
+      "name": "Bow_Evil",
+      "file": "weapons/MedievalWeapons/Bow_Evil.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Bow_Golden",
+      "pack": "Medieval Weapons",
+      "name": "Bow_Golden",
+      "file": "weapons/MedievalWeapons/Bow_Golden.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Bow_Wooden",
+      "pack": "Medieval Weapons",
+      "name": "Bow_Wooden",
+      "file": "weapons/MedievalWeapons/Bow_Wooden.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Bow_Wooden2",
+      "pack": "Medieval Weapons",
+      "name": "Bow_Wooden2",
+      "file": "weapons/MedievalWeapons/Bow_Wooden2.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Claymore",
+      "pack": "Medieval Weapons",
+      "name": "Claymore",
+      "file": "weapons/MedievalWeapons/Claymore.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Dagger_2",
+      "pack": "Medieval Weapons",
+      "name": "Dagger_2",
+      "file": "weapons/MedievalWeapons/Dagger_2.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Dagger",
+      "pack": "Medieval Weapons",
+      "name": "Dagger",
+      "file": "weapons/MedievalWeapons/Dagger.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Hammer_Double",
+      "pack": "Medieval Weapons",
+      "name": "Hammer_Double",
+      "file": "weapons/MedievalWeapons/Hammer_Double.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Hammer_Small",
+      "pack": "Medieval Weapons",
+      "name": "Hammer_Small",
+      "file": "weapons/MedievalWeapons/Hammer_Small.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Scythe",
+      "pack": "Medieval Weapons",
+      "name": "Scythe",
+      "file": "weapons/MedievalWeapons/Scythe.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Shield_Celtic_Golden",
+      "pack": "Medieval Weapons",
+      "name": "Shield_Celtic_Golden",
+      "file": "weapons/MedievalWeapons/Shield_Celtic_Golden.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Shield_Heater_2",
+      "pack": "Medieval Weapons",
+      "name": "Shield_Heater_2",
+      "file": "weapons/MedievalWeapons/Shield_Heater_2.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Shield_Heater",
+      "pack": "Medieval Weapons",
+      "name": "Shield_Heater",
+      "file": "weapons/MedievalWeapons/Shield_Heater.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Shield_Round_2",
+      "pack": "Medieval Weapons",
+      "name": "Shield_Round_2",
+      "file": "weapons/MedievalWeapons/Shield_Round_2.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Shield_Round",
+      "pack": "Medieval Weapons",
+      "name": "Shield_Round",
+      "file": "weapons/MedievalWeapons/Shield_Round.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Spear",
+      "pack": "Medieval Weapons",
+      "name": "Spear",
+      "file": "weapons/MedievalWeapons/Spear.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Sword_2",
+      "pack": "Medieval Weapons",
+      "name": "Sword_2",
+      "file": "weapons/MedievalWeapons/Sword_2.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Sword_Big",
+      "pack": "Medieval Weapons",
+      "name": "Sword_Big",
+      "file": "weapons/MedievalWeapons/Sword_Big.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Sword_Golden",
+      "pack": "Medieval Weapons",
+      "name": "Sword_Golden",
+      "file": "weapons/MedievalWeapons/Sword_Golden.fbx"
+    },
+    {
+      "id": "MedievalWeapons/Sword",
+      "pack": "Medieval Weapons",
+      "name": "Sword",
+      "file": "weapons/MedievalWeapons/Sword.fbx"
+    },
+    {
+      "id": "RPGAssetPack/AnimatedChest",
+      "pack": "RPG Asset Pack",
+      "name": "AnimatedChest",
+      "file": "weapons/RPGAssetPack/AnimatedChest.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Barrel",
+      "pack": "RPG Asset Pack",
+      "name": "Barrel",
+      "file": "weapons/RPGAssetPack/Barrel.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Book",
+      "pack": "RPG Asset Pack",
+      "name": "Book",
+      "file": "weapons/RPGAssetPack/Book.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Dagger",
+      "pack": "RPG Asset Pack",
+      "name": "Dagger",
+      "file": "weapons/RPGAssetPack/Dagger.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Gems",
+      "pack": "RPG Asset Pack",
+      "name": "Gems",
+      "file": "weapons/RPGAssetPack/Gems.fbx"
+    },
+    {
+      "id": "RPGAssetPack/IceStaff",
+      "pack": "RPG Asset Pack",
+      "name": "IceStaff",
+      "file": "weapons/RPGAssetPack/IceStaff.fbx"
+    },
+    {
+      "id": "RPGAssetPack/KnightHelmet",
+      "pack": "RPG Asset Pack",
+      "name": "KnightHelmet",
+      "file": "weapons/RPGAssetPack/KnightHelmet.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Rollofpaper",
+      "pack": "RPG Asset Pack",
+      "name": "Rollofpaper",
+      "file": "weapons/RPGAssetPack/Rollofpaper.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Scroll",
+      "pack": "RPG Asset Pack",
+      "name": "Scroll",
+      "file": "weapons/RPGAssetPack/Scroll.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Shield",
+      "pack": "RPG Asset Pack",
+      "name": "Shield",
+      "file": "weapons/RPGAssetPack/Shield.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Staff",
+      "pack": "RPG Asset Pack",
+      "name": "Staff",
+      "file": "weapons/RPGAssetPack/Staff.fbx"
+    },
+    {
+      "id": "RPGAssetPack/Sword",
+      "pack": "RPG Asset Pack",
+      "name": "Sword",
+      "file": "weapons/RPGAssetPack/Sword.fbx"
+    },
+    {
+      "id": "RPGAssetPack/WoodenStaff",
+      "pack": "RPG Asset Pack",
+      "name": "WoodenStaff",
+      "file": "weapons/RPGAssetPack/WoodenStaff.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Armor_Black",
+      "pack": "Ultimate RPG Items",
+      "name": "Armor_Black",
+      "file": "weapons/UltimateRPGItems/Armor_Black.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Armor_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Armor_Golden",
+      "file": "weapons/UltimateRPGItems/Armor_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Armor_Leather",
+      "pack": "Ultimate RPG Items",
+      "name": "Armor_Leather",
+      "file": "weapons/UltimateRPGItems/Armor_Leather.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Armor_Metal",
+      "pack": "Ultimate RPG Items",
+      "name": "Armor_Metal",
+      "file": "weapons/UltimateRPGItems/Armor_Metal.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Armor_Metal2",
+      "pack": "Ultimate RPG Items",
+      "name": "Armor_Metal2",
+      "file": "weapons/UltimateRPGItems/Armor_Metal2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Arrow_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Arrow_Golden",
+      "file": "weapons/UltimateRPGItems/Arrow_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Arrow",
+      "pack": "Ultimate RPG Items",
+      "name": "Arrow",
+      "file": "weapons/UltimateRPGItems/Arrow.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Axe_Double_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Axe_Double_Golden",
+      "file": "weapons/UltimateRPGItems/Axe_Double_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Axe_Double",
+      "pack": "Ultimate RPG Items",
+      "name": "Axe_Double",
+      "file": "weapons/UltimateRPGItems/Axe_Double.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Axe_small_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Axe_small_Golden",
+      "file": "weapons/UltimateRPGItems/Axe_small_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Axe_small",
+      "pack": "Ultimate RPG Items",
+      "name": "Axe_small",
+      "file": "weapons/UltimateRPGItems/Axe_small.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Backpack",
+      "pack": "Ultimate RPG Items",
+      "name": "Backpack",
+      "file": "weapons/UltimateRPGItems/Backpack.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Bag",
+      "pack": "Ultimate RPG Items",
+      "name": "Bag",
+      "file": "weapons/UltimateRPGItems/Bag.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Bone",
+      "pack": "Ultimate RPG Items",
+      "name": "Bone",
+      "file": "weapons/UltimateRPGItems/Bone.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book1_Closed",
+      "pack": "Ultimate RPG Items",
+      "name": "Book1_Closed",
+      "file": "weapons/UltimateRPGItems/Book1_Closed.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book1_Open",
+      "pack": "Ultimate RPG Items",
+      "name": "Book1_Open",
+      "file": "weapons/UltimateRPGItems/Book1_Open.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book2_Closed",
+      "pack": "Ultimate RPG Items",
+      "name": "Book2_Closed",
+      "file": "weapons/UltimateRPGItems/Book2_Closed.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book2_Open",
+      "pack": "Ultimate RPG Items",
+      "name": "Book2_Open",
+      "file": "weapons/UltimateRPGItems/Book2_Open.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book3_Closed",
+      "pack": "Ultimate RPG Items",
+      "name": "Book3_Closed",
+      "file": "weapons/UltimateRPGItems/Book3_Closed.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book3_Open",
+      "pack": "Ultimate RPG Items",
+      "name": "Book3_Open",
+      "file": "weapons/UltimateRPGItems/Book3_Open.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book4_Closed",
+      "pack": "Ultimate RPG Items",
+      "name": "Book4_Closed",
+      "file": "weapons/UltimateRPGItems/Book4_Closed.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Book4_Open",
+      "pack": "Ultimate RPG Items",
+      "name": "Book4_Open",
+      "file": "weapons/UltimateRPGItems/Book4_Open.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Bow_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Bow_Golden",
+      "file": "weapons/UltimateRPGItems/Bow_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Bow_Wooden",
+      "pack": "Ultimate RPG Items",
+      "name": "Bow_Wooden",
+      "file": "weapons/UltimateRPGItems/Bow_Wooden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Chalice",
+      "pack": "Ultimate RPG Items",
+      "name": "Chalice",
+      "file": "weapons/UltimateRPGItems/Chalice.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Chest_Closed",
+      "pack": "Ultimate RPG Items",
+      "name": "Chest_Closed",
+      "file": "weapons/UltimateRPGItems/Chest_Closed.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Chest_Ingots",
+      "pack": "Ultimate RPG Items",
+      "name": "Chest_Ingots",
+      "file": "weapons/UltimateRPGItems/Chest_Ingots.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Chest_Open",
+      "pack": "Ultimate RPG Items",
+      "name": "Chest_Open",
+      "file": "weapons/UltimateRPGItems/Chest_Open.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/ChickenLeg",
+      "pack": "Ultimate RPG Items",
+      "name": "ChickenLeg",
+      "file": "weapons/UltimateRPGItems/ChickenLeg.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Coin_Skull",
+      "pack": "Ultimate RPG Items",
+      "name": "Coin_Skull",
+      "file": "weapons/UltimateRPGItems/Coin_Skull.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Coin_Star",
+      "pack": "Ultimate RPG Items",
+      "name": "Coin_Star",
+      "file": "weapons/UltimateRPGItems/Coin_Star.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Coin",
+      "pack": "Ultimate RPG Items",
+      "name": "Coin",
+      "file": "weapons/UltimateRPGItems/Coin.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crown",
+      "pack": "Ultimate RPG Items",
+      "name": "Crown",
+      "file": "weapons/UltimateRPGItems/Crown.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crown2",
+      "pack": "Ultimate RPG Items",
+      "name": "Crown2",
+      "file": "weapons/UltimateRPGItems/Crown2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal1_Damaged",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal1_Damaged",
+      "file": "weapons/UltimateRPGItems/Crystal1_Damaged.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal1",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal1",
+      "file": "weapons/UltimateRPGItems/Crystal1.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal2_Damaged",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal2_Damaged",
+      "file": "weapons/UltimateRPGItems/Crystal2_Damaged.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal2",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal2",
+      "file": "weapons/UltimateRPGItems/Crystal2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal3_Damaged",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal3_Damaged",
+      "file": "weapons/UltimateRPGItems/Crystal3_Damaged.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal3",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal3",
+      "file": "weapons/UltimateRPGItems/Crystal3.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal4",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal4",
+      "file": "weapons/UltimateRPGItems/Crystal4.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal5_Damaged",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal5_Damaged",
+      "file": "weapons/UltimateRPGItems/Crystal5_Damaged.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Crystal5",
+      "pack": "Ultimate RPG Items",
+      "name": "Crystal5",
+      "file": "weapons/UltimateRPGItems/Crystal5.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Dagger_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Dagger_Golden",
+      "file": "weapons/UltimateRPGItems/Dagger_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Dagger",
+      "pack": "Ultimate RPG Items",
+      "name": "Dagger",
+      "file": "weapons/UltimateRPGItems/Dagger.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Dart_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Dart_Golden",
+      "file": "weapons/UltimateRPGItems/Dart_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Dart",
+      "pack": "Ultimate RPG Items",
+      "name": "Dart",
+      "file": "weapons/UltimateRPGItems/Dart.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/FishBone",
+      "pack": "Ultimate RPG Items",
+      "name": "FishBone",
+      "file": "weapons/UltimateRPGItems/FishBone.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Glove",
+      "pack": "Ultimate RPG Items",
+      "name": "Glove",
+      "file": "weapons/UltimateRPGItems/Glove.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Gold_Ingots",
+      "pack": "Ultimate RPG Items",
+      "name": "Gold_Ingots",
+      "file": "weapons/UltimateRPGItems/Gold_Ingots.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Hammer_Double_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Hammer_Double_Golden",
+      "file": "weapons/UltimateRPGItems/Hammer_Double_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Hammer_Double",
+      "pack": "Ultimate RPG Items",
+      "name": "Hammer_Double",
+      "file": "weapons/UltimateRPGItems/Hammer_Double.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Heart_Broken",
+      "pack": "Ultimate RPG Items",
+      "name": "Heart_Broken",
+      "file": "weapons/UltimateRPGItems/Heart_Broken.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Heart_Half",
+      "pack": "Ultimate RPG Items",
+      "name": "Heart_Half",
+      "file": "weapons/UltimateRPGItems/Heart_Half.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Heart",
+      "pack": "Ultimate RPG Items",
+      "name": "Heart",
+      "file": "weapons/UltimateRPGItems/Heart.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Key1",
+      "pack": "Ultimate RPG Items",
+      "name": "Key1",
+      "file": "weapons/UltimateRPGItems/Key1.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Key2",
+      "pack": "Ultimate RPG Items",
+      "name": "Key2",
+      "file": "weapons/UltimateRPGItems/Key2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Key3",
+      "pack": "Ultimate RPG Items",
+      "name": "Key3",
+      "file": "weapons/UltimateRPGItems/Key3.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Key4",
+      "pack": "Ultimate RPG Items",
+      "name": "Key4",
+      "file": "weapons/UltimateRPGItems/Key4.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Mineral",
+      "pack": "Ultimate RPG Items",
+      "name": "Mineral",
+      "file": "weapons/UltimateRPGItems/Mineral.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Necklace1",
+      "pack": "Ultimate RPG Items",
+      "name": "Necklace1",
+      "file": "weapons/UltimateRPGItems/Necklace1.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Necklace2",
+      "pack": "Ultimate RPG Items",
+      "name": "Necklace2",
+      "file": "weapons/UltimateRPGItems/Necklace2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Necklace3",
+      "pack": "Ultimate RPG Items",
+      "name": "Necklace3",
+      "file": "weapons/UltimateRPGItems/Necklace3.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Padlock",
+      "pack": "Ultimate RPG Items",
+      "name": "Padlock",
+      "file": "weapons/UltimateRPGItems/Padlock.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Parchment",
+      "pack": "Ultimate RPG Items",
+      "name": "Parchment",
+      "file": "weapons/UltimateRPGItems/Parchment.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion1_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion1_Empty",
+      "file": "weapons/UltimateRPGItems/Potion1_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion1_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion1_Filled",
+      "file": "weapons/UltimateRPGItems/Potion1_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion10_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion10_Empty",
+      "file": "weapons/UltimateRPGItems/Potion10_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion10_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion10_Filled",
+      "file": "weapons/UltimateRPGItems/Potion10_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion11_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion11_Empty",
+      "file": "weapons/UltimateRPGItems/Potion11_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion11_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion11_Filled",
+      "file": "weapons/UltimateRPGItems/Potion11_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion2_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion2_Empty",
+      "file": "weapons/UltimateRPGItems/Potion2_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion2_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion2_Filled",
+      "file": "weapons/UltimateRPGItems/Potion2_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion3_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion3_Empty",
+      "file": "weapons/UltimateRPGItems/Potion3_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion3_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion3_Filled",
+      "file": "weapons/UltimateRPGItems/Potion3_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion4_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion4_Empty",
+      "file": "weapons/UltimateRPGItems/Potion4_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion4_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion4_Filled",
+      "file": "weapons/UltimateRPGItems/Potion4_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion5_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion5_Empty",
+      "file": "weapons/UltimateRPGItems/Potion5_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion5_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion5_Filled",
+      "file": "weapons/UltimateRPGItems/Potion5_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion6_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion6_Empty",
+      "file": "weapons/UltimateRPGItems/Potion6_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion6_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion6_Filled",
+      "file": "weapons/UltimateRPGItems/Potion6_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion7_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion7_Empty",
+      "file": "weapons/UltimateRPGItems/Potion7_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion7_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion7_Filled",
+      "file": "weapons/UltimateRPGItems/Potion7_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion8_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion8_Empty",
+      "file": "weapons/UltimateRPGItems/Potion8_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion8_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion8_Filled",
+      "file": "weapons/UltimateRPGItems/Potion8_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion9_Empty",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion9_Empty",
+      "file": "weapons/UltimateRPGItems/Potion9_Empty.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Potion9_Filled",
+      "pack": "Ultimate RPG Items",
+      "name": "Potion9_Filled",
+      "file": "weapons/UltimateRPGItems/Potion9_Filled.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Pouch",
+      "pack": "Ultimate RPG Items",
+      "name": "Pouch",
+      "file": "weapons/UltimateRPGItems/Pouch.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring1",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring1",
+      "file": "weapons/UltimateRPGItems/Ring1.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring2",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring2",
+      "file": "weapons/UltimateRPGItems/Ring2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring3",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring3",
+      "file": "weapons/UltimateRPGItems/Ring3.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring4",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring4",
+      "file": "weapons/UltimateRPGItems/Ring4.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring5",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring5",
+      "file": "weapons/UltimateRPGItems/Ring5.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring6",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring6",
+      "file": "weapons/UltimateRPGItems/Ring6.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Ring7",
+      "pack": "Ultimate RPG Items",
+      "name": "Ring7",
+      "file": "weapons/UltimateRPGItems/Ring7.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Scroll",
+      "pack": "Ultimate RPG Items",
+      "name": "Scroll",
+      "file": "weapons/UltimateRPGItems/Scroll.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Skull",
+      "pack": "Ultimate RPG Items",
+      "name": "Skull",
+      "file": "weapons/UltimateRPGItems/Skull.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Skull2",
+      "pack": "Ultimate RPG Items",
+      "name": "Skull2",
+      "file": "weapons/UltimateRPGItems/Skull2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Snowflake1",
+      "pack": "Ultimate RPG Items",
+      "name": "Snowflake1",
+      "file": "weapons/UltimateRPGItems/Snowflake1.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Snowflake2",
+      "pack": "Ultimate RPG Items",
+      "name": "Snowflake2",
+      "file": "weapons/UltimateRPGItems/Snowflake2.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Snowflake3",
+      "pack": "Ultimate RPG Items",
+      "name": "Snowflake3",
+      "file": "weapons/UltimateRPGItems/Snowflake3.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Star",
+      "pack": "Ultimate RPG Items",
+      "name": "Star",
+      "file": "weapons/UltimateRPGItems/Star.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Sword_big_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Sword_big_Golden",
+      "file": "weapons/UltimateRPGItems/Sword_big_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Sword_big",
+      "pack": "Ultimate RPG Items",
+      "name": "Sword_big",
+      "file": "weapons/UltimateRPGItems/Sword_big.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Sword_Golden",
+      "pack": "Ultimate RPG Items",
+      "name": "Sword_Golden",
+      "file": "weapons/UltimateRPGItems/Sword_Golden.fbx"
+    },
+    {
+      "id": "UltimateRPGItems/Sword",
+      "pack": "Ultimate RPG Items",
+      "name": "Sword",
+      "file": "weapons/UltimateRPGItems/Sword.fbx"
+    }
+  ],
+  "accessories": [
+    {
+      "id": "HF_Amr_Boots_Fur_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Boots_Fur_01.glb"
+    },
+    {
+      "id": "HF_Amr_Boots_Leather_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Boots_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Bracers_Leather_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Bracers_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gloves_Leather_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Gloves_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Mantle_Fur_01",
+      "socket": "neck",
+      "file": "accessories/HF_Amr_Mantle_Fur_01.glb"
+    },
+    {
+      "id": "HF_Amr_Pauldrons_Leather_01",
+      "socket": "shoulder",
+      "file": "accessories/HF_Amr_Pauldrons_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Shoes_Mage_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Shoes_Mage_01.glb"
+    },
+    {
+      "id": "HF_Amr_Vambraces_Iron_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Vambraces_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Chainmail_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Chainmail_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Leather_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Padded_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Padded_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Scale_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Scale_01.glb"
+    },
+    {
+      "id": "HF_Amr_Kilt_Leather_01",
+      "socket": "hip",
+      "file": "accessories/HF_Amr_Kilt_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Robe_Mage_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Robe_Mage_01.glb"
+    },
+    {
+      "id": "HF_Amr_Tabard_Heraldic_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Tabard_Heraldic_01.glb"
+    },
+    {
+      "id": "HF_Amr_Tunic_Cloth_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Tunic_Cloth_01.glb"
+    },
+    {
+      "id": "HF_Amr_Cape_Knight_01",
+      "socket": "cape",
+      "file": "accessories/HF_Amr_Cape_Knight_01.glb"
+    },
+    {
+      "id": "HF_Amr_Cape_Royal_Fur_01",
+      "socket": "cape",
+      "file": "accessories/HF_Amr_Cape_Royal_Fur_01.glb"
+    },
+    {
+      "id": "HF_Amr_Cape_Tattered_01",
+      "socket": "cape",
+      "file": "accessories/HF_Amr_Cape_Tattered_01.glb"
+    },
+    {
+      "id": "HF_Amr_Cloak_Hooded_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Cloak_Hooded_01.glb"
+    },
+    {
+      "id": "HF_Gear_Backpack_Adventurer_01",
+      "socket": "back",
+      "file": "accessories/HF_Gear_Backpack_Adventurer_01.glb"
+    },
+    {
+      "id": "HF_Gear_Backpack_Frame_01",
+      "socket": "back",
+      "file": "accessories/HF_Gear_Backpack_Frame_01.glb"
+    },
+    {
+      "id": "HF_Gear_Bandolier_Potions_01",
+      "socket": "chest",
+      "file": "accessories/HF_Gear_Bandolier_Potions_01.glb"
+    },
+    {
+      "id": "HF_Gear_Bedroll_Pack_01",
+      "socket": "back",
+      "file": "accessories/HF_Gear_Bedroll_Pack_01.glb"
+    },
+    {
+      "id": "HF_Gear_Belt_Leather_01",
+      "socket": "hip",
+      "file": "accessories/HF_Gear_Belt_Leather_01.glb"
+    },
+    {
+      "id": "HF_Gear_Belt_Utility_01",
+      "socket": "hip",
+      "file": "accessories/HF_Gear_Belt_Utility_01.glb"
+    },
+    {
+      "id": "HF_Gear_Pouch_Hip_01",
+      "socket": "hip",
+      "file": "accessories/HF_Gear_Pouch_Hip_01.glb"
+    },
+    {
+      "id": "HF_Gear_Quiver_Hip_01",
+      "socket": "hip",
+      "file": "accessories/HF_Gear_Quiver_Hip_01.glb"
+    },
+    {
+      "id": "HF_Gear_Satchel_Shoulder_01",
+      "socket": "back",
+      "file": "accessories/HF_Gear_Satchel_Shoulder_01.glb"
+    },
+    {
+      "id": "HF_Gear_Waterskin_01",
+      "socket": "hip",
+      "file": "accessories/HF_Gear_Waterskin_01.glb"
+    },
+    {
+      "id": "HF_Amr_Circlet_Gem_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Circlet_Gem_01.glb"
+    },
+    {
+      "id": "HF_Amr_Hat_Feathered_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Hat_Feathered_01.glb"
+    },
+    {
+      "id": "HF_Amr_Hat_Straw_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Hat_Straw_01.glb"
+    },
+    {
+      "id": "HF_Amr_Hat_Witch_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Hat_Witch_01.glb"
+    },
+    {
+      "id": "HF_Amr_Hat_Wizard_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Hat_Wizard_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Cap_Leather_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Cap_Leather_01.glb"
+    },
+    {
+      "id": "HF_Amr_Hood_Ranger_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Hood_Ranger_01.glb"
+    },
+    {
+      "id": "HF_Amr_Hood_Rogue_Mask_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Hood_Rogue_Mask_01.glb"
+    },
+    {
+      "id": "HF_Amr_Mask_Plague_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Mask_Plague_01.glb"
+    },
+    {
+      "id": "HF_Amr_Coif_Chainmail_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Coif_Chainmail_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gorget_Plate_01",
+      "socket": "neck",
+      "file": "accessories/HF_Amr_Gorget_Plate_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Horned_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Horned_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Kettle_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Kettle_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Nasal_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Nasal_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Plumed_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Plumed_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Skull_Bone_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Skull_Bone_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Winged_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Winged_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Plate_Crude_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Plate_Crude_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Plate_Gold_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Plate_Gold_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Plate_Iron_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Plate_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Plate_Legendary_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Plate_Legendary_01.glb"
+    },
+    {
+      "id": "HF_Amr_Chest_Plate_Steel_01",
+      "socket": "chest",
+      "file": "accessories/HF_Amr_Chest_Plate_Steel_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gauntlets_Plate_Crude_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Crude_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gauntlets_Plate_Gold_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Gold_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gauntlets_Plate_Iron_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gauntlets_Plate_Legendary_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Legendary_01.glb"
+    },
+    {
+      "id": "HF_Amr_Gauntlets_Plate_Steel_01",
+      "socket": "wrist",
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Steel_01.glb"
+    },
+    {
+      "id": "HF_Amr_Greaves_Plate_Crude_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Greaves_Plate_Crude_01.glb"
+    },
+    {
+      "id": "HF_Amr_Greaves_Plate_Gold_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Greaves_Plate_Gold_01.glb"
+    },
+    {
+      "id": "HF_Amr_Greaves_Plate_Iron_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Greaves_Plate_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Greaves_Plate_Legendary_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Greaves_Plate_Legendary_01.glb"
+    },
+    {
+      "id": "HF_Amr_Greaves_Plate_Steel_01",
+      "socket": "foot",
+      "file": "accessories/HF_Amr_Greaves_Plate_Steel_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Great_Crude_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Great_Crude_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Great_Gold_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Great_Gold_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Great_Iron_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Great_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Great_Legendary_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Great_Legendary_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Great_Steel_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Great_Steel_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Visored_Crude_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Visored_Crude_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Visored_Gold_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Visored_Gold_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Visored_Iron_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Visored_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Visored_Legendary_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Visored_Legendary_01.glb"
+    },
+    {
+      "id": "HF_Amr_Helm_Visored_Steel_01",
+      "socket": "head",
+      "file": "accessories/HF_Amr_Helm_Visored_Steel_01.glb"
+    },
+    {
+      "id": "HF_Amr_Pauldrons_Plate_Crude_01",
+      "socket": "shoulder",
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Crude_01.glb"
+    },
+    {
+      "id": "HF_Amr_Pauldrons_Plate_Gold_01",
+      "socket": "shoulder",
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Gold_01.glb"
+    },
+    {
+      "id": "HF_Amr_Pauldrons_Plate_Iron_01",
+      "socket": "shoulder",
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Iron_01.glb"
+    },
+    {
+      "id": "HF_Amr_Pauldrons_Plate_Legendary_01",
+      "socket": "shoulder",
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Legendary_01.glb"
+    },
+    {
+      "id": "HF_Amr_Pauldrons_Plate_Steel_01",
+      "socket": "shoulder",
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Steel_01.glb"
+    }
+  ]
+}

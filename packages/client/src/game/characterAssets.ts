@@ -1,4 +1,5 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { AnimatorAvatar } from "@babylonjs/core/Animations/animatorAvatar";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
@@ -12,7 +13,17 @@ import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { assetUrl } from "../assets";
-import { MIXAMO_ANIMATIONS, retargetMixamo } from "./mixamo";
+import { MIXAMO_ANIMATIONS, UAL_TO_MIXAMO, retargetMixamo } from "./mixamo";
+import {
+  appearanceUrl,
+  boneName,
+  isMonster,
+  modelFile,
+  type Appearance,
+  type DefaultSocket,
+  type Mount,
+  type MountedItem,
+} from "./appearance";
 import type { Shadows } from "./shadows";
 import { TUNING } from "./tuning";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
@@ -390,6 +401,9 @@ export interface CharacterInstance {
   hands: TransformNode[];
   // Os du squelette par nom (points d'accroche des effets).
   bones: Map<string, TransformNode>;
+  // Personnage assemblé dans l'éditeur d'apparence : armes et accessoires par clé de placement (voir appearance.ts),
+  // pour les régler à la souris.
+  attachments?: { key: string; node: TransformNode }[];
   // Habille le personnage d'une des deux couleurs d'équipe (0 bleu, 1 rouge).
   setTeam(team: number): void;
   // Range les armes qui le prévoient (le bâton dans le dos) ou les remet en main.
@@ -411,6 +425,8 @@ export class CharacterAssets {
   private paints = new Map<string, PBRMaterial>();
   // Animations Mixamo, reciblées une fois sur un personnage modèle invisible (voir mixamo.ts).
   private mixamo: Promise<AnimationGroup[]> | null = null;
+  // Éditeur d'apparence : animations reciblées une fois par monstre, sur un exemplaire caché (voir createCustom).
+  private monsterAnimations = new Map<string, Promise<AnimationGroup[]>>();
 
   // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
   constructor(
@@ -477,9 +493,17 @@ export class CharacterAssets {
     return this.mixamo;
   }
 
-  async create(classId: string, parent: TransformNode, only?: ReadonlySet<string>): Promise<CharacterInstance | null> {
+  // custom : personnage assemblé dans l'éditeur d'apparence (développement), à la place du modèle de la classe, avec
+  // ses objets à accrocher (voir mountedItems) et leurs placements réglés pour ce modèle (par clé).
+  async create(
+    classId: string,
+    parent: TransformNode,
+    only?: ReadonlySet<string>,
+    custom?: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount> },
+  ): Promise<CharacterInstance | null> {
     const def = CHARACTERS[classId];
     if (!def) return null;
+    if (custom) return this.createCustom(def, custom, parent, only);
     const [character, libraries, weaponContainers, mixamo] = await Promise.all([
       this.load(def.model),
       Promise.all(this.libraries.map((url) => this.load(url))),
@@ -655,6 +679,171 @@ export class CharacterAssets {
     };
   }
 
+  // Personnage de l'éditeur d'apparence : corps d'une race et pièces de tenue (toutes sur le même squelette), ou
+  // monstre (squelette Mixamo, animations reciblées), plus ses armes et accessoires aux placements réglés. Il garde
+  // les animations de sa classe ; pas de couleur d'équipe, ni d'arme rangée ou d'instrument.
+  private async createCustom(
+    def: CharacterDef,
+    { appearance, items, mounts }: { appearance: Appearance; items: MountedItem[]; mounts: Record<string, Mount> },
+    parent: TransformNode,
+    only?: ReadonlySet<string>,
+  ): Promise<CharacterInstance> {
+    const monster = isMonster(appearance.model);
+    const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
+    const [base, libraries, mixamo, pieces, held] = await Promise.all([
+      this.load(appearanceUrl(modelFile(appearance))),
+      Promise.all(this.libraries.map((url) => this.load(url))),
+      this.loadMixamo(),
+      Promise.all(pieceFiles.map((file) => this.load(appearanceUrl(file)))),
+      Promise.all(items.map((item) => this.load(appearanceUrl(item.file)))),
+    ]);
+
+    const entries = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+    const root = entries.rootNodes[0] as TransformNode;
+    root.parent = parent;
+    root.scaling.scaleInPlace(CHARACTER_SCALE);
+    const nodes = new Map<string, TransformNode>();
+    for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
+    const cleanup: (() => void)[] = [];
+    const meshes = root.getChildMeshes(false);
+
+    // Pièces de tenue et coiffures : chacune arrive avec sa copie du squelette ; ses os suivent ceux du corps.
+    for (const piece of pieces) {
+      const pieceEntries = piece.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const pieceRoot = pieceEntries.rootNodes[0] as TransformNode;
+      pieceRoot.parent = parent;
+      pieceRoot.scaling.scaleInPlace(CHARACTER_SCALE);
+      for (const skeleton of pieceEntries.skeletons) {
+        for (const bone of skeleton.bones) {
+          const node = nodes.get(bone.name);
+          if (node) bone.linkTransformNode(node);
+        }
+      }
+      meshes.push(...pieceRoot.getChildMeshes(false));
+      cleanup.push(() => {
+        pieceRoot.dispose(false, false);
+        for (const skeleton of pieceEntries.skeletons) skeleton.dispose();
+      });
+    }
+
+    // Os par nom : ceux du modèle, plus nos noms d'os pour un monstre (points d'accroche des effets).
+    const bones = new Map(nodes);
+    if (monster) {
+      for (const [ours, mixamoName] of UAL_TO_MIXAMO) {
+        const node = nodes.get(mixamoName);
+        if (node && !bones.has(ours)) bones.set(ours, node);
+      }
+    }
+
+    // Armes et accessoires, placés avant les animations : un placement par défaut se calcule sur la pose de repos.
+    for (const node of [root, ...root.getDescendants(false)]) (node as TransformNode).computeWorldMatrix?.(true);
+    const attachments: { key: string; node: TransformNode }[] = [];
+    items.forEach((item, i) => {
+      const fbx = item.file.endsWith(".fbx");
+      // Arme en main d'un corps Quaternius : la prise des armes du jeu (lame vers le haut du modèle, poignée au point
+      // d'origine) ; sinon, posé droit au point d'accroche.
+      const hand = !monster && /@(right|left)$/.test(item.key);
+      const mount =
+        mounts[item.key] ??
+        (hand
+          ? { ...grip(item.socket.bone.endsWith("r") ? "r" : "l", 0), scale: fbx ? 0.01 : 1 }
+          : defaultMount(root, nodes, appearance.model, item.socket, fbx));
+      const bone = mount && nodes.get(mount.bone);
+      if (!mount || !bone) return;
+      const attach = new TransformNode(`attach-${item.key}`, this.scene);
+      attach.parent = bone;
+      attach.position.set(...mount.position);
+      attach.rotation.set(...mount.rotation);
+      attach.scaling.setAll(mount.scale);
+      const instance = held[i].instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      for (const node of instance.rootNodes) {
+        if (node.name === "__root__" || node.name === "__fbx_root__") {
+          for (const child of node.getChildren()) (child as TransformNode).parent = attach;
+          node.dispose();
+        } else (node as TransformNode).parent = attach;
+      }
+      // Paire : la pièce droite est à la racine, la gauche en enfant « _L » (décalée comme portée) ; on garde l'une
+      // ou l'autre, la gauche ramenée sur son propre point d'accroche.
+      if (item.part) {
+        const left = attach.getDescendants(false).find((node) => node.name.endsWith("_L")) as TransformNode | undefined;
+        if (item.part === "right") left?.dispose();
+        else if (left) {
+          const right = attach.getChildren();
+          left.parent = attach;
+          left.position.setAll(0);
+          for (const node of right) if (node !== left) node.dispose();
+        }
+      }
+      meshes.push(...attach.getChildMeshes(false));
+      attachments.push({ key: item.key, node: attach });
+    });
+
+    // Animations rebranchées par nom d'os : celles de nos bibliothèques pour un corps (même squelette), celles
+    // reciblées une fois pour ce monstre sinon.
+    const sources = monster
+      ? await this.monsterAnimationsOf(appearance.model, base, [...libraries.flatMap((library) => library.animationGroups), ...mixamo])
+      : [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
+    const animations = new Map<string, AnimationGroup>();
+    for (const group of sources) {
+      if (only && !only.has(group.name)) continue;
+      const clone = group.clone(group.name, (target: { name: string }) => nodes.get(target.name) ?? null);
+      clone.stop();
+      animations.set(group.name, clone);
+    }
+
+    this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
+    const weapons = attachments.map((a) => a.node);
+    return {
+      root,
+      set: def.animations,
+      meshes,
+      animations,
+      weapons,
+      attachments,
+      hands: ["hand_r", "hand_l"].map((name) => bones.get(name)).filter((bone): bone is TransformNode => !!bone),
+      bones,
+      setTeam: () => undefined,
+      setStowed: () => undefined,
+      setPlaying: () => undefined,
+      dispose() {
+        for (const group of animations.values()) group.dispose();
+        for (const attach of weapons) attach.dispose(false, false);
+        for (const run of cleanup) run();
+        root.dispose(false, false);
+        for (const skeleton of entries.skeletons) skeleton.dispose();
+      },
+    };
+  }
+
+  // Recible nos animations sur le squelette Mixamo d'un monstre (poses de repos différentes), une seule fois, sur un
+  // exemplaire caché : les animations obtenues visent ses os par leur nom et se clonent sur chaque personnage. Les
+  // déplacements d'os sont retirés (le bassin reste à sa hauteur, les os Mixamo n'ont pas nos proportions).
+  private monsterAnimationsOf(model: string, base: AssetContainer, sources: AnimationGroup[]): Promise<AnimationGroup[]> {
+    let groups = this.monsterAnimations.get(model);
+    if (!groups) {
+      const template = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const root = template.rootNodes[0] as TransformNode;
+      root.setEnabled(false);
+      const present = new Set(root.getDescendants(false).map((node) => node.name));
+      const names = new Map([...UAL_TO_MIXAMO].filter(([, mixamoName]) => present.has(mixamoName)));
+      const avatar = new AnimatorAvatar(`avatar-${model}`, root, false, false);
+      // Les os de nos personnages absents chez le monstre (doigts…) sont simplement ignorés.
+      avatar.showWarnings = false;
+      groups = Promise.resolve(
+        sources.map((group) => {
+          const retargeted = avatar.retargetAnimationGroup(group, { mapNodeNames: names, animationGroupName: group.name, fixRootPosition: false });
+          for (const target of [...retargeted.targetedAnimations]) {
+            if (target.animation.targetProperty === "position") retargeted.removeTargetedAnimation(target.animation);
+          }
+          retargeted.stop();
+          return retargeted;
+        }),
+      );
+      this.monsterAnimations.set(model, groups);
+    }
+    return groups;
+  }
+
   private paintMaterial(base: PBRMaterial, team: number): PBRMaterial {
     const key = `${base.uniqueId}-${team}`;
     let material = this.paints.get(key);
@@ -693,4 +882,31 @@ function paintWeapon(attach: TransformNode, colors: Record<string, string>, glow
       if (glow.includes(sub.name)) sub.emissiveColor = color.scale(0.45);
     }
   }
+}
+
+// Placement par défaut d'un objet de l'éditeur d'apparence : posé au point d'accroche, droit et tourné comme le
+// personnage dans sa pose de repos, à sa taille d'origine (centimètres pour un FBX).
+function defaultMount(root: TransformNode, nodes: Map<string, TransformNode>, model: string, socket: DefaultSocket, fbx: boolean): Mount | null {
+  const bone = nodes.get(boneName(model, socket.bone));
+  const at = nodes.get(boneName(model, socket.at ?? socket.bone));
+  if (!bone || !at) return null;
+  const rootScale = new Vector3();
+  const rootRotation = new Quaternion();
+  root.getWorldMatrix().decompose(rootScale, rootRotation);
+  const point = at.getAbsolutePosition().clone();
+  if (socket.ground) point.y = root.getAbsolutePosition().y;
+  const unit = fbx ? 0.01 : 1;
+  const world = Matrix.Compose(rootScale.scale(unit), rootRotation, point);
+  const local = world.multiply(bone.getWorldMatrix().clone().invert());
+  const scale = new Vector3();
+  const rotation = new Quaternion();
+  const position = new Vector3();
+  local.decompose(scale, rotation, position);
+  const euler = rotation.toEulerAngles();
+  return {
+    bone: bone.name,
+    position: [position.x, position.y, position.z],
+    rotation: [euler.x, euler.y, euler.z],
+    scale: Math.abs(scale.x),
+  };
 }
