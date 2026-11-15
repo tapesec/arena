@@ -117,3 +117,36 @@ export async function tintImage(url: string, color: string, from: number): Promi
   context.putImageData(pixels, 0, 0);
   return canvas.toDataURL("image/png");
 }
+
+// Palette (grid × grid cases de couleur, comme celle des objets Hearthfold) dont des cases prennent une autre couleur,
+// en adresse data: (PNG). Chaque case garde son dégradé : un pixel deux fois plus sombre que la moyenne de sa case reste
+// deux fois plus sombre que la couleur choisie.
+export async function paintCells(url: string, grid: number, colors: Record<number, string>): Promise<string> {
+  const { canvas, context, pixels } = await readPixels(url);
+  const { data, width } = pixels;
+  const size = Math.floor(width / grid);
+  const luminance = (r: number, g: number, b: number) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  for (const [cell, color] of Object.entries(colors)) {
+    const index = Number(cell);
+    const x0 = (index % grid) * size;
+    const y0 = Math.floor(index / grid) * size;
+    const target = [1, 3, 5].map((k) => parseInt(color.slice(k, k + 2), 16));
+    let sum = 0;
+    for (let y = y0; y < y0 + size; y++) {
+      for (let x = x0; x < x0 + size; x++) {
+        const i = (y * width + x) * 4;
+        sum += luminance(data[i], data[i + 1], data[i + 2]);
+      }
+    }
+    const average = Math.max(1, sum / (size * size));
+    for (let y = y0; y < y0 + size; y++) {
+      for (let x = x0; x < x0 + size; x++) {
+        const i = (y * width + x) * 4;
+        const factor = luminance(data[i], data[i + 1], data[i + 2]) / average;
+        for (let c = 0; c < 3; c++) data[i + c] = Math.min(255, target[c] * factor);
+      }
+    }
+  }
+  context.putImageData(pixels, 0, 0);
+  return canvas.toDataURL("image/png");
+}

@@ -16,12 +16,18 @@ export interface OutfitColor {
   tintFrom?: number;
 }
 
-// Texture de couleur qui remplace celle d'un matériau (variante du pack), éventuellement teinte (voir textureTint.ts).
+// Texture de couleur qui remplace celle d'un matériau (variante du pack), éventuellement teinte, ou palette dont des
+// cases sont repeintes (voir textureTint.ts).
 export interface Recolor {
   material: string;
   texture: string;
   tint?: { color: string; from: number };
+  cells?: { grid: number; colors: Record<number, string> };
 }
+
+// Couleurs choisies pour une arme ou un accessoire, par zone (voir le catalogue de l'éditeur) : « m:<matériau> » pour un
+// matériau entier, « c<case> » pour une case de la palette Hearthfold ; valeur : couleur CSS (#rrggbb).
+export type ItemColors = Record<string, string>;
 
 // Objet à accrocher au personnage : sa clé de placement, son fichier, son point d'accroche par défaut, et pour une
 // paire la pièce gardée.
@@ -32,6 +38,9 @@ export interface MountedItem {
   part?: "right" | "left";
   // Cape : elle pend toute seule, droite et avec un balancement (voir createCustom), au lieu de suivre l'os.
   hang?: boolean;
+  // Couleurs choisies, par zone ; palette : la palette Hearthfold (pour les zones « c<case> ») et son matériau.
+  colors?: ItemColors;
+  palette?: { texture: string; grid: number; material: string };
 }
 
 // Placement d'une arme ou d'un accessoire sur un os : position (m), rotation (radians, angles d'Euler) et échelle, dans
@@ -75,6 +84,9 @@ export interface Appearance {
   weapons: HeldWeapon[];
   // Accessoires portés par-dessus la tenue (pack Hearthfold), qu'on ait un corps ou un monstre.
   accessories: string[];
+  // Couleurs des armes et accessoires, par objet (identifiant du catalogue) : les deux mains, ou les deux pièces d'une
+  // paire, partagent celles de leur objet.
+  itemColors?: Record<string, ItemColors>;
 }
 
 // Contenu de appearances.json : deux variantes par classe (une par camp), et les placements réglés par modèle

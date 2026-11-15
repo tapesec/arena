@@ -840,1822 +840,8010 @@
       "id": "Quaternius/Shield_Wooden",
       "pack": "Quaternius",
       "name": "Shield_Wooden",
-      "file": "weapons/Quaternius/Shield_Wooden.glb"
+      "file": "weapons/Quaternius/Shield_Wooden.glb",
+      "colors": [
+        {
+          "id": "m:MI_Trim_Furniture",
+          "color": "#ffffff"
+        },
+        {
+          "id": "m:MI_Trim_Metal_Vertex",
+          "color": "#ffffff"
+        },
+        {
+          "id": "m:MI_Trim_Props",
+          "color": "#ffffff"
+        }
+      ]
     },
     {
       "id": "Quaternius/Sword_Bronze",
       "pack": "Quaternius",
       "name": "Sword_Bronze",
-      "file": "weapons/Quaternius/Sword_Bronze.glb"
+      "file": "weapons/Quaternius/Sword_Bronze.glb",
+      "colors": [
+        {
+          "id": "m:MI_Trim_Props_Vertex",
+          "color": "#ffffff"
+        }
+      ]
     },
     {
       "id": "Quaternius/Weapon_Dagger",
       "pack": "Quaternius",
       "name": "Weapon_Dagger",
-      "file": "weapons/Quaternius/Weapon_Dagger.glb"
+      "file": "weapons/Quaternius/Weapon_Dagger.glb",
+      "colors": [
+        {
+          "id": "m:Atlas",
+          "color": "#ffffff"
+        }
+      ]
     },
     {
       "id": "Quaternius/Weapon_Lute",
       "pack": "Quaternius",
       "name": "Weapon_Lute",
-      "file": "weapons/Quaternius/Weapon_Lute.glb"
+      "file": "weapons/Quaternius/Weapon_Lute.glb",
+      "colors": [
+        {
+          "id": "m:Atlas",
+          "color": "#ffffff"
+        }
+      ]
     },
     {
       "id": "Quaternius/Weapon_Sword_1",
       "pack": "Quaternius",
       "name": "Weapon_Sword_1",
-      "file": "weapons/Quaternius/Weapon_Sword_1.glb"
+      "file": "weapons/Quaternius/Weapon_Sword_1.glb",
+      "colors": [
+        {
+          "id": "m:Atlas",
+          "color": "#ffffff"
+        }
+      ]
     },
     {
       "id": "Quaternius/Weapon_Sword_2",
       "pack": "Quaternius",
       "name": "Weapon_Sword_2",
-      "file": "weapons/Quaternius/Weapon_Sword_2.glb"
+      "file": "weapons/Quaternius/Weapon_Sword_2.glb",
+      "colors": [
+        {
+          "id": "m:Atlas",
+          "color": "#ffffff"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Dagger_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Dagger_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Dagger_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Dagger_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Dagger_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Dagger_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Dagger_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Dagger_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Dagger_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Dagger_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Dagger_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Dagger_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Dagger_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Dagger_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Dagger_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Dagger_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sabre_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sabre_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sabre_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sabre_01.glb",
+      "colors": [
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Broken_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Broken_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Broken_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Broken_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Great_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Great_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Great_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Great_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Great_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Great_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Great_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Great_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Great_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Great_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Long_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Long_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Long_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Long_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Long_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Long_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Long_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Long_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Long_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Long_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Long_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Short_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Short_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Short_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Short_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Short_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Short_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Short_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Short_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Sword_Short_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Sword_Short_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Sword_Short_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_ThrowingKnives_Set_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_ThrowingKnives_Set_01",
-      "file": "weapons/Hearthfold/HF_Wep_ThrowingKnives_Set_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_ThrowingKnives_Set_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Great_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Great_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Great_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Great_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Great_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Great_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Great_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Great_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Great_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Great_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Great_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Hand_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Hand_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Hand_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Hand_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Hand_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Hand_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Hand_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Hand_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Axe_Hand_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Axe_Hand_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Axe_Hand_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Flail_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Flail_01",
-      "file": "weapons/Hearthfold/HF_Wep_Flail_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Flail_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Glaive_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Glaive_01",
-      "file": "weapons/Hearthfold/HF_Wep_Glaive_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Glaive_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Halberd_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Halberd_01",
-      "file": "weapons/Hearthfold/HF_Wep_Halberd_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Halberd_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Hammer_War_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Hammer_War_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Hammer_War_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Hammer_War_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Hammer_War_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Hammer_War_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Hammer_War_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Hammer_War_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Hammer_War_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Hammer_War_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Hammer_War_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Mace_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Mace_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Mace_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Mace_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Mace_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Mace_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Mace_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Mace_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Mace_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Mace_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Mace_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Mace_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Mace_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Mace_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Mace_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Mace_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Spear_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Spear_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Spear_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Spear_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Spear_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Spear_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Spear_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Spear_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Spear_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Spear_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Spear_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Spear_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Spear_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Spear_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Spear_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Spear_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Arrow_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Arrow_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Arrow_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Arrow_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Arrow_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Arrow_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Arrow_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Arrow_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Arrow_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Arrow_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Arrow_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Arrow_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Arrow_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Arrow_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Arrow_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Arrow_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Bow_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Bow_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Bow_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Bow_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Bow_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Bow_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Bow_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Bow_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Bow_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Bow_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Bow_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Bow_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Bow_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Bow_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Bow_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Bow_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Crossbow_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Crossbow_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Crossbow_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Crossbow_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Crossbow_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Crossbow_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Crossbow_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Crossbow_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Crossbow_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Crossbow_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Crossbow_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Staff_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Staff_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Staff_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Staff_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Staff_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Staff_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Staff_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Staff_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Staff_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c15",
+          "color": "#497e71"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Staff_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Staff_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Staff_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Staff_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Staff_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Staff_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Staff_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c53",
+          "color": "#569aae"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Wand_Crystal_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Wand_Crystal_01",
-      "file": "weapons/Hearthfold/HF_Wep_Wand_Crystal_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Wand_Crystal_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Wand_Oak_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Wand_Oak_01",
-      "file": "weapons/Hearthfold/HF_Wep_Wand_Oak_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Wand_Oak_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c1",
+          "color": "#60884a"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Buckler_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Buckler_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Buckler_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Buckler_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Buckler_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Buckler_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Buckler_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Buckler_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Buckler_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Buckler_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Buckler_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Heater_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Heater_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Heater_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Heater_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Heater_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Heater_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Heater_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Heater_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Heater_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Heater_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Heater_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Kite_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Kite_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Kite_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Kite_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Round_Crude_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Round_Crude_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Crude_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Round_Gold_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Round_Gold_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Gold_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Round_Iron_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Round_Iron_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Iron_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Round_Legendary_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Round_Legendary_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Legendary_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Round_Steel_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Round_Steel_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Steel_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Round_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "Hearthfold/HF_Wep_Shield_Tower_01",
       "pack": "Hearthfold",
       "name": "HF_Wep_Shield_Tower_01",
-      "file": "weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb"
+      "file": "weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb",
+      "colors": [
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Arrow",
       "pack": "Medieval Weapons",
       "name": "Arrow",
-      "file": "weapons/MedievalWeapons/Arrow.fbx"
+      "file": "weapons/MedievalWeapons/Arrow.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:Red",
+          "color": "#b45d62"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Axe_Double",
       "pack": "Medieval Weapons",
       "name": "Axe_Double",
-      "file": "weapons/MedievalWeapons/Axe_Double.fbx"
+      "file": "weapons/MedievalWeapons/Axe_Double.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Axe_Small",
       "pack": "Medieval Weapons",
       "name": "Axe_Small",
-      "file": "weapons/MedievalWeapons/Axe_Small.fbx"
+      "file": "weapons/MedievalWeapons/Axe_Small.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Axe",
       "pack": "Medieval Weapons",
       "name": "Axe",
-      "file": "weapons/MedievalWeapons/Axe.fbx"
+      "file": "weapons/MedievalWeapons/Axe.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Bow_Evil",
       "pack": "Medieval Weapons",
       "name": "Bow_Evil",
-      "file": "weapons/MedievalWeapons/Bow_Evil.fbx"
+      "file": "weapons/MedievalWeapons/Bow_Evil.fbx",
+      "colors": [
+        {
+          "id": "m:Red",
+          "color": "#a0343f"
+        },
+        {
+          "id": "m:Black",
+          "color": "#2c2625"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Bow_Golden",
       "pack": "Medieval Weapons",
       "name": "Bow_Golden",
-      "file": "weapons/MedievalWeapons/Bow_Golden.fbx"
+      "file": "weapons/MedievalWeapons/Bow_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Bow_Wooden",
       "pack": "Medieval Weapons",
       "name": "Bow_Wooden",
-      "file": "weapons/MedievalWeapons/Bow_Wooden.fbx"
+      "file": "weapons/MedievalWeapons/Bow_Wooden.fbx",
+      "colors": [
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Bow_Wooden2",
       "pack": "Medieval Weapons",
       "name": "Bow_Wooden2",
-      "file": "weapons/MedievalWeapons/Bow_Wooden2.fbx"
+      "file": "weapons/MedievalWeapons/Bow_Wooden2.fbx",
+      "colors": [
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Claymore",
       "pack": "Medieval Weapons",
       "name": "Claymore",
-      "file": "weapons/MedievalWeapons/Claymore.fbx"
+      "file": "weapons/MedievalWeapons/Claymore.fbx",
+      "colors": [
+        {
+          "id": "m:LightRed",
+          "color": "#b05b58"
+        },
+        {
+          "id": "m:Red",
+          "color": "#a0343f"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:DarkBrown",
+          "color": "#4c4340"
+        },
+        {
+          "id": "m:Black",
+          "color": "#2c2625"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Dagger_2",
       "pack": "Medieval Weapons",
       "name": "Dagger_2",
-      "file": "weapons/MedievalWeapons/Dagger_2.fbx"
+      "file": "weapons/MedievalWeapons/Dagger_2.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Dagger",
       "pack": "Medieval Weapons",
       "name": "Dagger",
-      "file": "weapons/MedievalWeapons/Dagger.fbx"
+      "file": "weapons/MedievalWeapons/Dagger.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Hammer_Double",
       "pack": "Medieval Weapons",
       "name": "Hammer_Double",
-      "file": "weapons/MedievalWeapons/Hammer_Double.fbx"
+      "file": "weapons/MedievalWeapons/Hammer_Double.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Hammer_Small",
       "pack": "Medieval Weapons",
       "name": "Hammer_Small",
-      "file": "weapons/MedievalWeapons/Hammer_Small.fbx"
+      "file": "weapons/MedievalWeapons/Hammer_Small.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Scythe",
       "pack": "Medieval Weapons",
       "name": "Scythe",
-      "file": "weapons/MedievalWeapons/Scythe.fbx"
+      "file": "weapons/MedievalWeapons/Scythe.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Shield_Celtic_Golden",
       "pack": "Medieval Weapons",
       "name": "Shield_Celtic_Golden",
-      "file": "weapons/MedievalWeapons/Shield_Celtic_Golden.fbx"
+      "file": "weapons/MedievalWeapons/Shield_Celtic_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightBlue",
+          "color": "#83adb4"
+        },
+        {
+          "id": "m:Green",
+          "color": "#4fb46d"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0be73"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Shield_Heater_2",
       "pack": "Medieval Weapons",
       "name": "Shield_Heater_2",
-      "file": "weapons/MedievalWeapons/Shield_Heater_2.fbx"
+      "file": "weapons/MedievalWeapons/Shield_Heater_2.fbx",
+      "colors": [
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Shield_Heater",
       "pack": "Medieval Weapons",
       "name": "Shield_Heater",
-      "file": "weapons/MedievalWeapons/Shield_Heater.fbx"
+      "file": "weapons/MedievalWeapons/Shield_Heater.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Shield_Round_2",
       "pack": "Medieval Weapons",
       "name": "Shield_Round_2",
-      "file": "weapons/MedievalWeapons/Shield_Round_2.fbx"
+      "file": "weapons/MedievalWeapons/Shield_Round_2.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Shield_Round",
       "pack": "Medieval Weapons",
       "name": "Shield_Round",
-      "file": "weapons/MedievalWeapons/Shield_Round.fbx"
+      "file": "weapons/MedievalWeapons/Shield_Round.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Spear",
       "pack": "Medieval Weapons",
       "name": "Spear",
-      "file": "weapons/MedievalWeapons/Spear.fbx"
+      "file": "weapons/MedievalWeapons/Spear.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Sword_2",
       "pack": "Medieval Weapons",
       "name": "Sword_2",
-      "file": "weapons/MedievalWeapons/Sword_2.fbx"
+      "file": "weapons/MedievalWeapons/Sword_2.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Sword_Big",
       "pack": "Medieval Weapons",
       "name": "Sword_Big",
-      "file": "weapons/MedievalWeapons/Sword_Big.fbx"
+      "file": "weapons/MedievalWeapons/Sword_Big.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Sword_Golden",
       "pack": "Medieval Weapons",
       "name": "Sword_Golden",
-      "file": "weapons/MedievalWeapons/Sword_Golden.fbx"
+      "file": "weapons/MedievalWeapons/Sword_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0be73"
+        }
+      ]
     },
     {
       "id": "MedievalWeapons/Sword",
       "pack": "Medieval Weapons",
       "name": "Sword",
-      "file": "weapons/MedievalWeapons/Sword.fbx"
+      "file": "weapons/MedievalWeapons/Sword.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#959aa0"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b4a564"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#795239"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#654430"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#a4a8b0"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/AnimatedChest",
       "pack": "RPG Asset Pack",
       "name": "AnimatedChest",
-      "file": "weapons/RPGAssetPack/AnimatedChest.fbx"
+      "file": "weapons/RPGAssetPack/AnimatedChest.fbx",
+      "colors": [
+        {
+          "id": "m:Material",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.001",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.002",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Barrel",
       "pack": "RPG Asset Pack",
       "name": "Barrel",
-      "file": "weapons/RPGAssetPack/Barrel.fbx"
+      "file": "weapons/RPGAssetPack/Barrel.fbx",
+      "colors": [
+        {
+          "id": "m:Wood",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Metal",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Book",
       "pack": "RPG Asset Pack",
       "name": "Book",
-      "file": "weapons/RPGAssetPack/Book.fbx"
+      "file": "weapons/RPGAssetPack/Book.fbx",
+      "colors": [
+        {
+          "id": "m:Material.001",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Dagger",
       "pack": "RPG Asset Pack",
       "name": "Dagger",
-      "file": "weapons/RPGAssetPack/Dagger.fbx"
+      "file": "weapons/RPGAssetPack/Dagger.fbx",
+      "colors": [
+        {
+          "id": "m:Material.003",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Gems",
       "pack": "RPG Asset Pack",
       "name": "Gems",
-      "file": "weapons/RPGAssetPack/Gems.fbx"
+      "file": "weapons/RPGAssetPack/Gems.fbx",
+      "colors": [
+        {
+          "id": "m:Material.006",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.007",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.008",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.009",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.012",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.011",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Material.010",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/IceStaff",
       "pack": "RPG Asset Pack",
       "name": "IceStaff",
-      "file": "weapons/RPGAssetPack/IceStaff.fbx"
+      "file": "weapons/RPGAssetPack/IceStaff.fbx",
+      "colors": [
+        {
+          "id": "m:Ice",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Staff",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/KnightHelmet",
       "pack": "RPG Asset Pack",
       "name": "KnightHelmet",
-      "file": "weapons/RPGAssetPack/KnightHelmet.fbx"
+      "file": "weapons/RPGAssetPack/KnightHelmet.fbx",
+      "colors": [
+        {
+          "id": "m:DarkerSilver",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Silver",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Red",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:DarkEyes",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Rollofpaper",
       "pack": "RPG Asset Pack",
       "name": "Rollofpaper",
-      "file": "weapons/RPGAssetPack/Rollofpaper.fbx"
+      "file": "weapons/RPGAssetPack/Rollofpaper.fbx",
+      "colors": [
+        {
+          "id": "m:Material.001",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Scroll",
       "pack": "RPG Asset Pack",
       "name": "Scroll",
-      "file": "weapons/RPGAssetPack/Scroll.fbx"
+      "file": "weapons/RPGAssetPack/Scroll.fbx",
+      "colors": [
+        {
+          "id": "m:Material.001",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Shield",
       "pack": "RPG Asset Pack",
       "name": "Shield",
-      "file": "weapons/RPGAssetPack/Shield.fbx"
+      "file": "weapons/RPGAssetPack/Shield.fbx",
+      "colors": [
+        {
+          "id": "m:Wood",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Metal",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:LighterWood",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Staff",
       "pack": "RPG Asset Pack",
       "name": "Staff",
-      "file": "weapons/RPGAssetPack/Staff.fbx"
+      "file": "weapons/RPGAssetPack/Staff.fbx",
+      "colors": [
+        {
+          "id": "m:Wood",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Gem",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/Sword",
       "pack": "RPG Asset Pack",
       "name": "Sword",
-      "file": "weapons/RPGAssetPack/Sword.fbx"
+      "file": "weapons/RPGAssetPack/Sword.fbx",
+      "colors": [
+        {
+          "id": "m:Material.003",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "RPGAssetPack/WoodenStaff",
       "pack": "RPG Asset Pack",
       "name": "WoodenStaff",
-      "file": "weapons/RPGAssetPack/WoodenStaff.fbx"
+      "file": "weapons/RPGAssetPack/WoodenStaff.fbx",
+      "colors": [
+        {
+          "id": "m:Wood",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Armor_Black",
       "pack": "Ultimate RPG Items",
       "name": "Armor_Black",
-      "file": "weapons/UltimateRPGItems/Armor_Black.fbx"
+      "file": "weapons/UltimateRPGItems/Armor_Black.fbx",
+      "colors": [
+        {
+          "id": "m:Black",
+          "color": "#1f1f1f"
+        },
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Armor_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Armor_Golden",
-      "file": "weapons/UltimateRPGItems/Armor_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Armor_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Armor_Leather",
       "pack": "Ultimate RPG Items",
       "name": "Armor_Leather",
-      "file": "weapons/UltimateRPGItems/Armor_Leather.fbx"
+      "file": "weapons/UltimateRPGItems/Armor_Leather.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Armor_Metal",
       "pack": "Ultimate RPG Items",
       "name": "Armor_Metal",
-      "file": "weapons/UltimateRPGItems/Armor_Metal.fbx"
+      "file": "weapons/UltimateRPGItems/Armor_Metal.fbx",
+      "colors": [
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Armor_Metal2",
       "pack": "Ultimate RPG Items",
       "name": "Armor_Metal2",
-      "file": "weapons/UltimateRPGItems/Armor_Metal2.fbx"
+      "file": "weapons/UltimateRPGItems/Armor_Metal2.fbx",
+      "colors": [
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Arrow_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Arrow_Golden",
-      "file": "weapons/UltimateRPGItems/Arrow_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Arrow_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Arrow",
       "pack": "Ultimate RPG Items",
       "name": "Arrow",
-      "file": "weapons/UltimateRPGItems/Arrow.fbx"
+      "file": "weapons/UltimateRPGItems/Arrow.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        },
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Axe_Double_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Axe_Double_Golden",
-      "file": "weapons/UltimateRPGItems/Axe_Double_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Axe_Double_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0c26d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Axe_Double",
       "pack": "Ultimate RPG Items",
       "name": "Axe_Double",
-      "file": "weapons/UltimateRPGItems/Axe_Double.fbx"
+      "file": "weapons/UltimateRPGItems/Axe_Double.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Axe_small_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Axe_small_Golden",
-      "file": "weapons/UltimateRPGItems/Axe_small_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Axe_small_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0c26d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Axe_small",
       "pack": "Ultimate RPG Items",
       "name": "Axe_small",
-      "file": "weapons/UltimateRPGItems/Axe_small.fbx"
+      "file": "weapons/UltimateRPGItems/Axe_small.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Backpack",
       "pack": "Ultimate RPG Items",
       "name": "Backpack",
-      "file": "weapons/UltimateRPGItems/Backpack.fbx"
+      "file": "weapons/UltimateRPGItems/Backpack.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        },
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Bag",
       "pack": "Ultimate RPG Items",
       "name": "Bag",
-      "file": "weapons/UltimateRPGItems/Bag.fbx"
+      "file": "weapons/UltimateRPGItems/Bag.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        },
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Bone",
       "pack": "Ultimate RPG Items",
       "name": "Bone",
-      "file": "weapons/UltimateRPGItems/Bone.fbx"
+      "file": "weapons/UltimateRPGItems/Bone.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book1_Closed",
       "pack": "Ultimate RPG Items",
       "name": "Book1_Closed",
-      "file": "weapons/UltimateRPGItems/Book1_Closed.fbx"
+      "file": "weapons/UltimateRPGItems/Book1_Closed.fbx",
+      "colors": [
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book1_Open",
       "pack": "Ultimate RPG Items",
       "name": "Book1_Open",
-      "file": "weapons/UltimateRPGItems/Book1_Open.fbx"
+      "file": "weapons/UltimateRPGItems/Book1_Open.fbx",
+      "colors": [
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:Teal",
+          "color": "#134c55"
+        },
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book2_Closed",
       "pack": "Ultimate RPG Items",
       "name": "Book2_Closed",
-      "file": "weapons/UltimateRPGItems/Book2_Closed.fbx"
+      "file": "weapons/UltimateRPGItems/Book2_Closed.fbx",
+      "colors": [
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book2_Open",
       "pack": "Ultimate RPG Items",
       "name": "Book2_Open",
-      "file": "weapons/UltimateRPGItems/Book2_Open.fbx"
+      "file": "weapons/UltimateRPGItems/Book2_Open.fbx",
+      "colors": [
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book3_Closed",
       "pack": "Ultimate RPG Items",
       "name": "Book3_Closed",
-      "file": "weapons/UltimateRPGItems/Book3_Closed.fbx"
+      "file": "weapons/UltimateRPGItems/Book3_Closed.fbx",
+      "colors": [
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book3_Open",
       "pack": "Ultimate RPG Items",
       "name": "Book3_Open",
-      "file": "weapons/UltimateRPGItems/Book3_Open.fbx"
+      "file": "weapons/UltimateRPGItems/Book3_Open.fbx",
+      "colors": [
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:Teal",
+          "color": "#134c55"
+        },
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book4_Closed",
       "pack": "Ultimate RPG Items",
       "name": "Book4_Closed",
-      "file": "weapons/UltimateRPGItems/Book4_Closed.fbx"
+      "file": "weapons/UltimateRPGItems/Book4_Closed.fbx",
+      "colors": [
+        {
+          "id": "m:Teal",
+          "color": "#134c55"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:DarkTeal",
+          "color": "#0f3e46"
+        },
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Book4_Open",
       "pack": "Ultimate RPG Items",
       "name": "Book4_Open",
-      "file": "weapons/UltimateRPGItems/Book4_Open.fbx"
+      "file": "weapons/UltimateRPGItems/Book4_Open.fbx",
+      "colors": [
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:Teal",
+          "color": "#134c55"
+        },
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Bow_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Bow_Golden",
-      "file": "weapons/UltimateRPGItems/Bow_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Bow_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Bow_Wooden",
       "pack": "Ultimate RPG Items",
       "name": "Bow_Wooden",
-      "file": "weapons/UltimateRPGItems/Bow_Wooden.fbx"
+      "file": "weapons/UltimateRPGItems/Bow_Wooden.fbx",
+      "colors": [
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:White",
+          "color": "#d1d1d1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Chalice",
       "pack": "Ultimate RPG Items",
       "name": "Chalice",
-      "file": "weapons/UltimateRPGItems/Chalice.fbx"
+      "file": "weapons/UltimateRPGItems/Chalice.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Chest_Closed",
       "pack": "Ultimate RPG Items",
       "name": "Chest_Closed",
-      "file": "weapons/UltimateRPGItems/Chest_Closed.fbx"
+      "file": "weapons/UltimateRPGItems/Chest_Closed.fbx",
+      "colors": [
+        {
+          "id": "m:DarkMetal",
+          "color": "#3f394e"
+        },
+        {
+          "id": "m:Wood",
+          "color": "#705147"
+        },
+        {
+          "id": "m:Metal",
+          "color": "#464255"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Chest_Ingots",
       "pack": "Ultimate RPG Items",
       "name": "Chest_Ingots",
-      "file": "weapons/UltimateRPGItems/Chest_Ingots.fbx"
+      "file": "weapons/UltimateRPGItems/Chest_Ingots.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        },
+        {
+          "id": "m:DarkMetal",
+          "color": "#3f394e"
+        },
+        {
+          "id": "m:Wood",
+          "color": "#705147"
+        },
+        {
+          "id": "m:Metal",
+          "color": "#464255"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Chest_Open",
       "pack": "Ultimate RPG Items",
       "name": "Chest_Open",
-      "file": "weapons/UltimateRPGItems/Chest_Open.fbx"
+      "file": "weapons/UltimateRPGItems/Chest_Open.fbx",
+      "colors": [
+        {
+          "id": "m:DarkMetal",
+          "color": "#3f394e"
+        },
+        {
+          "id": "m:Wood",
+          "color": "#705147"
+        },
+        {
+          "id": "m:Metal",
+          "color": "#464255"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/ChickenLeg",
       "pack": "Ultimate RPG Items",
       "name": "ChickenLeg",
-      "file": "weapons/UltimateRPGItems/ChickenLeg.fbx"
+      "file": "weapons/UltimateRPGItems/ChickenLeg.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        },
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Coin_Skull",
       "pack": "Ultimate RPG Items",
       "name": "Coin_Skull",
-      "file": "weapons/UltimateRPGItems/Coin_Skull.fbx"
+      "file": "weapons/UltimateRPGItems/Coin_Skull.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Coin_Star",
       "pack": "Ultimate RPG Items",
       "name": "Coin_Star",
-      "file": "weapons/UltimateRPGItems/Coin_Star.fbx"
+      "file": "weapons/UltimateRPGItems/Coin_Star.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Coin",
       "pack": "Ultimate RPG Items",
       "name": "Coin",
-      "file": "weapons/UltimateRPGItems/Coin.fbx"
+      "file": "weapons/UltimateRPGItems/Coin.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crown",
       "pack": "Ultimate RPG Items",
       "name": "Crown",
-      "file": "weapons/UltimateRPGItems/Crown.fbx"
+      "file": "weapons/UltimateRPGItems/Crown.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crown2",
       "pack": "Ultimate RPG Items",
       "name": "Crown2",
-      "file": "weapons/UltimateRPGItems/Crown2.fbx"
+      "file": "weapons/UltimateRPGItems/Crown2.fbx",
+      "colors": [
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        },
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal1_Damaged",
       "pack": "Ultimate RPG Items",
       "name": "Crystal1_Damaged",
-      "file": "weapons/UltimateRPGItems/Crystal1_Damaged.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal1_Damaged.fbx",
+      "colors": [
+        {
+          "id": "m:Purple",
+          "color": "#5d41a8"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal1",
       "pack": "Ultimate RPG Items",
       "name": "Crystal1",
-      "file": "weapons/UltimateRPGItems/Crystal1.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal1.fbx",
+      "colors": [
+        {
+          "id": "m:Purple",
+          "color": "#5d41a8"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal2_Damaged",
       "pack": "Ultimate RPG Items",
       "name": "Crystal2_Damaged",
-      "file": "weapons/UltimateRPGItems/Crystal2_Damaged.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal2_Damaged.fbx",
+      "colors": [
+        {
+          "id": "m:Pink",
+          "color": "#d142b1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal2",
       "pack": "Ultimate RPG Items",
       "name": "Crystal2",
-      "file": "weapons/UltimateRPGItems/Crystal2.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal2.fbx",
+      "colors": [
+        {
+          "id": "m:Pink",
+          "color": "#d142b1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal3_Damaged",
       "pack": "Ultimate RPG Items",
       "name": "Crystal3_Damaged",
-      "file": "weapons/UltimateRPGItems/Crystal3_Damaged.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal3_Damaged.fbx",
+      "colors": [
+        {
+          "id": "m:Green",
+          "color": "#65d171"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal3",
       "pack": "Ultimate RPG Items",
       "name": "Crystal3",
-      "file": "weapons/UltimateRPGItems/Crystal3.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal3.fbx",
+      "colors": [
+        {
+          "id": "m:Green",
+          "color": "#65d171"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal4",
       "pack": "Ultimate RPG Items",
       "name": "Crystal4",
-      "file": "weapons/UltimateRPGItems/Crystal4.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal4.fbx",
+      "colors": [
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal5_Damaged",
       "pack": "Ultimate RPG Items",
       "name": "Crystal5_Damaged",
-      "file": "weapons/UltimateRPGItems/Crystal5_Damaged.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal5_Damaged.fbx",
+      "colors": [
+        {
+          "id": "m:Cyan",
+          "color": "#62d1b3"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Crystal5",
       "pack": "Ultimate RPG Items",
       "name": "Crystal5",
-      "file": "weapons/UltimateRPGItems/Crystal5.fbx"
+      "file": "weapons/UltimateRPGItems/Crystal5.fbx",
+      "colors": [
+        {
+          "id": "m:Cyan",
+          "color": "#62d1b3"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Dagger_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Dagger_Golden",
-      "file": "weapons/UltimateRPGItems/Dagger_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Dagger_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0c26d"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Dagger",
       "pack": "Ultimate RPG Items",
       "name": "Dagger",
-      "file": "weapons/UltimateRPGItems/Dagger.fbx"
+      "file": "weapons/UltimateRPGItems/Dagger.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Dart_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Dart_Golden",
-      "file": "weapons/UltimateRPGItems/Dart_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Dart_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Dart",
       "pack": "Ultimate RPG Items",
       "name": "Dart",
-      "file": "weapons/UltimateRPGItems/Dart.fbx"
+      "file": "weapons/UltimateRPGItems/Dart.fbx",
+      "colors": [
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        },
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/FishBone",
       "pack": "Ultimate RPG Items",
       "name": "FishBone",
-      "file": "weapons/UltimateRPGItems/FishBone.fbx"
+      "file": "weapons/UltimateRPGItems/FishBone.fbx",
+      "colors": [
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Glove",
       "pack": "Ultimate RPG Items",
       "name": "Glove",
-      "file": "weapons/UltimateRPGItems/Glove.fbx"
+      "file": "weapons/UltimateRPGItems/Glove.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Gold_Ingots",
       "pack": "Ultimate RPG Items",
       "name": "Gold_Ingots",
-      "file": "weapons/UltimateRPGItems/Gold_Ingots.fbx"
+      "file": "weapons/UltimateRPGItems/Gold_Ingots.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Hammer_Double_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Hammer_Double_Golden",
-      "file": "weapons/UltimateRPGItems/Hammer_Double_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Hammer_Double_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0c26d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Hammer_Double",
       "pack": "Ultimate RPG Items",
       "name": "Hammer_Double",
-      "file": "weapons/UltimateRPGItems/Hammer_Double.fbx"
+      "file": "weapons/UltimateRPGItems/Hammer_Double.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Heart_Broken",
       "pack": "Ultimate RPG Items",
       "name": "Heart_Broken",
-      "file": "weapons/UltimateRPGItems/Heart_Broken.fbx"
+      "file": "weapons/UltimateRPGItems/Heart_Broken.fbx",
+      "colors": [
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Heart_Half",
       "pack": "Ultimate RPG Items",
       "name": "Heart_Half",
-      "file": "weapons/UltimateRPGItems/Heart_Half.fbx"
+      "file": "weapons/UltimateRPGItems/Heart_Half.fbx",
+      "colors": [
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Heart",
       "pack": "Ultimate RPG Items",
       "name": "Heart",
-      "file": "weapons/UltimateRPGItems/Heart.fbx"
+      "file": "weapons/UltimateRPGItems/Heart.fbx",
+      "colors": [
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Key1",
       "pack": "Ultimate RPG Items",
       "name": "Key1",
-      "file": "weapons/UltimateRPGItems/Key1.fbx"
+      "file": "weapons/UltimateRPGItems/Key1.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Key2",
       "pack": "Ultimate RPG Items",
       "name": "Key2",
-      "file": "weapons/UltimateRPGItems/Key2.fbx"
+      "file": "weapons/UltimateRPGItems/Key2.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Key3",
       "pack": "Ultimate RPG Items",
       "name": "Key3",
-      "file": "weapons/UltimateRPGItems/Key3.fbx"
+      "file": "weapons/UltimateRPGItems/Key3.fbx",
+      "colors": [
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Key4",
       "pack": "Ultimate RPG Items",
       "name": "Key4",
-      "file": "weapons/UltimateRPGItems/Key4.fbx"
+      "file": "weapons/UltimateRPGItems/Key4.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Mineral",
       "pack": "Ultimate RPG Items",
       "name": "Mineral",
-      "file": "weapons/UltimateRPGItems/Mineral.fbx"
+      "file": "weapons/UltimateRPGItems/Mineral.fbx",
+      "colors": [
+        {
+          "id": "m:Grey",
+          "color": "#414141"
+        },
+        {
+          "id": "m:Pink",
+          "color": "#d142b1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Necklace1",
       "pack": "Ultimate RPG Items",
       "name": "Necklace1",
-      "file": "weapons/UltimateRPGItems/Necklace1.fbx"
+      "file": "weapons/UltimateRPGItems/Necklace1.fbx",
+      "colors": [
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Lilac",
+          "color": "#7a4ed1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Necklace2",
       "pack": "Ultimate RPG Items",
       "name": "Necklace2",
-      "file": "weapons/UltimateRPGItems/Necklace2.fbx"
+      "file": "weapons/UltimateRPGItems/Necklace2.fbx",
+      "colors": [
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Necklace3",
       "pack": "Ultimate RPG Items",
       "name": "Necklace3",
-      "file": "weapons/UltimateRPGItems/Necklace3.fbx"
+      "file": "weapons/UltimateRPGItems/Necklace3.fbx",
+      "colors": [
+        {
+          "id": "m:DarkBrown",
+          "color": "#4f3b30"
+        },
+        {
+          "id": "m:Cyan",
+          "color": "#62d1b3"
+        },
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Padlock",
       "pack": "Ultimate RPG Items",
       "name": "Padlock",
-      "file": "weapons/UltimateRPGItems/Padlock.fbx"
+      "file": "weapons/UltimateRPGItems/Padlock.fbx",
+      "colors": [
+        {
+          "id": "m:Grey",
+          "color": "#414141"
+        },
+        {
+          "id": "m:Black",
+          "color": "#1f1f1f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Parchment",
       "pack": "Ultimate RPG Items",
       "name": "Parchment",
-      "file": "weapons/UltimateRPGItems/Parchment.fbx"
+      "file": "weapons/UltimateRPGItems/Parchment.fbx",
+      "colors": [
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion1_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion1_Empty",
-      "file": "weapons/UltimateRPGItems/Potion1_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion1_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Liquid_Red",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion1_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion1_Filled",
-      "file": "weapons/UltimateRPGItems/Potion1_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion1_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Liquid_Red",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion10_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion10_Empty",
-      "file": "weapons/UltimateRPGItems/Potion10_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion10_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion10_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion10_Filled",
-      "file": "weapons/UltimateRPGItems/Potion10_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion10_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion11_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion11_Empty",
-      "file": "weapons/UltimateRPGItems/Potion11_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion11_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion11_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion11_Filled",
-      "file": "weapons/UltimateRPGItems/Potion11_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion11_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion2_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion2_Empty",
-      "file": "weapons/UltimateRPGItems/Potion2_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion2_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Yellow",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion2_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion2_Filled",
-      "file": "weapons/UltimateRPGItems/Potion2_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion2_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Yellow",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion3_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion3_Empty",
-      "file": "weapons/UltimateRPGItems/Potion3_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion3_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Green",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion3_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion3_Filled",
-      "file": "weapons/UltimateRPGItems/Potion3_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion3_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Green",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion4_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion4_Empty",
-      "file": "weapons/UltimateRPGItems/Potion4_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion4_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Magenta",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion4_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion4_Filled",
-      "file": "weapons/UltimateRPGItems/Potion4_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion4_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Magenta",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion5_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion5_Empty",
-      "file": "weapons/UltimateRPGItems/Potion5_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion5_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion5_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion5_Filled",
-      "file": "weapons/UltimateRPGItems/Potion5_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion5_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion6_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion6_Empty",
-      "file": "weapons/UltimateRPGItems/Potion6_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion6_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Red",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion6_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion6_Filled",
-      "file": "weapons/UltimateRPGItems/Potion6_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion6_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Red",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion7_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion7_Empty",
-      "file": "weapons/UltimateRPGItems/Potion7_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion7_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Yellow",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion7_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion7_Filled",
-      "file": "weapons/UltimateRPGItems/Potion7_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion7_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Yellow",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion8_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion8_Empty",
-      "file": "weapons/UltimateRPGItems/Potion8_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion8_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Magenta",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion8_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion8_Filled",
-      "file": "weapons/UltimateRPGItems/Potion8_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion8_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Magenta",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion9_Empty",
       "pack": "Ultimate RPG Items",
       "name": "Potion9_Empty",
-      "file": "weapons/UltimateRPGItems/Potion9_Empty.fbx"
+      "file": "weapons/UltimateRPGItems/Potion9_Empty.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Green",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Potion9_Filled",
       "pack": "Ultimate RPG Items",
       "name": "Potion9_Filled",
-      "file": "weapons/UltimateRPGItems/Potion9_Filled.fbx"
+      "file": "weapons/UltimateRPGItems/Potion9_Filled.fbx",
+      "colors": [
+        {
+          "id": "m:Glass",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Liquid_Green",
+          "color": "#e7e7e7"
+        },
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Pouch",
       "pack": "Ultimate RPG Items",
       "name": "Pouch",
-      "file": "weapons/UltimateRPGItems/Pouch.fbx"
+      "file": "weapons/UltimateRPGItems/Pouch.fbx",
+      "colors": [
+        {
+          "id": "m:Brown",
+          "color": "#5d4539"
+        },
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring1",
       "pack": "Ultimate RPG Items",
       "name": "Ring1",
-      "file": "weapons/UltimateRPGItems/Ring1.fbx"
+      "file": "weapons/UltimateRPGItems/Ring1.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Liquid_Cyan",
+          "color": "#e7e7e7"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring2",
       "pack": "Ultimate RPG Items",
       "name": "Ring2",
-      "file": "weapons/UltimateRPGItems/Ring2.fbx"
+      "file": "weapons/UltimateRPGItems/Ring2.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Green",
+          "color": "#65d171"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring3",
       "pack": "Ultimate RPG Items",
       "name": "Ring3",
-      "file": "weapons/UltimateRPGItems/Ring3.fbx"
+      "file": "weapons/UltimateRPGItems/Ring3.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Red",
+          "color": "#d1493c"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring4",
       "pack": "Ultimate RPG Items",
       "name": "Ring4",
-      "file": "weapons/UltimateRPGItems/Ring4.fbx"
+      "file": "weapons/UltimateRPGItems/Ring4.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Cyan",
+          "color": "#62d1b3"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring5",
       "pack": "Ultimate RPG Items",
       "name": "Ring5",
-      "file": "weapons/UltimateRPGItems/Ring5.fbx"
+      "file": "weapons/UltimateRPGItems/Ring5.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Lilac",
+          "color": "#7a4ed1"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring6",
       "pack": "Ultimate RPG Items",
       "name": "Ring6",
-      "file": "weapons/UltimateRPGItems/Ring6.fbx"
+      "file": "weapons/UltimateRPGItems/Ring6.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:Green",
+          "color": "#65d171"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Ring7",
       "pack": "Ultimate RPG Items",
       "name": "Ring7",
-      "file": "weapons/UltimateRPGItems/Ring7.fbx"
+      "file": "weapons/UltimateRPGItems/Ring7.fbx",
+      "colors": [
+        {
+          "id": "m:Teal",
+          "color": "#134c55"
+        },
+        {
+          "id": "m:DarkTeal",
+          "color": "#0f3e46"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Scroll",
       "pack": "Ultimate RPG Items",
       "name": "Scroll",
-      "file": "weapons/UltimateRPGItems/Scroll.fbx"
+      "file": "weapons/UltimateRPGItems/Scroll.fbx",
+      "colors": [
+        {
+          "id": "m:Beige",
+          "color": "#8f8672"
+        },
+        {
+          "id": "m:DarkRed",
+          "color": "#552d28"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Skull",
       "pack": "Ultimate RPG Items",
       "name": "Skull",
-      "file": "weapons/UltimateRPGItems/Skull.fbx"
+      "file": "weapons/UltimateRPGItems/Skull.fbx",
+      "colors": [
+        {
+          "id": "m:Bone",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Skull2",
       "pack": "Ultimate RPG Items",
       "name": "Skull2",
-      "file": "weapons/UltimateRPGItems/Skull2.fbx"
+      "file": "weapons/UltimateRPGItems/Skull2.fbx",
+      "colors": [
+        {
+          "id": "m:Bone",
+          "color": "#8f8672"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Snowflake1",
       "pack": "Ultimate RPG Items",
       "name": "Snowflake1",
-      "file": "weapons/UltimateRPGItems/Snowflake1.fbx"
+      "file": "weapons/UltimateRPGItems/Snowflake1.fbx",
+      "colors": [
+        {
+          "id": "m:Snowflake",
+          "color": "#62d1b3"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Snowflake2",
       "pack": "Ultimate RPG Items",
       "name": "Snowflake2",
-      "file": "weapons/UltimateRPGItems/Snowflake2.fbx"
+      "file": "weapons/UltimateRPGItems/Snowflake2.fbx",
+      "colors": [
+        {
+          "id": "m:Snowflake",
+          "color": "#62d1b3"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Snowflake3",
       "pack": "Ultimate RPG Items",
       "name": "Snowflake3",
-      "file": "weapons/UltimateRPGItems/Snowflake3.fbx"
+      "file": "weapons/UltimateRPGItems/Snowflake3.fbx",
+      "colors": [
+        {
+          "id": "m:Snowflake",
+          "color": "#62d1b3"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Star",
       "pack": "Ultimate RPG Items",
       "name": "Star",
-      "file": "weapons/UltimateRPGItems/Star.fbx"
+      "file": "weapons/UltimateRPGItems/Star.fbx",
+      "colors": [
+        {
+          "id": "m:Gold",
+          "color": "#b9a54f"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Sword_big_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Sword_big_Golden",
-      "file": "weapons/UltimateRPGItems/Sword_big_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Sword_big_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0c26d"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Sword_big",
       "pack": "Ultimate RPG Items",
       "name": "Sword_big",
-      "file": "weapons/UltimateRPGItems/Sword_big.fbx"
+      "file": "weapons/UltimateRPGItems/Sword_big.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Sword_Golden",
       "pack": "Ultimate RPG Items",
       "name": "Sword_Golden",
-      "file": "weapons/UltimateRPGItems/Sword_Golden.fbx"
+      "file": "weapons/UltimateRPGItems/Sword_Golden.fbx",
+      "colors": [
+        {
+          "id": "m:Golden",
+          "color": "#a58e3d"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightGold",
+          "color": "#d0c26d"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     },
     {
       "id": "UltimateRPGItems/Sword",
       "pack": "Ultimate RPG Items",
       "name": "Sword",
-      "file": "weapons/UltimateRPGItems/Sword.fbx"
+      "file": "weapons/UltimateRPGItems/Sword.fbx",
+      "colors": [
+        {
+          "id": "m:Steel",
+          "color": "#5d6476"
+        },
+        {
+          "id": "m:LightWood",
+          "color": "#63474a"
+        },
+        {
+          "id": "m:DarkWood",
+          "color": "#402d39"
+        },
+        {
+          "id": "m:LightSteel",
+          "color": "#919092"
+        },
+        {
+          "id": "m:DarkSteel",
+          "color": "#7f7f75"
+        }
+      ]
     }
   ],
   "accessories": [
     {
       "id": "HF_Amr_Boots_Fur_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Boots_Fur_01.glb"
+      "file": "accessories/HF_Amr_Boots_Fur_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Boots_Leather_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Boots_Leather_01.glb"
+      "file": "accessories/HF_Amr_Boots_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Bracers_Leather_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Bracers_Leather_01.glb"
+      "file": "accessories/HF_Amr_Bracers_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gloves_Leather_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Gloves_Leather_01.glb"
+      "file": "accessories/HF_Amr_Gloves_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Mantle_Fur_01",
       "socket": "neck",
-      "file": "accessories/HF_Amr_Mantle_Fur_01.glb"
+      "file": "accessories/HF_Amr_Mantle_Fur_01.glb",
+      "colors": [
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c19",
+          "color": "#c6c0b4"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c24",
+          "color": "#938b81"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Pauldrons_Leather_01",
       "socket": "shoulder",
-      "file": "accessories/HF_Amr_Pauldrons_Leather_01.glb"
+      "file": "accessories/HF_Amr_Pauldrons_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Shoes_Mage_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Shoes_Mage_01.glb"
+      "file": "accessories/HF_Amr_Shoes_Mage_01.glb",
+      "colors": [
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Vambraces_Iron_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Vambraces_Iron_01.glb"
+      "file": "accessories/HF_Amr_Vambraces_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Chainmail_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Chainmail_01.glb"
+      "file": "accessories/HF_Amr_Chest_Chainmail_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Leather_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Leather_01.glb"
+      "file": "accessories/HF_Amr_Chest_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Padded_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Padded_01.glb"
+      "file": "accessories/HF_Amr_Chest_Padded_01.glb",
+      "colors": [
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c59",
+          "color": "#c0a784"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Scale_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Scale_01.glb"
+      "file": "accessories/HF_Amr_Chest_Scale_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Kilt_Leather_01",
       "socket": "hip",
-      "file": "accessories/HF_Amr_Kilt_Leather_01.glb"
+      "file": "accessories/HF_Amr_Kilt_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Robe_Mage_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Robe_Mage_01.glb"
+      "file": "accessories/HF_Amr_Robe_Mage_01.glb",
+      "colors": [
+        {
+          "id": "c49",
+          "color": "#555e70"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Tabard_Heraldic_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Tabard_Heraldic_01.glb"
+      "file": "accessories/HF_Amr_Tabard_Heraldic_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Tunic_Cloth_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Tunic_Cloth_01.glb"
+      "file": "accessories/HF_Amr_Tunic_Cloth_01.glb",
+      "colors": [
+        {
+          "id": "c4",
+          "color": "#3a604f"
+        },
+        {
+          "id": "c46",
+          "color": "#567b53"
+        },
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Cape_Knight_01",
       "socket": "cape",
-      "file": "accessories/HF_Amr_Cape_Knight_01.glb"
+      "file": "accessories/HF_Amr_Cape_Knight_01.glb",
+      "colors": [
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c32",
+          "color": "#b74642"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Cape_Royal_Fur_01",
       "socket": "cape",
-      "file": "accessories/HF_Amr_Cape_Royal_Fur_01.glb"
+      "file": "accessories/HF_Amr_Cape_Royal_Fur_01.glb",
+      "colors": [
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Cape_Tattered_01",
       "socket": "cape",
-      "file": "accessories/HF_Amr_Cape_Tattered_01.glb"
+      "file": "accessories/HF_Amr_Cape_Tattered_01.glb",
+      "colors": [
+        {
+          "id": "c14",
+          "color": "#797c4c"
+        },
+        {
+          "id": "c46",
+          "color": "#567b53"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Cloak_Hooded_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Cloak_Hooded_01.glb"
+      "file": "accessories/HF_Amr_Cloak_Hooded_01.glb",
+      "colors": [
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c49",
+          "color": "#555e70"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Backpack_Adventurer_01",
       "socket": "back",
-      "file": "accessories/HF_Gear_Backpack_Adventurer_01.glb"
+      "file": "accessories/HF_Gear_Backpack_Adventurer_01.glb",
+      "colors": [
+        {
+          "id": "c14",
+          "color": "#797c4c"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Backpack_Frame_01",
       "socket": "back",
-      "file": "accessories/HF_Gear_Backpack_Frame_01.glb"
+      "file": "accessories/HF_Gear_Backpack_Frame_01.glb",
+      "colors": [
+        {
+          "id": "c47",
+          "color": "#cabda1"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c56",
+          "color": "#e09a44"
+        },
+        {
+          "id": "c46",
+          "color": "#567b53"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Bandolier_Potions_01",
       "socket": "chest",
-      "file": "accessories/HF_Gear_Bandolier_Potions_01.glb"
+      "file": "accessories/HF_Gear_Bandolier_Potions_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c33",
+          "color": "#cd833e"
+        },
+        {
+          "id": "c32",
+          "color": "#b74642"
+        },
+        {
+          "id": "c2",
+          "color": "#88a758"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Bedroll_Pack_01",
       "socket": "back",
-      "file": "accessories/HF_Gear_Bedroll_Pack_01.glb"
+      "file": "accessories/HF_Gear_Bedroll_Pack_01.glb",
+      "colors": [
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Belt_Leather_01",
       "socket": "hip",
-      "file": "accessories/HF_Gear_Belt_Leather_01.glb"
+      "file": "accessories/HF_Gear_Belt_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Belt_Utility_01",
       "socket": "hip",
-      "file": "accessories/HF_Gear_Belt_Utility_01.glb"
+      "file": "accessories/HF_Gear_Belt_Utility_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c22",
+          "color": "#654936"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Pouch_Hip_01",
       "socket": "hip",
-      "file": "accessories/HF_Gear_Pouch_Hip_01.glb"
+      "file": "accessories/HF_Gear_Pouch_Hip_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Quiver_Hip_01",
       "socket": "hip",
-      "file": "accessories/HF_Gear_Quiver_Hip_01.glb"
+      "file": "accessories/HF_Gear_Quiver_Hip_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c32",
+          "color": "#b74642"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Satchel_Shoulder_01",
       "socket": "back",
-      "file": "accessories/HF_Gear_Satchel_Shoulder_01.glb"
+      "file": "accessories/HF_Gear_Satchel_Shoulder_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Gear_Waterskin_01",
       "socket": "hip",
-      "file": "accessories/HF_Gear_Waterskin_01.glb"
+      "file": "accessories/HF_Gear_Waterskin_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Circlet_Gem_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Circlet_Gem_01.glb"
+      "file": "accessories/HF_Amr_Circlet_Gem_01.glb",
+      "colors": [
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Hat_Feathered_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Hat_Feathered_01.glb"
+      "file": "accessories/HF_Amr_Hat_Feathered_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c28",
+          "color": "#c5b18b"
+        },
+        {
+          "id": "c32",
+          "color": "#b74642"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Hat_Straw_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Hat_Straw_01.glb"
+      "file": "accessories/HF_Amr_Hat_Straw_01.glb",
+      "colors": [
+        {
+          "id": "c20",
+          "color": "#966f4c"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c50",
+          "color": "#b79c62"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c32",
+          "color": "#b74642"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Hat_Witch_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Hat_Witch_01.glb"
+      "file": "accessories/HF_Amr_Hat_Witch_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c14",
+          "color": "#797c4c"
+        },
+        {
+          "id": "c6",
+          "color": "#677e42"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Hat_Wizard_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Hat_Wizard_01.glb"
+      "file": "accessories/HF_Amr_Hat_Wizard_01.glb",
+      "colors": [
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c54",
+          "color": "#3a6a8d"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c34",
+          "color": "#d5b64e"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Cap_Leather_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Cap_Leather_01.glb"
+      "file": "accessories/HF_Amr_Helm_Cap_Leather_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Hood_Ranger_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Hood_Ranger_01.glb"
+      "file": "accessories/HF_Amr_Hood_Ranger_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c46",
+          "color": "#567b53"
+        },
+        {
+          "id": "c4",
+          "color": "#3a604f"
+        },
+        {
+          "id": "c21",
+          "color": "#b79369"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Hood_Rogue_Mask_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Hood_Rogue_Mask_01.glb"
+      "file": "accessories/HF_Amr_Hood_Rogue_Mask_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c49",
+          "color": "#555e70"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c48",
+          "color": "#9a5344"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Mask_Plague_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Mask_Plague_01.glb"
+      "file": "accessories/HF_Amr_Mask_Plague_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c53",
+          "color": "#569aae"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Coif_Chainmail_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Coif_Chainmail_01.glb"
+      "file": "accessories/HF_Amr_Coif_Chainmail_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gorget_Plate_01",
       "socket": "neck",
-      "file": "accessories/HF_Amr_Gorget_Plate_01.glb"
+      "file": "accessories/HF_Amr_Gorget_Plate_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Horned_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Horned_01.glb"
+      "file": "accessories/HF_Amr_Helm_Horned_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Kettle_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Kettle_01.glb"
+      "file": "accessories/HF_Amr_Helm_Kettle_01.glb",
+      "colors": [
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Nasal_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Nasal_01.glb"
+      "file": "accessories/HF_Amr_Helm_Nasal_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Plumed_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Plumed_01.glb"
+      "file": "accessories/HF_Amr_Helm_Plumed_01.glb",
+      "colors": [
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c32",
+          "color": "#b74642"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c43",
+          "color": "#a76c49"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Skull_Bone_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Skull_Bone_01.glb"
+      "file": "accessories/HF_Amr_Helm_Skull_Bone_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c60",
+          "color": "#cac2ae"
+        },
+        {
+          "id": "c18",
+          "color": "#886f58"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Winged_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Winged_01.glb"
+      "file": "accessories/HF_Amr_Helm_Winged_01.glb",
+      "colors": [
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c35",
+          "color": "#d5ccb4"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c27",
+          "color": "#b1aca4"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Plate_Crude_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Plate_Crude_01.glb"
+      "file": "accessories/HF_Amr_Chest_Plate_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Plate_Gold_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Plate_Gold_01.glb"
+      "file": "accessories/HF_Amr_Chest_Plate_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Plate_Iron_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Plate_Iron_01.glb"
+      "file": "accessories/HF_Amr_Chest_Plate_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Plate_Legendary_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Plate_Legendary_01.glb"
+      "file": "accessories/HF_Amr_Chest_Plate_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Chest_Plate_Steel_01",
       "socket": "chest",
-      "file": "accessories/HF_Amr_Chest_Plate_Steel_01.glb"
+      "file": "accessories/HF_Amr_Chest_Plate_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gauntlets_Plate_Crude_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Gauntlets_Plate_Crude_01.glb"
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gauntlets_Plate_Gold_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Gauntlets_Plate_Gold_01.glb"
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gauntlets_Plate_Iron_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Gauntlets_Plate_Iron_01.glb"
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gauntlets_Plate_Legendary_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Gauntlets_Plate_Legendary_01.glb"
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Gauntlets_Plate_Steel_01",
       "socket": "wrist",
-      "file": "accessories/HF_Amr_Gauntlets_Plate_Steel_01.glb"
+      "file": "accessories/HF_Amr_Gauntlets_Plate_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Greaves_Plate_Crude_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Greaves_Plate_Crude_01.glb"
+      "file": "accessories/HF_Amr_Greaves_Plate_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c17",
+          "color": "#6c5444"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Greaves_Plate_Gold_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Greaves_Plate_Gold_01.glb"
+      "file": "accessories/HF_Amr_Greaves_Plate_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c23",
+          "color": "#8b5340"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Greaves_Plate_Iron_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Greaves_Plate_Iron_01.glb"
+      "file": "accessories/HF_Amr_Greaves_Plate_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Greaves_Plate_Legendary_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Greaves_Plate_Legendary_01.glb"
+      "file": "accessories/HF_Amr_Greaves_Plate_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Greaves_Plate_Steel_01",
       "socket": "foot",
-      "file": "accessories/HF_Amr_Greaves_Plate_Steel_01.glb"
+      "file": "accessories/HF_Amr_Greaves_Plate_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Great_Crude_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Great_Crude_01.glb"
+      "file": "accessories/HF_Amr_Helm_Great_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Great_Gold_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Great_Gold_01.glb"
+      "file": "accessories/HF_Amr_Helm_Great_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Great_Iron_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Great_Iron_01.glb"
+      "file": "accessories/HF_Amr_Helm_Great_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Great_Legendary_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Great_Legendary_01.glb"
+      "file": "accessories/HF_Amr_Helm_Great_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Great_Steel_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Great_Steel_01.glb"
+      "file": "accessories/HF_Amr_Helm_Great_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Visored_Crude_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Visored_Crude_01.glb"
+      "file": "accessories/HF_Amr_Helm_Visored_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Visored_Gold_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Visored_Gold_01.glb"
+      "file": "accessories/HF_Amr_Helm_Visored_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Visored_Iron_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Visored_Iron_01.glb"
+      "file": "accessories/HF_Amr_Helm_Visored_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Visored_Legendary_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Visored_Legendary_01.glb"
+      "file": "accessories/HF_Amr_Helm_Visored_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Helm_Visored_Steel_01",
       "socket": "head",
-      "file": "accessories/HF_Amr_Helm_Visored_Steel_01.glb"
+      "file": "accessories/HF_Amr_Helm_Visored_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c61",
+          "color": "#302e31"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Pauldrons_Plate_Crude_01",
       "socket": "shoulder",
-      "file": "accessories/HF_Amr_Pauldrons_Plate_Crude_01.glb"
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Crude_01.glb",
+      "colors": [
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c26",
+          "color": "#58595f"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        },
+        {
+          "id": "c63",
+          "color": "#ae936c"
+        },
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Pauldrons_Plate_Gold_01",
       "socket": "shoulder",
-      "file": "accessories/HF_Amr_Pauldrons_Plate_Gold_01.glb"
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Gold_01.glb",
+      "colors": [
+        {
+          "id": "c44",
+          "color": "#a04440"
+        },
+        {
+          "id": "c42",
+          "color": "#caa24a"
+        },
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Pauldrons_Plate_Iron_01",
       "socket": "shoulder",
-      "file": "accessories/HF_Amr_Pauldrons_Plate_Iron_01.glb"
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Iron_01.glb",
+      "colors": [
+        {
+          "id": "c40",
+          "color": "#6a6d73"
+        },
+        {
+          "id": "c16",
+          "color": "#504138"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c41",
+          "color": "#414247"
+        },
+        {
+          "id": "c62",
+          "color": "#77533d"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Pauldrons_Plate_Legendary_01",
       "socket": "shoulder",
-      "file": "accessories/HF_Amr_Pauldrons_Plate_Legendary_01.glb"
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Legendary_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c55",
+          "color": "#b1cad5"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c36",
+          "color": "#815b9d"
+        },
+        {
+          "id": "c57",
+          "color": "#6cbdc8"
+        }
+      ]
     },
     {
       "id": "HF_Amr_Pauldrons_Plate_Steel_01",
       "socket": "shoulder",
-      "file": "accessories/HF_Amr_Pauldrons_Plate_Steel_01.glb"
+      "file": "accessories/HF_Amr_Pauldrons_Plate_Steel_01.glb",
+      "colors": [
+        {
+          "id": "c31",
+          "color": "#5b6573"
+        },
+        {
+          "id": "c25",
+          "color": "#797e84"
+        },
+        {
+          "id": "c39",
+          "color": "#d8d7d5"
+        },
+        {
+          "id": "c45",
+          "color": "#496395"
+        },
+        {
+          "id": "c37",
+          "color": "#5379b7"
+        }
+      ]
     }
   ],
   "outfitColors": {
@@ -2689,5 +8877,76 @@
     "skins/FantasyHair_1.webp",
     "skins/FantasyHair_2.webp",
     "skins/FantasyHair_3.webp"
-  ]
+  ],
+  "palette": {
+    "file": "hearthfold-palette.png",
+    "grid": 8,
+    "material": "HF_Palette_Mat",
+    "colors": [
+      "#42653e",
+      "#60884a",
+      "#88a758",
+      "#a9b15b",
+      "#3a604f",
+      "#466c65",
+      "#677e42",
+      "#718d4a",
+      "#c0763d",
+      "#a0493b",
+      "#c69d49",
+      "#d09aa8",
+      "#d2cac3",
+      "#9883b4",
+      "#797c4c",
+      "#497e71",
+      "#504138",
+      "#6c5444",
+      "#886f58",
+      "#c6c0b4",
+      "#966f4c",
+      "#b79369",
+      "#654936",
+      "#8b5340",
+      "#938b81",
+      "#797e84",
+      "#58595f",
+      "#b1aca4",
+      "#c5b18b",
+      "#7f654e",
+      "#a76d55",
+      "#5b6573",
+      "#b74642",
+      "#cd833e",
+      "#d5b64e",
+      "#d5ccb4",
+      "#815b9d",
+      "#5379b7",
+      "#ca6f8d",
+      "#d8d7d5",
+      "#6a6d73",
+      "#414247",
+      "#caa24a",
+      "#a76c49",
+      "#a04440",
+      "#496395",
+      "#567b53",
+      "#cabda1",
+      "#9a5344",
+      "#555e70",
+      "#b79c62",
+      "#cec5b4",
+      "#9a5e4c",
+      "#569aae",
+      "#3a6a8d",
+      "#b1cad5",
+      "#e09a44",
+      "#6cbdc8",
+      "#bb4b3e",
+      "#c0a784",
+      "#cac2ae",
+      "#302e31",
+      "#77533d",
+      "#ae936c"
+    ]
+  }
 }

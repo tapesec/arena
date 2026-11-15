@@ -3,12 +3,14 @@
 // packages/client/public/dev-models/appearance/ (non versionné), plus leur catalogue dans
 // packages/client/src/appearanceCatalog.json (versionné : seulement des noms de fichiers).
 // Usage : node scripts/prepare-appearance-lab.mjs   (après import-assets.sh et import-appearance-assets.sh)
-import { copyFile, mkdir, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
 import { compactPrimitive, dedup, prune, textureCompress, unpartition } from "@gltf-transform/functions";
+import { parseBinaryFBX } from "@babylonjs/loaders/FBX/parsers/fbxBinaryParser.js";
+import { interpretFBX } from "@babylonjs/loaders/FBX/interpreter/fbxInterpreter.js";
 import sharp from "sharp";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -59,9 +61,17 @@ const SOCKETS = [
   [/Cape|Cloak/, "cape"],
 ];
 
+// Palette des objets Hearthfold (armes et armures partagent la même) : une image de PALETTE_GRID × PALETTE_GRID cases
+// de couleur, où chaque partie d'un objet prend sa couleur (ses coordonnées de texture tombent dans une case).
+const PALETTE_SOURCE = "hearthfold-weapons/Hearthfold_Weapons_Shields_Pack/Textures/HF_Palette.png";
+const PALETTE_MATERIAL = "HF_Palette_Mat";
+const PALETTE_GRID = 8;
+
 async function main() {
   await rm(OUT, { recursive: true, force: true });
   const catalog = { bodies: [], parts: [], hair: [], monsters: [], weapons: [], accessories: [], outfitColors: {}, raceHairColors: [] };
+  const palette = await readPalette();
+  catalog.palette = { file: "hearthfold-palette.png", grid: PALETTE_GRID, material: PALETTE_MATERIAL, colors: palette.colors };
 
   for (const { id, race, gender, source, skin } of await bodySources()) {
     await writeOptimized(await io.read(path.join(SOURCE, source)), `bodies/${id}.glb`);
@@ -127,10 +137,12 @@ async function main() {
       if (ext === ".fbx") {
         await mkdir(path.join(OUT, "weapons", slug), { recursive: true });
         await copyFile(file, path.join(OUT, "weapons", slug, `${name}.fbx`));
-        catalog.weapons.push({ id, pack, name, file: `weapons/${slug}/${name}.fbx` });
+        catalog.weapons.push({ id, pack, name, file: `weapons/${slug}/${name}.fbx`, colors: await fbxZones(file) });
       } else {
-        await writeOptimized(await io.read(file), `weapons/${slug}/${name}.glb`);
-        catalog.weapons.push({ id, pack, name, file: `weapons/${slug}/${name}.glb` });
+        const doc = await io.read(file);
+        const colors = gltfZones(doc, palette);
+        await writeOptimized(doc, `weapons/${slug}/${name}.glb`);
+        catalog.weapons.push({ id, pack, name, file: `weapons/${slug}/${name}.glb`, colors });
       }
     }
   }
@@ -141,13 +153,116 @@ async function main() {
     if (name.startsWith("HF_Dsp_")) continue;
     const socket = SOCKETS.find(([pattern]) => pattern.test(name))?.[1];
     if (!socket) continue;
-    await writeOptimized(await io.read(file), `accessories/${name}.glb`);
-    catalog.accessories.push({ id: name, socket, file: `accessories/${name}.glb` });
+    const doc = await io.read(file);
+    const colors = gltfZones(doc, palette);
+    await writeOptimized(doc, `accessories/${name}.glb`);
+    catalog.accessories.push({ id: name, socket, file: `accessories/${name}.glb`, colors });
   }
 
   await writeFile(CATALOG, `${JSON.stringify(catalog, null, 2)}\n`);
   const counts = Object.entries(catalog).map(([key, list]) => `${Array.isArray(list) ? list.length : Object.keys(list).length} ${key}`);
   console.log(`Catalogue écrit : ${counts.join(", ")}`);
+}
+
+// Palette Hearthfold, copiée telle quelle (sans compression, les cases restent nettes), et couleur moyenne de chaque
+// case (pastilles de l'éditeur), rangées ligne par ligne.
+async function readPalette() {
+  const source = path.join(SOURCE, PALETTE_SOURCE);
+  await mkdir(OUT, { recursive: true });
+  await copyFile(source, path.join(OUT, "hearthfold-palette.png"));
+  const { data, info } = await sharp(source).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const size = info.width / PALETTE_GRID;
+  const colors = [];
+  for (let row = 0; row < PALETTE_GRID; row++) {
+    for (let col = 0; col < PALETTE_GRID; col++) {
+      const sum = [0, 0, 0];
+      for (let y = row * size; y < (row + 1) * size; y++) {
+        for (let x = col * size; x < (col + 1) * size; x++) for (let c = 0; c < 3; c++) sum[c] += data[(y * info.width + x) * 3 + c];
+      }
+      colors.push(hex(sum.map((v) => v / (size * size * 255))));
+    }
+  }
+  return { colors };
+}
+
+// Zones de couleur d'un objet glTF, la plus grande surface d'abord : pour le matériau de la palette Hearthfold, les
+// cases utilisées (« c<numéro> » : chaque triangle compte pour la case où tombe le centre de ses coordonnées de
+// texture), et pour un autre matériau, le matériau entier (« m:<nom> », sa couleur de base).
+function gltfZones(doc, palette) {
+  const weights = new Map();
+  const add = (id, color, weight) => {
+    const zone = weights.get(id) ?? { id, color, weight: 0 };
+    zone.weight += weight;
+    weights.set(id, zone);
+  };
+  for (const mesh of doc.getRoot().listMeshes()) {
+    for (const primitive of mesh.listPrimitives()) {
+      const material = primitive.getMaterial();
+      if (!material) continue;
+      const uv = primitive.getAttribute("TEXCOORD_0");
+      const position = primitive.getAttribute("POSITION");
+      if (!position) continue;
+      const indices = primitive.getIndices()?.getArray() ?? [...Array(position.getCount()).keys()];
+      const [p, q, r] = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      const area = (i) => {
+        position.getElement(indices[i], p);
+        position.getElement(indices[i + 1], q);
+        position.getElement(indices[i + 2], r);
+        const e = [0, 1, 2].map((k) => q[k] - p[k]);
+        const f = [0, 1, 2].map((k) => r[k] - p[k]);
+        return Math.hypot(e[1] * f[2] - e[2] * f[1], e[2] * f[0] - e[0] * f[2], e[0] * f[1] - e[1] * f[0]) / 2;
+      };
+      if (material.getName() !== PALETTE_MATERIAL || !uv) {
+        let total = 0;
+        for (let i = 0; i + 2 < indices.length; i += 3) total += area(i);
+        // Couleur de base glTF : linéaire, comme la lit Babylon ; la pastille est en sRGB.
+        add(`m:${material.getName()}`, hex(material.getBaseColorFactor().slice(0, 3).map(toSrgb)), total);
+        continue;
+      }
+      const a = [0, 0];
+      const b = [0, 0];
+      const c = [0, 0];
+      for (let i = 0; i + 2 < indices.length; i += 3) {
+        uv.getElement(indices[i], a);
+        uv.getElement(indices[i + 1], b);
+        uv.getElement(indices[i + 2], c);
+        const u = (a[0] + b[0] + c[0]) / 3;
+        const v = (a[1] + b[1] + c[1]) / 3;
+        const col = Math.min(PALETTE_GRID - 1, Math.max(0, Math.floor((u - Math.floor(u)) * PALETTE_GRID)));
+        const row = Math.min(PALETTE_GRID - 1, Math.max(0, Math.floor((v - Math.floor(v)) * PALETTE_GRID)));
+        const cell = row * PALETTE_GRID + col;
+        add(`c${cell}`, palette.colors[cell], area(i));
+      }
+    }
+  }
+  return [...weights.values()].sort((x, y) => y.weight - x.weight).map(({ id, color }) => ({ id, color }));
+}
+
+// Zones de couleur d'un objet FBX (packs Quaternius, couleurs unies) : un matériau chacune, avec sa couleur telle que
+// Babylon l'affiche (couleur diffuse multipliée par son facteur, linéaire, convertie en sRGB pour la pastille).
+async function fbxZones(file) {
+  const buffer = await readFile(file);
+  const scene = interpretFBX(parseBinaryFBX(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)));
+  const zones = new Map();
+  for (const material of scene.materials) {
+    const { diffuseColor = [1, 1, 1], diffuseFactor = 1 } = material.properties;
+    const color = diffuseColor.map((v) => toSrgb(v * diffuseFactor));
+    if (!zones.has(material.name)) zones.set(material.name, { id: `m:${material.name}`, color: hex(color) });
+  }
+  return [...zones.values()];
+}
+
+// Composante linéaire (0 à 1) en sRGB.
+function toSrgb(v) {
+  return v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055;
+}
+
+// Couleur CSS d'une couleur aux composantes de 0 à 1.
+function hex(color) {
+  return `#${color
+    .slice(0, 3)
+    .map((v) => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, "0"))
+    .join("")}`;
 }
 
 // Corps : morphologies humaines, puis races (« WaterElf_Male_Fins » : race WaterElfFins).

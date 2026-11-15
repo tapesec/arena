@@ -5,7 +5,7 @@ import { GizmoManager } from "@babylonjs/core/Gizmos/gizmoManager";
 import { UtilityLayerRenderer } from "@babylonjs/core/Rendering/utilityLayerRenderer";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { CATALOG, genderOf, hairFor, outfitTexture, outfitsOf, sanitizedAppearance } from "./appearanceData";
+import { CATALOG, colorZones, genderOf, hairFor, outfitTexture, outfitsOf, sanitizedAppearance, type ColorZone } from "./appearanceData";
 import { mainHues } from "./game/textureTint";
 import {
   ACCESSORY_SOCKETS,
@@ -21,6 +21,7 @@ import {
   weaponKey,
   type Appearance,
   type AppearanceFile,
+  type ItemColors,
   type Mount,
   type OutfitColor,
   type WeaponSlot,
@@ -91,9 +92,28 @@ function appearanceAssets(appearance: Appearance): string[] {
     if (appearance.skin) assets.push(`Peau : couleur ${appearance.skin}`);
     if (appearance.raceHairColor) assets.push(`Cheveux de la race : couleur ${appearance.raceHairColor}`);
   }
-  for (const weapon of appearance.weapons) assets.push(`Arme ${weaponLabel(weapon.item)}, ${WEAPON_SLOTS[weapon.slot].toLowerCase()}`);
-  for (const id of appearance.accessories) assets.push(`Accessoire ${accessoryLabel(id)} (Hearthfold Armor & Wearables)`);
+  for (const weapon of appearance.weapons) {
+    assets.push(`Arme ${weaponLabel(weapon.item)}, ${WEAPON_SLOTS[weapon.slot].toLowerCase()}${colorsLabel(appearance, weapon.item)}`);
+  }
+  for (const id of appearance.accessories) assets.push(`Accessoire ${accessoryLabel(id)} (Hearthfold Armor & Wearables)${colorsLabel(appearance, id)}`);
   return assets;
+}
+
+// Couleurs changées d'un objet, pour la liste des assets (« , couleurs : Steel #aa0000, couleur 2 #… »).
+function colorsLabel(appearance: Appearance, item: string): string {
+  const colors = appearance.itemColors?.[item];
+  if (!colors) return "";
+  const zones = colorZones(item);
+  return `, couleurs : ${Object.entries(colors)
+    .map(([zone, color]) => `${zoneLabel(zones, zone)} ${color}`)
+    .join(", ")}`;
+}
+
+// Nom d'une zone de couleur : le matériau (sans le préfixe MI_), ou « Couleur n » (rang de la case de palette dans
+// l'objet, la principale en premier).
+function zoneLabel(zones: ColorZone[], zone: string): string {
+  if (zone.startsWith("m:")) return zone.slice(2).replace(/^MI_/, "");
+  return `Couleur ${zones.findIndex((z) => z.id === zone) + 1}`;
 }
 
 interface AbilityButtonsProps {
@@ -177,6 +197,16 @@ export function AppearancePanel(props: {
     onChange({ ...file, variants: { ...file.variants, [classId]: list } });
   };
   const patch = (changes: Partial<Appearance>) => appearance && update({ ...appearance, ...changes });
+  // Objet dont les couleurs sont dépliées (une arme ou un accessoire à la fois).
+  const [coloring, setColoring] = useState<string | null>(null);
+  const colorsOf = (item: string) => appearance?.itemColors?.[item] ?? {};
+  const setItemColors = (item: string, colors: ItemColors) => patch({ itemColors: { ...appearance?.itemColors, [item]: colors } });
+  const colorButton = (item: string) =>
+    colorZones(item).length > 0 && (
+      <button className={coloring === item ? "lab-tab-active" : ""} onClick={() => setColoring(coloring === item ? null : item)} title="Changer les couleurs de l'objet">
+        Couleurs{Object.keys(colorsOf(item)).length ? " •" : ""}
+      </button>
+    );
   const gender = appearance ? genderOf(appearance.model) : null;
   const body = appearance && !isMonster(appearance.model) ? CATALOG.bodies.find((b) => b.id === appearance.model) : null;
   const [weaponPack, setWeaponPack] = useState(WEAPON_PACKS[0]);
@@ -350,19 +380,26 @@ export function AppearancePanel(props: {
 
           <h4>Armes</h4>
           {appearance.weapons.map((weapon, i) => (
-            <div key={`${weapon.item}-${i}`} className="appearance-item">
-              <span>{weaponLabel(weapon.item)}</span>
-              <span className="appearance-variants">
-                <select value={weapon.slot} onChange={(e) => moveWeapon(i, e.target.value as WeaponSlot)} title="Changer de place (échange avec l'arme qui y est)">
-                  {Object.entries(WEAPON_SLOTS).map(([id, label]) => (
-                    <option key={id} value={id}>
-                      {label}
-                      {id !== weapon.slot && appearance.weapons.some((w) => w.slot === id) ? " (échange)" : ""}
-                    </option>
-                  ))}
-                </select>
-                <button onClick={() => patch({ weapons: appearance.weapons.filter((_, j) => j !== i) })}>Retirer</button>
-              </span>
+            <div key={`${weapon.item}-${i}`}>
+              <div className="appearance-item">
+                <span>{weaponLabel(weapon.item)}</span>
+                <span className="appearance-variants">
+                  {colorButton(weapon.item)}
+                  <select value={weapon.slot} onChange={(e) => moveWeapon(i, e.target.value as WeaponSlot)} title="Changer de place (échange avec l'arme qui y est)">
+                    {Object.entries(WEAPON_SLOTS).map(([id, label]) => (
+                      <option key={id} value={id}>
+                        {label}
+                        {id !== weapon.slot && appearance.weapons.some((w) => w.slot === id) ? " (échange)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <button onClick={() => patch({ weapons: appearance.weapons.filter((_, j) => j !== i) })}>Retirer</button>
+                </span>
+              </div>
+              {/* Une arme tenue deux fois : ses couleurs (partagées) se règlent sous la première. */}
+              {coloring === weapon.item && appearance.weapons.findIndex((w) => w.item === weapon.item) === i && (
+                <ItemColorControls item={weapon.item} colors={colorsOf(weapon.item)} onChange={(colors) => setItemColors(weapon.item, colors)} />
+              )}
             </div>
           ))}
           <div className="appearance-add">
@@ -398,9 +435,15 @@ export function AppearancePanel(props: {
 
           <h4>Accessoires (par-dessus la tenue)</h4>
           {appearance.accessories.map((id) => (
-            <div key={id} className="appearance-item">
-              <span>{accessoryLabel(id)}</span>
-              <button onClick={() => patch({ accessories: appearance.accessories.filter((a) => a !== id) })}>Retirer</button>
+            <div key={id}>
+              <div className="appearance-item">
+                <span>{accessoryLabel(id)}</span>
+                <span className="appearance-variants">
+                  {colorButton(id)}
+                  <button onClick={() => patch({ accessories: appearance.accessories.filter((a) => a !== id) })}>Retirer</button>
+                </span>
+              </div>
+              {coloring === id && <ItemColorControls item={id} colors={colorsOf(id)} onChange={(colors) => setItemColors(id, colors)} />}
             </div>
           ))}
           <div className="appearance-add">
@@ -497,6 +540,38 @@ function HairControls({ appearance, race, gender, patch }: { appearance: Appeara
 
 // Noms des tenues dans l'éditeur.
 const OUTFIT_NAMES: Record<string, string> = { Knight: "Chevalier", Noble: "Noble", Peasant: "Paysan", Ranger: "Rôdeur", Wizard: "Mage" };
+// Couleur de pipette : elle en envoie une à chaque mouvement, on n'applique que la dernière, après une courte pause
+// (chaque couleur recalcule une texture et reconstruit le personnage). L'application passe par le dernier apply reçu
+// (l'apparence à jour, pas celle du moment où la pipette a bougé) ; un choix en attente est appliqué si la ligne
+// disparaît, et abandonné si la valeur change d'ailleurs (retour à l'origine).
+function useDelayedColor(value: string | undefined, apply: (color: string) => void): [string | undefined, (color: string) => void] {
+  const [picked, setPicked] = useState(value);
+  const applyRef = useRef(apply);
+  applyRef.current = apply;
+  const pending = useRef<string | null>(null);
+  useEffect(() => {
+    pending.current = null;
+    setPicked(value);
+  }, [value]);
+  useEffect(() => {
+    if (!picked || picked === value) return;
+    pending.current = picked;
+    const timer = setTimeout(() => {
+      pending.current = null;
+      applyRef.current(picked);
+    }, 300);
+    return () => clearTimeout(timer);
+    // value change à chaque choix appliqué ; seule la couleur en cours de choix relance l'attente.
+  }, [picked]);
+  useEffect(
+    () => () => {
+      if (pending.current) applyRef.current(pending.current);
+    },
+    [],
+  );
+  return [picked, setPicked];
+}
+
 // Couleur proposée quand on active la teinte libre d'une tenue.
 const DEFAULT_TINT = "#3a6fd8";
 
@@ -559,16 +634,7 @@ function OutfitColorRow({ outfit, color, onChange }: { outfit: string; color: Ou
       current = false;
     };
   }, [texture]);
-  // La pipette envoie une couleur à chaque mouvement : on n'applique que la dernière, après une courte pause (chaque
-  // couleur recalcule une texture et reconstruit le personnage).
-  const [tint, setTint] = useState(color.tint);
-  useEffect(() => setTint(color.tint), [color.tint]);
-  useEffect(() => {
-    if (!tint || tint === color.tint) return;
-    const timer = setTimeout(() => onChange({ ...color, tint }), 300);
-    return () => clearTimeout(timer);
-    // color et onChange changent à chaque rendu ; seule la couleur en cours de choix relance l'attente.
-  }, [tint]);
+  const [tint, setTint] = useDelayedColor(color.tint, (next) => onChange({ ...color, tint: next }));
   return (
     <div className="appearance-outfit-color">
       <div className="appearance-row">
@@ -604,6 +670,89 @@ function OutfitColorRow({ outfit, color, onChange }: { outfit: string; color: Ou
             </button>
           </span>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Couleurs d'une arme ou d'un accessoire : une ligne par zone (matériau, ou case de la palette Hearthfold), avec sa
+// couleur d'origine, une couleur libre et les couleurs de la palette Hearthfold. Une arme tenue deux fois partage ses
+// couleurs.
+function ItemColorControls({ item, colors, onChange }: { item: string; colors: ItemColors; onChange: (colors: ItemColors) => void }) {
+  const zones = colorZones(item);
+  // Zone dont la palette est dépliée.
+  const [open, setOpen] = useState<string | null>(null);
+  const set = (zone: string, color: string | null) => {
+    const next = { ...colors };
+    if (color) next[zone] = color;
+    else delete next[zone];
+    onChange(next);
+  };
+  return (
+    <div className="appearance-item-colors">
+      {zones.map((zone) => (
+        <div key={zone.id}>
+          <ZoneColorRow
+            label={zoneLabel(zones, zone.id)}
+            zone={zone}
+            value={colors[zone.id]}
+            paletteOpen={open === zone.id}
+            onTogglePalette={() => setOpen(open === zone.id ? null : zone.id)}
+            onChange={(color) => set(zone.id, color)}
+          />
+          {open === zone.id && (
+            <div className="appearance-palette">
+              {CATALOG.palette.colors.map((color, n) => (
+                <button
+                  key={n}
+                  className={`appearance-swatch ${colors[zone.id] === color ? "appearance-swatch-active" : ""}`}
+                  style={{ background: color }}
+                  title={color}
+                  onClick={() => {
+                    set(zone.id, color);
+                    setOpen(null);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+      {Object.keys(colors).length > 0 && <button onClick={() => onChange({})}>Toutes les couleurs d'origine</button>}
+    </div>
+  );
+}
+
+// Une zone de couleur : pastille d'origine, couleur choisie (pipette appliquée après une courte pause, voir
+// useDelayedColor), palette, retour à l'origine.
+function ZoneColorRow(props: {
+  label: string;
+  zone: ColorZone;
+  value: string | undefined;
+  paletteOpen: boolean;
+  onTogglePalette: () => void;
+  onChange: (color: string | null) => void;
+}) {
+  const { label, zone, value, onChange } = props;
+  const [picked, setPicked] = useDelayedColor(value, onChange);
+  return (
+    <div className="appearance-row">
+      <span className="appearance-variants">
+        <span className="appearance-swatch appearance-swatch-static" style={{ background: zone.color }} title={`Couleur d'origine ${zone.color}`} />
+        {label}
+      </span>
+      <span className="appearance-variants">
+        <input type="color" value={picked ?? zone.color} onChange={(e) => setPicked(e.target.value)} title="Couleur libre" />
+        <button className={props.paletteOpen ? "lab-tab-active" : ""} onClick={props.onTogglePalette} title="Couleurs de la palette Hearthfold">
+          Palette
+        </button>
+      </span>
+      {value ? (
+        <button onClick={() => onChange(null)} title="Revenir à la couleur d'origine">
+          ×
+        </button>
+      ) : (
+        <span />
       )}
     </div>
   );

@@ -10,6 +10,7 @@ import {
   weaponKey,
   weaponSocket,
   type Appearance,
+  type ItemColors,
   type MountedItem,
   type Recolor,
   type Socket,
@@ -32,16 +33,24 @@ export interface CatalogPart {
   outfit: string;
   slot: string;
 }
+// Zone de couleur d'un objet (voir ItemColors), avec sa couleur d'origine ; pour un glTF, la plus grande surface vient
+// en premier (un FBX garde l'ordre de ses matériaux).
+export interface ColorZone {
+  id: string;
+  color: string;
+}
 export interface CatalogWeapon {
   id: string;
   pack: string;
   name: string;
   file: string;
+  colors: ColorZone[];
 }
 export interface CatalogAccessory {
   id: string;
   socket: Socket;
   file: string;
+  colors: ColorZone[];
 }
 export interface AppearanceCatalog {
   bodies: CatalogBody[];
@@ -54,6 +63,8 @@ export interface AppearanceCatalog {
   // Variantes de couleur des tenues (par tenue : Knight…) et des cheveux des races.
   outfitColors: Record<string, string[]>;
   raceHairColors: string[];
+  // Palette des objets Hearthfold : fichier, cases par côté, matériau qui l'utilise, couleur moyenne de chaque case.
+  palette: { file: string; grid: number; material: string; colors: string[] };
 }
 export const CATALOG = catalogJson as AppearanceCatalog;
 
@@ -74,6 +85,17 @@ export function sanitizedAppearance(appearance: Appearance): Appearance {
     Object.entries(appearance.outfitColors ?? {}).filter(([outfit, color]) => outfits.includes(outfit) && variant(color.variant)),
   );
   const race = !!body && isFantasyRace(body.race);
+  // Couleurs d'objets : seulement pour les objets portés, leurs zones connues, et des couleurs #rrggbb.
+  const worn = new Set([...appearance.weapons.map((w) => w.item), ...appearance.accessories]);
+  const itemColors = Object.fromEntries(
+    Object.entries(appearance.itemColors ?? {})
+      .filter(([item]) => worn.has(item))
+      .map(([item, colors]) => {
+        const zones = colorZones(item);
+        return [item, Object.fromEntries(Object.entries(colors).filter(([zone, color]) => zones.some((z) => z.id === zone) && /^#[0-9a-f]{6}$/i.test(color)))];
+      })
+      .filter(([, colors]) => Object.keys(colors).length),
+  ) as Record<string, ItemColors>;
   return {
     ...appearance,
     hair: appearance.hair.filter((id) => valid.some((h) => h.id === id)),
@@ -82,7 +104,21 @@ export function sanitizedAppearance(appearance: Appearance): Appearance {
     outfitColors: Object.keys(outfitColors).length ? outfitColors : undefined,
     skin: race && body.skins ? variant(appearance.skin) : undefined,
     raceHairColor: race ? variant(appearance.raceHairColor) : undefined,
+    itemColors: Object.keys(itemColors).length ? itemColors : undefined,
   };
+}
+
+// Zones de couleur d'une arme ou d'un accessoire (aucune s'il n'est pas au catalogue).
+export function colorZones(item: string): ColorZone[] {
+  return (CATALOG.weapons.find((w) => w.id === item) ?? CATALOG.accessories.find((a) => a.id === item))?.colors ?? [];
+}
+
+// Couleurs à appliquer à un objet, avec la palette Hearthfold si une de ses cases est repeinte.
+function itemPaint(appearance: Appearance, item: string): Pick<MountedItem, "colors" | "palette"> {
+  const colors = appearance.itemColors?.[item];
+  if (!colors || !Object.keys(colors).length) return {};
+  const { file, grid, material } = CATALOG.palette;
+  return { colors, palette: Object.keys(colors).some((zone) => zone.startsWith("c")) ? { texture: appearanceUrl(file), grid, material } : undefined };
 }
 
 export function genderOf(model: string): string | null {
@@ -94,15 +130,16 @@ export function mountedItems(appearance: Appearance): MountedItem[] {
   const items: MountedItem[] = [];
   for (const weapon of appearance.weapons) {
     const def = CATALOG.weapons.find((w) => w.id === weapon.item);
-    if (def) items.push({ key: weaponKey(weapon), file: def.file, socket: weaponSocket(weapon.slot) });
+    if (def) items.push({ key: weaponKey(weapon), file: def.file, socket: weaponSocket(weapon.slot), ...itemPaint(appearance, weapon.item) });
   }
   for (const id of appearance.accessories) {
     const def = CATALOG.accessories.find((a) => a.id === id);
     if (!def) continue;
+    const paint = itemPaint(appearance, id);
     if (PAIRED_SOCKETS.has(def.socket)) {
-      items.push({ key: accessoryKey(id, "r"), file: def.file, socket: accessorySocket(def, "r"), part: "right" });
-      items.push({ key: accessoryKey(id, "l"), file: def.file, socket: accessorySocket(def, "l"), part: "left" });
-    } else items.push({ key: accessoryKey(id, "c"), file: def.file, socket: accessorySocket(def, "c"), hang: def.socket === "cape" });
+      items.push({ key: accessoryKey(id, "r"), file: def.file, socket: accessorySocket(def, "r"), part: "right", ...paint });
+      items.push({ key: accessoryKey(id, "l"), file: def.file, socket: accessorySocket(def, "l"), part: "left", ...paint });
+    } else items.push({ key: accessoryKey(id, "c"), file: def.file, socket: accessorySocket(def, "c"), hang: def.socket === "cape", ...paint });
   }
   return items;
 }

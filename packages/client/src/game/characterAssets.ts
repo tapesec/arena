@@ -4,6 +4,7 @@ import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -26,7 +27,7 @@ import {
   type MountedItem,
   type Recolor,
 } from "./appearance";
-import { tintImage } from "./textureTint";
+import { paintCells, tintImage } from "./textureTint";
 import type { Shadows } from "./shadows";
 import { TUNING } from "./tuning";
 import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLoader";
@@ -654,12 +655,26 @@ export class CharacterAssets {
   ): Promise<CharacterInstance> {
     const monster = isMonster(appearance.model);
     const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
-    // Textures de couleur réservées dès le départ : rendues si la création échoue.
+    // Textures de couleur réservées dès le départ : rendues si la création échoue. Pour chaque objet dont des cases de
+    // la palette Hearthfold sont repeintes, sa palette repeinte.
     const colorKeys = recolors.map((recolor) => this.acquireColorTexture(recolor));
+    const itemKeys = items.map((item) => {
+      const cells = Object.fromEntries(
+        Object.entries(item.colors ?? {})
+          .filter(([zone]) => /^c\d+$/.test(zone))
+          .map(([zone, color]) => [Number(zone.slice(1)), color]),
+      );
+      if (!item.palette || !Object.keys(cells).length) return null;
+      return this.acquireColorTexture({ material: item.palette.material, texture: item.palette.texture, cells: { grid: item.palette.grid, colors: cells } });
+    });
+    const releaseAll = () => {
+      for (const key of [...colorKeys, ...itemKeys]) if (key) this.releaseColorTexture(key);
+    };
     let loaded;
     try {
       loaded = await Promise.all([
         Promise.all(colorKeys.map((key) => this.colorTextures.get(key)!.texture)),
+        Promise.all(itemKeys.map((key) => (key ? this.colorTextures.get(key)!.texture : null))),
         this.load(appearanceUrl(modelFile(appearance))),
       Promise.all(this.libraries.map((url) => this.load(url))),
       this.loadMixamo(),
@@ -667,10 +682,10 @@ export class CharacterAssets {
         Promise.all(items.map((item) => this.load(appearanceUrl(item.file)))),
       ]);
     } catch (error) {
-      for (const key of colorKeys) this.releaseColorTexture(key);
+      releaseAll();
       throw error;
     }
-    const [textures, base, libraries, mixamo, pieces, held] = loaded;
+    const [textures, itemTextures, base, libraries, mixamo, pieces, held] = loaded;
 
     const entries = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
     const root = entries.rootNodes[0] as TransformNode;
@@ -678,7 +693,7 @@ export class CharacterAssets {
     root.scaling.scaleInPlace(CHARACTER_SCALE);
     const nodes = new Map<string, TransformNode>();
     for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
-    const cleanup: (() => void)[] = [() => colorKeys.forEach((key) => this.releaseColorTexture(key))];
+    const cleanup: (() => void)[] = [releaseAll];
     const meshes = root.getChildMeshes(false);
 
     // Pièces de tenue et coiffures : chacune arrive avec sa copie du squelette ; ses os suivent ceux du corps.
@@ -814,6 +829,10 @@ export class CharacterAssets {
           for (const node of right) if (node !== left) node.dispose();
         }
       }
+      if (item.colors) {
+        const copies = paintItem(this.scene, attach, item.colors, item.palette?.material, itemTextures[i]);
+        cleanup.push(() => copies.forEach(disposePainted));
+      }
       meshes.push(...attach.getChildMeshes(false));
       attachments.push({ key: item.key, node: attach });
     });
@@ -867,11 +886,18 @@ export class CharacterAssets {
 
   // Réserve la texture de couleur d'un matériau (éditeur d'apparence), teinte au besoin, et rend sa clé. Mêmes réglages
   // que les textures des glTF (pas d'inversion verticale). Un échec de chargement n'est pas gardé : on réessaiera.
-  private acquireColorTexture({ texture, tint }: Recolor): string {
-    const key = `${texture}|${tint ? `${tint.from}>${tint.color}` : ""}`;
+  private acquireColorTexture({ texture, tint, cells }: Recolor): string {
+    const painted = cells
+      ? Object.entries(cells.colors)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([cell, color]) => `${cell}=${color}`)
+          .join(",")
+      : "";
+    const key = `${texture}|${tint ? `${tint.from}>${tint.color}` : ""}${painted}`;
     let entry = this.colorTextures.get(key);
     if (!entry) {
-      const promise = (async () => new Texture(tint ? await tintImage(texture, tint.color, tint.from) : texture, this.scene, false, false))();
+      const source = async () => (cells ? paintCells(texture, cells.grid, cells.colors) : tint ? tintImage(texture, tint.color, tint.from) : texture);
+      const promise = (async () => new Texture(await source(), this.scene, false, false))();
       entry = { texture: promise, uses: 0 };
       this.colorTextures.set(key, entry);
       promise.catch(() => this.colorTextures.delete(key));
@@ -916,6 +942,62 @@ export class CharacterAssets {
     }
     return groups;
   }
+}
+
+// Couleurs choisies d'une arme ou d'un accessoire de l'éditeur d'apparence, sur des copies de ses matériaux (partagés avec
+// les autres exemplaires du même fichier) : une zone « m:<nom> » donne sa couleur au matériau de ce nom (couleur unie
+// d'un FBX, ou teinte multipliée par la texture d'un glTF ; blanc : inchangé), et la palette repeinte remplace la texture du matériau de la
+// palette. Rend les copies (à libérer avec disposePainted).
+function paintItem(scene: Scene, attach: TransformNode, colors: Record<string, string>, paletteMaterial: string | undefined, palette: Texture | null): Material[] {
+  const copies = new Map<Material, Material>();
+  const copyOf = (material: Material): Material => {
+    let copy = copies.get(material);
+    if (copy) return copy;
+    if (material instanceof MultiMaterial) {
+      // Copiée seulement si un de ses sous-matériaux change.
+      const subs = material.subMaterials.map((sub) => sub && copyOf(sub));
+      if (subs.every((sub, i) => sub === material.subMaterials[i])) {
+        copies.set(material, material);
+        return material;
+      }
+      const multi = new MultiMaterial(`${material.name}-painted`, scene);
+      multi.subMaterials = subs;
+      copy = multi;
+    } else {
+      // Le chargeur FBX renomme les copies qu'il fait d'un matériau (couleurs de sommets, faces visibles des deux côtés).
+      const name = material.name.replace(/(_CullingOff|_VertexColor)+$/, "");
+      const color = colors[`m:${name}`];
+      const repaint = !!palette && name === paletteMaterial;
+      const clone = color || repaint ? material.clone(`${material.name}-painted`) : null;
+      if (!clone) {
+        copies.set(material, material);
+        return material;
+      }
+      copy = clone;
+      // Couleurs des matériaux : linéaires (celles du fichier) ; la couleur choisie est en sRGB.
+      const linear = color && Color3.FromHexString(color).toLinearSpace();
+      if (linear && copy instanceof StandardMaterial) copy.diffuseColor = linear;
+      else if (linear) (copy as PBRMaterial).albedoColor = linear;
+      if (repaint) {
+        const pbr = copy as PBRMaterial;
+        pbr.albedoTexture?.dispose();
+        pbr.albedoTexture = palette;
+        copy.metadata = { paintedPalette: true };
+      }
+    }
+    copies.set(material, copy);
+    return copy;
+  };
+  for (const mesh of attach.getChildMeshes(false)) if (mesh.material) mesh.material = copyOf(mesh.material);
+  return [...copies].filter(([source, copy]) => source !== copy).map(([, copy]) => copy);
+}
+
+// Libère une copie de paintItem : la palette repeinte est partagée (rendue à part), les autres textures de la copie
+// aussi (libérées avec elle, elles ne font que baisser le compteur de la texture d'origine).
+function disposePainted(copy: Material) {
+  if (copy instanceof MultiMaterial) return copy.dispose(false, false, false);
+  if (copy.metadata?.paintedPalette) (copy as PBRMaterial).albedoTexture = null;
+  copy.dispose(false, true);
 }
 
 // Colore les matériaux d'une arme d'après leur nom (sous-matériaux compris).
