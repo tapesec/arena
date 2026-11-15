@@ -1,4 +1,1002 @@
 {
-  "variants": {},
-  "mounts": {}
+  "variants": {
+    "lame": [
+      {
+        "model": "Human_Male",
+        "headOnly": true,
+        "parts": [
+          "Male_Ranger_Body",
+          "Male_Noble_Arms",
+          "Male_Ranger_Feet_Boots",
+          "Male_Knight_Legs_Armor",
+          "Male_Ranger_Acc_Pauldron"
+        ],
+        "hair": [
+          "Hair_Beard",
+          "Hair_Balding"
+        ],
+        "weapons": [
+          {
+            "item": "Quaternius/Sword_Bronze",
+            "slot": "right"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Shield_Buckler_Iron_01",
+            "slot": "left"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Hat_Feathered_01",
+          "HF_Gear_Bandolier_Potions_01"
+        ],
+        "hairColor": "#ff1900",
+        "outfitColors": {
+          "Ranger": {
+            "variant": 2
+          },
+          "Noble": {
+            "variant": 2
+          },
+          "Knight": {
+            "variant": 3
+          }
+        }
+      },
+      {
+        "model": "monster:GoblinWarrior",
+        "headOnly": true,
+        "parts": [],
+        "hair": [],
+        "weapons": [
+          {
+            "item": "Quaternius/Weapon_Sword_2",
+            "slot": "right"
+          },
+          {
+            "item": "Quaternius/Weapon_Sword_2",
+            "slot": "left"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Coif_Chainmail_01",
+          "HF_Gear_Belt_Utility_01"
+        ]
+      }
+    ],
+    "gardien": [
+      {
+        "model": "Human_Male",
+        "headOnly": true,
+        "parts": [
+          "Male_Knight_Legs_Armor",
+          "Male_Knight_Body_Cloth",
+          "Male_Knight_Arms",
+          "Male_Noble_Acc_Pauldron_Lion",
+          "Male_Noble_Acc_Pauldron",
+          "Male_Knight_Feet_Armor"
+        ],
+        "hair": [
+          "Hair_Moustache",
+          "Hair_Beard",
+          "Hair_Buzzed"
+        ],
+        "weapons": [
+          {
+            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
+            "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "slot": "right"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Helm_Winged_01"
+        ],
+        "outfitColors": {
+          "Knight": {
+            "variant": 1
+          },
+          "Noble": {
+            "variant": 2
+          }
+        }
+      },
+      {
+        "model": "monster:DeserterKnight",
+        "headOnly": true,
+        "parts": [],
+        "hair": [],
+        "weapons": [
+          {
+            "item": "MedievalWeapons/Axe",
+            "slot": "right"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Shield_Kite_01",
+            "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Axe_Great_Crude_01",
+            "slot": "back"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Helm_Horned_01"
+        ]
+      }
+    ],
+    "arcaniste": [
+      {
+        "model": "HumanTeen_Female",
+        "headOnly": true,
+        "parts": [
+          "Female_Noble_Arms",
+          "Female_Noble_Legs",
+          "Female_Noble_Feet",
+          "Female_Wizard_Body"
+        ],
+        "hair": [
+          "Hair_Long_Teen"
+        ],
+        "weapons": [
+          {
+            "item": "UltimateRPGItems/Book1_Open",
+            "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Staff_Legendary_01",
+            "slot": "right"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Hat_Witch_01",
+          "HF_Amr_Cape_Royal_Fur_01",
+          "HF_Gear_Bandolier_Potions_01"
+        ],
+        "outfitColors": {
+          "Noble": {
+            "variant": 2
+          },
+          "Wizard": {
+            "variant": 2
+          }
+        },
+        "hairColor": "#ff6f00"
+      },
+      {
+        "model": "monster:Cultist",
+        "headOnly": true,
+        "parts": [],
+        "hair": [],
+        "weapons": [
+          {
+            "item": "MedievalWeapons/Scythe",
+            "slot": "right"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Staff_Crude_01",
+            "slot": "left"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Mantle_Fur_01",
+          "HF_Amr_Cape_Tattered_01",
+          "HF_Amr_Helm_Skull_Bone_01",
+          "HF_Amr_Boots_Fur_01"
+        ],
+        "itemColors": {
+          "HF_Amr_Mantle_Fur_01": {
+            "c42": "#414247",
+            "c60": "#302e31",
+            "c16": "#302e31",
+            "c24": "#504138",
+            "c27": "#414247",
+            "c19": "#302e31",
+            "c25": "#302e31",
+            "c62": "#302e31",
+            "c26": "#302e31"
+          },
+          "HF_Amr_Cape_Tattered_01": {
+            "c14": "#302e31",
+            "c46": "#b74642"
+          }
+        }
+      }
+    ],
+    "pretre": [
+      {
+        "model": "Elf_Male",
+        "headOnly": true,
+        "parts": [
+          "Male_Knight_Arms",
+          "Male_Ranger_Legs",
+          "Male_Ranger_Feet_Boots",
+          "Male_Wizard_Body",
+          "Male_Noble_Acc_Gorget"
+        ],
+        "hair": [
+          "Hair_Buzzed"
+        ],
+        "weapons": [
+          {
+            "item": "Hearthfold/HF_Wep_Mace_Legendary_01",
+            "slot": "right"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Circlet_Gem_01",
+          "HF_Gear_Belt_Utility_01",
+          "HF_Amr_Cape_Royal_Fur_01"
+        ],
+        "outfitColors": {
+          "Knight": {
+            "variant": 3
+          },
+          "Ranger": {
+            "variant": 2
+          },
+          "Wizard": {
+            "variant": 1
+          },
+          "Noble": {
+            "variant": 1
+          }
+        },
+        "itemColors": {
+          "HF_Amr_Cape_Royal_Fur_01": {
+            "c36": "#496395"
+          }
+        }
+      },
+      {
+        "model": "monster:KoboldShaman",
+        "headOnly": true,
+        "parts": [],
+        "hair": [],
+        "weapons": [
+          {
+            "item": "Hearthfold/HF_Wep_Wand_Oak_01",
+            "slot": "right"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Sword_Short_Steel_01",
+            "slot": "left"
+          }
+        ],
+        "accessories": [
+          "HF_Amr_Cape_Tattered_01"
+        ]
+      }
+    ],
+    "barde": [
+      {
+        "model": "HumanRegular_Male",
+        "headOnly": true,
+        "parts": [
+          "Male_Peasant_Arms",
+          "Male_Peasant_Legs",
+          "Male_Peasant_Feet",
+          "Male_Peasant_Body",
+          "Male_Knight_Acc_Scarf"
+        ],
+        "hair": [
+          "Hair_Moustache",
+          "Hair_SimpleParted"
+        ],
+        "weapons": [
+          {
+            "item": "Hearthfold/HF_Wep_Sabre_01",
+            "slot": "right"
+          },
+          {
+            "item": "Quaternius/Weapon_Lute",
+            "slot": "back"
+          }
+        ],
+        "accessories": [],
+        "outfitColors": {
+          "Peasant": {
+            "variant": 1
+          },
+          "Knight": {
+            "variant": 1
+          }
+        },
+        "hairColor": "#ffdd00"
+      },
+      {
+        "model": "WaterElfFins_Male",
+        "headOnly": true,
+        "parts": [
+          "Male_Peasant_Legs",
+          "Male_Knight_Acc_Scarf",
+          "Male_Ranger_Body",
+          "Male_Wizard_Arms",
+          "Male_Noble_Feet",
+          "Male_Noble_Acc_Gorget"
+        ],
+        "hair": [
+          "Hair_Moustache"
+        ],
+        "weapons": [
+          {
+            "item": "Quaternius/Weapon_Lute",
+            "slot": "back"
+          },
+          {
+            "item": "Quaternius/Weapon_Dagger",
+            "slot": "right"
+          }
+        ],
+        "accessories": [],
+        "outfitColors": {
+          "Peasant": {
+            "variant": 1
+          },
+          "Knight": {
+            "variant": 3
+          },
+          "Ranger": {
+            "variant": 2
+          }
+        },
+        "hairColor": "#ffdd00",
+        "skin": 2,
+        "raceHairColor": 2
+      }
+    ]
+  },
+  "mounts": {
+    "Human_Male": {
+      "HF_Amr_Cape_Knight_01@c": {
+        "bone": "neck_01",
+        "position": [
+          0.1198,
+          0.0708,
+          -0.1251
+        ],
+        "rotation": [
+          0,
+          -0.7245,
+          0
+        ],
+        "scale": 1
+      },
+      "HF_Gear_Bandolier_Potions_01@c": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.1886,
+          -0.0299
+        ],
+        "rotation": [
+          -0.0888,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "MedievalWeapons/Sword_2@left": {
+        "bone": "hand_l",
+        "position": [
+          0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.0022
+      },
+      "Hearthfold/HF_Wep_Shield_Buckler_Iron_01@left": {
+        "bone": "hand_l",
+        "position": [
+          0.0205,
+          0.1023,
+          -0.0043
+        ],
+        "rotation": [
+          -0.1363,
+          -1.696,
+          -3.0171
+        ],
+        "scale": 1.13
+      },
+      "Hearthfold/HF_Wep_Shield_Tower_01@left": {
+        "bone": "hand_l",
+        "position": [
+          -0.06,
+          0.0958,
+          0.0209
+        ],
+        "rotation": [
+          -0.021,
+          -1.3424,
+          -1.5708
+        ],
+        "scale": 0.7963
+      },
+      "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          -0.0507
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 1.2614
+      }
+    },
+    "monster:GoblinWarrior": {
+      "Quaternius/Weapon_Sword_2@right": {
+        "bone": "mixamorig:RightHand",
+        "position": [
+          -0.0159,
+          0.0462,
+          0.0571
+        ],
+        "rotation": [
+          0.4197,
+          0.0775,
+          -1.3629
+        ],
+        "scale": 0.652
+      },
+      "HF_Amr_Coif_Chainmail_01@c": {
+        "bone": "mixamorig:Head",
+        "position": [
+          -0.0006,
+          0,
+          0.008
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1.0328
+      },
+      "HF_Amr_Greaves_Plate_Iron_01@l": {
+        "bone": "mixamorig:LeftFoot",
+        "position": [
+          -0.0032,
+          0.1152,
+          -0.061
+        ],
+        "rotation": [
+          -1.051,
+          0.2582,
+          -3.1328
+        ],
+        "scale": 1.4366
+      },
+      "HF_Gear_Belt_Utility_01@c": {
+        "bone": "mixamorig:Hips",
+        "position": [
+          0,
+          0.0382,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1.2489
+      },
+      "Quaternius/Weapon_Sword_2@left": {
+        "bone": "mixamorig:LeftHand",
+        "position": [
+          0.0058,
+          0.0637,
+          -0.01
+        ],
+        "rotation": [
+          0.136,
+          -2.9461,
+          -1.4519
+        ],
+        "scale": 0.652
+      }
+    },
+    "monster:DeserterKnight": {
+      "MedievalWeapons/Axe@right": {
+        "bone": "mixamorig:RightHand",
+        "position": [
+          0.1684,
+          0.1106,
+          0.0485
+        ],
+        "rotation": [
+          0.3366,
+          2.9253,
+          1.3011
+        ],
+        "scale": 0.0025
+      },
+      "Hearthfold/HF_Wep_Shield_Kite_01@left": {
+        "bone": "mixamorig:LeftHand",
+        "position": [
+          -0.0083,
+          0.0099,
+          -0.0522
+        ],
+        "rotation": [
+          -0.1855,
+          -2.9832,
+          -1.4397
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Axe_Great_Crude_01@back": {
+        "bone": "mixamorig:Spine2",
+        "position": [
+          0.4112,
+          -0.4446,
+          -0.1028
+        ],
+        "rotation": [
+          0.1259,
+          -3.1331,
+          -0.6418
+        ],
+        "scale": 1
+      },
+      "HF_Amr_Helm_Horned_01@c": {
+        "bone": "mixamorig:Head",
+        "position": [
+          0,
+          0.0337,
+          0.0443
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1
+      }
+    },
+    "HumanTeen_Female": {
+      "UltimateRPGItems/Book1_Open@left": {
+        "bone": "hand_l",
+        "position": [
+          0.0396,
+          0.2166,
+          0.0507
+        ],
+        "rotation": [
+          -0.1913,
+          2.9532,
+          1.7763
+        ],
+        "scale": 0.0036
+      },
+      "HF_Amr_Hat_Witch_01@c": {
+        "bone": "Head",
+        "position": [
+          0,
+          -0.023,
+          0.0004
+        ],
+        "rotation": [
+          -0.0181,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "HF_Amr_Cape_Royal_Fur_01@c": {
+        "bone": "neck_01",
+        "position": [
+          0.0172,
+          0.0418,
+          -0.1167
+        ],
+        "rotation": [
+          0.1935,
+          -0.216,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Staff_Legendary_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 1
+      },
+      "HF_Gear_Bandolier_Potions_01@c": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.1628,
+          0.0406
+        ],
+        "rotation": [
+          0.1976,
+          0,
+          0
+        ],
+        "scale": 1
+      }
+    },
+    "monster:Cultist": {
+      "MedievalWeapons/Scythe@right": {
+        "bone": "mixamorig:RightHand",
+        "position": [
+          -0.0073,
+          0.0576,
+          0.0498
+        ],
+        "rotation": [
+          0.3175,
+          3.1233,
+          1.4082
+        ],
+        "scale": 0.0026
+      },
+      "UltimateRPGItems/Skull@left": {
+        "bone": "mixamorig:LeftHand",
+        "position": [
+          -0.1291,
+          0.132,
+          -0.0045
+        ],
+        "rotation": [
+          -0.374,
+          -1.5382,
+          -3.0269
+        ],
+        "scale": 0.0046
+      },
+      "RPGAssetPack/Rollofpaper@left": {
+        "bone": "mixamorig:LeftHand",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          -0.1888,
+          -1.525,
+          1.6375
+        ],
+        "scale": 0.0021
+      },
+      "Hearthfold/HF_Wep_Staff_Crude_01@left": {
+        "bone": "mixamorig:LeftHand",
+        "position": [
+          0.0156,
+          0.0748,
+          0.0198
+        ],
+        "rotation": [
+          -0.0625,
+          0.0738,
+          1.3806
+        ],
+        "scale": 1
+      },
+      "HF_Amr_Mask_Plague_01@c": {
+        "bone": "mixamorig:Head",
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 0.7651
+      },
+      "HF_Amr_Shoes_Mage_01@l": {
+        "bone": "mixamorig:LeftFoot",
+        "position": [
+          -0.0008,
+          0.1422,
+          -0.1126
+        ],
+        "rotation": [
+          -0.8795,
+          -0.3144,
+          -2.9386
+        ],
+        "scale": 1.6036
+      },
+      "HF_Amr_Shoes_Mage_01@r": {
+        "bone": "mixamorig:RightFoot",
+        "position": [
+          -0.0023,
+          0.1332,
+          -0.1239
+        ],
+        "rotation": [
+          -0.8737,
+          0.3189,
+          2.9363
+        ],
+        "scale": 1.6036
+      },
+      "HF_Amr_Cape_Tattered_01@c": {
+        "bone": "mixamorig:Neck",
+        "position": [
+          0.0524,
+          0,
+          -0.1534
+        ],
+        "rotation": [
+          0,
+          -0.5117,
+          0
+        ],
+        "scale": 1
+      },
+      "HF_Amr_Helm_Skull_Bone_01@c": {
+        "bone": "mixamorig:Head",
+        "position": [
+          0,
+          0.0577,
+          -0.0386
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "HF_Amr_Helm_Kettle_01@c": {
+        "bone": "mixamorig:Head",
+        "position": [
+          0,
+          0.3457,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1
+      }
+    },
+    "HumanRegular_Male": {
+      "HF_Amr_Circlet_Gem_01@c": {
+        "bone": "Head",
+        "position": [
+          0,
+          -0.0154,
+          0.026
+        ],
+        "rotation": [
+          -0.029,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Sabre_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.0299,
+          0.0997,
+          0
+        ],
+        "rotation": [
+          0.21,
+          -1.5708,
+          -1.5708
+        ],
+        "scale": 1.13
+      },
+      "Quaternius/Weapon_Lute@back": {
+        "bone": "spine_03",
+        "position": [
+          0.1693,
+          0.2673,
+          -0.1235
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          2.5334
+        ],
+        "scale": 0.7063
+      },
+      "Quaternius/Weapon_Lute@play": {
+        "bone": "mains (chant)",
+        "position": [
+          0.0195,
+          -0.6745,
+          0.033
+        ],
+        "rotation": [
+          0,
+          0,
+          0.2709
+        ],
+        "scale": 0.7063
+      }
+    },
+    "Elf_Male": {
+      "HF_Amr_Circlet_Gem_01@c": {
+        "bone": "Head",
+        "position": [
+          0,
+          -0.0045,
+          0.0127
+        ],
+        "rotation": [
+          -0.029,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "HF_Gear_Belt_Utility_01@c": {
+        "bone": "pelvis",
+        "position": [
+          0,
+          0.214,
+          -0.0043
+        ],
+        "rotation": [
+          -0.1062,
+          0,
+          0
+        ],
+        "scale": 0.9824
+      },
+      "HF_Amr_Cape_Royal_Fur_01@c": {
+        "bone": "neck_01",
+        "position": [
+          0.0084,
+          0.0394,
+          -0.1538
+        ],
+        "rotation": [
+          0,
+          -0.1424,
+          0
+        ],
+        "scale": 1.0328
+      }
+    },
+    "monster:KoboldShaman": {
+      "HF_Amr_Cape_Tattered_01@c": {
+        "bone": "mixamorig:Neck",
+        "position": [
+          0,
+          0.038,
+          -0.1197
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 0.5446
+      },
+      "Hearthfold/HF_Wep_Wand_Oak_01@right": {
+        "bone": "mixamorig:RightHand",
+        "position": [
+          -0.0033,
+          0.0671,
+          0.012
+        ],
+        "rotation": [
+          -0.158,
+          0.1905,
+          -1.4858
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Sword_Short_Steel_01@left": {
+        "bone": "mixamorig:LeftHand",
+        "position": [
+          0.0092,
+          0.0523,
+          0.0097
+        ],
+        "rotation": [
+          -0.1306,
+          0.0982,
+          1.4101
+        ],
+        "scale": 1
+      }
+    },
+    "WaterElfEars_Male": {
+      "Quaternius/Weapon_Lute@back": {
+        "bone": "spine_03",
+        "position": [
+          -0.136,
+          0.1453,
+          -0.2012
+        ],
+        "rotation": [
+          0.0546,
+          -0.1296,
+          -2.2697
+        ],
+        "scale": 0.6651
+      },
+      "Quaternius/Weapon_Dagger@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.4594
+      }
+    },
+    "WaterElfFins_Male": {
+      "Quaternius/Weapon_Lute@back": {
+        "bone": "spine_03",
+        "position": [
+          -0.0795,
+          0.1089,
+          -0.2079
+        ],
+        "rotation": [
+          -0.0318,
+          -0.2044,
+          -2.3336
+        ],
+        "scale": 0.9069
+      },
+      "Quaternius/Weapon_Dagger@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.4734
+      },
+      "Quaternius/Weapon_Lute@play": {
+        "bone": "mains (chant)",
+        "position": [
+          0.0113,
+          -0.5965,
+          0.0171
+        ],
+        "rotation": [
+          0,
+          0,
+          0.3304
+        ],
+        "scale": 0.6718
+      }
+    }
+  }
 }
