@@ -1,6 +1,7 @@
 import catalogJson from "./appearanceCatalog.json";
 import {
   PAIRED_SOCKETS,
+  WEAPON_SLOTS,
   appearanceUrl,
   isFantasyRace,
   accessoryKey,
@@ -76,6 +77,8 @@ export function sanitizedAppearance(appearance: Appearance): Appearance {
   return {
     ...appearance,
     hair: appearance.hair.filter((id) => valid.some((h) => h.id === id)),
+    // Une arme par place connue (la première) : un fichier modifié à la main peut en avoir deux, ou une place inconnue.
+    weapons: appearance.weapons.filter((w, i, all) => w.slot in WEAPON_SLOTS && all.findIndex((x) => x.slot === w.slot) === i),
     outfitColors: Object.keys(outfitColors).length ? outfitColors : undefined,
     skin: race && body.skins ? variant(appearance.skin) : undefined,
     raceHairColor: race ? variant(appearance.raceHairColor) : undefined,

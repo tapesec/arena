@@ -168,7 +168,9 @@ export function AppearancePanel(props: {
 }) {
   const { classId, camp, file, onChange } = props;
   const variants = file.variants[classId] ?? [null, null];
-  const appearance = variants[camp] ?? null;
+  // Apparence nettoyée (coiffures, couleurs, armes d'un fichier modifié à la main) : c'est elle qu'on modifie.
+  const stored = variants[camp] ?? null;
+  const appearance = stored && sanitizedAppearance(stored);
   const update = (next: Appearance | null) => {
     const list = [...variants];
     list[camp] = next;
@@ -179,6 +181,19 @@ export function AppearancePanel(props: {
   const body = appearance && !isMonster(appearance.model) ? CATALOG.bodies.find((b) => b.id === appearance.model) : null;
   const [weaponPack, setWeaponPack] = useState(WEAPON_PACKS[0]);
   const [weaponSlot, setWeaponSlot] = useState<WeaponSlot>("right");
+  // Place proposée pour la prochaine arme : la première libre (main droite, main gauche, dos).
+  const usedSlots = (appearance?.weapons ?? []).map((w) => w.slot).join(",");
+  useEffect(() => {
+    const used = usedSlots.split(",");
+    setWeaponSlot((Object.keys(WEAPON_SLOTS) as WeaponSlot[]).find((slot) => !used.includes(slot)) ?? "right");
+  }, [usedSlots, classId, camp]);
+  // Change une arme de place ; une arme déjà à cette place prend l'ancienne place de la première.
+  const moveWeapon = (index: number, slot: WeaponSlot) => {
+    if (!appearance) return;
+    const from = appearance.weapons[index].slot;
+    const other = appearance.weapons.findIndex((w, j) => j !== index && w.slot === slot);
+    patch({ weapons: appearance.weapons.map((w, i) => (i === index ? { ...w, slot } : i === other ? { ...w, slot: from } : w)) });
+  };
 
   const setBody = (race: string, nextGender: string) => {
     if (!appearance) return;
@@ -336,17 +351,26 @@ export function AppearancePanel(props: {
           <h4>Armes</h4>
           {appearance.weapons.map((weapon, i) => (
             <div key={`${weapon.item}-${i}`} className="appearance-item">
-              <span>
-                {weaponLabel(weapon.item)} · {WEAPON_SLOTS[weapon.slot]}
+              <span>{weaponLabel(weapon.item)}</span>
+              <span className="appearance-variants">
+                <select value={weapon.slot} onChange={(e) => moveWeapon(i, e.target.value as WeaponSlot)} title="Changer de place (échange avec l'arme qui y est)">
+                  {Object.entries(WEAPON_SLOTS).map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                      {id !== weapon.slot && appearance.weapons.some((w) => w.slot === id) ? " (échange)" : ""}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={() => patch({ weapons: appearance.weapons.filter((_, j) => j !== i) })}>Retirer</button>
               </span>
-              <button onClick={() => patch({ weapons: appearance.weapons.filter((_, j) => j !== i) })}>Retirer</button>
             </div>
           ))}
           <div className="appearance-add">
-            <select value={weaponSlot} onChange={(e) => setWeaponSlot(e.target.value as WeaponSlot)}>
+            <select value={weaponSlot} onChange={(e) => setWeaponSlot(e.target.value as WeaponSlot)} title="Place de l'arme ajoutée">
               {Object.entries(WEAPON_SLOTS).map(([id, label]) => (
                 <option key={id} value={id}>
                   {label}
+                  {appearance.weapons.some((w) => w.slot === id) ? " (remplace)" : ""}
                 </option>
               ))}
             </select>
@@ -395,7 +419,7 @@ export function AppearancePanel(props: {
               ))}
             </select>
           </div>
-          <p className="lab-note">Placez armes et accessoires sur ce modèle dans l'onglet « Placement ».</p>
+          <p className="lab-note">Placez armes et accessoires sur ce modèle dans l'onglet « Placement » (une arme se règle pour chaque place : changée de main, elle reprend le réglage de cette main).</p>
 
           <h4>Assets nécessaires</h4>
           <ul className="appearance-assets">
