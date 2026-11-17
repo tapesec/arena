@@ -13,6 +13,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
 import { CHARACTERS, CharacterAssets, hasCharacterModel, type CharacterInstance } from "./characterAssets";
 import { gameCharacter } from "./gameAppearances";
+import { lobbyReady } from "./lobbyPriority";
 
 // Choix de la classe (salle d'attente) : les personnages des classes alignés côte à côte, en 3D, avec l'apparence du
 // camp du joueur. Chacun occupe une colonne de même largeur que la colonne HTML (nom et compétences) placée dessous :
@@ -81,8 +82,8 @@ export class ClassLineup {
     this.pedestalOn.emissiveColor = color.scale(0.8);
     this.pedestalOn.specularColor = Color3.Black();
 
-    // Seules les animations jouées ici (attente et geste de chaque classe) sont chargées : le jeu charge le reste en
-    // même temps, dans sa propre scène.
+    // Seules les animations jouées ici (attente et geste de chaque classe) sont chargées : le jeu charge le reste dans
+    // sa propre scène, une fois cet écran prêt (voir lobbyPriority).
     const played = new Set(classIds.filter(hasCharacterModel).flatMap((id) => [CHARACTERS[id].animations.idle, ...CHARACTERS[id].animations.attacks.slice(0, 1)]));
     this.assets = new CharacterAssets(this.scene, undefined, played);
     this.slots = classIds.map((classId) => {
@@ -104,33 +105,42 @@ export class ClassLineup {
     this.observer.observe(canvas);
   }
 
-  // Charge les personnages l'un après l'autre (le premier apparaît vite), dans l'apparence du camp du joueur.
+  // Charge les personnages tous en même temps (les fichiers communs, bibliothèques d'animations, ne sont chargés qu'une
+  // fois), dans l'apparence du camp du joueur ; chacun apparaît dès qu'il est prêt. Une fois tous affichés, le jeu peut
+  // lancer son propre préchargement (voir lobbyPriority).
   private async load() {
-    for (const slot of this.slots) {
-      if (!hasCharacterModel(slot.classId)) continue;
-      const set = CHARACTERS[slot.classId].animations;
-      const idleName = set.idle;
-      const gestureName = set.attacks[0];
-      const only = new Set([idleName, ...(gestureName ? [gestureName] : [])]);
-      let instance: CharacterInstance | null = null;
-      try {
-        instance = await this.assets.create(slot.classId, slot.holder, only, gameCharacter(slot.classId, this.team));
-      } catch {
-        // Un modèle qui manque ne doit pas empêcher de choisir sa classe : la colonne reste vide. (Un chargement qui
-        // se termine après la fermeture de l'écran échoue aussi ici, la scène n'existant plus : c'est voulu.)
-      }
-      if (this.disposed) {
-        instance?.dispose();
-        return;
-      }
-      if (!instance) continue;
-      slot.instance = instance;
-      slot.idle = instance.animations.get(idleName);
-      slot.gesture = gestureName ? instance.animations.get(gestureName) : undefined;
-      slot.idle?.start(true);
-      this.applyLook(slot);
-    }
+    await Promise.all(this.slots.map((slot) => this.loadSlot(slot)));
+    // Écran déjà fermé : dispose a déjà levé l'attente ; ne pas libérer celle d'un jeu suivant.
+    if (this.disposed) return;
     this.onReady?.();
+    lobbyReady();
+  }
+
+  private async loadSlot(slot: Slot) {
+    if (!hasCharacterModel(slot.classId)) return;
+    const set = CHARACTERS[slot.classId].animations;
+    const idleName = set.idle;
+    const gestureName = set.attacks[0];
+    const only = new Set([idleName, ...(gestureName ? [gestureName] : [])]);
+    let instance: CharacterInstance | null = null;
+    try {
+      instance = await this.assets.create(slot.classId, slot.holder, only, gameCharacter(slot.classId, this.team));
+    } catch {
+      // Un modèle qui manque ne doit pas empêcher de choisir sa classe : la colonne reste vide. (Un chargement qui
+      // se termine après la fermeture de l'écran échoue aussi ici, la scène n'existant plus : c'est voulu.)
+    }
+    if (this.disposed) {
+      instance?.dispose();
+      return;
+    }
+    if (!instance) return;
+    slot.instance = instance;
+    slot.idle = instance.animations.get(idleName);
+    slot.gesture = gestureName ? instance.animations.get(gestureName) : undefined;
+    slot.idle?.start(true);
+    this.applyLook(slot);
+    // Choisie avant d'avoir fini de charger : elle fait son geste maintenant.
+    if (slot.classId === this.selected) this.playGesture(slot);
   }
 
   private resize = () => {
@@ -201,6 +211,8 @@ export class ClassLineup {
 
   dispose() {
     this.disposed = true;
+    // Écran quitté avant la fin du chargement : le jeu n'a plus à attendre.
+    lobbyReady();
     this.observer.disconnect();
     for (const slot of this.slots) slot.instance?.dispose();
     this.engine.dispose();

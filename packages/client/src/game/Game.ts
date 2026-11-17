@@ -74,6 +74,7 @@ import { OrderWheel } from "./OrderWheel";
 import { MAGNET_RADIUS, bestCandidate, type TargetCandidate } from "./targeting";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
+import { lobbyReady, waitForLobby } from "./lobbyPriority";
 import { MovementPredictor, VelocityTracker } from "./prediction";
 import { TUNING } from "./tuning";
 import { MUSIC } from "./commonSounds";
@@ -104,6 +105,8 @@ const HUD_REFRESH_MS = 100;
 // Mesure de l'aller-retour avec le serveur (affiché à côté du son).
 const PING_INTERVAL_MS = 2000;
 const PERF_REPORT_MS = 30_000;
+// Attente maximale de l'écran de choix avant de lancer le préchargement du jeu (voir lobbyPriority).
+const LOBBY_PRIORITY_MAX_MS = 10_000;
 
 // Quand la caméra tourne pendant un déplacement, on renvoie la direction au plus 20 fois par seconde.
 const YAW_RESEND_MS = 50;
@@ -191,9 +194,35 @@ export class Game {
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.spellEffects = new SpellEffects(this.scene);
     this.village = new Village(this.scene);
+    // Le chargement attend que l'écran de choix ait affiché ses personnages (voir lobbyPriority) : préchargement, mais
+    // aussi les personnages des joueurs déjà connus (bots, coéquipiers), qui passent par les mêmes fichiers. L'attente
+    // compte dans le chargement : la barre n'atteint pas 100 % avant que le reste soit lancé (le serveur croirait sinon
+    // que le joueur a fini).
+    const lobbyFirst = waitForLobby(LOBBY_PRIORITY_MAX_MS);
     this.characterAssets = new CharacterAssets(this.scene);
-    this.characterAssets.preload((task, weight) => this.loading.track(task, weight));
-    audio.preloadGame(soundRecipes(TUNING), [MUSIC.match], (task, weight) => this.loading.track(task, weight));
+    this.characterAssets.gate = lobbyFirst;
+    void this.loading.track(
+      lobbyFirst.then(() => {
+        if (this.disposed) return;
+        const track = <T>(task: Promise<T>, weight?: number) => this.loading.track(task, weight);
+        // Chaque lancement à part : une erreur dans l'un ne doit pas empêcher de déclarer les suivants (la barre
+        // atteindrait sinon 100 % sans eux).
+        const launches = [
+          () => this.characterAssets.preload(track),
+          () => audio.preloadGame(soundRecipes(TUNING), [MUSIC.match], track),
+          // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
+          () => void track(this.village.load(), 10),
+          () => void track(new Nature(this.scene).load(), 10),
+        ];
+        for (const launch of launches) {
+          try {
+            launch();
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      }),
+    );
     this.fog = new FogOfWar(this.scene);
     this.gameAudio = new GameAudio(this.camera, this.room.sessionId);
     // Les pistes de sons des compétences réglées passent par l'audio du jeu (spatialisé).
@@ -362,10 +391,6 @@ export class Game {
     this.village.shadows = this.shadows;
     createSky(this.scene);
     this.shadows.receive([createGround(this.scene)]);
-
-    // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
-    void this.loading.track(this.village.load(), 10);
-    void this.loading.track(new Nature(this.scene).load(), 10);
 
   }
 
@@ -777,6 +802,8 @@ export class Game {
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
     const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };
+    // Arrivée après le choix de classe (pas d'écran de choix) : le préchargement n'a rien à attendre.
+    if (match.phase && match.phase !== "classSelect") lobbyReady();
     this.gameAudio.update(dt, this.players.values(), this.self, match.phase, match.phaseTimeLeft, match.winner);
     this.spellEffects.updateGuardLinks(this.guardLinks());
 

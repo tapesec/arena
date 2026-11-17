@@ -8,6 +8,7 @@ import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { WHEEL_INNER } from "./game/OrderWheel";
 import { ClassLineup } from "./game/ClassLineup";
+import { lobbyReady } from "./game/lobbyPriority";
 import { abilityDescription, abilityName, className, classRole, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame, type SelfFrame } from "./store";
 
@@ -383,8 +384,9 @@ function ClassLineupView({ team, selected, onSelect }: { team: number; selected:
           () => setReady(true),
         );
       } catch {
-        // Pas de WebGL : on choisit sa classe par les noms, sans les personnages.
+        // Pas de WebGL : on choisit sa classe par les noms, sans les personnages (et le jeu n'attend pas).
         setReady(true);
+        lobbyReady();
         return;
       }
       lineupRef.current = lineup;
