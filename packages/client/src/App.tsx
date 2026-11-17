@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type ClassId } from "@arena/shared";
+import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type AbilityDef, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
 import { LanguageMenu } from "./LanguageMenu";
@@ -7,8 +7,9 @@ import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abil
 import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { WHEEL_INNER } from "./game/OrderWheel";
+import { ClassLineup } from "./game/ClassLineup";
 import { abilityDescription, abilityName, className, classRole, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
-import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame } from "./store";
+import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame, type SelfFrame } from "./store";
 
 export function App() {
   const inGame = useHudStore((s) => s.inGame);
@@ -286,67 +287,62 @@ function ClassSelectScreen() {
   const humans = teammates.filter((mate) => !mate.isBot).length;
   const full = (match?.matchSize ?? 0) > 0 && (match?.playerCount ?? 0) >= (match?.matchSize ?? 0);
 
+  const timeLeft = match?.timeLeft ?? 0;
+  const choose = (classId: ClassId) => {
+    audio.play(UI_SOUNDS.classSelect);
+    actions?.selectClass(classId);
+  };
+
   return (
-    <div className="screen">
-      <h1>{t("lobby.title")}</h1>
-      <p className="screen-text">
-        {t("lobby.team")} <span className={`team-name team-${team}`}>{teamName(team)}</span> · {t("lobby.startsIn")}{" "}
-        <strong className="lobby-countdown">{match?.timeLeft ?? 0} s</strong>
-      </p>
-      <p className="screen-hint">
-        {full ? t("lobby.full") : t("lobby.players", { humans, total: teammates.length })}
-      </p>
-      <div className="class-list">
-        {CLASS_LIST.map((c) => (
-          <button
-            key={c.id}
-            className={`class-card ${myClass === c.id ? "class-card-selected" : ""}`}
-            onClick={() => {
-              audio.play(UI_SOUNDS.classSelect);
-              actions?.selectClass(c.id);
-            }}
-          >
-            <span className="class-name">{className(c.id)}</span>
-            <span className="class-role">{classRole(c.id)}</span>
-            <span className="class-stats">
-              {c.maxHp} {t("lobby.hp")} · {t(c.resource === "mana" ? "resource.mana" : "resource.endurance")}
-            </span>
-            <span className="class-abilities">{c.abilities.map((id) => abilityName(id)).join(" · ")}</span>
-          </button>
-        ))}
-      </div>
-      <div className="roster">
-        <h2>{t("lobby.yourTeam")}</h2>
-        {teammates.map((mate) => (
-          <div key={mate.id} className={`roster-line ${mate.isSelf ? "roster-self" : ""}`}>
-            <span className="roster-name">
-              {mate.name}
-              {mate.isSelf && <span className="roster-tag">{t("lobby.you")}</span>}
-              {mate.leader && <span className="roster-tag roster-leader">{t("lobby.leader")}</span>}
-              {mate.isBot && <span className="roster-tag roster-bot">{t("lobby.bot")}</span>}
-            </span>
-            {mate.isBot && self?.leader ? (
-              <select
-                className="roster-select"
-                value={mate.classId}
-                onChange={(e) => {
-                  audio.play(UI_SOUNDS.click);
-                  actions?.setBotClass(mate.id, e.target.value as ClassId);
-                }}
-              >
-                {CLASS_LIST.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {className(c.id)}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <strong className="roster-class">{mate.classId ? className(mate.classId) : t("lobby.choosing")}</strong>
-            )}
-          </div>
-        ))}
-        {self?.leader && <p className="screen-hint">{t("lobby.leaderHint")}</p>}
-        <p className="screen-hint">{t("lobby.hidden")}</p>
+    <div className="screen lobby-screen">
+      <header className="lobby-header">
+        <h1>{t("lobby.title")}</h1>
+        <p className="screen-text">
+          {t("lobby.team")} <span className={`team-name team-${team}`}>{teamName(team)}</span>
+        </p>
+        <div className={`lobby-timer ${timeLeft <= 10 ? "lobby-timer-urgent" : ""}`}>
+          <span className="lobby-timer-label">{t("lobby.startsIn")}</span>
+          <strong className="lobby-countdown">{timeLeft} s</strong>
+        </div>
+        <p className="screen-hint">
+          {full ? t("lobby.full") : t("lobby.players", { humans, total: teammates.length })}
+        </p>
+      </header>
+      <div className="lobby-body">
+        <ClassLineupView team={team} selected={myClass} onSelect={choose} />
+        <aside className="roster">
+          <h2>{t("lobby.yourTeam")}</h2>
+          {teammates.map((mate) => (
+            <div key={mate.id} className={`roster-line ${mate.isSelf ? "roster-self" : ""}`}>
+              <span className="roster-name">
+                {mate.name}
+                {mate.isSelf && <span className="roster-tag">{t("lobby.you")}</span>}
+                {mate.leader && <span className="roster-tag roster-leader">{t("lobby.leader")}</span>}
+                {mate.isBot && <span className="roster-tag roster-bot">{t("lobby.bot")}</span>}
+              </span>
+              {mate.isBot && self?.leader ? (
+                <select
+                  className="roster-select"
+                  value={mate.classId}
+                  onChange={(e) => {
+                    audio.play(UI_SOUNDS.click);
+                    actions?.setBotClass(mate.id, e.target.value as ClassId);
+                  }}
+                >
+                  {CLASS_LIST.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {className(c.id)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <strong className="roster-class">{mate.classId ? className(mate.classId) : t("lobby.choosing")}</strong>
+              )}
+            </div>
+          ))}
+          {self?.leader && <p className="screen-hint">{t("lobby.leaderHint")}</p>}
+          <p className="screen-hint">{t("lobby.hidden")}</p>
+        </aside>
       </div>
       {import.meta.env.DEV && self?.leader && (
         <button className="secondary-button" onClick={() => actions?.forceStart()}>
@@ -356,6 +352,140 @@ function ClassSelectScreen() {
       <button className="link-button" onClick={leaveGame}>
         {t("lobby.leave")}
       </button>
+    </div>
+  );
+}
+
+// Les classes alignées : en haut leurs personnages en 3D (apparence du camp du joueur, voir ClassLineup), en dessous,
+// dans la même colonne, le nom et les compétences (infobulle au survol, la même qu'en jeu). Un clic sur le personnage
+// ou sur son nom choisit la classe.
+function ClassLineupView({ team, selected, onSelect }: { team: number; selected: string; onSelect: (classId: ClassId) => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lineupRef = useRef<ClassLineup | null>(null);
+  const [hovered, setHovered] = useState(-1);
+  const [ready, setReady] = useState(false);
+
+  // Valeurs courantes, pour la scène créée après coup (voir le délai ci-dessous).
+  const current = useRef({ selected, hovered });
+  current.current = { selected, hovered };
+
+  useEffect(() => {
+    setReady(false);
+    let lineup: ClassLineup | null = null;
+    // Création reportée d'un instant, comme pour le jeu (GameCanvas) : en développement, StrictMode monte, démonte et
+    // remonte aussitôt ; le premier montage lancerait sinon des téléchargements pour rien.
+    const start = setTimeout(() => {
+      try {
+        lineup = new ClassLineup(
+          canvasRef.current!,
+          CLASS_LIST.map((c) => c.id),
+          team,
+          () => setReady(true),
+        );
+      } catch {
+        // Pas de WebGL : on choisit sa classe par les noms, sans les personnages.
+        setReady(true);
+        return;
+      }
+      lineupRef.current = lineup;
+      lineup.setSelected(current.current.selected);
+      lineup.setHovered(current.current.hovered);
+    }, 0);
+    return () => {
+      clearTimeout(start);
+      lineup?.dispose();
+      lineupRef.current = null;
+    };
+  }, [team]);
+
+  useEffect(() => lineupRef.current?.setSelected(selected), [selected]);
+  useEffect(() => lineupRef.current?.setHovered(hovered), [hovered]);
+
+  // Colonne sous le pointeur, d'après sa position dans le canvas (toutes les colonnes ont la même largeur).
+  const columnAt = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const index = Math.floor(((event.clientX - rect.left) / rect.width) * CLASS_LIST.length);
+    return index >= 0 && index < CLASS_LIST.length ? index : -1;
+  };
+
+  return (
+    <div className="lobby-classes">
+      <div className="lobby-stage-wrap">
+        <canvas
+          ref={canvasRef}
+          className="lobby-stage"
+          aria-hidden="true"
+          onMouseMove={(e) => setHovered(columnAt(e))}
+          onMouseLeave={() => setHovered(-1)}
+          onClick={(e) => {
+            const index = columnAt(e);
+            if (index >= 0) onSelect(CLASS_LIST[index].id);
+          }}
+        />
+        {!ready && <div className="lobby-loading">{t("lobby.loadingCharacters")}</div>}
+      </div>
+      <div className="lobby-columns">
+        {CLASS_LIST.map((c, index) => (
+          <div
+            key={c.id}
+            className={`lobby-column ${selected === c.id ? "lobby-column-selected" : ""} ${hovered === index ? "lobby-column-hover" : ""}`}
+          >
+            <button
+              className={`lobby-class-name team-border-${team}`}
+              aria-pressed={selected === c.id}
+              onClick={() => onSelect(c.id)}
+              onMouseEnter={() => setHovered(index)}
+              onMouseLeave={() => setHovered(-1)}
+            >
+              <span className="class-name">{className(c.id)}</span>
+              <span className="class-role">{classRole(c.id)}</span>
+            </button>
+            <div className="lobby-abilities">
+              {c.abilities.map((abilityId) => (
+                <LobbyAbility key={abilityId} abilityId={abilityId} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Icône d'une compétence dans le choix de classe, avec l'infobulle de la barre de jeu au survol (ou au focus clavier).
+function LobbyAbility({ abilityId }: { abilityId: string }) {
+  const [shown, setShown] = useState(false);
+  const ability = getAbility(abilityId);
+  if (!ability) return null;
+  return (
+    <div
+      className="slot lobby-ability"
+      style={{ color: abilityColor(abilityId) }}
+      tabIndex={0}
+      aria-label={abilityName(abilityId)}
+      onMouseEnter={() => setShown(true)}
+      onMouseLeave={() => setShown(false)}
+      onFocus={() => setShown(true)}
+      onBlur={() => setShown(false)}
+    >
+      <span className="slot-icon" dangerouslySetInnerHTML={{ __html: abilityIcon(abilityId) ?? "" }} />
+      {ability.position && <PositionBadge position={ability.position} wrong={false} />}
+      {shown && <AbilityTooltip ability={ability} />}
+    </div>
+  );
+}
+
+// Infobulle d'une compétence : nom à la couleur de son école, coût, incantation, portée et recharge, description, et la
+// raison pour laquelle elle ne part pas (barre de jeu). self : le joueur, pour les valeurs qui dépendent de lui.
+function AbilityTooltip({ ability, self, reason }: { ability: AbilityDef; self?: SelfFrame; reason?: string | null }) {
+  return (
+    <div className="slot-tooltip">
+      <div className="tooltip-name" style={{ color: abilityColor(ability.id) }}>
+        {abilityName(ability.id)}
+      </div>
+      <div className="tooltip-details">{abilityDetails(ability, self).join(" · ")}</div>
+      <div className="tooltip-description">{abilityDescription(ability.id)}</div>
+      {reason && <div className="tooltip-reason">{reason}</div>}
     </div>
   );
 }
@@ -700,16 +830,7 @@ function Hotbar() {
                 {formatCooldown(remaining)}
               </span>
             )}
-            {hovered === abilityId && (
-              <div className="slot-tooltip">
-                <div className="tooltip-name" style={{ color: abilityColor(abilityId) }}>
-                  {abilityName(abilityId)}
-                </div>
-                <div className="tooltip-details">{abilityDetails(ability, self).join(" · ")}</div>
-                <div className="tooltip-description">{abilityDescription(abilityId)}</div>
-                {status.reason && <div className="tooltip-reason">{status.reason}</div>}
-              </div>
-            )}
+            {hovered === abilityId && <AbilityTooltip ability={ability} self={self} reason={status.reason} />}
           </div>
         );
       })}

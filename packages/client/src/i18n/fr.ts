@@ -26,7 +26,7 @@ export const fr: Record<TextKey, string> = {
   "lobby.startsIn": "La partie commence dans",
   "lobby.full": "Salle complète.",
   "lobby.players": "{humans} / {total} joueurs dans votre équipe · les places libres sont tenues par des bots.",
-  "lobby.hp": "PV",
+  "lobby.loadingCharacters": "Chargement des personnages…",
   "lobby.yourTeam": "Votre équipe",
   "lobby.you": "vous",
   "lobby.leader": "chef",
@@ -37,8 +37,6 @@ export const fr: Record<TextKey, string> = {
   "lobby.forceStart": "Lancer maintenant (test)",
   "lobby.leave": "Quitter la file",
 
-  "resource.mana": "Mana",
-  "resource.endurance": "Endurance",
 
   "punct.colon": "\u00a0: ",
 
@@ -107,7 +105,7 @@ export const fr: Record<TextKey, string> = {
   "help.target": "Tab\u00a0: ennemi suivant · clic\u00a0: cibler · F1\u00a0: soi-même · Échap\u00a0: annuler",
   "help.lock": "F\u00a0: faire face à la cible · C\u00a0: la suivre (stick)",
   "help.attack": "R\u00a0: activer/couper l'attaque · molette\u00a0: zoom · V\u00a0: recentrer",
-  "help.abilities": "1 à 9, 0\u00a0: compétences",
+  "help.abilities": "1 à 8\u00a0: compétences",
   "help.orders": "Molette maintenue\u00a0: ordres aux bots",
 
   "error.noTarget": "Aucune cible",

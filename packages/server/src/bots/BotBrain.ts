@@ -302,7 +302,8 @@ export class BotBrain {
   // Tente d'utiliser une compétence (sur la cible donnée, ou sans cible). Retourne vrai si c'est parti.
   protected tryUse(abilityId: string, target?: PlayerRuntime): boolean {
     const ability = getAbility(abilityId);
-    if (!ability) return false;
+    // Compétence absente de la barre (à débloquer) : rien à tenter, et la cible ne change pas.
+    if (!ability || !this.player.classDef.abilities.includes(abilityId)) return false;
     if (target) this.combat.setTarget(this.player.id, target.id === this.player.id ? null : target.id);
     // Une compétence offensive exige de faire face à la cible.
     if (isOffensive(ability)) this.combat.faceTarget(this.player.id);

@@ -29,7 +29,7 @@ export const en = {
   "lobby.startsIn": "The match starts in",
   "lobby.full": "Match is full.",
   "lobby.players": "{humans} / {total} players on your team · empty slots are filled by bots.",
-  "lobby.hp": "HP",
+  "lobby.loadingCharacters": "Loading characters…",
   "lobby.yourTeam": "Your team",
   "lobby.you": "you",
   "lobby.leader": "leader",
@@ -41,8 +41,6 @@ export const en = {
   "lobby.leave": "Leave the queue",
 
   // Ressources
-  "resource.mana": "Mana",
-  "resource.endurance": "Endurance",
 
   // Ponctuation
   "punct.colon": ": ",
@@ -119,7 +117,7 @@ export const en = {
   "help.target": "Tab: next enemy · click: target · F1: target self · Esc: cancel",
   "help.lock": "F: face the target · C: follow it (stick)",
   "help.attack": "R: toggle auto-attack · mouse wheel: zoom · V: reset camera",
-  "help.abilities": "1–9, 0: abilities",
+  "help.abilities": "1–8: abilities",
   "help.orders": "Hold the mouse wheel: orders to your bots",
 
   // Raisons d'un refus (serveur et infobulle de la barre d'action), voir GameErrorCode
