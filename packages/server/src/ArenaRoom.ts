@@ -1,6 +1,7 @@
 import { CloseCode, Room, type AuthContext, type Client } from "colyseus";
 import { StateView } from "@colyseus/schema";
 import {
+  CLASS_LIST,
   FULL_LOBBY_COUNTDOWN,
   LOADING_DURATION,
   LOBBY_DURATION,
@@ -268,6 +269,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     player.name = wanted ? claimName(wanted, [...this.state.players.values()]) : fallback;
     player.colorIndex = replaced?.[1].colorIndex ?? this.nextColorIndex();
     player.team = team;
+    // Classe choisie d'office : la première de la liste (la plus à gauche sur l'écran de choix), qu'il peut changer.
+    player.classId = CLASS_LIST[0].id;
     this.state.players.set(client.sessionId, player);
     this.arrivals.push(client.sessionId);
     this.updateLeaders();
@@ -371,7 +374,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     void this.lock();
     this.state.phase = "loading";
     this.state.phaseTimeLeft = LOADING_SECONDS;
-    // Les joueurs qui n'ont pas choisi à temps prennent la classe qui manque le plus à leur équipe.
+    // Filet de sécurité : chaque joueur a une classe dès son arrivée (la première de la liste, voir onJoin) ; une classe
+    // invalide, qui ne devrait plus arriver, est remplacée par celle qui manque le plus à son équipe.
     this.state.players.forEach((player) => {
       if (!getClass(player.classId)) player.classId = pickBotClass(this.teamClasses(player.team));
     });

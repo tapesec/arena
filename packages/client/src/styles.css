@@ -447,11 +447,6 @@ body,
   font-weight: 700;
 }
 
-.class-card-selected {
-  border-color: #ffd76a;
-  box-shadow: 0 0 8px rgba(255, 215, 106, 0.5);
-}
-
 .roster {
   margin-top: 8px;
   text-align: center;
@@ -518,6 +513,266 @@ body,
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Choix de la classe (salle d'attente) --- */
+.lobby-screen {
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.lobby-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Compte à rebours bien visible : gros chiffres, qui passent au rouge et battent dans les 10 dernières secondes. */
+.lobby-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 22px;
+  border: 1px solid rgba(255, 224, 138, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 224, 138, 0.06);
+}
+
+.lobby-timer-label {
+  color: #c8c8c8;
+  font-size: 16px;
+}
+
+.lobby-timer .lobby-countdown {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.lobby-timer-urgent {
+  border-color: rgba(255, 111, 111, 0.6);
+  background: rgba(255, 111, 111, 0.08);
+}
+
+.lobby-timer-urgent .lobby-countdown {
+  color: #ff6f6f;
+  animation: lobby-pulse 1s ease-in-out infinite;
+}
+
+@keyframes lobby-pulse {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lobby-timer-urgent .lobby-countdown {
+    animation: none;
+  }
+}
+
+.lobby-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 1400px;
+}
+
+.lobby-classes {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 1100px;
+}
+
+/* Personnages en 3D : une colonne par classe, de la même largeur que la colonne de texte en dessous. */
+.lobby-stage {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 34vh, 380px);
+  cursor: pointer;
+  outline: none;
+}
+
+/* minmax(0, 1fr) : colonnes toujours égales (alignées sur les personnages), même si un nom est long. */
+.lobby-columns {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.lobby-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+}
+
+.lobby-class-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 14px;
+  background: none;
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.lobby-column-hover .lobby-class-name {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.lobby-column-selected .lobby-class-name.team-border-0 {
+  border-color: #6fa3ff;
+  box-shadow: 0 0 10px rgba(111, 163, 255, 0.45);
+}
+
+.lobby-column-selected .lobby-class-name.team-border-1 {
+  border-color: #ff6f6f;
+  box-shadow: 0 0 10px rgba(255, 111, 111, 0.45);
+}
+
+/* Huit compétences sur deux lignes de quatre. */
+.lobby-abilities {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 40px));
+  gap: 5px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Les icônes rétrécissent avec leur colonne (fenêtre étroite). */
+.lobby-ability {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  cursor: default;
+}
+
+.lobby-ability .slot-icon {
+  inset: 5px;
+}
+
+.lobby-class-summary {
+  margin: 0;
+  max-width: 220px;
+  /* Trois lignes réservées : les grilles de compétences restent alignées d'une colonne à l'autre. */
+  min-height: 4.2em;
+  color: #aab;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Touche de la compétence, plus petite que sur la barre de jeu (cases plus petites). */
+.lobby-ability .slot-key {
+  font-size: 10px;
+}
+
+/* Ultime : liseré doré et petite étoile. */
+.lobby-ability-ultimate,
+.lobby-ability-ultimate:hover {
+  border-color: #e0b84f;
+  box-shadow: 0 0 6px rgba(224, 184, 79, 0.45);
+}
+
+.lobby-ultimate-star {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  color: #ffd76a;
+  font-size: 10px;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.tooltip-tag {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(224, 184, 79, 0.2);
+  color: #ffd76a;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.lobby-ability:focus-visible {
+  outline: 2px solid #ffe08a;
+  outline-offset: 1px;
+}
+
+/* Infobulle jamais plus large que l'écran (téléphone). */
+.lobby-ability .slot-tooltip {
+  max-width: min(240px, 90vw);
+}
+
+/* Infobulles des colonnes du bord : calées vers l'intérieur pour ne pas sortir de l'écran. */
+.lobby-column:first-child .slot-tooltip {
+  left: 0;
+  transform: none;
+}
+
+.lobby-column:last-child .slot-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.lobby-stage-wrap {
+  position: relative;
+}
+
+.lobby-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a93a3;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Liste de son équipe, en colonne à droite. */
+.lobby-body .roster {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding: 12px 16px;
+  border: 1px solid #2c323c;
+  border-radius: 8px;
+  background: #161a20;
+}
+
+/* Très petite fenêtre : les cases deviennent minuscules, la touche masquerait l'icône. */
+@media (max-width: 700px) {
+  .lobby-ability .slot-key {
+    display: none;
+  }
+
+  .lobby-ultimate-star {
+    font-size: 8px;
+  }
+}
+
+/* Fenêtre étroite : la liste d'équipe passe sous les personnages. */
+@media (max-width: 1380px) {
+  .lobby-body {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lobby-classes {
+    width: 100%;
+  }
+}
+
 .phase-banner {
   position: absolute;
   top: 12px;
@@ -546,34 +801,6 @@ body,
   font-size: 40px;
 }
 
-.class-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  max-width: 1000px;
-}
-
-.class-card {
-  width: 180px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  background: #1c2128;
-  color: inherit;
-  border: 1px solid #3a4250;
-  border-radius: 8px;
-  font: inherit;
-  cursor: pointer;
-}
-
-.class-card:hover {
-  border-color: #ffd76a;
-  background: #232a33;
-}
-
 .class-name {
   font-size: 17px;
   font-weight: 700;
@@ -582,13 +809,6 @@ body,
 .class-role {
   color: #ffd76a;
   font-size: 13px;
-}
-
-.class-stats,
-.class-abilities {
-  color: #aab;
-  font-size: 12px;
-  line-height: 1.4;
 }
 
 /* --- Cadres et effets --- */

@@ -469,6 +469,8 @@ export class CharacterAssets {
   private containers = new Map<string, Promise<AssetContainer>>();
   // Ombres portées : chaque personnage créé (et ses armes) projette son ombre.
   shadows: Shadows | null = null;
+  // Attente avant tout téléchargement (jeu : l'écran de choix de classe passe d'abord, voir lobbyPriority).
+  gate: Promise<void> | null = null;
   // Animations Mixamo, reciblées une fois sur un personnage modèle invisible (voir mixamo.ts).
   private mixamo: Promise<AnimationGroup[]> | null = null;
   // Éditeur d'apparence : textures de couleur (variantes, teintes), chargées une fois par fichier et par teinte, avec le
@@ -478,9 +480,12 @@ export class CharacterAssets {
   private monsterAnimations = new Map<string, Promise<AnimationGroup[]>>();
 
   // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
+  // mixamoOnly : seules ces animations Mixamo sont chargées et reciblées (le choix de classe n'en joue que quelques-unes,
+  // inutile de décoder toutes les autres pendant que le jeu charge).
   constructor(
     private scene: Scene,
     private libraries: string[] = ANIMATION_LIBRARIES,
+    private mixamoOnly?: ReadonlySet<string>,
   ) {
     registerBuiltInLoaders();
   }
@@ -505,7 +510,8 @@ export class CharacterAssets {
       // Aucune animation lancée au chargement : elles sont jouées sur les personnages, pas sur les modèles d'origine.
       const options = { pluginOptions: { gltf: { animationStartMode: GLTFLoaderAnimationStartMode.NONE } } };
       // Un chemin absolu (commençant par /) est pris tel quel, les autres sont relatifs à public/models/.
-      container = LoadAssetContainerAsync(url.startsWith("/") ? url : assetUrl(`models/${url}`), this.scene, options).then((loaded) => {
+      const gate = this.gate ?? Promise.resolve();
+      container = gate.then(() => LoadAssetContainerAsync(url.startsWith("/") ? url : assetUrl(`models/${url}`), this.scene, options)).then((loaded) => {
         // Sans image d'environnement à refléter, le métal sort presque noir : on l'atténue.
         for (const material of loaded.materials) {
           if (material.getClassName() === "PBRMaterial") (material as unknown as { metallic: number }).metallic = METALLIC;
@@ -533,7 +539,7 @@ export class CharacterAssets {
       const all = this.libraries !== ANIMATION_LIBRARIES;
       const used = usedAnimations();
       for (const [name, url] of Object.entries(MIXAMO_ANIMATIONS)) {
-        if (!all && !used.has(name)) continue;
+        if (this.mixamoOnly ? !this.mixamoOnly.has(name) : !all && !used.has(name)) continue;
         const group = retargetMixamo(name, await this.load(url), root);
         if (group) groups.push(group);
       }

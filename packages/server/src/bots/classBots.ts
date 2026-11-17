@@ -446,6 +446,7 @@ class GardienBot extends BotBrain {
     }
 
     const attacked = this.combat.now - ward.lastMeleeHitAt < 3;
+    // Interception : à débloquer, hors de la barre pour l'instant (tryUse l'ignore alors).
     if (attacked && this.hpRatio(ward) < 0.4) this.tryUse("intercept", ward);
 
     // L'agresseur du protégé, sinon l'ennemi le plus proche de lui.
