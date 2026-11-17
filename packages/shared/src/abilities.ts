@@ -68,6 +68,8 @@ export interface AbilityDef {
   // Temps de recharge en secondes ; 0 = aucun.
   cooldown: number;
   target: AbilityTarget;
+  // Compétence ultime (une par classe, longue recharge), signalée sur l'écran de choix.
+  ultimate?: boolean;
   // Technique de mêlée (comme les styles de DAoC) : elle part au prochain coup d'arme, à la place du coup normal
   // (aussitôt si l'arme est prête). Peut être esquivée, bloquée, et profite du buff de force et des critiques.
   melee?: boolean;
@@ -201,6 +203,7 @@ const list: AbilityDef[] = [
   },
   {
     id: "rampart",
+    ultimate: true,
     name: "Rempart",
     description:
       "Pendant 10 s, le Gardien et les alliés à 30 m de lui ne subissent aucune attaque de mêlée. Le Gardien ne peut plus rien faire ; l'effet s'arrête s'il meurt ou s'il est mez ou stun.",
@@ -309,6 +312,7 @@ const list: AbilityDef[] = [
   },
   {
     id: "arcanePower",
+    ultimate: true,
     name: "Puissance arcanique",
     description: "Pendant 15 s, tous les sorts de dégâts de l'Arcaniste sont critiques (× 1,5).",
     castTime: 0,
@@ -436,6 +440,7 @@ const list: AbilityDef[] = [
   },
   {
     id: "divineIntervention",
+    ultimate: true,
     name: "Intervention divine",
     description: "Relève tous les alliés morts à 30 m à 50 % de vie, sans aucun buff.",
     castTime: 5,
@@ -535,6 +540,7 @@ const list: AbilityDef[] = [
   },
   {
     id: "ballad",
+    ultimate: true,
     name: "Ballade rythmée",
     description:
       "Pendant 10 s, tous les alliés courent 100 % plus vite et sont immunisés aux root et snares (ceux en place sont retirés). Chacun la perd dès qu'il agit.",
@@ -673,6 +679,7 @@ const list: AbilityDef[] = [
   },
   {
     id: "rage",
+    ultimate: true,
     name: "Rage",
     description: "Tous les coups sont critiques pendant 10 s.",
     castTime: 0,

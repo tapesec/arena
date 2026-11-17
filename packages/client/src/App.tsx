@@ -9,7 +9,7 @@ import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { WHEEL_INNER } from "./game/OrderWheel";
 import { ClassLineup } from "./game/ClassLineup";
 import { lobbyReady } from "./game/lobbyPriority";
-import { abilityDescription, abilityName, className, classRole, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
+import { abilityDescription, abilityName, className, classRole, classSummary, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame, type SelfFrame } from "./store";
 
 export function App() {
@@ -337,7 +337,7 @@ function ClassSelectScreen() {
                   ))}
                 </select>
               ) : (
-                <strong className="roster-class">{mate.classId ? className(mate.classId) : t("lobby.choosing")}</strong>
+                <strong className="roster-class">{className(mate.classId)}</strong>
               )}
             </div>
           ))}
@@ -442,9 +442,10 @@ function ClassLineupView({ team, selected, onSelect }: { team: number; selected:
               <span className="class-name">{className(c.id)}</span>
               <span className="class-role">{classRole(c.id)}</span>
             </button>
+            <p className="lobby-class-summary">{classSummary(c.id)}</p>
             <div className="lobby-abilities">
-              {c.abilities.map((abilityId) => (
-                <LobbyAbility key={abilityId} abilityId={abilityId} />
+              {c.abilities.map((abilityId, slot) => (
+                <LobbyAbility key={abilityId} abilityId={abilityId} slot={slot} />
               ))}
             </div>
           </div>
@@ -454,36 +455,41 @@ function ClassLineupView({ team, selected, onSelect }: { team: number; selected:
   );
 }
 
-// Icône d'une compétence dans le choix de classe, avec l'infobulle de la barre de jeu au survol (ou au focus clavier).
-function LobbyAbility({ abilityId }: { abilityId: string }) {
+// Icône d'une compétence dans le choix de classe, avec sa touche (comme sur la barre de jeu), un liseré doré pour
+// l'ultime, et l'infobulle de la barre de jeu au survol (ou au focus clavier). slot : sa place dans la barre (0 = touche 1).
+function LobbyAbility({ abilityId, slot }: { abilityId: string; slot: number }) {
   const [shown, setShown] = useState(false);
   const ability = getAbility(abilityId);
   if (!ability) return null;
   return (
     <div
-      className="slot lobby-ability"
+      className={`slot lobby-ability ${ability.ultimate ? "lobby-ability-ultimate" : ""}`}
       style={{ color: abilityColor(abilityId) }}
       tabIndex={0}
-      aria-label={abilityName(abilityId)}
+      aria-label={`${(slot + 1) % 10} · ${abilityName(abilityId)}${ability.ultimate ? ` · ${t("lobby.ultimate")}` : ""}`}
       onMouseEnter={() => setShown(true)}
       onMouseLeave={() => setShown(false)}
       onFocus={() => setShown(true)}
       onBlur={() => setShown(false)}
     >
       <span className="slot-icon" dangerouslySetInnerHTML={{ __html: abilityIcon(abilityId) ?? "" }} />
+      <span className="slot-key">{(slot + 1) % 10}</span>
+      {ability.ultimate && <span className="lobby-ultimate-star" aria-hidden="true">★</span>}
       {ability.position && <PositionBadge position={ability.position} wrong={false} />}
-      {shown && <AbilityTooltip ability={ability} />}
+      {shown && <AbilityTooltip ability={ability} tag={ability.ultimate ? t("lobby.ultimate") : undefined} />}
     </div>
   );
 }
 
 // Infobulle d'une compétence : nom à la couleur de son école, coût, incantation, portée et recharge, description, et la
 // raison pour laquelle elle ne part pas (barre de jeu). self : le joueur, pour les valeurs qui dépendent de lui.
-function AbilityTooltip({ ability, self, reason }: { ability: AbilityDef; self?: SelfFrame; reason?: string | null }) {
+// tag : mention à côté du nom (« Ultime » sur l'écran de choix).
+function AbilityTooltip({ ability, self, reason, tag }: { ability: AbilityDef; self?: SelfFrame; reason?: string | null; tag?: string }) {
   return (
     <div className="slot-tooltip">
       <div className="tooltip-name" style={{ color: abilityColor(ability.id) }}>
         {abilityName(ability.id)}
+        {tag && <span className="tooltip-tag">{tag}</span>}
       </div>
       <div className="tooltip-details">{abilityDetails(ability, self).join(" · ")}</div>
       <div className="tooltip-description">{abilityDescription(ability.id)}</div>

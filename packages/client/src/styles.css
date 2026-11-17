@@ -657,6 +657,52 @@ body,
   inset: 5px;
 }
 
+.lobby-class-summary {
+  margin: 0;
+  max-width: 220px;
+  /* Trois lignes réservées : les grilles de compétences restent alignées d'une colonne à l'autre. */
+  min-height: 4.2em;
+  color: #aab;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Touche de la compétence, plus petite que sur la barre de jeu (cases plus petites). */
+.lobby-ability .slot-key {
+  font-size: 10px;
+}
+
+/* Ultime : liseré doré et petite étoile. */
+.lobby-ability-ultimate,
+.lobby-ability-ultimate:hover {
+  border-color: #e0b84f;
+  box-shadow: 0 0 6px rgba(224, 184, 79, 0.45);
+}
+
+.lobby-ultimate-star {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  color: #ffd76a;
+  font-size: 10px;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.tooltip-tag {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(224, 184, 79, 0.2);
+  color: #ffd76a;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
 .lobby-ability:focus-visible {
   outline: 2px solid #ffe08a;
   outline-offset: 1px;
@@ -702,6 +748,17 @@ body,
   border: 1px solid #2c323c;
   border-radius: 8px;
   background: #161a20;
+}
+
+/* Très petite fenêtre : les cases deviennent minuscules, la touche masquerait l'icône. */
+@media (max-width: 700px) {
+  .lobby-ability .slot-key {
+    display: none;
+  }
+
+  .lobby-ultimate-star {
+    font-size: 8px;
+  }
 }
 
 /* Fenêtre étroite : la liste d'équipe passe sous les personnages. */

@@ -3,12 +3,12 @@ import { NEAR_SIGHT_FACTOR, type ClassId, type EffectKind } from "@arena/shared"
 // Noms et descriptions du contenu du jeu en anglais. En français, ils viennent directement de @arena/shared
 // (la référence du GDD et du tableur) : voir content.ts.
 
-export const CLASSES_EN: Record<ClassId, { name: string; role: string }> = {
-  gardien: { name: "Guardian", role: "Tank" },
-  arcaniste: { name: "Arcanist", role: "Magic damage" },
-  pretre: { name: "Priest", role: "Healer" },
-  barde: { name: "Bard", role: "Crowd control" },
-  lame: { name: "Blade", role: "Melee damage" },
+export const CLASSES_EN: Record<ClassId, { name: string; role: string; summary: string }> = {
+  gardien: { name: "Guardian", role: "Tank", summary: "Protects vulnerable allies and holds the front line." },
+  arcaniste: { name: "Arcanist", role: "Magic damage", summary: "Heavy damage from range, as long as someone protects them." },
+  pretre: { name: "Priest", role: "Healer", summary: "Keeps the group alive, brings the dead back and strengthens allies." },
+  barde: { name: "Bard", role: "Crowd control", summary: "Neutralizes the enemy group and controls the pace of the fight." },
+  lame: { name: "Blade", role: "Melee damage", summary: "Hunts down and kills fragile targets, casters first." },
 };
 
 export const EFFECTS_EN: Record<EffectKind, string> = {

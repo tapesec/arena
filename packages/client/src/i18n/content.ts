@@ -29,3 +29,8 @@ export function classRole(id: string): string {
   if (currentLanguage() === "en") return CLASSES_EN[id as ClassId]?.role ?? "";
   return CLASSES[id as ClassId]?.role ?? "";
 }
+
+export function classSummary(id: string): string {
+  if (currentLanguage() === "en") return CLASSES_EN[id as ClassId]?.summary ?? "";
+  return CLASSES[id as ClassId]?.summary ?? "";
+}
