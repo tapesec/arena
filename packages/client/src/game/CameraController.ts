@@ -3,9 +3,10 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import { useHudStore } from "../store";
 
-// Vue isométrique : caméra en diagonale, inclinée d'environ 55° par rapport à la verticale.
+// Vue isométrique : caméra en diagonale, inclinée d'environ 46° par rapport à la verticale (55° avant le
+// 2026-11-19 : plus plongeante, les murs cachent moins le joueur et on voit plus loin autour de lui).
 const DEFAULT_ALPHA = (-3 * Math.PI) / 4;
-const BETA = 0.95;
+const BETA = 0.8;
 // Inclinaison réglable à la souris : de presque à la verticale à presque rasante.
 const MIN_BETA = 0.3;
 const MAX_BETA = 1.35;
