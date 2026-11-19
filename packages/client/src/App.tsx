@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type AbilityDef, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
@@ -6,7 +6,8 @@ import { LanguageMenu } from "./LanguageMenu";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
-import { WHEEL_INNER } from "./game/OrderWheel";
+import { OrderWheelGraphic } from "./OrderWheelGraphic";
+import { Tutorial, tutorialSeen } from "./Tutorial";
 import { ClassLineup } from "./game/ClassLineup";
 import { lobbyReady } from "./game/lobbyPriority";
 import { abilityDescription, abilityName, className, classRole, classSummary, effectLabel, formatDecimal, moveKeys, quote, t, type TextKey } from "./i18n";
@@ -185,62 +186,13 @@ function Hud() {
   );
 }
 
-// Roue des ordres : rayons extérieur et intérieur du disque (pixels), et rayon où sont écrits les ordres.
-const WHEEL_OUTER = 180;
-const WHEEL_LABEL = (WHEEL_OUTER + WHEEL_INNER) / 2;
-
-// Point à la distance radius du centre, dans la direction angle (0 en haut, sens horaire), dans le repère du SVG.
-function wheelPoint(angle: number, radius: number): string {
-  return `${WHEEL_OUTER + Math.sin(angle) * radius},${WHEEL_OUTER - Math.cos(angle) * radius}`;
-}
-
-// Part de disque (couronne) centrée sur center, d'ouverture span.
-function wheelSector(center: number, span: number): string {
-  const from = center - span / 2;
-  const to = center + span / 2;
-  return [
-    `M ${wheelPoint(from, WHEEL_INNER)}`,
-    `L ${wheelPoint(from, WHEEL_OUTER)}`,
-    `A ${WHEEL_OUTER} ${WHEEL_OUTER} 0 0 1 ${wheelPoint(to, WHEEL_OUTER)}`,
-    `L ${wheelPoint(to, WHEEL_INNER)}`,
-    `A ${WHEEL_INNER} ${WHEEL_INNER} 0 0 0 ${wheelPoint(from, WHEEL_INNER)}`,
-    "Z",
-  ].join(" ");
-}
-
-// Roue des ordres aux bots, ouverte tant que la molette est enfoncée (voir game/OrderWheel.ts) : un disque
-// semi-transparent découpé en parts, une par ordre, le premier en haut puis dans le sens des aiguilles d'une montre.
+// Roue des ordres aux bots, ouverte tant que la molette est enfoncée (voir game/OrderWheel.ts), centrée sur la souris.
 function OrderWheelView() {
   const wheel = useHudStore((s) => s.orderWheel);
   if (!wheel) return null;
-  const span = (2 * Math.PI) / wheel.items.length;
-  const size = WHEEL_OUTER * 2;
   return (
     <div className="order-wheel" style={{ left: wheel.x, top: wheel.y }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {wheel.items.map((item, index) =>
-          index === wheel.selected ? null : (
-            <path key={item.id} className={`order-wheel-sector${item.enabled ? "" : " order-wheel-disabled"}`} d={wheelSector(index * span, span)} />
-          ),
-        )}
-        {/* La part pointée en dernier : son contour doré passe par-dessus ceux de ses voisines. */}
-        {wheel.selected !== null && (
-          <path className="order-wheel-sector order-wheel-selected" d={wheelSector(wheel.selected * span, span)} />
-        )}
-      </svg>
-      {wheel.items.map((item, index) => {
-        const angle = index * span;
-        const classes = ["order-wheel-label"];
-        if (!item.enabled) classes.push("order-wheel-disabled");
-        if (index === wheel.selected) classes.push("order-wheel-selected");
-        const x = Math.sin(angle) * WHEEL_LABEL;
-        const y = -Math.cos(angle) * WHEEL_LABEL;
-        return (
-          <div key={item.id} className={classes.join(" ")} style={{ transform: `translate(${x}px, ${y}px) translate(-50%, -50%)` }}>
-            {item.label}
-          </div>
-        );
-      })}
+      <OrderWheelGraphic items={wheel.items} selected={wheel.selected} />
     </div>
   );
 }
@@ -290,6 +242,10 @@ function ClassSelectScreen() {
   const humans = teammates.filter((mate) => !mate.isBot).length;
   const full = (match?.matchSize ?? 0) > 0 && (match?.playerCount ?? 0) >= (match?.matchSize ?? 0);
 
+  // Didacticiel : ouvert d'office à la première partie (voir Tutorial), puis par le bouton « Comment jouer ? ».
+  const [tutorial, setTutorial] = useState(() => !tutorialSeen());
+  const closeTutorial = useCallback(() => setTutorial(false), []);
+
   const timeLeft = match?.timeLeft ?? 0;
   const choose = (classId: ClassId) => {
     audio.play(UI_SOUNDS.classSelect);
@@ -310,7 +266,11 @@ function ClassSelectScreen() {
         <p className="screen-hint">
           {full ? t("lobby.full") : t("lobby.players", { humans, total: teammates.length })}
         </p>
+        <button type="button" className="secondary-button tutorial-open" onClick={() => setTutorial(true)}>
+          {t("tutorial.open")}
+        </button>
       </header>
+      {tutorial && <Tutorial classId={myClass as ClassId | ""} onClose={closeTutorial} />}
       <div className="lobby-body">
         <ClassLineupView team={team} selected={myClass} onSelect={choose} />
         <aside className="roster">
