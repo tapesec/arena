@@ -51,6 +51,9 @@ const FLEE_ANGLES = [0, 30, -30, 60, -60, 90, -90, 120, -120];
 // Suivez-moi : distance à laquelle chaque bot suit le joueur (tirée au hasard pour qu'ils ne s'empilent pas).
 const FOLLOW_MIN_DISTANCE = 2.5;
 const FOLLOW_MAX_DISTANCE = 5;
+// Suivi d'office du début du combat (voir followHumansAtStart) : il cesse si le joueur suivi ne s'éloigne pas d'au
+// moins 1 m de sa position pendant ce temps (secondes), pour qu'un joueur absent ne retienne pas toute son équipe.
+const START_FOLLOW_IDLE = 15;
 
 // Ordre donné par un joueur (roue de la molette) : qui l'a donné, sa cible (Assistez-moi), et jusqu'à quand il vaut.
 export interface BotOrder {
@@ -58,6 +61,8 @@ export interface BotOrder {
   issuer: PlayerRuntime;
   target: PlayerRuntime | null;
   until: number;
+  // Donné d'office au début du combat, et non par le joueur.
+  automatic?: boolean;
 }
 
 // Erreur humaine : les bots ne sont pas des machines parfaites. Modifiable (les tests la coupent).
@@ -96,6 +101,10 @@ export class BotBrain {
   // Ordre en cours (un seul à la fois : un nouvel ordre remplace le précédent).
   order: BotOrder | null = null;
   private followDistance = FOLLOW_MIN_DISTANCE + Math.random() * (FOLLOW_MAX_DISTANCE - FOLLOW_MIN_DISTANCE);
+  // Suivi d'office : dernière position où le joueur suivi a bougé, et quand.
+  private guideMark: { x: number; z: number; at: number } | null = null;
+  // Suivi d'office mis de côté par un ordre ponctuel (buff, soin, vitesse…) : il reprend quand cet ordre est fini.
+  private resumeFollow: BotOrder | null = null;
 
   constructor(
     readonly player: PlayerRuntime,
@@ -106,6 +115,7 @@ export class BotBrain {
   update(dt: number, world: BotWorld) {
     if (!this.player.alive) {
       this.order = null;
+      this.resumeFollow = null;
       this.stop();
       return;
     }
@@ -152,10 +162,13 @@ export class BotBrain {
   // --- Ordres ---
 
   // Reçoit un ordre d'un joueur de son équipe : retourne la réponse du bot. S'il refuse, il garde son ordre précédent.
-  receiveOrder(kind: OrderId, issuer: PlayerRuntime, target: PlayerRuntime | null): OrderReply {
+  receiveOrder(kind: OrderId, issuer: PlayerRuntime, target: PlayerRuntime | null, automatic = false): OrderReply {
     const refusal = this.refuseOrder(kind, issuer);
     if (refusal) return refusal;
-    this.order = { kind, issuer, target, until: this.combat.now + this.orderDuration(kind) };
+    // Un ordre du joueur qui n'est pas Suivez-moi interrompt le suivi d'office sans l'annuler.
+    this.resumeFollow = kind !== "follow" && this.order?.automatic ? this.order : null;
+    this.order = { kind, issuer, target, until: this.combat.now + this.orderDuration(kind), automatic };
+    if (automatic) this.guideMark = { x: issuer.state.x, z: issuer.state.z, at: this.combat.now };
     return kind;
   }
 
@@ -186,12 +199,28 @@ export class BotBrain {
   // Suivez-moi : tant qu'aucun ennemi n'est en vue, le bot suit le joueur ; au premier ennemi aperçu, l'ordre cesse
   // et le bot engage le combat comme d'habitude.
   private follow() {
+    if (this.enemies().length > 0) this.resumeFollow = null;
+    // Ordre ponctuel terminé : le suivi d'office reprend, si le joueur suivi est toujours là.
+    const resume = this.resumeFollow;
+    if (!this.order && resume) {
+      this.resumeFollow = null;
+      if (resume.issuer.alive && this.world.players.get(resume.issuer.id) === resume.issuer) this.order = resume;
+    }
     if (this.order?.kind !== "follow") return;
-    if (this.enemies().length > 0) {
+    if (this.enemies().length > 0 || this.guideIdle()) {
       this.order = null;
       return;
     }
     if (!this.isCasting) this.moveTo(this.order.issuer.state, this.followDistance);
+  }
+
+  // Suivi d'office : le joueur suivi n'a pas bougé depuis START_FOLLOW_IDLE secondes.
+  private guideIdle(): boolean {
+    if (!this.order?.automatic) return false;
+    const { x, z } = this.order.issuer.state;
+    const now = this.combat.now;
+    if (!this.guideMark || distance(this.guideMark, { x, z }) > 1) this.guideMark = { x, z, at: now };
+    return now - this.guideMark.at > START_FOLLOW_IDLE;
   }
 
   // Assistez-moi : la cible du joueur, tant que l'équipe la voit.

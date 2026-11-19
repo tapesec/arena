@@ -8,7 +8,7 @@ import { computeTeamVisibility } from "../visibility";
 import { HUMAN_ERRORS, type BotBrain } from "./BotBrain";
 import { createBotBrain } from "./classBots";
 import { pickBotClass } from "./composition";
-import { dispatchOrder } from "./orders";
+import { dispatchOrder, followHumansAtStart } from "./orders";
 import { Pathfinder } from "./Pathfinder";
 
 const DT = 0.05;
@@ -305,6 +305,58 @@ describe("Bots : ordres", () => {
     sim.spawn("e", "arcaniste", 1, 12, 14);
     sim.run(1);
     assert.equal(sim.bots[0].order, null);
+  });
+
+  it("Début du combat : les bots suivent d'office le chef d'équipe humain, pas ceux d'une équipe sans humain", () => {
+    const sim = new Sim();
+    const lame = sim.spawn("l", "lame", 0, 0, 0, 0, true);
+    const autre = sim.spawn("a", "arcaniste", 0, 3, 0);
+    const chef = sim.spawn("j", "barde", 0, 0, 2);
+    chef.state.leader = true;
+    const adverse = sim.spawn("e", "lame", 1, 30, 0, 0, true);
+    // Sim.spawn ne marque pas les bots : à faire ici, l'équipe d'en face n'a que des bots.
+    lame.state.isBot = adverse.state.isBot = true;
+    followHumansAtStart(sim.bots, sim.combat.players);
+    assert.equal(sim.bots[0].order?.issuer, chef);
+    assert.equal(sim.bots[1].order, null);
+    assert.ok(autre && adverse);
+    chef.state.x += 12;
+    sim.run(5);
+    assert.ok(distance(lame.state, chef.state) <= 5.5, `Lame à ${distance(lame.state, chef.state).toFixed(1)} m`);
+  });
+
+  it("Début du combat : le suivi d'office cesse si le joueur reste sur place 15 s", () => {
+    const sim = new Sim();
+    sim.spawn("l", "lame", 0, 0, 0, 0, true).state.isBot = true;
+    sim.spawn("j", "barde", 0, 0, 2);
+    followHumansAtStart(sim.bots, sim.combat.players);
+    sim.run(10);
+    assert.equal(sim.bots[0].order?.kind, "follow");
+    sim.run(6);
+    assert.equal(sim.bots[0].order, null);
+  });
+
+  it("Début du combat : le délai de 15 s repart quand le joueur bouge", () => {
+    const sim = new Sim();
+    sim.spawn("l", "lame", 0, 0, 0, 0, true).state.isBot = true;
+    const joueur = sim.spawn("j", "barde", 0, 0, 2);
+    followHumansAtStart(sim.bots, sim.combat.players);
+    sim.run(10);
+    joueur.state.x += 3;
+    sim.run(10);
+    assert.equal(sim.bots[0].order?.kind, "follow");
+  });
+
+  it("Début du combat : après un ordre ponctuel, le bot reprend le suivi d'office", () => {
+    const sim = new Sim();
+    const pretre = sim.spawn("p", "pretre", 0, 0, 0, 0, true);
+    pretre.state.isBot = true;
+    const joueur = sim.spawn("j", "lame", 0, 0, 2);
+    followHumansAtStart(sim.bots, sim.combat.players);
+    assert.deepEqual(sim.order("buff", joueur), [{ botId: "p", reply: "buff" }]);
+    sim.run(6);
+    assert.equal(sim.bots[0].order?.kind, "follow");
+    assert.equal(sim.bots[0].order?.automatic, true);
   });
 
   it("Suivez-moi : un Prêtre suit encore le joueur après plus de 10 s sans ennemi", () => {

@@ -22,7 +22,7 @@ import {
 } from "@arena/shared";
 import { BotBrain } from "./bots/BotBrain";
 import { createBotBrain } from "./bots/classBots";
-import { dispatchOrder } from "./bots/orders";
+import { dispatchOrder, followHumansAtStart } from "./bots/orders";
 import { botToReplace, initialBotClasses, pickBotClass } from "./bots/composition";
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
@@ -437,6 +437,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     this.state.phaseTimeLeft = 0;
     this.combat.confine = null;
     this.replaceUnloadedPlayers();
+    followHumansAtStart(this.bots, this.combat.players);
     // L'écran de chargement ne sert plus : sans filtre, il montrerait encore les pseudos adverses.
     this.state.loading.clear();
   }
@@ -453,6 +454,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       this.reportPlayer(id, player, "chargement");
       player.isBot = true;
       player.leader = false;
+      // Le chef suivant de son équipe est désigné après la boucle.
+      this.arrivals = this.arrivals.filter((arrival) => arrival !== id);
       player.name = this.freshName();
       this.combat.setInput(id, NO_INPUT);
       this.bots.push(createBotBrain(runtime, this.combat, this.pathfinder));
@@ -462,6 +465,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       client.leave(CloseCode.CONSENTED);
     }
     this.state.playerCount = this.humans();
+    this.updateLeaders();
   }
 
   // La partie se termine quand une équipe n'a plus aucun joueur vivant (ou plus aucun joueur).

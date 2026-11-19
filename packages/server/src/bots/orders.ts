@@ -56,3 +56,18 @@ export function dispatchOrder(
     }
   }
 }
+
+// Au début du combat, les bots de chaque équipe qui compte un joueur humain le suivent, comme un Suivez-moi donné
+// d'office, jusqu'au premier ennemi aperçu : un nouveau venu n'est pas laissé seul derrière des bots partis au front.
+// Ils suivent le chef d'équipe (premier humain arrivé), à défaut le premier humain de l'équipe. Le suivi cesse aussi
+// si ce joueur reste sur place trop longtemps (voir BotBrain.guideIdle).
+export function followHumansAtStart(bots: readonly BotBrain[], players: ReadonlyMap<string, PlayerRuntime>) {
+  for (const team of [0, 1]) {
+    const humans = [...players.values()].filter((p) => p.alive && !p.state.isBot && p.state.team === team);
+    const guide = humans.find((p) => p.state.leader) ?? humans[0];
+    if (!guide) continue;
+    for (const bot of bots) {
+      if (bot.player.alive && bot.player.state.team === team) bot.receiveOrder("follow", guide, null, true);
+    }
+  }
+}
