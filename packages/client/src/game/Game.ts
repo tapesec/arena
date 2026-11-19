@@ -885,7 +885,10 @@ export class Game {
     const nearSight = isMagic(ability) && self.hasEffect("nearSight") ? NEAR_SIGHT_FACTOR : 1;
     const range = ability.melee ? MELEE_RANGE : ability.range * nearSight;
     const best = this.bestEnemy({ preferFree: true, preferInRange: true, preferFront: true }, range, ability.minRange ?? 0);
-    if (best) this.setTarget(best);
+    if (!best) return;
+    this.setTarget(best);
+    // La première fois, en combat : comment choisir soi-même sa cible.
+    if ((this.room.state as { phase: MatchPhase }).phase === "fighting") useHudStore.getState().showHint("autoTarget", t("hint.autoTarget"));
   }
 
   // Vrai si rien chez le joueur n'empêche la compétence de partir (la cible mise à part).

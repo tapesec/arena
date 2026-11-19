@@ -170,6 +170,7 @@ function Hud() {
       <PrepCard />
       <SpectatorBanner />
       <FlashMessage />
+      <HintMessage />
       <div className="hud-bottom">
         <SelfAuras />
         <SelfCastBar />
@@ -964,6 +965,13 @@ function FlashMessage() {
   const message = useHudStore((s) => s.flashMessage);
   if (!message) return null;
   return <div className="flash-message">{message}</div>;
+}
+
+function HintMessage() {
+  const hint = useHudStore((s) => s.hint);
+  const phase = useHudStore((s) => s.match?.phase);
+  if (!hint || phase !== "fighting") return null;
+  return <div className="hint-message">{hint}</div>;
 }
 
 function CombatLog() {

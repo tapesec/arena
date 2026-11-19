@@ -139,6 +139,11 @@ const MAX_LOG_LINES = 8;
 const ERROR_DISPLAY_MS = 2000;
 
 let errorTimeout: ReturnType<typeof setTimeout> | undefined;
+// Conseil ponctuel (voir showHint) : affiché plus longtemps qu'une erreur, le temps de le lire.
+const HINT_DISPLAY_MS = 6000;
+let hintTimeout: ReturnType<typeof setTimeout> | undefined;
+// Conseils déjà montrés pendant cette visite (au cas où le stockage local est indisponible).
+const shownHints = new Set<string>();
 
 interface HudState {
   // Le joueur a demandé à rejoindre une partie (sinon : écran d'accueil).
@@ -191,6 +196,10 @@ interface HudState {
   startCooldown: (abilityId: string, durationSeconds: number) => void;
   startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
+  // Conseil affiché sous les messages d'erreur, une seule fois par navigateur : key le retient (stockage local, à
+  // défaut pour la visite), un conseil déjà vu n'est plus montré.
+  hint: string | null;
+  showHint: (key: string, message: string) => void;
 }
 
 // Ce qui est remis à zéro à chaque nouvelle partie.
@@ -209,6 +218,7 @@ const freshGame = {
   cooldownEnds: {},
   swing: null,
   flashMessage: null,
+  hint: null,
   orderWheel: null,
 };
 
@@ -281,6 +291,20 @@ export const useHudStore = create<HudState>((set) => ({
   startSwing: (remainingSeconds, struck) => {
     const now = performance.now();
     set({ swing: { start: now, end: now + remainingSeconds * 1000, struck } });
+  },
+  showHint: (key, message) => {
+    const storageKey = `arena.hint.${key}`;
+    if (shownHints.has(key)) return;
+    shownHints.add(key);
+    try {
+      if (localStorage.getItem(storageKey)) return;
+      localStorage.setItem(storageKey, "1");
+    } catch {
+      // Stockage indisponible : le conseil est montré à chaque fois.
+    }
+    clearTimeout(hintTimeout);
+    set({ hint: message });
+    hintTimeout = setTimeout(() => set({ hint: null }), HINT_DISPLAY_MS);
   },
   flash: (message) => {
     clearTimeout(errorTimeout);

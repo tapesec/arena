@@ -73,6 +73,7 @@ export const fr: Record<TextKey, string> = {
   "reply.full": "Tu es déjà au max.",
   "reply.alreadyBuffed": "Tu as déjà tout.",
   "reply.alreadySinging": "Je la chante déjà\u00a0!",
+  "hint.autoTarget": "Cible choisie pour vous · Tab\u00a0: ennemi suivant · clic\u00a0: cibler qui vous voulez",
   "prep.objective": "Objectif\u00a0: éliminer toute l'équipe adverse",
   "prep.noRespawn": "Pas de réapparition\u00a0: restez groupés. Au départ, les bots suivent le chef d'équipe jusqu'au premier ennemi aperçu.",
   "prep.yourClass": "Votre classe\u00a0: {name}",

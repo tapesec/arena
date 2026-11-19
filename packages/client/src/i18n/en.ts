@@ -82,6 +82,7 @@ export const en = {
   "reply.alreadySinging": "Already singing it!",
 
   // Combat
+  "hint.autoTarget": "Target picked for you · Tab: next enemy · click: target anyone you like",
   "prep.objective": "Goal: wipe out the whole enemy team",
   "prep.noRespawn": "No respawn: stay together. At the start, the bots follow the team leader until the first enemy is spotted.",
   "prep.yourClass": "Your class: {name}",
