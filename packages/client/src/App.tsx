@@ -274,34 +274,36 @@ function ClassSelectScreen() {
         <ClassLineupView team={team} selected={myClass} onSelect={choose} />
         <aside className="roster">
           <h2>{t("lobby.yourTeam")}</h2>
-          {teammates.map((mate) => (
-            <div key={mate.id} className={`roster-line ${mate.isSelf ? "roster-self" : ""}`}>
-              <span className="roster-name">
-                {mate.name}
-                {mate.isSelf && <span className="roster-tag">{t("lobby.you")}</span>}
-                {mate.leader && <span className="roster-tag roster-leader">{t("lobby.leader")}</span>}
-                {mate.isBot && <span className="roster-tag roster-bot">{t("lobby.bot")}</span>}
-              </span>
-              {mate.isBot && self?.leader ? (
-                <select
-                  className="roster-select"
-                  value={mate.classId}
-                  onChange={(e) => {
-                    audio.play(UI_SOUNDS.click);
-                    actions?.setBotClass(mate.id, e.target.value as ClassId);
-                  }}
-                >
-                  {CLASS_LIST.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {className(c.id)}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <strong className="roster-class">{className(mate.classId)}</strong>
-              )}
-            </div>
-          ))}
+          <div className="roster-lines">
+            {teammates.map((mate) => (
+              <div key={mate.id} className={`roster-line ${mate.isSelf ? "roster-self" : ""}`}>
+                <span className="roster-name">
+                  {mate.name}
+                  {mate.isSelf && <span className="roster-tag">{t("lobby.you")}</span>}
+                  {mate.leader && <span className="roster-tag roster-leader">{t("lobby.leader")}</span>}
+                  {mate.isBot && <span className="roster-tag roster-bot">{t("lobby.bot")}</span>}
+                </span>
+                {mate.isBot && self?.leader ? (
+                  <select
+                    className="roster-select"
+                    value={mate.classId}
+                    onChange={(e) => {
+                      audio.play(UI_SOUNDS.click);
+                      actions?.setBotClass(mate.id, e.target.value as ClassId);
+                    }}
+                  >
+                    {CLASS_LIST.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {className(c.id)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <strong className="roster-class">{className(mate.classId)}</strong>
+                )}
+              </div>
+            ))}
+          </div>
           {self?.leader && <p className="screen-hint">{t("lobby.leaderHint")}</p>}
           <p className="screen-hint">{t("lobby.hidden")}</p>
         </aside>

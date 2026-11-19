@@ -638,17 +638,17 @@ body,
   }
 }
 
+/* Choix de classe centré à l'écran, la liste de son équipe en dessous (décidé le 2026-11-19). */
 .lobby-body {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   gap: 24px;
   width: 100%;
-  max-width: 1400px;
 }
 
 .lobby-classes {
-  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   max-width: 1100px;
 }
@@ -809,7 +809,21 @@ body,
   pointer-events: none;
 }
 
-/* Liste de son équipe, en colonne à droite. */
+/* Liste de son équipe, sous le choix de classe : deux colonnes de 4, pour rester courte (tout tient sur un écran de
+   portable). */
+.lobby-body .roster-lines {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, auto));
+  column-gap: 24px;
+}
+
+@media (max-width: 760px) {
+  .lobby-body .roster-lines {
+    grid-template-columns: minmax(0, auto);
+  }
+}
+
+/* Liste de son équipe, sous le choix de classe. */
 .lobby-body .roster {
   flex: 0 0 auto;
   margin-top: 0;
@@ -827,18 +841,6 @@ body,
 
   .lobby-ultimate-star {
     font-size: 8px;
-  }
-}
-
-/* Fenêtre étroite : la liste d'équipe passe sous les personnages. */
-@media (max-width: 1380px) {
-  .lobby-body {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .lobby-classes {
-    width: 100%;
   }
 }
 
