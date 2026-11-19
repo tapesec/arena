@@ -76,6 +76,7 @@ import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
+import { TargetPointer, edgePoint } from "./TargetPointer";
 import { MAGNET_RADIUS, bestCandidate, rankEnemies, type EnemyCandidate, type EnemyRanking, type TargetCandidate } from "./targeting";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
@@ -173,6 +174,8 @@ export class Game {
   // Cible ennemie vivante à l'image précédente : sa mort déclenche un nouveau ciblage (voir retargetAfterDeath).
   private aliveEnemyTarget: string | null = null;
   private targetMarker!: Mesh;
+  // Flèche au bord de l'écran vers la cible hors champ.
+  private targetPointer: TargetPointer;
   private lastHudRefresh = 0;
   private lastHudSnapshot = "";
   // Chargement du jeu, suivi pour l'écran de chargement ; dernier pourcentage envoyé au serveur.
@@ -209,6 +212,7 @@ export class Game {
       if (!this.isSpectating) this.sendMove();
     });
     this.overlay = new WorldOverlay(overlayElement, this.scene);
+    this.targetPointer = new TargetPointer(overlayElement);
     this.spellEffects = new SpellEffects(this.scene);
     this.village = new Village(this.scene);
     // Le chargement attend que l'écran de choix ait affiché ses personnages (voir lobbyPriority) : préchargement, mais
@@ -297,6 +301,7 @@ export class Game {
   dispose() {
     this.disposed = true;
     this.unsubscribeMovementMode();
+    this.targetPointer.dispose();
     clearInterval(this.pingTimer);
     clearInterval(this.perfTimer);
     useHudStore.getState().setActions(null);
@@ -978,9 +983,39 @@ export class Game {
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
     this.targetMarker.setEnabled(!!target);
     if (target) this.targetMarker.position.set(target.root.position.x, target.root.position.y + 0.06, target.root.position.z);
+    this.updateTargetPointer(self, target);
 
     this.refreshHud(self, target);
     this.scene.render();
+  }
+
+  // Cible hors champ : flèche au bord de l'écran dans sa direction, avec sa distance.
+  private updateTargetPointer(self: PlayerVisual | undefined, target: PlayerVisual | undefined) {
+    const camera = this.scene.activeCamera;
+    if (!self || !self.isAlive || !target || target === self || !target.root.isEnabled() || !camera) {
+      this.targetPointer.update(null, false, 0);
+      return;
+    }
+    // La caméra vient de bouger (follow) : matrices de cette image, pas de la précédente.
+    this.scene.updateTransformMatrix(true);
+    const width = this.engine.getRenderWidth();
+    const height = this.engine.getRenderHeight();
+    const projected = Vector3.Project(
+      target.root.position.add(BODY_CENTER),
+      Matrix.IdentityReadOnly,
+      this.scene.getTransformMatrix(),
+      camera.viewport.toGlobal(width, height),
+    );
+    const cssWidth = this.canvas.clientWidth;
+    const cssHeight = this.canvas.clientHeight;
+    const point = edgePoint(
+      (projected.x * cssWidth) / width,
+      (projected.y * cssHeight) / height,
+      projected.z < 0 || projected.z > 1,
+      cssWidth,
+      cssHeight,
+    );
+    this.targetPointer.update(point, target.state.team !== self.state.team, distance(self.state, target.state));
   }
 
   // Son personnage bouge tout de suite, sans attendre le serveur (voir MovementPredictor) : en préparation et en combat,
