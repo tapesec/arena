@@ -809,6 +809,50 @@ body,
   pointer-events: none;
 }
 
+.prep-card {
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 32px));
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Écrans moyens : la carte passerait sur le cadre de la cible (en haut, à côté de celui du joueur) ; elle se place
+   dessous. */
+@media (max-width: 1480px) {
+  .prep-card {
+    top: 140px;
+  }
+}
+
+.prep-card ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+/* Touche de la compétence, dans le texte (et non au coin d'une case). */
+.prep-card .slot-key {
+  position: static;
+  display: inline-block;
+  min-width: 16px;
+  padding: 0 3px;
+  border: 1px solid rgba(255, 215, 106, 0.6);
+  border-radius: 3px;
+  text-align: center;
+}
+
+.prep-objective {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffe08a;
+}
+
+.prep-class {
+  margin-top: 6px;
+  font-weight: 700;
+}
+
 .end-overlay {
   position: absolute;
   inset: 0;

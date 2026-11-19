@@ -9,7 +9,7 @@ import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { WHEEL_INNER } from "./game/OrderWheel";
 import { ClassLineup } from "./game/ClassLineup";
 import { lobbyReady } from "./game/lobbyPriority";
-import { abilityDescription, abilityName, className, classRole, classSummary, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
+import { abilityDescription, abilityName, className, classRole, classSummary, effectLabel, formatDecimal, moveKeys, quote, t, type TextKey } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame, type SelfFrame } from "./store";
 
 export function App() {
@@ -167,6 +167,7 @@ function Hud() {
         <TargetPanel />
       </div>
       <PhaseBanner />
+      <PrepCard />
       <SpectatorBanner />
       <FlashMessage />
       <div className="hud-bottom">
@@ -546,6 +547,48 @@ function PhaseBanner() {
   return (
     <div className="phase-banner">
       {t("match.preparation")} <strong>{match.timeLeft} s</strong>
+    </div>
+  );
+}
+
+// Conseils de la carte de préparation, par classe : une phrase générale (slot 0), puis des compétences de la barre
+// (numéro de case) suivies de leur conseil. Textes « prep.tip.<classe>.<case> ».
+const PREP_TIPS: Record<ClassId, number[]> = {
+  gardien: [0, 1, 3],
+  arcaniste: [0, 1, 3],
+  pretre: [0, 1, 3],
+  barde: [0, 1, 5],
+  lame: [0, 1, 4],
+};
+
+// Pendant la préparation : ce qu'il faut savoir en quinze secondes (objectif, sa classe, la roue des ordres).
+function PrepCard() {
+  const match = useHudStore((s) => s.match);
+  const classId = useHudStore((s) => s.self?.classId ?? "");
+  if (match?.phase !== "preparation" || !classId) return null;
+  const abilities = getClass(classId)?.abilities ?? [];
+  return (
+    <div className="hud-panel prep-card">
+      <div className="prep-objective">{t("prep.objective")}</div>
+      <div>{t("prep.noRespawn")}</div>
+      <div className="prep-class">{t("prep.yourClass", { name: className(classId) })}</div>
+      <ul>
+        {(PREP_TIPS[classId] ?? []).map((slot) => {
+          const text = t(`prep.tip.${classId}.${slot}` as TextKey);
+          const abilityId = abilities[slot - 1];
+          return (
+            <li key={slot}>
+              {slot > 0 && abilityId && (
+                <>
+                  <span className="slot-key">{slot}</span> <strong>{abilityName(abilityId)}</strong>{" "}
+                </>
+              )}
+              {text}
+            </li>
+          );
+        })}
+      </ul>
+      <div>{t("prep.orders")}</div>
     </div>
   );
 }
