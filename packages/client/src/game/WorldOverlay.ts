@@ -56,7 +56,8 @@ interface Bubble {
 }
 
 // Camp d'un joueur vu par le joueur local : son texte au-dessus de la tête est bleu ou rouge.
-export type Side = "ally" | "enemy";
+// « self » : son propre personnage (pseudo doré, avec un chevron au-dessus pour le repérer dans la mêlée).
+export type Side = "ally" | "enemy" | "self";
 
 // Couche HTML posée sur le canvas : badges de classe, textes flottants (dégâts, soins…)
 // et indicateurs de contrôle au-dessus des têtes. Pilotée par la boucle de jeu, pas par React, pour rester légère.
@@ -87,6 +88,8 @@ export class WorldOverlay {
 
   // Affiche (ou retire, avec null) l'indicateur de contrôle d'un joueur.
   setIndicator(playerId: string, anchor: TransformNode, kind: StatusIndicator | null) {
+    // Un indicateur (Zzz, étoiles, !!!…) prend la place du chevron de son propre personnage, juste au-dessus du pseudo.
+    this.badges.get(playerId)?.element.classList.toggle("nameplate-has-indicator", !!kind);
     const current = this.indicators.get(playerId);
     if (current?.kind === kind) return;
     current?.element.remove();
@@ -130,6 +133,12 @@ export class WorldOverlay {
 
     const element = document.createElement("div");
     element.className = `nameplate nameplate-${side}${alive ? "" : " nameplate-dead"}`;
+    if (side === "self" && alive) {
+      const chevron = document.createElement("span");
+      chevron.className = "nameplate-chevron";
+      chevron.textContent = "▼";
+      element.append(chevron);
+    }
     const text = document.createElement("span");
     text.className = "nameplate-label";
     text.textContent = label;

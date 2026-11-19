@@ -1318,6 +1318,30 @@ body,
   color: #ff5a52;
 }
 
+/* Son propre personnage : pseudo doré, chevron doré au-dessus (décidé le 2026-11-19, pour se repérer dans la
+   mêlée). */
+.nameplate-self .nameplate-label {
+  color: #ffd76a;
+}
+
+/* Au-dessus du pseudo, sans le déplacer (le pseudo reste centré sur son point d'ancrage). */
+.nameplate-chevron {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffd76a;
+  font-size: 18px;
+  line-height: 1;
+  text-shadow:
+    0 0 3px #000,
+    0 1px 2px #000;
+}
+
+.nameplate-has-indicator .nameplate-chevron {
+  display: none;
+}
+
 .nameplate-dead {
   opacity: 0.35;
   filter: grayscale(1);

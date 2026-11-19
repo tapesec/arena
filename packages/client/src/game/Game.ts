@@ -131,6 +131,7 @@ const HOVER_ALLY = new Color3(0.61, 0.78, 1);
 const BODY_CENTER = new Vector3(0, 1.1, 0);
 // Anneau sous la cible : rouge, gris quand un obstacle la cache ; pointillé de ligne de vue, à mi-jambe.
 const TARGET_MARKER_COLOR = new Color3(1, 0.2, 0.2);
+const SELF_MARKER_COLOR = new Color3(1, 0.8, 0.3);
 const TARGET_MARKER_BLOCKED = new Color3(0.45, 0.45, 0.45);
 const SIGHT_LINE_COLOR = new Color3(1, 0.25, 0.25);
 const SIGHT_LINE_ALLY = new Color3(0.44, 0.64, 1);
@@ -190,6 +191,8 @@ export class Game {
   // Cible ennemie vivante à l'image précédente : sa mort déclenche un nouveau ciblage (voir retargetAfterDeath).
   private aliveEnemyTarget: string | null = null;
   private targetMarker!: Mesh;
+  // Anneau doré permanent sous son propre personnage (pour le repérer dans la mêlée).
+  private selfMarker!: Mesh;
   private targetMarkerMaterial!: StandardMaterial;
   // Cible cachée par un obstacle : pointillé rouge du joueur à la cible (voir updateTargetMarker).
   private sightLine: LinesMesh | null = null;
@@ -519,6 +522,14 @@ export class Game {
     material.disableLighting = true;
     this.targetMarker.material = material;
     this.targetMarkerMaterial = material;
+
+    this.selfMarker = CreateTorus("selfMarker", { diameter: 1.5, thickness: 0.16, tessellation: 48 }, this.scene);
+    const selfMaterial = new StandardMaterial("selfMarkerMat", this.scene);
+    selfMaterial.emissiveColor = SELF_MARKER_COLOR;
+    selfMaterial.disableLighting = true;
+    this.selfMarker.material = selfMaterial;
+    this.selfMarker.isPickable = false;
+    this.selfMarker.setEnabled(false);
     this.targetMarker.isPickable = false;
     this.targetMarker.setEnabled(false);
   }
@@ -1000,7 +1011,8 @@ export class Game {
       const classId = player.state.classId as ClassId | "";
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
-      this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
+      const side = enemy ? "enemy" : player === this.self ? "self" : "ally";
+      this.overlay.setBadge(player.sessionId, player.root, classId, label, side, player.isAlive);
     }
     this.retargetAfterDeath();
     this.overlay.update(dt);
@@ -1028,6 +1040,9 @@ export class Game {
     this.updateFog(dt, self, match.phase);
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
+    this.selfMarker.setEnabled(!!self && self.isAlive);
+    // Assez haut pour ne pas s'enfoncer dans le sol (épaisseur 0,16 m).
+    if (self) this.selfMarker.position.set(self.root.position.x, self.root.position.y + 0.08, self.root.position.z);
     this.updateTargetMarker(self, target);
     this.updateTargetPointer(self, target);
 
