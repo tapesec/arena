@@ -10,7 +10,7 @@ import { OrderWheelGraphic } from "./OrderWheelGraphic";
 import { Tutorial, tutorialSeen } from "./Tutorial";
 import { ClassLineup } from "./game/ClassLineup";
 import { lobbyReady } from "./game/lobbyPriority";
-import { abilityDescription, abilityName, className, classRole, classSummary, effectLabel, formatDecimal, moveKeys, quote, t, type TextKey } from "./i18n";
+import { abilityDescription, abilityName, className, classRole, classSummary, effectLabel, formatDecimal, moveKeys, quote, t } from "./i18n";
 import { useHudStore, type CastFrame, type EffectFrame, type GroupMemberFrame, type SelfFrame } from "./store";
 
 export function App() {
@@ -168,7 +168,6 @@ function Hud() {
         <TargetPanel />
       </div>
       <PhaseBanner />
-      <PrepCard />
       <SpectatorBanner />
       <FlashMessage />
       <HintMessage />
@@ -508,49 +507,6 @@ function PhaseBanner() {
   return (
     <div className="phase-banner">
       {t("match.preparation")} <strong>{match.timeLeft} s</strong>
-    </div>
-  );
-}
-
-// Conseils de la carte de préparation, par classe : une phrase générale (« general »), puis des compétences, montrées
-// avec leur touche et leur nom et suivies de leur conseil. Textes « prep.tip.<classe>.<general ou compétence> ».
-const PREP_TIPS: Record<ClassId, string[]> = {
-  gardien: ["general", "guard", "charge"],
-  arcaniste: ["general", "firebolt", "concentration"],
-  pretre: ["general", "heal", "resurrect"],
-  barde: ["general", "mez", "speedSong"],
-  lame: ["general", "backstab", "kick"],
-};
-
-// Pendant la préparation : ce qu'il faut savoir en quinze secondes (objectif, sa classe, la roue des ordres).
-function PrepCard() {
-  const match = useHudStore((s) => s.match);
-  const classId = useHudStore((s) => s.self?.classId ?? "");
-  if (match?.phase !== "preparation" || !classId) return null;
-  const abilities = getClass(classId)?.abilities ?? [];
-  return (
-    <div className="hud-panel prep-card">
-      <div className="prep-objective">{t("prep.objective")}</div>
-      <div>{t("prep.noRespawn")}</div>
-      <div className="prep-class">{t("prep.yourClass", { name: className(classId) })}</div>
-      <ul>
-        {(PREP_TIPS[classId] ?? []).map((tip) => {
-          const text = t(`prep.tip.${classId}.${tip}` as TextKey);
-          const slot = abilities.indexOf(tip) + 1;
-          const abilityId = slot > 0 ? tip : undefined;
-          return (
-            <li key={tip}>
-              {abilityId && (
-                <>
-                  <span className="slot-key">{slot}</span> <strong>{abilityName(abilityId)}</strong>{" "}
-                </>
-              )}
-              {text}
-            </li>
-          );
-        })}
-      </ul>
-      <div>{t("prep.orders")}</div>
     </div>
   );
 }
