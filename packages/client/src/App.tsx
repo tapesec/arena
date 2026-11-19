@@ -266,7 +266,7 @@ function ClassSelectScreen() {
         <p className="screen-hint">
           {full ? t("lobby.full") : t("lobby.players", { humans, total: teammates.length })}
         </p>
-        <button type="button" className="secondary-button tutorial-open" onClick={() => setTutorial(true)}>
+        <button type="button" className="primary-button tutorial-open" onClick={() => setTutorial(true)}>
           {t("tutorial.open")}
         </button>
       </header>
