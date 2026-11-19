@@ -1032,9 +1032,29 @@ function SoundControl() {
   );
 }
 
+// L'aide des commandes est ouverte d'office à la première partie jouée dans ce navigateur (décidé le 2026-11-19).
+const HELP_SEEN_KEY = "arena.helpSeen";
+
+function helpAlreadySeen(): boolean {
+  try {
+    return !!localStorage.getItem(HELP_SEEN_KEY);
+  } catch {
+    // Stockage indisponible : aide fermée, comme avant.
+    return true;
+  }
+}
+
 // Aide des commandes, repliée derrière un bouton « i » (le bouton ne prend pas le focus : le clavier reste au jeu).
 function HelpPanel() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => !helpAlreadySeen());
+  // Retenu une fois l'aide affichée (dans un effet : l'initialisation de l'état peut être appelée deux fois).
+  useEffect(() => {
+    try {
+      localStorage.setItem(HELP_SEEN_KEY, "1");
+    } catch {
+      // Stockage indisponible : rien à retenir.
+    }
+  }, []);
   return (
     <>
       <button
