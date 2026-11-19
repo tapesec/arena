@@ -552,14 +552,14 @@ function PhaseBanner() {
   );
 }
 
-// Conseils de la carte de préparation, par classe : une phrase générale (slot 0), puis des compétences de la barre
-// (numéro de case) suivies de leur conseil. Textes « prep.tip.<classe>.<case> ».
-const PREP_TIPS: Record<ClassId, number[]> = {
-  gardien: [0, 1, 3],
-  arcaniste: [0, 1, 3],
-  pretre: [0, 1, 3],
-  barde: [0, 1, 5],
-  lame: [0, 1, 4],
+// Conseils de la carte de préparation, par classe : une phrase générale (« general »), puis des compétences, montrées
+// avec leur touche et leur nom et suivies de leur conseil. Textes « prep.tip.<classe>.<general ou compétence> ».
+const PREP_TIPS: Record<ClassId, string[]> = {
+  gardien: ["general", "guard", "charge"],
+  arcaniste: ["general", "firebolt", "concentration"],
+  pretre: ["general", "heal", "resurrect"],
+  barde: ["general", "mez", "speedSong"],
+  lame: ["general", "backstab", "kick"],
 };
 
 // Pendant la préparation : ce qu'il faut savoir en quinze secondes (objectif, sa classe, la roue des ordres).
@@ -574,12 +574,13 @@ function PrepCard() {
       <div>{t("prep.noRespawn")}</div>
       <div className="prep-class">{t("prep.yourClass", { name: className(classId) })}</div>
       <ul>
-        {(PREP_TIPS[classId] ?? []).map((slot) => {
-          const text = t(`prep.tip.${classId}.${slot}` as TextKey);
-          const abilityId = abilities[slot - 1];
+        {(PREP_TIPS[classId] ?? []).map((tip) => {
+          const text = t(`prep.tip.${classId}.${tip}` as TextKey);
+          const slot = abilities.indexOf(tip) + 1;
+          const abilityId = slot > 0 ? tip : undefined;
           return (
-            <li key={slot}>
-              {slot > 0 && abilityId && (
+            <li key={tip}>
+              {abilityId && (
                 <>
                   <span className="slot-key">{slot}</span> <strong>{abilityName(abilityId)}</strong>{" "}
                 </>

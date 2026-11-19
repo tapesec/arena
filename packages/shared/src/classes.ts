@@ -14,7 +14,9 @@ export interface ClassDef {
   resource: ResourceType;
   // Attaque automatique de mêlée (valeurs provisoires, non fixées par le GDD).
   autoAttack: { damage: number; interval: number };
-  // Compétences dans l'ordre de la barre (touches 1, 2, 3…).
+  // Compétences dans l'ordre de la barre (touches 1, 2, 3…), sur deux rangées de 4 (décidé le 2026-11-19) : 1 à 4, ce
+  // qu'on enchaîne pour attaquer ou soigner, dans l'ordre d'usage (combos côte à côte) ; 5 à 7, contrôle, défense et
+  // soutien ; 8, l'ultime.
   abilities: string[];
   // Compétences « à débloquer » déjà programmées, pas encore dans la barre (la progression viendra plus tard).
   unlockable?: string[];
@@ -32,7 +34,7 @@ const list: ClassDef[] = [
     maxHp: 1600,
     resource: "endurance",
     autoAttack: { damage: 55, interval: 2 },
-    abilities: ["guard", "shieldBash", "charge", "powerStrike", "taunt", "rallyCry", "cripplingStrike", "rampart"],
+    abilities: ["powerStrike", "shieldBash", "cripplingStrike", "charge", "guard", "taunt", "rallyCry", "rampart"],
     // Interception : retirée de la barre (8 compétences par classe), gardée pour plus tard.
     unlockable: ["intercept"],
     passives: ["shieldBlock"],
@@ -45,7 +47,7 @@ const list: ClassDef[] = [
     maxHp: 900,
     resource: "mana",
     autoAttack: { damage: 30, interval: 2.5 },
-    abilities: ["firebolt", "blast", "concentration", "frostbolt", "nearSight", "burn", "frostNova", "arcanePower"],
+    abilities: ["firebolt", "burn", "frostbolt", "blast", "frostNova", "nearSight", "concentration", "arcanePower"],
     unlockable: ["freeze", "bubble"],
     passives: [],
   },
@@ -57,7 +59,7 @@ const list: ClassDef[] = [
     maxHp: 1100,
     resource: "mana",
     autoAttack: { damage: 30, interval: 2.5 },
-    abilities: ["heal", "instantHeal", "resurrect", "groupHeal", "buffHp", "buffStrength", "renew", "divineIntervention"],
+    abilities: ["heal", "renew", "instantHeal", "groupHeal", "buffHp", "buffStrength", "resurrect", "divineIntervention"],
     passives: [],
   },
   {
@@ -68,7 +70,7 @@ const list: ClassDef[] = [
     maxHp: 1000,
     resource: "mana",
     autoAttack: { damage: 30, interval: 2.5 },
-    abilities: ["mez", "awaken", "aoeMez", "silence", "speedSong", "secondWind", "buffDexterity", "ballad"],
+    abilities: ["mez", "aoeMez", "silence", "awaken", "speedSong", "secondWind", "buffDexterity", "ballad"],
     passives: [],
   },
   {
@@ -79,7 +81,7 @@ const list: ClassDef[] = [
     maxHp: 1300,
     resource: "endurance",
     autoAttack: { damage: 70, interval: 2 },
-    abilities: ["backstab", "flankStrike", "evasion", "kick", "sprint", "poisonBlade", "gangrene", "rage"],
+    abilities: ["backstab", "poisonBlade", "gangrene", "flankStrike", "kick", "evasion", "sprint", "rage"],
     unlockable: ["armorBreak"],
     passives: [],
   },

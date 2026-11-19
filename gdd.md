@@ -72,6 +72,8 @@
 
 ## Classes
 
+Les tableaux de compétences suivent l'ordre de la barre (touches 1 à 8), sur deux rangées de 4 (décidé le 2026-11-19) : 1 à 4, ce qu'on enchaîne pour attaquer ou soigner, dans l'ordre d'usage (les combos de la Lame côte à côte) ; 5 à 7, contrôle, défense et soutien ; 8, l'ultime.
+
 | Classe | Rôle | Points de vie | Ressource |
 |---|---|---|---|
 | Gardien | Tank | 1 600 | Endurance |
@@ -86,13 +88,13 @@ Protège les alliés vulnérables et tient la ligne de front.
 
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
-| Garde | 75 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m maximum), si l'allié et le Gardien sont immobiles au moment du coup. Portée 10 m. | Instantané | 15 endurance | — |
-| Coup de bouclier | Stun de 2 s au contact. Technique de mêlée. | Prochain coup | 40 endurance | 10 s |
-| Charge | Fonce sur un ennemi entre 10 et 30 m (vitesse +500 %), s'arrête au contact : 100 dégâts et stun 4 s, impossibles à esquiver ou bloquer, même sur une cible immunisée au stun (l'immunité est quand même donnée). Impossible rooté. | Instantané | 30 endurance | 20 s |
 | Coup puissant | 100 dégâts, toutes positions. Technique de mêlée. | Prochain coup | 20 endurance | — |
+| Coup de bouclier | Stun de 2 s au contact. Technique de mêlée. | Prochain coup | 40 endurance | 10 s |
+| Frappe handicapante | 100 dégâts et snare 8 s, dans le dos. Technique de mêlée. | Prochain coup | 15 endurance | — |
+| Charge | Fonce sur un ennemi entre 10 et 30 m (vitesse +500 %), s'arrête au contact : 100 dégâts et stun 4 s, impossibles à esquiver ou bloquer, même sur une cible immunisée au stun (l'immunité est quand même donnée). Impossible rooté. | Instantané | 30 endurance | 20 s |
+| Garde | 75 % de chances de bloquer les attaques de mêlée visant l'allié protégé (à 4 m maximum), si l'allié et le Gardien sont immobiles au moment du coup. Portée 10 m. | Instantané | 15 endurance | — |
 | Provocation | 6 s : la cible inflige 50 % de dégâts en moins (mêlée et sorts) à tout autre que le Gardien. Sur le coup : arrêt net 0,5 s, incantation interrompue, attaque automatique arrêtée, cible tournée vers le Gardien. Pas d'immunité. Portée 30 m. | Instantané | 30 endurance | 20 s |
 | Cri de ralliement | Le Gardien et les alliés à 20 m sont immunisés aux contrôles magiques 6 s ; ceux déjà en place sont retirés. Contrôle magique = venu d'un sort (mana, hors technique de mêlée). | Instantané | 30 endurance | 60 s |
-| Frappe handicapante | 100 dégâts et snare 8 s, dans le dos. Technique de mêlée. | Prochain coup | 15 endurance | — |
 | Rempart (ultime) | 10 s : le Gardien et les alliés à 30 m (y compris ceux qui arrivent) ne subissent aucune attaque de mêlée. Le Gardien ne peut plus rien faire ; l'effet s'arrête s'il meurt ou s'il est mez ou stun. | Instantané | 50 endurance | 3 min |
 | *(à débloquer)* Interception | Encaisse à la place d'un allié (à 4 m) le prochain coup qui le vise, pendant 10 s. Portée 20 m. Retirée de la barre le 2026-11-17 (8 compétences par classe), programmée et gardée pour plus tard. | Instantané | 25 endurance | 10 s |
 | Passif | 30 % de chances de bloquer avec le bouclier. | — | — | — |
@@ -104,12 +106,12 @@ Gros dégâts à distance, à condition d'être protégé.
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
 | Trait de feu | 250 dégâts sur une cible. | 2 s | 100 mana | — |
-| Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 7 m (pas les alliés), 450 dégâts au centre, décroissant jusqu'à 100 au bord. | 2 s | 150 mana | — |
-| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 30 s (90 s avant le 2026-11-19) |
-| Trait de givre | 150 dégâts de givre et snare 4 s (contrôle magique). | 2 s | 100 mana | — |
-| Near sight | 15 s : la portée des sorts de la cible est réduite de 75 % (30 m → 7,5 m) ; une incantation en cours échoue si la cible est trop loin à la fin. Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire. | 1,5 s | 100 mana | — |
 | Brûlure | Dot de feu : 400 dégâts en 10 s, un tic par seconde. Comme dans DAoC, chaque tic libère du mez et du root mais n'interrompt pas l'incantation (et n'est pas intercepté). Relancée, elle repart de zéro. | 2 s | 200 mana | — |
+| Trait de givre | 150 dégâts de givre et snare 4 s (contrôle magique). | 2 s | 100 mana | — |
+| Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 7 m (pas les alliés), 450 dégâts au centre, décroissant jusqu'à 100 au bord. | 2 s | 150 mana | — |
 | Nova de givre | Root 12 s sur les ennemis à 15 m autour du lanceur, sans cible. | 1,5 s | 200 mana | 60 s |
+| Near sight | 15 s : la portée des sorts de la cible est réduite de 75 % (30 m → 7,5 m) ; une incantation en cours échoue si la cible est trop loin à la fin. Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire. | 1,5 s | 100 mana | — |
+| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 30 s (90 s avant le 2026-11-19) |
 | Puissance arcanique (ultime) | 15 s : tous les sorts de dégâts de l'Arcaniste sont critiques (× 1,5), tics de la Brûlure compris. | Instantané | 400 mana | 3 min |
 
 À débloquer (programmés, pas encore dans la barre) :
@@ -127,12 +129,12 @@ Garde le groupe en vie, relève les morts et le renforce.
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
 | Soin | Rend 300 points de vie à un allié. | 2 s | 80 mana | — |
+| Renouveau | Soin sur la durée : 500 points de vie en 10 s, un tic de 50 par seconde. Relancé, il repart de zéro ; ceux de plusieurs Prêtres se cumulent. | 2 s | 100 mana | — |
 | Soin instantané | Rend 200 points de vie à un allié. | Instantané | 60 mana | 3 min |
-| Résurrection | Relève un allié mort à 50 % de vie, sans aucun buff. Utilisable en combat. | 4 s | 300 mana | — |
 | Soin de groupe | Rend 900 points de vie répartis entre les membres du groupe à 30 m (même derrière un obstacle), Prêtre compris, au prorata des points de vie qui manquent à chacun ; personne n'est soigné au-delà de son maximum, le surplus est perdu. | 3 s | 300 mana | — |
 | Buff de vie | +200 points de vie maximum. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 50 mana | — |
 | Buff de puissance | +15 % de dégâts (mêlée et sorts, tics compris) et de soins. Dure jusqu'à la mort du Prêtre ou de la cible. | 2 s | 50 mana | — |
-| Renouveau | Soin sur la durée : 500 points de vie en 10 s, un tic de 50 par seconde. Relancé, il repart de zéro ; ceux de plusieurs Prêtres se cumulent. | 2 s | 100 mana | — |
+| Résurrection | Relève un allié mort à 50 % de vie, sans aucun buff. Utilisable en combat. | 4 s | 300 mana | — |
 | Intervention divine (ultime) | Relève tous les alliés morts à 30 m du Prêtre (même derrière un obstacle), à 50 % de vie, sans aucun buff. Impossible sans allié mort à portée. | 5 s | 500 mana | 3 min |
 
 ### 4. Barde — contrôle de foule
@@ -142,9 +144,9 @@ Neutralise le groupe adverse et contrôle le rythme du combat.
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
 | Mez ciblé | Mez de 10 s sur une cible. | 2 s | 100 mana | — |
-| Réveil | Retire le mez d'un autre allié (pas le stun ; l'immunité reste). | 1 s | 50 mana | — |
 | Mez de zone | Mez de 10 s sur la cible et les ennemis à 10 m d'elle. | 2 s | 100 mana | — |
 | Oubli | Pendant 10 s, le prochain sort de la cible n'a aucun effet (voir Oubli). | 1 s | 40 mana | — |
+| Réveil | Retire le mez d'un autre allié (pas le stun ; l'immunité reste). | 1 s | 50 mana | — |
 | Chant de vitesse | Active ou coupe le chant : +100 % de vitesse de course aux alliés à 30 m (ne se cumule ni avec le Sprint ni avec la Ballade : le plus fort compte). Un bénéficiaire touché (attaque ou effet hostile, même esquivé, bloqué ou absorbé) ou qui agit (attaquer, lancer ou incanter une compétence ; ni se déplacer, ni lancer ou couper un chant) le perd, et ne le retrouve qu'après 5 s consécutives sans être touché ni agir. | Instantané | 50 mana à l'activation | — |
 | Chant de second souffle | Active ou coupe le chant : +50 mana et +5 endurance par seconde aux alliés à 30 m, Barde compris. | Instantané | 50 mana à l'activation | — |
 | Buff dextérité | Intervalle d'attaque et temps d'incantation × 0,85. Dure jusqu'à la mort du Barde ou de la cible ; sans cumul. | 2 s | 50 mana | — |
@@ -159,14 +161,14 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 | Compétence | Effet | Incantation | Coût | Recharge |
 |---|---|---|---|---|
 | Attaque dans le dos | 270 dégâts, à la place du coup normal. Uniquement de dos. Technique de mêlée. | Prochain coup | 25 endurance | — |
-| Attaque de flanc | 190 dégâts, à la place du coup normal, et snare de 40 % pendant 8 s. Uniquement de côté. Technique de mêlée. | Prochain coup | 20 endurance | — |
-| Évasion | 75 % d'esquive contre la mêlée pendant 8 s. | Instantané | 20 endurance | 1 min |
-| Coup de pied | 50 dégâts et silence 10 s. Attaque de mêlée instantanée (pas une technique), qui peut être esquivée ou bloquée. | Instantané | 20 endurance | 1 min |
-| Sprint | Vitesse de course × 2 pendant 10 s. Ne retire ni snare ni root (un snare de 40 % donne × 1,2) ; ne se cumule pas avec le Chant de vitesse (le plus fort compte). | Instantané | 25 endurance | 1 min |
 | Lame empoisonnée | Combo après l'Attaque dans le dos : poison, 300 dégâts en 10 s (un tic par seconde). Technique de mêlée. | Prochain coup | 20 endurance | — |
 | Gangrène | Combo après la Lame empoisonnée : 350 dégâts, et la cible reçoit 50 % de soins en moins pendant 10 s (tous les soins : Soin, Renouveau, part du Soin de groupe). Technique de mêlée. | Prochain coup | 10 endurance | — |
-| *(à débloquer)* Brise armure | Combo après l'Attaque de flanc : 250 dégâts, et la cible subit 25 % de dégâts de mêlée en plus pendant 10 s (attaques automatiques et techniques, de tous les attaquants ; pas les sorts). Relancé, il repart de zéro, sans cumul. Technique de mêlée. | Prochain coup | 10 endurance | — |
+| Attaque de flanc | 190 dégâts, à la place du coup normal, et snare de 40 % pendant 8 s. Uniquement de côté. Technique de mêlée. | Prochain coup | 20 endurance | — |
+| Coup de pied | 50 dégâts et silence 10 s. Attaque de mêlée instantanée (pas une technique), qui peut être esquivée ou bloquée. | Instantané | 20 endurance | 1 min |
+| Évasion | 75 % d'esquive contre la mêlée pendant 8 s. | Instantané | 20 endurance | 1 min |
+| Sprint | Vitesse de course × 2 pendant 10 s. Ne retire ni snare ni root (un snare de 40 % donne × 1,2) ; ne se cumule pas avec le Chant de vitesse (le plus fort compte). | Instantané | 25 endurance | 1 min |
 | Rage (ultime) | Tous les coups sont critiques pendant 10 s. | Instantané | — | 3 min |
+| *(à débloquer)* Brise armure | Combo après l'Attaque de flanc : 250 dégâts, et la cible subit 25 % de dégâts de mêlée en plus pendant 10 s (attaques automatiques et techniques, de tous les attaquants ; pas les sorts). Relancé, il repart de zéro, sans cumul. Technique de mêlée. | Prochain coup | 10 endurance | — |
 | *(option future)* Furtivité | Devenir invisible, pour un rôle d'assassin. | — | — | — |
 
 ## Points ouverts
