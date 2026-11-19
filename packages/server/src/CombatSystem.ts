@@ -953,7 +953,7 @@ export class CombatSystem {
     while (ticks.done < ticks.total && elapsed >= (ticks.done + 1) * interval - 1e-6 && player.alive) {
       ticks.done++;
       if (ticks.kind === "heal") {
-        // Un tic qui ne soigne rien (cible pleine) n'est pas annoncé : pas de « +0 » au journal ni de voix.
+        // Un tic qui ne soigne rien (cible pleine) n'est pas annoncé : pas de « +0 » flottant ni de voix.
         if (player.state.hp < player.state.maxHp) this.heal(source, player, effect.value, ticks.abilityId);
       } else this.dealDamage(source, player, effect.value, ticks.abilityId, false, false, true);
     }

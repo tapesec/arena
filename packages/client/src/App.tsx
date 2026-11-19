@@ -177,7 +177,6 @@ function Hud() {
         <SwingBar />
         <Hotbar />
       </div>
-      <CombatLog />
       <HelpPanel />
       <OrderWheelView />
       {phase === "ended" && <EndScreen />}
@@ -891,18 +890,6 @@ function HintMessage() {
   const phase = useHudStore((s) => s.match?.phase);
   if (!hint || phase !== "fighting") return null;
   return <div className="hint-message">{hint}</div>;
-}
-
-function CombatLog() {
-  const lines = useHudStore((s) => s.combatLog);
-  if (lines.length === 0) return null;
-  return (
-    <div className="hud-panel combat-log">
-      {lines.map((line, i) => (
-        <div key={i}>{line}</div>
-      ))}
-    </div>
-  );
 }
 
 // Latence, affichée tant qu'on est connecté à une partie : vert jusqu'à 80 ms, orange jusqu'à 150 ms, rouge au-delà.

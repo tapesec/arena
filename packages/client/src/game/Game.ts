@@ -73,7 +73,6 @@ import { FogOfWar, type FogWatcher } from "./FogOfWar";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
-import { formatCombatEvent, formatInterrupt } from "./combatLog";
 import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
@@ -560,9 +559,7 @@ export class Game {
 
   private bindMessages() {
     const hud = useHudStore.getState();
-    const nameOf = (id: string) => this.nameOf(id);
     this.room.onMessage("combat", (event: CombatEvent) => {
-      for (const line of formatCombatEvent(event, nameOf, this.room.sessionId)) hud.pushLog(line);
       this.showCombatText(event);
       this.gameAudio.onCombat(event, this.players.get(event.sourceId), this.players.get(event.targetId));
       // Auto-attaque : le personnage qui frappe joue son coup.
@@ -588,7 +585,6 @@ export class Game {
       }
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
-      hud.pushLog(formatInterrupt(event, nameOf, this.room.sessionId));
       const caster = this.players.get(event.casterId);
       if (caster) this.overlay.addText(caster.root, t("float.interrupted"), "info");
       caster?.interruptCast();
@@ -993,10 +989,6 @@ export class Game {
     const self = this.self;
     if (!self) return [];
     return [...this.players.values()].filter((p) => p !== self && p.state.team === self.state.team);
-  }
-
-  private nameOf(id: string): string {
-    return id === this.room.sessionId ? t("log.you") : (this.players.get(id)?.state.name ?? "?");
   }
 
   private renderFrame() {

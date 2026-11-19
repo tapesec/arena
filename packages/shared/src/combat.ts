@@ -119,7 +119,7 @@ export function positionRelativeTo(target: Position & { facing: number }, attack
   return "side";
 }
 
-// Événement diffusé à tous les clients pour le journal de combat.
+// Événement diffusé à tous les clients pour les textes flottants, les sons et les effets.
 // abilityId vaut "auto" pour l'attaque automatique.
 export type CombatEventKind =
   | "damage"

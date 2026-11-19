@@ -135,7 +135,6 @@ export interface GameActions {
   castAbility: (abilityId: string) => void;
 }
 
-const MAX_LOG_LINES = 8;
 const ERROR_DISPLAY_MS = 2000;
 
 let errorTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -169,7 +168,6 @@ interface HudState {
   self: SelfFrame | null;
   target: TargetFrame | null;
   group: GroupMemberFrame[];
-  combatLog: string[];
   // Instant (performance.now()) de fin de recharge, par compétence.
   cooldownEnds: Record<string, number>;
   // Prochain coup d'arme : instants (performance.now()) de début et de fin de l'attente, null avant le premier ;
@@ -192,7 +190,6 @@ interface HudState {
   setLoading: (loading: LoadingFrame[], loaded: boolean) => void;
   setFrames: (self: SelfFrame | null, target: TargetFrame | null, group: GroupMemberFrame[]) => void;
   setActions: (actions: GameActions | null) => void;
-  pushLog: (line: string) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
   startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
@@ -214,7 +211,6 @@ const freshGame = {
   self: null,
   target: null,
   group: [],
-  combatLog: [],
   cooldownEnds: {},
   swing: null,
   flashMessage: null,
@@ -285,7 +281,6 @@ export const useHudStore = create<HudState>((set) => ({
   setFrames: (self, target, group) => set({ self, target, group }),
   setActions: (actions) => set({ actions }),
   setOrderWheel: (orderWheel) => set({ orderWheel }),
-  pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),
   startCooldown: (abilityId, durationSeconds) =>
     set((s) => ({ cooldownEnds: { ...s.cooldownEnds, [abilityId]: performance.now() + durationSeconds * 1000 } })),
   startSwing: (remainingSeconds, struck) => {
