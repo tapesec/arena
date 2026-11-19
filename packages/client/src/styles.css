@@ -1661,6 +1661,124 @@ body,
   text-shadow: 0 0 2px #000;
 }
 
+/* --- Page d'accueil : illustration en plein écran, titre en logo dans le ciel, carte de jeu sur l'herbe --- */
+.home-screen {
+  justify-content: space-between;
+  padding: 5vh 16px 3vh;
+  /* Cadrage un peu haut : en portrait, le château et le choc central restent dans l'image. */
+  background: #1d3a5c url("/home-art.webp") 50% 40% / cover no-repeat;
+}
+
+/* La langue reste en haut à droite, même sur téléphone (ailleurs, elle repasse dans le flux sous 480 px). */
+.home-screen .language-menu {
+  position: absolute;
+}
+
+/* Téléphone : place sous la carte pour le lien des crédits et le volume ; crédits sur toute la largeur. */
+@media (max-width: 480px) {
+  .home-screen {
+    padding-bottom: 56px;
+  }
+
+  .screen .home-credits {
+    right: 16px;
+    max-width: none;
+  }
+}
+
+/* Voiles : un peu d'ombre en haut pour le titre, plus en bas pour la carte. */
+.home-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(8, 16, 32, 0.45), rgba(8, 16, 32, 0) 32%),
+    linear-gradient(to top, rgba(8, 12, 20, 0.7), rgba(8, 12, 20, 0) 38%);
+  pointer-events: none;
+}
+
+.home-screen > * {
+  position: relative;
+}
+
+.home-title {
+  text-align: center;
+}
+
+.screen h1.home-logo {
+  margin: 0;
+  font-family: "Cinzel", Georgia, serif;
+  font-size: clamp(44px, 8vw, 96px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #fff6c8 0%, #ffd76a 45%, #d8902a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 #5a3410) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55));
+}
+
+.home-tagline {
+  margin: 10px 0 0;
+  color: #fff;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.home-punchline {
+  margin: 4px 0 0;
+  color: #ffe9a8;
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-style: italic;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.home-card {
+  padding: 16px 22px 18px;
+  border: 1px solid rgba(255, 215, 106, 0.45);
+  border-radius: 14px;
+  background: rgba(12, 16, 26, 0.72);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.home-card .primary-button {
+  min-width: 200px;
+  padding: 12px 28px;
+  font-size: 20px;
+  box-shadow: 0 0 18px rgba(255, 215, 106, 0.55);
+}
+
+.home-credits-toggle {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  border: none;
+  background: none;
+  color: #e6e9ef;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-shadow: 0 1px 3px #000;
+  cursor: pointer;
+}
+
+.screen .home-credits {
+  position: absolute;
+  left: 16px;
+  bottom: 40px;
+  /* Moitié gauche de l'écran : ne passe pas sur la carte de jeu, centrée. */
+  max-width: max(260px, min(560px, calc(50vw - 200px)));
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(10, 12, 18, 0.88);
+  color: #c9ced8;
+  text-align: left;
+}
+
 /* Crédits sous le bouton de l'écran d'accueil. */
 .credits {
   margin-top: 28px;

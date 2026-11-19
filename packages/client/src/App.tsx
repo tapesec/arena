@@ -84,13 +84,18 @@ function HomeScreen() {
     audio.play(UI_SOUNDS.click);
     joinGame();
   };
+  // Crédits repliés derrière un lien, pour laisser la place à l'illustration.
+  const [credits, setCredits] = useState(false);
   return (
-    <div className="screen">
-      <h1>Win or Wipe</h1>
-      <p className="screen-text">{t("home.tagline")}</p>
+    <div className="screen home-screen">
       <LanguageMenu />
+      <header className="home-title">
+        <h1 className="home-logo">Win or Wipe</h1>
+        <p className="home-tagline">{t("home.tagline")}</p>
+        <p className="home-punchline">{t("home.punchline")}</p>
+      </header>
       <form
-        className="name-form"
+        className="name-form home-card"
         onSubmit={(event) => {
           event.preventDefault();
           play();
@@ -113,32 +118,44 @@ function HomeScreen() {
           {t("home.play")}
         </button>
       </form>
-      <p className="credits">
-        {t("home.creditsMusic")} {quote("Woodland Fantasy")}, Matthew Pablo,{" "}
-        <a href="https://www.matthewpablo.com" target="_blank" rel="noreferrer">
-          matthewpablo.com
-        </a>{" "}
-        · {quote("The Last Encounter")}, Eric Matyas,{" "}
-        <a href="https://soundimage.org" target="_blank" rel="noreferrer">
-          soundimage.org
-        </a>
-        <br />
-        {t("home.creditsIcons")} Lorc, Delapouite, Zeromancer, Sbed, Felbrigg {t("home.and")} Skoll,{" "}
-        <a href="https://game-icons.net" target="_blank" rel="noreferrer">
-          game-icons.net
-        </a>{" "}
-        (CC BY 3.0)
-        <br />
-        {t("home.creditsSounds")} {quote("Elemental Magic: Fire Attacks")}, Last Day Dreaming,{" "}
-        <a href="https://lastdaydreaming.uwu.ai" target="_blank" rel="noreferrer">
-          lastdaydreaming.uwu.ai
-        </a>{" "}
-        (
-        <a href="https://creativecommons.org/licenses/by-nd/4.0/" target="_blank" rel="noreferrer">
-          CC BY-ND 4.0
-        </a>
-        ) · {t("home.creditsVoices")}, Marti Topmade
-      </p>
+      <button
+        type="button"
+        className="home-credits-toggle"
+        aria-expanded={credits}
+        aria-controls="home-credits"
+        onClick={() => setCredits(!credits)}
+        onKeyDown={(event) => event.key === "Escape" && setCredits(false)}
+      >
+        {t("home.credits")}
+      </button>
+      {credits && (
+        <p id="home-credits" className="credits home-credits">
+          {t("home.creditsMusic")} {quote("Woodland Fantasy")}, Matthew Pablo,{" "}
+          <a href="https://www.matthewpablo.com" target="_blank" rel="noreferrer">
+            matthewpablo.com
+          </a>{" "}
+          · {quote("The Last Encounter")}, Eric Matyas,{" "}
+          <a href="https://soundimage.org" target="_blank" rel="noreferrer">
+            soundimage.org
+          </a>
+          <br />
+          {t("home.creditsIcons")} Lorc, Delapouite, Zeromancer, Sbed, Felbrigg {t("home.and")} Skoll,{" "}
+          <a href="https://game-icons.net" target="_blank" rel="noreferrer">
+            game-icons.net
+          </a>{" "}
+          (CC BY 3.0)
+          <br />
+          {t("home.creditsSounds")} {quote("Elemental Magic: Fire Attacks")}, Last Day Dreaming,{" "}
+          <a href="https://lastdaydreaming.uwu.ai" target="_blank" rel="noreferrer">
+            lastdaydreaming.uwu.ai
+          </a>{" "}
+          (
+          <a href="https://creativecommons.org/licenses/by-nd/4.0/" target="_blank" rel="noreferrer">
+            CC BY-ND 4.0
+          </a>
+          ) · {t("home.creditsVoices")}, Marti Topmade
+        </p>
+      )}
     </div>
   );
 }

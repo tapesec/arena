@@ -3,6 +3,8 @@
 export const en = {
   // Accueil
   "home.tagline": "8v8 PvP arena",
+  "home.punchline": "No respawn. Win… or wipe.",
+  "home.credits": "Credits",
   "home.language": "Language",
   "home.name": "Player name",
   "home.nameHint": "Letters, digits and @ · {max} characters max",
