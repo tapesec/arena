@@ -127,6 +127,14 @@ const HOVER_ENEMY = new Color3(1, 0.36, 0.32);
 const HOVER_ALLY = new Color3(0.61, 0.78, 1);
 // Point visé par l'aimant : le milieu du corps.
 const BODY_CENTER = new Vector3(0, 1.1, 0);
+// Cadrage de combat (décidé le 2026-11-19) : avec un ennemi visé à moins de FRAMING_RANGE mètres, la caméra vise un
+// point décalé du joueur vers lui (FRAMING_SHARE de l'écart, FRAMING_MAX_OFFSET mètres au plus), pour garder les deux
+// à l'écran ; le décalage s'installe et disparaît en douceur (FRAMING_RATE).
+const FRAMING_RANGE = 30;
+const FRAMING_SHARE = 0.35;
+const FRAMING_MAX_OFFSET = 8;
+const FRAMING_RATE = 3;
+const FRAMING_FADE = 6;
 
 // Vitesse de la caméra libre en mode spectateur, en mètres par seconde.
 const SPECTATOR_SPEED = 18;
@@ -176,6 +184,8 @@ export class Game {
   private targetMarker!: Mesh;
   // Flèche au bord de l'écran vers la cible hors champ.
   private targetPointer: TargetPointer;
+  // Cadrage de combat : décalage actuel du point visé par la caméra par rapport au joueur.
+  private framingOffset = new Vector3();
   private lastHudRefresh = 0;
   private lastHudSnapshot = "";
   // Chargement du jeu, suivi pour l'écran de chargement ; dernier pourcentage envoyé au serveur.
@@ -427,7 +437,7 @@ export class Game {
         this.spectatorFocus = null;
         this.sendMove();
       }
-      this.camera.follow(self.root.position);
+      this.camera.follow(self.root.position.add(this.updateFraming(self, dt)));
       if (this.modernMovement) {
         // La caméra ne suit pas l'orientation : on la place une fois dans le dos du personnage à son apparition
         // (tourné vers le centre de l'arène, pour les deux équipes).
@@ -441,13 +451,37 @@ export class Game {
       else this.camera.followFacing(self.root.rotation.y, dt);
       return;
     }
-    this.spectatorFocus ??= self.root.position.clone();
+    // Le cadrage de combat ne sert plus : le point libre part de là où regardait la caméra (pas de saut), et le
+    // décalage est oublié (pas de retour vers l'ancienne cible à la résurrection).
+    if (!this.spectatorFocus) {
+      this.spectatorFocus = this.camera.camera.target.clone();
+      this.framingOffset.setAll(0);
+    }
     const dir = inputToDirection({ ...this.moveKeys, yaw: this.camera.yaw });
     const limit = ARENA_SIZE / 2;
     this.spectatorFocus.x = Math.max(-limit, Math.min(limit, this.spectatorFocus.x + dir.x * SPECTATOR_SPEED * dt));
     this.spectatorFocus.z = Math.max(-limit, Math.min(limit, this.spectatorFocus.z + dir.z * SPECTATOR_SPEED * dt));
     this.spectatorFocus.y = terrainHeight(this.spectatorFocus.x, this.spectatorFocus.z);
     this.camera.follow(this.spectatorFocus);
+  }
+
+  // Cadrage de combat : décalage vers l'ennemi visé proche (voir FRAMING_*), lissé.
+  private updateFraming(self: PlayerVisual, dt: number): Vector3 {
+    const target = this.targetId ? this.players.get(this.targetId) : undefined;
+    const goal = new Vector3();
+    if (target && target.isAlive && target.root.isEnabled() && target.state.team !== self.state.team) {
+      const dx = target.root.position.x - self.root.position.x;
+      const dz = target.root.position.z - self.root.position.z;
+      const length = Math.hypot(dx, dz);
+      if (length <= FRAMING_RANGE && length > 0) {
+        // Le décalage s'efface progressivement sur les 6 derniers mètres, pour ne pas sauter à la limite.
+        const fade = Math.min(1, (FRAMING_RANGE - length) / FRAMING_FADE);
+        const offset = Math.min(length * FRAMING_SHARE, FRAMING_MAX_OFFSET) * fade;
+        goal.set((dx / length) * offset, 0, (dz / length) * offset);
+      }
+    }
+    this.framingOffset.addInPlace(goal.subtract(this.framingOffset).scale(1 - Math.exp(-FRAMING_RATE * dt)));
+    return this.framingOffset;
   }
 
   // Clic droit maintenu : quand la souris tourne la caméra, le personnage doit tourner aussi.
