@@ -1002,10 +1002,29 @@ function HelpPanel() {
 }
 
 function HelpContent() {
+  const mode = useHudStore((s) => s.movementMode);
+  const setMode = useHudStore((s) => s.setMovementMode);
+  const modern = mode === "modern";
   return (
     <div className="hud-panel help">
-      <div>{t("help.move", moveKeys())}</div>
-      <div>{t("help.mouse", moveKeys())}</div>
+      <div className="help-mode" role="group" aria-label={t("help.movementMode")}>
+        {t("help.movementMode")}
+        {(["modern", "classic"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            className={`help-mode-button${mode === m ? " active" : ""}`}
+            aria-pressed={mode === m}
+            // Le bouton ne prend pas le focus : le clavier reste au jeu.
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setMode(m)}
+          >
+            {t(m === "modern" ? "help.modeModern" : "help.modeClassic")}
+          </button>
+        ))}
+      </div>
+      <div>{t(modern ? "help.moveModern" : "help.move", moveKeys())}</div>
+      <div>{t(modern ? "help.mouseModern" : "help.mouse", moveKeys())}</div>
       <div>{t("help.target")}</div>
       <div>{t("help.lock")}</div>
       <div>{t("help.attack")}</div>

@@ -175,6 +175,10 @@ interface HudState {
   setOrderWheel: (wheel: OrderWheelFrame | null) => void;
   // Message bref affiché au centre de l'écran ("Cible hors de portée"...).
   flashMessage: string | null;
+  // Déplacement : « modern » (touches dans les directions de l'écran) ou « classic » (comme DAoC). Retenu par le
+  // navigateur.
+  movementMode: MovementMode;
+  setMovementMode: (mode: MovementMode) => void;
   actions: GameActions | null;
   joinGame: () => void;
   leaveGame: () => void;
@@ -208,6 +212,18 @@ const freshGame = {
   orderWheel: null,
 };
 
+export type MovementMode = "modern" | "classic";
+const MOVEMENT_STORAGE_KEY = "arena.movementMode";
+
+// Mode moderne par défaut (décidé le 2026-11-19 : plus simple pour un nouveau venu) ; le mode DAoC reste au choix.
+function initialMovementMode(): MovementMode {
+  try {
+    return localStorage.getItem(MOVEMENT_STORAGE_KEY) === "classic" ? "classic" : "modern";
+  } catch {
+    return "modern";
+  }
+}
+
 // Le dernier pseudo saisi est retenu par le navigateur ; à la première visite, un pseudo par défaut est proposé.
 const NAME_STORAGE_KEY = "arena.playerName";
 
@@ -225,6 +241,15 @@ export const useHudStore = create<HudState>((set) => ({
   inGame: false,
   gameKey: 0,
   playerName: initialPlayerName(),
+  movementMode: initialMovementMode(),
+  setMovementMode: (mode) => {
+    try {
+      localStorage.setItem(MOVEMENT_STORAGE_KEY, mode);
+    } catch {
+      // Stockage indisponible : le choix vaut pour cette visite seulement.
+    }
+    set({ movementMode: mode });
+  },
   language: currentLanguage(),
   setLanguage: (language) => {
     applyLanguage(language);

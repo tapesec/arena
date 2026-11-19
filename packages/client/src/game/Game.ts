@@ -154,6 +154,16 @@ export class Game {
   // Dernières touches de déplacement et orientation de caméra envoyées au serveur.
   private moveKeys: MoveInput = NO_INPUT;
   private sentYaw = 0;
+  // Dernière commande de déplacement envoyée.
+  private sentInput: MoveInput = NO_INPUT;
+  // Ennemi visé au lancement de l'incantation en cours (mode moderne : le personnage lui fait face).
+  private castTargetId: string | null = null;
+  // Mode moderne : caméra placée une fois dans le dos du personnage (voir updateCamera).
+  private cameraPlaced = false;
+  // Changement de mode de déplacement en pleine partie : la commande est renvoyée aussitôt.
+  private unsubscribeMovementMode = useHudStore.subscribe((state, previous) => {
+    if (state.movementMode !== previous.movementMode && !this.isSpectating) this.sendMove();
+  });
   private lastMoveSent = 0;
   // Point suivi par la caméra en mode spectateur (null quand on suit son personnage).
   private spectatorFocus: Vector3 | null = null;
@@ -286,6 +296,7 @@ export class Game {
 
   dispose() {
     this.disposed = true;
+    this.unsubscribeMovementMode();
     clearInterval(this.pingTimer);
     clearInterval(this.perfTimer);
     useHudStore.getState().setActions(null);
@@ -343,16 +354,56 @@ export class Game {
     this.room.send("loadProgress", { progress: percent });
   }
 
-  // Touches de déplacement, plus l'état du clic droit : maintenu, le personnage s'oriente comme la caméra.
+  // Envoie la commande de déplacement (voir moveInput).
   private sendMove() {
     // Tant que le jeu charge (écran de chargement), le joueur ne voit pas son personnage : pas de commandes.
     if (this.loading.progress < 1) return;
-    this.sentYaw = this.camera.yaw;
+    const input = this.moveInput();
+    this.sentInput = input;
+    this.sentYaw = input.yaw ?? this.camera.yaw;
     this.lastMoveSent = performance.now();
-    const input: MoveInput = { ...this.moveKeys, steer: this.camera.steering, yaw: this.sentYaw };
     const message = { ...input, seq: this.predictor.send(input) };
     if (DEV_INPUT_LAG > 0) setTimeout(() => this.room.send("input", message), DEV_INPUT_LAG);
     else this.room.send("input", message);
+  }
+
+  private get modernMovement(): boolean {
+    return useHudStore.getState().movementMode === "modern";
+  }
+
+  // Commande de déplacement.
+  // - Mode classique (DAoC) : touches de déplacement, plus l'état du clic droit : maintenu, le personnage s'oriente
+  //   comme la caméra.
+  // - Mode moderne : les touches font courir dans les directions de l'écran (haut, bas, gauche, droite et diagonales,
+  //   à pleine vitesse), le personnage tourné dans le sens de sa course ; la caméra ne le suit plus dans son dos (clic
+  //   droit pour la tourner). À l'arrêt, pendant une incantation ou une attaque, il fait face à sa cible ennemie.
+  //   Le serveur ne connaît que le mode classique : on lui envoie « avancer, orienté dans telle direction ».
+  private moveInput(): MoveInput {
+    if (!this.modernMovement) return { ...this.moveKeys, steer: this.camera.steering, yaw: this.camera.yaw };
+    const dir = inputToDirection({ ...this.moveKeys, yaw: this.camera.yaw });
+    if (dir.x !== 0 || dir.z !== 0) return { ...NO_INPUT, up: true, steer: true, yaw: Math.atan2(dir.x, dir.z) };
+    const self = this.self;
+    if (!self) return NO_INPUT;
+    // En incantation : la cible du début du sort ; en attaque : la cible actuelle.
+    const casting = self.state.castAbility !== "";
+    const targetId = casting ? this.castTargetId : self.state.attacking ? this.targetId : null;
+    const target = targetId ? this.players.get(targetId) : undefined;
+    if (target?.isAlive && target.state.team !== self.state.team) {
+      return { ...NO_INPUT, steer: true, yaw: facingTowards(self.state, target.state) };
+    }
+    return NO_INPUT;
+  }
+
+  // Mode moderne : la commande change sans que le joueur touche au clavier (caméra tournée pendant la course, cible
+  // qui se déplace, attaque lancée) : on la renvoie, sans dépasser une commande toutes les YAW_RESEND_MS.
+  private resendMoveIfChanged() {
+    const next = this.moveInput();
+    const sent = this.sentInput;
+    const sameKeys = next.up === sent.up && next.down === sent.down && next.left === sent.left && next.right === sent.right && !!next.steer === !!sent.steer;
+    if (!sameKeys) return this.sendMove();
+    const yaw = next.yaw ?? this.sentYaw;
+    const turned = Math.abs(Math.atan2(Math.sin(yaw - this.sentYaw), Math.cos(yaw - this.sentYaw)));
+    if (next.steer && turned > YAW_RESEND_THRESHOLD && performance.now() - this.lastMoveSent > YAW_RESEND_MS) this.sendMove();
   }
 
   // Mort pendant le combat : la caméra devient libre et le brouillard de guerre disparaît (côté serveur).
@@ -372,6 +423,14 @@ export class Game {
         this.sendMove();
       }
       this.camera.follow(self.root.position);
+      if (this.modernMovement) {
+        // La caméra ne suit pas l'orientation : on la place une fois dans le dos du personnage à son apparition
+        // (tourné vers le centre de l'arène, pour les deux équipes).
+        if (!this.cameraPlaced) this.camera.faceTowards(self.root.rotation.y);
+        this.cameraPlaced = true;
+        this.resendMoveIfChanged();
+        return;
+      }
       // Clic droit : la souris oriente la caméra et le personnage suit. Sinon, la caméra se place dans son dos.
       if (this.camera.steering) this.resendMoveIfCameraTurned();
       else this.camera.followFacing(self.root.rotation.y, dt);
@@ -659,6 +718,7 @@ export class Game {
       case "toggleAttack":
         this.steerTowardsTarget();
         this.room.send("toggleAttack");
+        this.restoreModernMove();
         break;
       case "faceLock":
         this.room.send("faceLock");
@@ -756,8 +816,20 @@ export class Game {
   // Touche de la barre ou clic sur une case : ciblage automatique si besoin, puis lancement.
   private castAbility(abilityId: string) {
     this.autoTarget(abilityId);
-    if (getAbility(abilityId)?.target === "enemy") this.steerTowardsTarget();
+    const ability = getAbility(abilityId);
+    if (ability?.target === "enemy") this.steerTowardsTarget();
+    // Mode moderne : le personnage fera face à cette cible pendant toute l'incantation, même après un Tab (le serveur
+    // vérifie à la fin qu'il fait face à la cible du début). Pas pour un sort sur un allié.
+    if (ability && ability.castTime > 0) this.castTargetId = ability.target === "enemy" ? this.targetId : null;
     this.room.send("cast", { abilityId });
+    this.restoreModernMove();
+  }
+
+  // Mode moderne : le serveur vient de tourner le personnage vers l'ennemi visé, et avec lui la direction de course
+  // (une commande « steer » impose l'orientation). On renvoie aussitôt la commande : la compétence instantanée est
+  // déjà partie face à l'ennemi, et le personnage reprend sa course (on peut ainsi tirer en fuyant).
+  private restoreModernMove() {
+    if (this.modernMovement && !this.isSpectating) this.sendMove();
   }
 
   // Le serveur tourne le personnage vers l'ennemi visé (compétence ou attaque). Clic droit tenu, c'est la caméra qui
@@ -765,7 +837,8 @@ export class Game {
   private steerTowardsTarget() {
     const self = this.self;
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
-    if (!this.camera.steering || !self || !target?.isAlive || target.state.team === self.state.team) return;
+    // Mode moderne : moveInput tourne déjà le personnage vers sa cible pendant l'incantation ou l'attaque.
+    if (this.modernMovement || !this.camera.steering || !self || !target?.isAlive || target.state.team === self.state.team) return;
     if (isFacing(self.state, target.state)) return;
     this.camera.faceTowards(facingTowards(self.state, target.state));
     this.sendMove();
