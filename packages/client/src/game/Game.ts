@@ -5,6 +5,8 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
+import { CreateDashedLines } from "@babylonjs/core/Meshes/Builders/linesBuilder";
+import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
@@ -127,6 +129,12 @@ const HOVER_ENEMY = new Color3(1, 0.36, 0.32);
 const HOVER_ALLY = new Color3(0.61, 0.78, 1);
 // Point visé par l'aimant : le milieu du corps.
 const BODY_CENTER = new Vector3(0, 1.1, 0);
+// Anneau sous la cible : rouge, gris quand un obstacle la cache ; pointillé de ligne de vue, à mi-jambe.
+const TARGET_MARKER_COLOR = new Color3(1, 0.2, 0.2);
+const TARGET_MARKER_BLOCKED = new Color3(0.45, 0.45, 0.45);
+const SIGHT_LINE_COLOR = new Color3(1, 0.25, 0.25);
+const SIGHT_LINE_ALLY = new Color3(0.44, 0.64, 1);
+const SIGHT_LINE_HEIGHT = new Vector3(0, 0.5, 0);
 // Cadrage de combat (décidé le 2026-11-19) : avec un ennemi visé à moins de FRAMING_RANGE mètres, la caméra vise un
 // point décalé du joueur vers lui (FRAMING_SHARE de l'écart, FRAMING_MAX_OFFSET mètres au plus), pour garder les deux
 // à l'écran ; le décalage s'installe et disparaît en douceur (FRAMING_RATE).
@@ -182,6 +190,10 @@ export class Game {
   // Cible ennemie vivante à l'image précédente : sa mort déclenche un nouveau ciblage (voir retargetAfterDeath).
   private aliveEnemyTarget: string | null = null;
   private targetMarker!: Mesh;
+  private targetMarkerMaterial!: StandardMaterial;
+  // Cible cachée par un obstacle : pointillé rouge du joueur à la cible (voir updateTargetMarker).
+  private sightLine: LinesMesh | null = null;
+  private sightLineDashes = 0;
   // Flèche au bord de l'écran vers la cible hors champ.
   private targetPointer: TargetPointer;
   // Cadrage de combat : décalage actuel du point visé par la caméra par rapport au joueur.
@@ -503,9 +515,10 @@ export class Game {
   private createTargetMarker() {
     this.targetMarker = CreateTorus("targetMarker", { diameter: 1.9, thickness: 0.1, tessellation: 48 }, this.scene);
     const material = new StandardMaterial("targetMarkerMat", this.scene);
-    material.emissiveColor = new Color3(1, 0.2, 0.2);
+    material.emissiveColor = TARGET_MARKER_COLOR;
     material.disableLighting = true;
     this.targetMarker.material = material;
+    this.targetMarkerMaterial = material;
     this.targetMarker.isPickable = false;
     this.targetMarker.setEnabled(false);
   }
@@ -1015,12 +1028,48 @@ export class Game {
     this.updateFog(dt, self, match.phase);
 
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
-    this.targetMarker.setEnabled(!!target);
-    if (target) this.targetMarker.position.set(target.root.position.x, target.root.position.y + 0.06, target.root.position.z);
+    this.updateTargetMarker(self, target);
     this.updateTargetPointer(self, target);
 
     this.refreshHud(self, target);
     this.scene.render();
+  }
+
+  // Anneau sous la cible ; si un obstacle la cache (ligne de vue coupée), l'anneau passe en gris et un pointillé rouge
+  // la relie au joueur : il voit pourquoi ses sorts refusent et qu'il doit contourner (décidé le 2026-11-19).
+  private updateTargetMarker(self: PlayerVisual | undefined, target: PlayerVisual | undefined) {
+    this.targetMarker.setEnabled(!!target);
+    if (target) this.targetMarker.position.set(target.root.position.x, target.root.position.y + 0.06, target.root.position.z);
+    const blocked =
+      !!self &&
+      self.isAlive &&
+      !!target &&
+      target !== self &&
+      target.isAlive &&
+      target.root.isEnabled() &&
+      !hasLineOfSight(self.state, target.state);
+    this.targetMarkerMaterial.emissiveColor = blocked ? TARGET_MARKER_BLOCKED : TARGET_MARKER_COLOR;
+    if (!blocked) {
+      this.sightLine?.setEnabled(false);
+      return;
+    }
+    const points = [self!.root.position.add(SIGHT_LINE_HEIGHT), target!.root.position.add(SIGHT_LINE_HEIGHT)];
+    // Un tiret tous les 0,8 m environ, arrondi par paliers de 5 : le maillage n'est recréé que de loin en loin.
+    const dashNb = Math.max(5, Math.round(Vector3.Distance(points[0], points[1]) / 4) * 5);
+    // Le nombre de tirets fixe la taille du maillage : on le recrée quand il change, sinon on le met à jour.
+    if (this.sightLine && this.sightLineDashes === dashNb) {
+      CreateDashedLines("sightLine", { points, dashNb, instance: this.sightLine });
+    } else {
+      this.sightLine?.dispose();
+      this.sightLine = CreateDashedLines("sightLine", { points, dashNb, dashSize: 3, gapSize: 2, updatable: true }, this.scene);
+      this.sightLine.isPickable = false;
+      // Mis à jour sans recalculer son volume englobant : toujours dessiné (sinon éliminé hors de sa place d'origine).
+      this.sightLine.alwaysSelectAsActiveMesh = true;
+      this.sightLineDashes = dashNb;
+    }
+    // Rouge pour un ennemi, bleu pour un allié (comme la flèche au bord de l'écran).
+    this.sightLine.color = target!.state.team !== self!.state.team ? SIGHT_LINE_COLOR : SIGHT_LINE_ALLY;
+    this.sightLine.setEnabled(true);
   }
 
   // Cible hors champ : flèche au bord de l'écran dans sa direction, avec sa distance.
