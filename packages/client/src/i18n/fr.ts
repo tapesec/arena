@@ -90,7 +90,6 @@ export const fr: Record<TextKey, string> = {
   "frame.dead": "Mort",
   "frame.you": "Vous",
   "frame.outOfSight": "Hors de vue",
-  "frame.notFacing": "Pas en face",
   "frame.inMelee": "Au contact",
 
   "sound.unmute": "Réactiver le son",

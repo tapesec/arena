@@ -158,13 +158,29 @@ export class CombatSystem {
     const player = this.players.get(id);
     if (!player?.alive) return;
     player.state.attacking = !player.state.attacking;
-    if (player.state.attacking) this.noteAction(player);
+    if (player.state.attacking) {
+      this.noteAction(player);
+      if (player.targetId) this.turnTowardsEnemy(player, player.targetId);
+    }
     // Couper l'attaque annule la technique en attente et l'enchaînement d'un combo.
     if (!player.state.attacking) {
       player.state.queuedAbility = "";
       this.clearCombo(player);
     }
     else this.sendSwing(player, false);
+  }
+
+  // Se tourner tout seul vers l'ennemi visé (décidé le 2026-11-19, pour les débutants) : en lançant une compétence
+  // contre lui ou en activant l'attaque, le personnage qui ne lui fait pas face pivote une fois vers lui, comme un /face
+  // automatique. Pas de verrou : il peut se détourner ensuite. Pas sous mez ni stun (rooté, il peut pivoter).
+  private turnTowardsEnemy(player: PlayerRuntime, targetId: string) {
+    const target = this.players.get(targetId);
+    if (!target?.alive || !this.areEnemies(player, target) || player.incapacitated) return;
+    if (isFacing(player.state, target.state)) return;
+    player.state.facing = facingTowards(player.state, target.state);
+    // Clic droit tenu : la commande impose l'orientation de la souris à chaque tic ; elle suit la rotation jusqu'à la
+    // prochaine commande (le client tourne aussi sa caméra vers la cible avant d'envoyer la compétence).
+    if (player.input.steer) player.input = { ...player.input, yaw: player.state.facing };
   }
 
   // Tourne le personnage vers sa cible sans le déplacer (équivalent du /face de DAoC).
@@ -197,6 +213,7 @@ export class CombatSystem {
 
     const targetId = this.pickTarget(caster, ability);
     if (!targetId) return this.sendError(caster, "noTarget");
+    if (ability.target === "enemy") this.turnTowardsEnemy(caster, targetId);
 
     // Technique de mêlée : mise en attente du prochain coup d'arme, qui part aussitôt si l'arme est prête.
     // Ses conditions (portée, position, endurance) sont vérifiées au moment du coup.

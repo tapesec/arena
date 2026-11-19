@@ -100,7 +100,6 @@ export const en = {
   "frame.dead": "Dead",
   "frame.you": "You",
   "frame.outOfSight": "No line of sight",
-  "frame.notFacing": "Not facing",
   "frame.inMelee": "In melee range",
 
   // Son

@@ -179,7 +179,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 ## Choix faits pendant le prototype (provisoires, à valider en test)
 
 - **Incantation** : bouger interrompt l'incantation, et on ne peut pas commencer à incanter en bougeant (comme dans DAoC).
-- **Orientation** : pour attaquer ou lancer un sort offensif, la cible doit être dans un cône de 180° devant soi.
+- **Orientation** : pour attaquer ou lancer un sort offensif, la cible doit être dans un cône de 180° devant soi. Depuis le 2026-11-19, le personnage **se tourne tout seul** vers l'ennemi visé quand on lance une compétence contre lui (techniques de mêlée comprises), même si elle est ensuite refusée (portée, ligne de vue…), ou qu'on active l'attaque : un /face automatique, sans verrou (on peut se détourner ensuite, et le sort échoue alors à la fin de l'incantation). Clic droit tenu, la caméra se tourne aussi vers la cible. Pas sous mez, stun ni Rempart ; rooté, on pivote. La barre de compétences et le cadre de la cible n'affichent donc plus « Pas en face ».
 - **Positions** (Lame) : devant = ±60° face à la cible, dans le dos = ±60° derrière, flanc = entre les deux.
 - **Zones d'effet** : le Mez de zone est centré sur la cible (et non sur un point du sol choisi à la souris) ; Déflagration est centrée sur le lanceur.
 - **Attaque automatique** : Gardien 55 dégâts / 2 s, Lame 70 / 2 s, Arcaniste, Prêtre et Barde 30 / 2,5 s.

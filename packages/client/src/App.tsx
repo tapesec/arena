@@ -619,7 +619,6 @@ function TargetPanel() {
   let tag = <span className="tag tag-out-range">{target.distance} m</span>;
   if (target.isSelf) tag = <span className="tag tag-out-range">{t("frame.you")}</span>;
   else if (!target.inLineOfSight) tag = <span className="tag tag-blocked">{t("frame.outOfSight")}</span>;
-  else if (!target.isAlly && !target.facing) tag = <span className="tag tag-blocked">{t("frame.notFacing")}</span>;
   else if (target.inMeleeRange) tag = <span className="tag tag-in-range">{t("frame.inMelee")}</span>;
 
   return (

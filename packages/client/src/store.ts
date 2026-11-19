@@ -66,8 +66,6 @@ export interface TargetFrame extends UnitFrame {
   distance: number;
   inMeleeRange: boolean;
   inLineOfSight: boolean;
-  // La cible est dans le cône de vision du joueur.
-  facing: boolean;
   // Où se trouve le joueur par rapport à la cible : devant, sur son flanc, dans son dos.
   position: RelativePosition;
 }

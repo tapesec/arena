@@ -77,6 +77,11 @@ export class CameraController {
     this.camera.alpha += delta * (1 - Math.exp(-FOLLOW_RATE * dt));
   }
 
+  // Place la caméra dans le dos d'un personnage orienté selon facing, tout de suite (sans changer zoom ni inclinaison).
+  faceTowards(facing: number) {
+    this.camera.alpha = Math.atan2(-Math.cos(facing), -Math.sin(facing));
+  }
+
   // Zoom par défaut ; l'orientation est remise par défaut seulement si on ne suit pas de personnage.
   reset(facing?: number) {
     this.camera.alpha = facing === undefined ? DEFAULT_ALPHA : Math.atan2(-Math.cos(facing), -Math.sin(facing));

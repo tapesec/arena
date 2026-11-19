@@ -1117,6 +1117,39 @@ describe("Immunités aux contrôles", () => {
 });
 
 describe("Règles communes", () => {
+  it("se tourne tout seul vers l'ennemi visé en lançant un sort ou en activant l'attaque, pas sous mez", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, Math.PI);
+    const enemy = world.spawn("e", "pretre", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "firebolt", enemy);
+    assert.equal(arcaniste.state.castAbility, "firebolt");
+    assert.ok(Math.abs(arcaniste.state.facing) < 1e-6, `orientation ${arcaniste.state.facing}`);
+
+    // Dos tourné : l'ennemi est derrière la Lame.
+    const lame = world.spawn("l", "lame", 0, 0, 12, 0);
+    world.combat.setTarget(lame.id, enemy.id);
+    world.combat.toggleAttack(lame.id);
+    assert.ok(Math.abs(Math.abs(lame.state.facing) - Math.PI) < 1e-6, `orientation ${lame.state.facing}`);
+
+    // Sous mez : l'attaque activée ne le tourne pas (ce chemin ne passe pas par checkCanUse).
+    const gardien = world.spawn("g", "gardien", 0, -3, 0, Math.PI);
+    (world.combat as unknown as { addEffect(p: PlayerRuntime, kind: string, duration: number, sourceId: string): void }).addEffect(gardien, "mez", 10, "x");
+    world.combat.setTarget(gardien.id, enemy.id);
+    world.combat.toggleAttack(gardien.id);
+    assert.equal(gardien.state.facing, Math.PI, "sous mez, pas de rotation");
+
+    // Jamais vers un allié.
+    const pretre = world.spawn("p", "pretre", 0, 0, -5, 0);
+    world.cast(pretre, "heal", arcaniste);
+    assert.equal(pretre.state.facing, 0);
+
+    // Clic droit tenu : l'orientation demandée suit la rotation.
+    const steer = world.spawn("s", "arcaniste", 0, 4, 0, Math.PI);
+    world.combat.setInput(steer.id, { up: false, down: false, left: false, right: false, steer: true, yaw: Math.PI });
+    world.cast(steer, "firebolt", enemy);
+    world.run(2.05);
+    assert.ok(world.eventsOf("damage").some((e) => e.sourceId === "s"), "le sort part malgré le clic droit");
+  });
+
   it("le root arrête net, puis la vitesse remonte jusqu'à la normale ; il casse aux dégâts", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const enemy = world.spawn("e", "pretre", 1, 0, 10, Math.PI);

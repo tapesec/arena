@@ -21,6 +21,7 @@ import {
   getClass,
   hasLineOfSight,
   isFacing,
+  facingTowards,
   isMagic,
   NEAR_SIGHT_FACTOR,
   type AbilityDef,
@@ -656,6 +657,7 @@ export class Game {
         this.setTarget(this.room.sessionId);
         break;
       case "toggleAttack":
+        this.steerTowardsTarget();
         this.room.send("toggleAttack");
         break;
       case "faceLock":
@@ -754,7 +756,19 @@ export class Game {
   // Touche de la barre ou clic sur une case : ciblage automatique si besoin, puis lancement.
   private castAbility(abilityId: string) {
     this.autoTarget(abilityId);
+    if (getAbility(abilityId)?.target === "enemy") this.steerTowardsTarget();
     this.room.send("cast", { abilityId });
+  }
+
+  // Le serveur tourne le personnage vers l'ennemi visé (compétence ou attaque). Clic droit tenu, c'est la caméra qui
+  // oriente le personnage : on la tourne d'abord vers la cible, sinon elle le ramènerait aussitôt dans l'autre sens.
+  private steerTowardsTarget() {
+    const self = this.self;
+    const target = this.targetId ? this.players.get(this.targetId) : undefined;
+    if (!this.camera.steering || !self || !target?.isAlive || target.state.team === self.state.team) return;
+    if (isFacing(self.state, target.state)) return;
+    this.camera.faceTowards(facingTowards(self.state, target.state));
+    this.sendMove();
   }
 
   // Ennemis vivants que l'équipe voit (le serveur n'envoie pas les autres), à moins de TAB_TARGET_RANGE. range et
@@ -974,7 +988,6 @@ export class Game {
             distance: Math.round(distance(self.state, target.state)),
             inMeleeRange: isInMeleeRange(self.state, target.state),
             inLineOfSight: hasLineOfSight(self.state, target.state),
-            facing: isFacing(self.state, target.state),
             position: positionRelativeTo(target.state, self.state),
           }
         : null;

@@ -81,7 +81,7 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
       if (!target || target.isAlly || target.hp <= 0) return refused("noTarget", "needEnemy");
       const status = reach(ability, target);
       if (status !== READY) return status;
-      if (!target.facing) return refused("position", "notFacing");
+      // Pas face à la cible : le personnage se tourne tout seul vers elle en lançant la compétence (voir le serveur).
       if (ability.position && target.position !== ability.position) {
         return refused("position", ability.position === "back" ? "needBack" : "needSide");
       }
