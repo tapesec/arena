@@ -21,6 +21,10 @@ import {
   getClass,
   hasLineOfSight,
   isFacing,
+  isMagic,
+  NEAR_SIGHT_FACTOR,
+  type AbilityDef,
+  MELEE_RANGE,
   positionRelativeTo,
   inputToDirection,
   isInMeleeRange,
@@ -71,7 +75,7 @@ import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
-import { MAGNET_RADIUS, bestCandidate, type TargetCandidate } from "./targeting";
+import { MAGNET_RADIUS, bestCandidate, rankEnemies, type EnemyCandidate, type EnemyRanking, type TargetCandidate } from "./targeting";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
 import { lobbyReady, waitForLobby } from "./lobbyPriority";
@@ -155,6 +159,8 @@ export class Game {
   private players = new Map<string, PlayerVisual>();
   private characterAssets: CharacterAssets;
   private targetId: string | null = null;
+  // Cible ennemie vivante à l'image précédente : sa mort déclenche un nouveau ciblage (voir retargetAfterDeath).
+  private aliveEnemyTarget: string | null = null;
   private targetMarker!: Mesh;
   private lastHudRefresh = 0;
   private lastHudSnapshot = "";
@@ -259,7 +265,7 @@ export class Game {
       setBotClass: (botId, classId) => this.room.send("setBotClass", { botId, classId }),
       selectTarget: (playerId) => this.setTarget(playerId),
       selectSelf: () => this.setTarget(this.room.sessionId),
-      castAbility: (abilityId) => this.room.send("cast", { abilityId }),
+      castAbility: (abilityId) => this.castAbility(abilityId),
     });
 
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
@@ -636,7 +642,7 @@ export class Game {
     if (action.startsWith("slot")) {
       const slot = Number(action.slice(4)) - 1;
       const abilityId = this.self && getClass(this.self.state.classId)?.abilities[slot];
-      if (abilityId) this.room.send("cast", { abilityId });
+      if (abilityId) this.castAbility(abilityId);
       return;
     }
     switch (action) {
@@ -736,24 +742,91 @@ export class Game {
     if (this.canvas.style.cursor !== cursor) this.canvas.style.cursor = cursor;
   }
 
-  // Tab : passe à l'ennemi vivant et visible suivant, du plus proche au plus éloigné.
+  // Tab : passe à l'ennemi vivant et visible suivant : ceux en ligne de vue d'abord, du plus proche au plus éloigné,
+  // puis ceux cachés par un obstacle.
   private cycleTarget() {
-    const self = this.self;
-    if (!self) return;
-
-    const candidates = [...this.players.values()]
-      .filter(
-        (p) =>
-          p.state.team !== self.state.team &&
-          p.isAlive &&
-          distance(self.state, p.state) <= TAB_TARGET_RANGE &&
-          hasLineOfSight(self.state, p.state),
-      )
-      .sort((a, b) => distance(self.state, a.state) - distance(self.state, b.state));
+    const candidates = rankEnemies(this.enemyCandidates());
     if (candidates.length === 0) return;
+    const currentIndex = candidates.indexOf(this.targetId ?? "");
+    this.setTarget(candidates[(currentIndex + 1) % candidates.length]);
+  }
 
-    const currentIndex = candidates.findIndex((p) => p.sessionId === this.targetId);
-    this.setTarget(candidates[(currentIndex + 1) % candidates.length].sessionId);
+  // Touche de la barre ou clic sur une case : ciblage automatique si besoin, puis lancement.
+  private castAbility(abilityId: string) {
+    this.autoTarget(abilityId);
+    this.room.send("cast", { abilityId });
+  }
+
+  // Ennemis vivants que l'équipe voit (le serveur n'envoie pas les autres), à moins de TAB_TARGET_RANGE. range et
+  // minRange : portées de la compétence à lancer (range 0 : sans objet).
+  private enemyCandidates(range = 0, minRange = 0): EnemyCandidate[] {
+    const self = this.self;
+    if (!self) return [];
+    const candidates: EnemyCandidate[] = [];
+    for (const p of this.players.values()) {
+      if (p.state.team === self.state.team || !p.isAlive) continue;
+      const d = distance(self.state, p.state);
+      if (d > TAB_TARGET_RANGE) continue;
+      candidates.push({
+        id: p.sessionId,
+        distance: d,
+        lineOfSight: hasLineOfSight(self.state, p.state),
+        inRange: (range <= 0 || d <= range) && d >= minRange,
+        inFront: isFacing(self.state, p.state),
+        controlled: p.hasEffect("mez") || p.hasEffect("root"),
+      });
+    }
+    return candidates;
+  }
+
+  // Meilleur ennemi selon ranking, ou null.
+  private bestEnemy(ranking: EnemyRanking, range = 0, minRange = 0): string | null {
+    return rankEnemies(this.enemyCandidates(range, minRange), ranking)[0] ?? null;
+  }
+
+  // Compétence dirigée contre un ennemi lancée sans ennemi vivant en cible : le jeu en choisit un (en ligne de vue,
+  // libre de mez et de root, à portée, devant soi, le plus proche). Une cible ennemie choisie par le joueur est gardée,
+  // même hors de vue : il voit alors pourquoi le sort refuse. Rien ne change si la compétence ne peut pas partir de
+  // toute façon (mort, contrôlé, en recharge, sans ressource, déjà en incantation) : la cible du joueur est gardée.
+  private autoTarget(abilityId: string) {
+    const ability = getAbility(abilityId);
+    const self = this.self;
+    if (!ability || !self || ability.target !== "enemy" || !this.canStart(ability)) return;
+    const current = this.targetId ? this.players.get(this.targetId) : undefined;
+    if (current && current.isAlive && current.state.team !== self.state.team) return;
+    // Near sight : la portée des sorts est réduite (comme sur le serveur).
+    const nearSight = isMagic(ability) && self.hasEffect("nearSight") ? NEAR_SIGHT_FACTOR : 1;
+    const range = ability.melee ? MELEE_RANGE : ability.range * nearSight;
+    const best = this.bestEnemy({ preferFree: true, preferInRange: true, preferFront: true }, range, ability.minRange ?? 0);
+    if (best) this.setTarget(best);
+  }
+
+  // Vrai si rien chez le joueur n'empêche la compétence de partir (la cible mise à part).
+  private canStart(ability: AbilityDef): boolean {
+    const self = this.self;
+    if (!self?.isAlive || self.state.castAbility) return false;
+    if (self.hasEffect("mez") || self.hasEffect("stun") || self.hasEffect("rampart")) return false;
+    if (isMagic(ability) && self.hasEffect("silenced")) return false;
+    if (self.state[ability.resource] < ability.cost) return false;
+    return (useHudStore.getState().cooldownEnds[ability.id] ?? 0) <= performance.now();
+  }
+
+  // Cible ennemie qui meurt sous les yeux du joueur : une autre est choisie aussitôt, de préférence ni mez ni root
+  // (sinon n'importe laquelle). Seulement au moment de la mort : un corps ennemi ciblé ensuite au clic reste ciblé, et
+  // sans candidat la cible morte reste (la prochaine compétence offensive en choisira une).
+  private retargetAfterDeath() {
+    const self = this.self;
+    const target = this.targetId ? this.players.get(this.targetId) : undefined;
+    const enemy = !!self && !!target && target.state.team !== self.state.team;
+    if (enemy && target!.isAlive) {
+      this.aliveEnemyTarget = target!.sessionId;
+      return;
+    }
+    const died = enemy && this.aliveEnemyTarget === target!.sessionId;
+    this.aliveEnemyTarget = null;
+    if (!died || !self!.isAlive) return;
+    const best = this.bestEnemy({ preferFree: true, preferFront: true });
+    if (best) this.setTarget(best);
   }
 
   // Le serveur ignore une cible sur soi-même : sans cible, soins et buffs s'appliquent au lanceur.
@@ -787,6 +860,7 @@ export class Game {
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       this.overlay.setBadge(player.sessionId, player.root, classId, label, enemy ? "enemy" : "ally", player.isAlive);
     }
+    this.retargetAfterDeath();
     this.overlay.update(dt);
     this.orderWheel.update();
     this.updateHover();
