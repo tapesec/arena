@@ -150,6 +150,9 @@ abstract class CasterBot extends BotBrain {
 
 // Distance en deçà de laquelle un ennemi prend assez de dégâts de Déflagration pour qu'elle vaille le coup.
 const BLAST_REACH = 5;
+// Nombre d'ennemis tout près pour protéger la Déflagration par Concentration : depuis que Concentration se recharge en
+// 30 s, la garder pour les grosses mêlées évite une Déflagration ininterruptible à chaque accrochage.
+const BLAST_CONCENTRATION_MIN = 3;
 // La Nova de givre (15 m) vaut le coup quand un ennemi de mêlée est déjà assez près.
 const NOVA_REACH = 8;
 
@@ -158,10 +161,10 @@ const NOVA_REACH = 8;
 // Trait de feu. Puissance arcanique dès qu'il a une cible.
 class ArcanisteBot extends CasterBot {
   protected think() {
-    // Plusieurs ennemis tout près : Déflagration, protégée par Concentration si elle est prête.
+    // Plusieurs ennemis tout près : Déflagration, protégée par Concentration si elle est prête et qu'ils sont nombreux.
     const close = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH).length;
     if (close >= 2 && !this.isCasting) {
-      if (this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
+      if (close >= BLAST_CONCENTRATION_MIN && this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
       if (this.tryUse("blast")) return;
     }
     // La mêlée arrive : Nova de givre (protégée par Concentration au contact) pour s'en débarrasser.

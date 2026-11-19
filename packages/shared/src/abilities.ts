@@ -251,7 +251,8 @@ const list: AbilityDef[] = [
     resource: "mana",
     cost: 0,
     range: 0,
-    cooldown: 90,
+    // 30 s (au lieu de 90, décidé le 2026-11-19) : un lanceur pris pour cible peut s'en servir à chaque combat.
+    cooldown: 30,
     target: "self",
     effects: [{ type: "status", status: "concentration", duration: INFINITE }],
   },

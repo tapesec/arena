@@ -99,7 +99,7 @@ Gros dégâts à distance, à condition d'être protégé.
 |---|---|---|---|---|
 | Trait de feu | 250 dégâts sur une cible. | 2 s | 100 mana | — |
 | Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 7 m (pas les alliés), 450 dégâts au centre, décroissant jusqu'à 100 au bord. | 2 s | 150 mana | — |
-| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 90 s |
+| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 30 s (90 s avant le 2026-11-19) |
 | Trait de givre | 150 dégâts de givre et snare 4 s (contrôle magique). | 2 s | 100 mana | — |
 | Near sight | 15 s : la portée des sorts de la cible est réduite de 75 % (30 m → 7,5 m) ; une incantation en cours échoue si la cible est trop loin à la fin. Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire. | 1,5 s | 100 mana | — |
 | Brûlure | Dot de feu : 400 dégâts en 10 s, un tic par seconde. Comme dans DAoC, chaque tic libère du mez et du root mais n'interrompt pas l'incantation (et n'est pas intercepté). Relancée, elle repart de zéro. | 2 s | 200 mana | — |
