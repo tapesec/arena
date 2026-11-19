@@ -6,9 +6,10 @@ export type ResourceType = "mana" | "endurance";
 export const MAX_MANA = 1000;
 export const MAX_ENDURANCE = 100;
 
-// Régénération de base par seconde.
-export const MANA_REGEN = 5;
-export const ENDURANCE_REGEN = 2;
+// Régénération de base par seconde : le tiers de celle sous Chant de second souffle (base + bonus du chant), pour
+// qu'un joueur sans Barde ne reste pas à sec (décidé le 2026-11-19 ; avant : 5 mana et 2 endurance).
+export const MANA_REGEN = 25;
+export const ENDURANCE_REGEN = 2.5;
 
 // Distance maximale entre les centres de deux personnages pour frapper au corps à corps.
 export const MELEE_RANGE = 3;

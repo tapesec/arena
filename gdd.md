@@ -45,8 +45,9 @@
 
 - **Incantation** : les sorts ont un temps d'incantation. Tout dégât reçu interrompt l'incantation.
 - **Ressources** :
-  - **Mana** pour les lanceurs de sorts : 1 000 points, régénération de 5/s.
-  - **Endurance** pour les combattants de mêlée : 100 points, régénération de 2/s.
+  - **Mana** pour les lanceurs de sorts : 1 000 points, régénération de 25/s.
+  - **Endurance** pour les combattants de mêlée : 100 points, régénération de 2,5/s.
+  - La régénération de base vaut le tiers de celle sous Chant de second souffle (base + 50 mana ou + 5 endurance, soit 75 et 7,5/s) : un joueur sans Barde ne reste pas à sec (décidé le 2026-11-19 ; avant : 5 mana et 2 endurance par seconde).
 - **Ligne de vue** : obligatoire pour tout sort et toute attaque à distance.
 - **Portées** : mêlée 3 m, sorts 30 m.
 - **Contrôle de foule** :

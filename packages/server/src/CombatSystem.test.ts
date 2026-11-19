@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import {
   BACKWARD_SPEED_FACTOR,
+  ENDURANCE_REGEN,
+  MANA_REGEN,
   CLASSES,
   MOVE_SPEED,
   NO_INPUT,
@@ -546,11 +548,13 @@ describe("Barde", () => {
     world.cast(enemy, "mez", ally);
     world.run(2.1);
     assert.ok(ally.has("mez"));
+    barde.state.mana = 500;
     world.cast(barde, "awaken", ally);
     world.run(1.05);
     assert.ok(!ally.has("mez"));
     assert.ok(ally.has("immuneMez"));
-    assert.ok(Math.abs(barde.state.mana - (barde.state.maxMana - 50)) < 1, "50 mana");
+    // Parti de 500 : 50 mana dépensés, plus 1,05 s de régénération.
+    assert.ok(Math.abs(barde.state.mana - (500 + MANA_REGEN * 1.05 - 50)) < 1, `50 mana (${barde.state.mana})`);
 
     const gardien = world.spawn("g", "gardien", 1, 3, 2, Math.PI);
     world.cast(gardien, "shieldBash", ally);
@@ -563,6 +567,7 @@ describe("Barde", () => {
   it("Oubli : n'interrompt pas, mais le sort qui finit pendant l'effet n'a aucun effet (mana et recharge dépensés)", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
+    arcaniste.state.mana = 500;
     world.cast(arcaniste, "firebolt", barde);
     world.cast(barde, "silence", arcaniste);
     world.run(1.05);
@@ -571,7 +576,8 @@ describe("Barde", () => {
     assert.equal(world.interrupts.length, 0);
     world.run(1);
     assert.equal(barde.state.hp, barde.state.maxHp, "le sort oublié ne fait rien");
-    assert.ok(arcaniste.state.mana < arcaniste.state.maxMana - 99, "mana dépensé");
+    // Parti de 500 : 100 mana dépensés, plus 2,05 s de régénération.
+    assert.ok(Math.abs(arcaniste.state.mana - (500 + MANA_REGEN * 2.05 - 100)) < 1, `mana dépensé (${arcaniste.state.mana})`);
     assert.ok(!arcaniste.has("oblivion"), "consommé au premier sort");
     world.cast(arcaniste, "firebolt", barde);
     world.run(2.05);
@@ -677,9 +683,9 @@ describe("Barde", () => {
     barde.state.mana = 0;
     lame.state.endurance = far.state.endurance = 0;
     world.run(1);
-    assert.ok(Math.abs(barde.state.mana - 55) < 1, `mana ${barde.state.mana}`);
-    assert.ok(Math.abs(lame.state.endurance - 7) < 0.2, `endurance ${lame.state.endurance}`);
-    assert.ok(Math.abs(far.state.endurance - 2) < 0.2, "hors de portée : régénération de base");
+    assert.ok(Math.abs(barde.state.mana - (MANA_REGEN + 50)) < 1, `mana ${barde.state.mana}`);
+    assert.ok(Math.abs(lame.state.endurance - (ENDURANCE_REGEN + 5)) < 0.2, `endurance ${lame.state.endurance}`);
+    assert.ok(Math.abs(far.state.endurance - ENDURANCE_REGEN) < 0.2, "hors de portée : régénération de base");
   });
 
   it("Buff dextérité : coups et incantations 15 % plus rapides, permanent, retiré à la mort du Barde", () => {
