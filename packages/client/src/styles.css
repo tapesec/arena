@@ -3356,8 +3356,8 @@ body,
   position: fixed;
   inset: 0;
   z-index: -1;
-  /* Image déjà floutée et assombrie (petite, agrandie : le flou masque l'agrandissement) : aucun filtre à recalculer
-     sous le canvas 3D à chaque image. */
+  /* Image préparée (sombre, désaturée, à peine floue, 960 px) : aucun filtre à recalculer sous le canvas 3D à chaque
+     image ; sombre pour que les personnages ressortent. */
   background: url("/home-art-blur.webp") 50% 40% / cover no-repeat;
   pointer-events: none;
 }
