@@ -24,8 +24,8 @@ import { lobbyReady } from "./lobbyPriority";
 const VISIBLE_HEIGHT = 2.6;
 // Point visé par la caméra (m) : le milieu du personnage, un peu au-dessus pour garder le socle en bas.
 const TARGET_Y = 1.05;
-// Couleurs des équipes (les mêmes que .team-0 et .team-1 dans styles.css).
-const TEAM_COLORS = [Color3.FromHexString("#6fa3ff"), Color3.FromHexString("#ff6f6f")];
+// Socle de la classe choisie : doré, comme le cadre de son nom (il ne prend plus la couleur de l'équipe).
+const CHOSEN_COLOR = Color3.FromHexString("#ffc94d");
 // Assombrissement des classes non choisies (0 : aucun), et de celle survolée.
 const DIMMED = 0.5;
 const DIMMED_HOVER = 0.2;
@@ -77,9 +77,8 @@ export class ClassLineup {
     this.pedestalOff.diffuseColor = new Color3(0.2, 0.22, 0.26);
     this.pedestalOff.specularColor = Color3.Black();
     this.pedestalOn = new StandardMaterial("pedestal-on", this.scene);
-    const color = TEAM_COLORS[this.team] ?? TEAM_COLORS[0];
-    this.pedestalOn.diffuseColor = color.scale(0.5);
-    this.pedestalOn.emissiveColor = color.scale(0.8);
+    this.pedestalOn.diffuseColor = CHOSEN_COLOR.scale(0.5);
+    this.pedestalOn.emissiveColor = CHOSEN_COLOR.scale(0.8);
     this.pedestalOn.specularColor = Color3.Black();
 
     // Seules les animations jouées ici (attente et geste de chaque classe) sont chargées : le jeu charge le reste dans

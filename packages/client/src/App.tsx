@@ -268,7 +268,7 @@ function ClassSelectScreen() {
   };
 
   return (
-    <div className="screen lobby-screen">
+    <div className="screen lobby-screen themed-screen">
       <header className="lobby-header">
         <h1>{t("lobby.title")}</h1>
         <p className="screen-text">
@@ -412,7 +412,7 @@ function ClassLineupView({ team, selected, onSelect }: { team: number; selected:
             className={`lobby-column ${selected === c.id ? "lobby-column-selected" : ""} ${hovered === index ? "lobby-column-hover" : ""}`}
           >
             <button
-              className={`lobby-class-name team-border-${team}`}
+              className="lobby-class-name"
               aria-pressed={selected === c.id}
               onClick={() => onSelect(c.id)}
               onMouseEnter={() => setHovered(index)}
@@ -485,7 +485,7 @@ function LoadingScreen() {
   const team = loading.find((p) => p.isSelf)?.team ?? match?.team ?? 0;
   const late = match?.phase === "preparation";
   return (
-    <div className="screen">
+    <div className="screen themed-screen">
       <h1>{t("loading.title")}</h1>
       <p className="screen-text">
         {late ? t("loading.late") : t("loading.startsIn")} <strong className="lobby-countdown">{match?.timeLeft ?? 0} s</strong>

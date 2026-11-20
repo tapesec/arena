@@ -682,14 +682,10 @@ body,
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-.lobby-column-selected .lobby-class-name.team-border-0 {
-  border-color: #6fa3ff;
-  box-shadow: 0 0 10px rgba(111, 163, 255, 0.45);
-}
-
-.lobby-column-selected .lobby-class-name.team-border-1 {
-  border-color: #ff6f6f;
-  box-shadow: 0 0 10px rgba(255, 111, 111, 0.45);
+.lobby-column-selected .lobby-class-name {
+  border-color: #ffd76a;
+  background: rgba(255, 215, 106, 0.1);
+  box-shadow: 0 0 12px rgba(255, 215, 106, 0.45);
 }
 
 /* Huit compétences sur deux lignes de quatre. */
@@ -814,10 +810,6 @@ body,
 .lobby-body .roster {
   flex: 0 0 auto;
   margin-top: 0;
-  padding: 12px 16px;
-  border: 1px solid #2c323c;
-  border-radius: 8px;
-  background: #161a20;
 }
 
 /* Très petite fenêtre : les cases deviennent minuscules, la touche masquerait l'icône. */
@@ -3350,4 +3342,87 @@ body,
 
 .tutorial-dot.active {
   background: #ffd76a;
+}
+
+/* --- Écrans habillés comme l'accueil (choix de classe, chargement) : l'illustration floutée et assombrie en fond,
+   titres en Cinzel doré, panneaux en cartes vitrées bordées d'or. --- */
+.themed-screen {
+  isolation: isolate;
+  background: #0d1320;
+}
+
+.themed-screen::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  /* Image déjà floutée et assombrie (petite, agrandie : le flou masque l'agrandissement) : aucun filtre à recalculer
+     sous le canvas 3D à chaque image. */
+  background: url("/home-art-blur.webp") 50% 40% / cover no-repeat;
+  pointer-events: none;
+}
+
+.screen.themed-screen h1 {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  background: linear-gradient(180deg, #fff6c8 0%, #ffd76a 45%, #d8902a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 #5a3410) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+}
+
+.themed-screen .class-name,
+.themed-screen .roster h2,
+.themed-screen .loading-team h2 {
+  font-family: "Cinzel", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.themed-screen .class-name {
+  color: #ffe9a8;
+  font-size: 18px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.themed-screen .lobby-class-summary,
+.themed-screen .screen-text,
+.themed-screen .screen-hint {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Compte à rebours en médaillon doré. */
+.themed-screen .lobby-timer {
+  padding: 6px 26px;
+  border: 2px solid rgba(255, 215, 106, 0.7);
+  border-radius: 999px;
+  background: rgba(12, 16, 26, 0.72);
+  box-shadow: 0 0 16px rgba(255, 215, 106, 0.25), inset 0 0 12px rgba(255, 215, 106, 0.12);
+}
+
+.themed-screen .screen-hint {
+  color: #b4bccb;
+}
+
+.themed-screen .lobby-timer-urgent {
+  border-color: rgba(255, 111, 111, 0.8);
+  background: rgba(40, 10, 12, 0.75);
+  box-shadow: 0 0 18px rgba(255, 111, 111, 0.35);
+}
+
+/* Cartes vitrées : liste d'équipe, équipes de l'écran de chargement. */
+.themed-screen .lobby-body .roster,
+.themed-screen .loading-team {
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 215, 106, 0.4);
+  border-radius: 12px;
+  background: rgba(12, 16, 26, 0.72);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.themed-screen .loading-line {
+  background: rgba(255, 255, 255, 0.06);
 }

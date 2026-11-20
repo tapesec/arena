@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { getAbility, getClass, ORDERS, type ClassId } from "@arena/shared";
 import { abilityColor, abilityIcon } from "./abilityBar";
 import { abilityName, className, moveKeys, t, type TextKey } from "./i18n";
@@ -49,7 +50,9 @@ export function Tutorial({ classId, onClose }: { classId: ClassId | ""; onClose:
   }, [close]);
 
   const last = slide === SLIDES - 1;
-  return (
+  // Rendu directement dans la page : l'écran de choix forme son propre empilement (fond flouté), qui plafonnerait le
+  // voile du didacticiel sous les boutons du son et de la langue.
+  return createPortal(
     // Fermé par un clic à côté, seulement s'il commence à côté (pas un glisser parti du dialogue).
     <div className="tutorial-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}>
       <div className="tutorial" role="dialog" aria-modal="true" aria-label={t("tutorial.title")}>
@@ -84,7 +87,8 @@ export function Tutorial({ classId, onClose }: { classId: ClassId | ""; onClose:
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
