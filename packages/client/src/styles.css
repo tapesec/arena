@@ -350,7 +350,7 @@ body,
   flex-direction: column;
   align-items: center;
   transform: translate(-50%, -50%);
-  color: #6fa3ff;
+  color: #4cf266;
   font-size: 12px;
   font-weight: 700;
   text-shadow: 0 0 3px #000, 0 0 3px #000;
@@ -1272,6 +1272,37 @@ body,
   text-shadow:
     0 0 3px #000,
     0 1px 2px #000;
+}
+
+/* Chevron de la cible : plus gros que celui de son propre personnage, à la couleur de son anneau, et qui monte et
+   descend doucement (décidé le 2026-11-20). */
+.nameplate-chevron.nameplate-target {
+  font-size: 24px;
+  animation: target-bob 1s ease-in-out infinite;
+}
+
+.nameplate-target-enemy {
+  color: #ff4a42;
+}
+
+.nameplate-target-ally {
+  color: #4cf266;
+}
+
+.nameplate-target-blocked {
+  color: #9a9a9a;
+}
+
+@keyframes target-bob {
+  50% {
+    transform: translate(-50%, -5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nameplate-chevron.nameplate-target {
+    animation: none;
+  }
 }
 
 .nameplate-has-indicator .nameplate-chevron {

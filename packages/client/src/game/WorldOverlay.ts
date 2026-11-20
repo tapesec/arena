@@ -58,6 +58,8 @@ interface Bubble {
 // Camp d'un joueur vu par le joueur local : son texte au-dessus de la tête est bleu ou rouge.
 // « self » : son propre personnage (pseudo doré, avec un chevron au-dessus pour le repérer dans la mêlée).
 export type Side = "ally" | "enemy" | "self";
+// Marque de la cible du joueur au-dessus de son pseudo : ennemie (rouge), alliée (vert), ou cachée par un obstacle (gris).
+export type TargetMark = "enemy" | "ally" | "blocked";
 
 // Couche HTML posée sur le canvas : badges de classe, textes flottants (dégâts, soins…)
 // et indicateurs de contrôle au-dessus des têtes. Pilotée par la boucle de jeu, pas par React, pour rester légère.
@@ -88,7 +90,8 @@ export class WorldOverlay {
 
   // Affiche (ou retire, avec null) l'indicateur de contrôle d'un joueur.
   setIndicator(playerId: string, anchor: TransformNode, kind: StatusIndicator | null) {
-    // Un indicateur (Zzz, étoiles, !!!…) prend la place du chevron de son propre personnage, juste au-dessus du pseudo.
+    // Un indicateur (Zzz, étoiles, !!!…) prend la place du chevron (de son propre personnage ou de la cible), juste au-dessus
+    // du pseudo.
     this.badges.get(playerId)?.element.classList.toggle("nameplate-has-indicator", !!kind);
     const current = this.indicators.get(playerId);
     if (current?.kind === kind) return;
@@ -123,8 +126,8 @@ export class WorldOverlay {
   }
 
   // Au-dessus de la tête : un texte coloré selon le camp (le pseudo d'un allié, la classe d'un ennemi).
-  setBadge(playerId: string, anchor: TransformNode, classId: ClassId | "", label: string, side: Side, alive: boolean) {
-    const key = `${classId}|${label}|${side}|${alive}`;
+  setBadge(playerId: string, anchor: TransformNode, classId: ClassId | "", label: string, side: Side, alive: boolean, target: TargetMark | null = null) {
+    const key = `${classId}|${label}|${side}|${alive}|${target}`;
     const current = this.badges.get(playerId);
     if (current?.key === key) return;
     current?.element.remove();
@@ -133,9 +136,10 @@ export class WorldOverlay {
 
     const element = document.createElement("div");
     element.className = `nameplate nameplate-${side}${alive ? "" : " nameplate-dead"}`;
-    if (side === "self" && alive) {
+    // Chevron : celui de la cible (plus gros, animé, à sa couleur), sinon celui de son propre personnage (doré, fixe).
+    if (alive && (target || side === "self")) {
       const chevron = document.createElement("span");
-      chevron.className = "nameplate-chevron";
+      chevron.className = target ? `nameplate-chevron nameplate-target nameplate-target-${target}` : "nameplate-chevron";
       chevron.textContent = "▼";
       element.append(chevron);
     }

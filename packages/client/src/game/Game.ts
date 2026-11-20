@@ -63,7 +63,7 @@ import {
   type TeammateFrame,
 } from "../store";
 import { CameraController } from "./CameraController";
-import { WorldOverlay, type StatusIndicator } from "./WorldOverlay";
+import { WorldOverlay, type StatusIndicator, type TargetMark } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
 import { audio } from "../audio/AudioManager";
 import { Nature } from "./nature";
@@ -128,12 +128,14 @@ const HOVER_ENEMY = new Color3(1, 0.36, 0.32);
 const HOVER_ALLY = new Color3(0.61, 0.78, 1);
 // Point visé par l'aimant : le milieu du corps.
 const BODY_CENTER = new Vector3(0, 1.1, 0);
-// Anneau sous la cible : rouge, gris quand un obstacle la cache ; pointillé de ligne de vue, à mi-jambe.
+// Anneau de la cible : rouge pour un ennemi, vert pour un allié (décidé le 2026-11-20), gris quand un obstacle la cache ;
+// pointillé de ligne de vue, à mi-jambe.
 const TARGET_MARKER_COLOR = new Color3(1, 0.2, 0.2);
+const TARGET_MARKER_ALLY = new Color3(0.3, 0.95, 0.4);
 const SELF_MARKER_COLOR = new Color3(1, 0.8, 0.3);
 const TARGET_MARKER_BLOCKED = new Color3(0.45, 0.45, 0.45);
 const SIGHT_LINE_COLOR = new Color3(1, 0.25, 0.25);
-const SIGHT_LINE_ALLY = new Color3(0.44, 0.64, 1);
+const SIGHT_LINE_ALLY = new Color3(0.3, 0.95, 0.4);
 const SIGHT_LINE_HEIGHT = new Vector3(0, 0.5, 0);
 // Cadrage de combat (décidé le 2026-11-19) : avec un ennemi visé à moins de FRAMING_RANGE mètres, la caméra vise un
 // point décalé du joueur vers lui (FRAMING_SHARE de l'écart, FRAMING_MAX_OFFSET mètres au plus), pour garder les deux
@@ -193,7 +195,7 @@ export class Game {
   // Anneau doré permanent sous son propre personnage (pour le repérer dans la mêlée).
   private selfMarker!: Mesh;
   private targetMarkerMaterial!: StandardMaterial;
-  // Cible cachée par un obstacle : pointillé rouge du joueur à la cible (voir updateTargetMarker).
+  // Cible cachée par un obstacle : pointillé (rouge ou vert) du joueur à la cible (voir updateTargetMarker).
   private sightLine: LinesMesh | null = null;
   private sightLineDashes = 0;
   // Flèche au bord de l'écran vers la cible hors champ.
@@ -513,9 +515,9 @@ export class Game {
 
   }
 
-  // Anneau rouge affiché sous la cible actuelle.
+  // Anneau (rouge, vert ou gris) affiché sous la cible actuelle.
   private createTargetMarker() {
-    this.targetMarker = CreateTorus("targetMarker", { diameter: 1.9, thickness: 0.1, tessellation: 48 }, this.scene);
+    this.targetMarker = CreateTorus("targetMarker", { diameter: 1.9, thickness: 0.16, tessellation: 48 }, this.scene);
     const material = new StandardMaterial("targetMarkerMat", this.scene);
     material.emissiveColor = TARGET_MARKER_COLOR;
     material.disableLighting = true;
@@ -997,6 +999,8 @@ export class Game {
     // le serveur n'envoyant que 20 mises à jour par seconde.
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
     this.predictSelf(dt);
+    const currentTarget = this.targetId ? this.players.get(this.targetId) : undefined;
+    const targetBlocked = this.targetBlocked(this.self, currentTarget);
     for (const player of this.players.values()) {
       player.update(smoothing);
       const enemy = !!this.self && player.state.team !== this.self.state.team;
@@ -1004,7 +1008,7 @@ export class Game {
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       const side = enemy ? "enemy" : player === this.self ? "self" : "ally";
-      this.overlay.setBadge(player.sessionId, player.root, classId, label, side, player.isAlive);
+      this.overlay.setBadge(player.sessionId, player.root, classId, label, side, player.isAlive, player.sessionId === this.targetId ? this.targetMark(player, targetBlocked) : null);
     }
     this.retargetAfterDeath();
     this.overlay.update(dt);
@@ -1035,27 +1039,42 @@ export class Game {
     this.selfMarker.setEnabled(!!self && self.isAlive);
     // Assez haut pour ne pas s'enfoncer dans le sol (épaisseur 0,16 m).
     if (self) this.selfMarker.position.set(self.root.position.x, self.root.position.y + 0.08, self.root.position.z);
-    this.updateTargetMarker(self, target);
+    this.updateTargetMarker(self, target, targetBlocked);
     this.updateTargetPointer(self, target);
 
     this.refreshHud(self, target);
     this.scene.render();
   }
 
-  // Anneau sous la cible ; si un obstacle la cache (ligne de vue coupée), l'anneau passe en gris et un pointillé rouge
-  // la relie au joueur : il voit pourquoi ses sorts refusent et qu'il doit contourner (décidé le 2026-11-19).
-  private updateTargetMarker(self: PlayerVisual | undefined, target: PlayerVisual | undefined) {
-    this.targetMarker.setEnabled(!!target);
-    if (target) this.targetMarker.position.set(target.root.position.x, target.root.position.y + 0.06, target.root.position.z);
-    const blocked =
+  // Marque de la cible au-dessus de son pseudo (même couleur que son anneau).
+  // Se cibler soi-même : pas de chevron de cible, le chevron doré du joueur reste.
+  private targetMark(target: PlayerVisual, blocked: boolean): TargetMark | null {
+    const self = this.self;
+    if (target === self) return null;
+    if (blocked) return "blocked";
+    return self && target.state.team !== self.state.team ? "enemy" : "ally";
+  }
+
+  // Ligne de vue coupée entre le joueur (vivant) et sa cible (vivante) : calculée une fois par image.
+  private targetBlocked(self: PlayerVisual | undefined, target: PlayerVisual | undefined): boolean {
+    return (
       !!self &&
       self.isAlive &&
       !!target &&
       target !== self &&
       target.isAlive &&
       target.root.isEnabled() &&
-      !hasLineOfSight(self.state, target.state);
-    this.targetMarkerMaterial.emissiveColor = blocked ? TARGET_MARKER_BLOCKED : TARGET_MARKER_COLOR;
+      !hasLineOfSight(self.state, target.state)
+    );
+  }
+
+  // Anneau sous la cible ; si un obstacle la cache (ligne de vue coupée), l'anneau passe en gris et un pointillé
+  // la relie au joueur : il voit pourquoi ses sorts refusent et qu'il doit contourner (décidé le 2026-11-19).
+  private updateTargetMarker(self: PlayerVisual | undefined, target: PlayerVisual | undefined, blocked: boolean) {
+    this.targetMarker.setEnabled(!!target);
+    if (target) this.targetMarker.position.set(target.root.position.x, target.root.position.y + 0.06, target.root.position.z);
+    const enemy = !!self && !!target && target.state.team !== self.state.team;
+    this.targetMarkerMaterial.emissiveColor = blocked ? TARGET_MARKER_BLOCKED : enemy ? TARGET_MARKER_COLOR : TARGET_MARKER_ALLY;
     if (!blocked) {
       this.sightLine?.setEnabled(false);
       return;
@@ -1074,7 +1093,7 @@ export class Game {
       this.sightLine.alwaysSelectAsActiveMesh = true;
       this.sightLineDashes = dashNb;
     }
-    // Rouge pour un ennemi, bleu pour un allié (comme la flèche au bord de l'écran).
+    // Rouge pour un ennemi, vert pour un allié (comme l'anneau et la flèche au bord de l'écran).
     this.sightLine.color = target!.state.team !== self!.state.team ? SIGHT_LINE_COLOR : SIGHT_LINE_ALLY;
     this.sightLine.setEnabled(true);
   }
