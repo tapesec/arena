@@ -7,8 +7,8 @@ import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 // Résolution de la carte d'ombres, et côté (en mètres) de la zone ombrée, centrée sur ce que regarde la caméra :
 // limiter la zone garde des ombres nettes sur une carte de 100 m.
 const MAP_SIZE = 2048;
-// 75 m (60 m avant le 2026-11-21) : suit le recul de la caméra de 25 %.
-const AREA = 75;
+// 86 m (60 m avant le 2026-11-21) : suit le recul de la caméra (+25 %, puis +15 %).
+const AREA = 86;
 // Distance à laquelle on place le soleil, en arrière du point regardé, et profondeur de la zone ombrée.
 const SUN_DISTANCE = 60;
 const DEPTH = 130;
