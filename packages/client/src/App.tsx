@@ -658,15 +658,38 @@ function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; h
       <MiniBar value={member.hp} max={member.maxHp} kind="hp" label={dead ? t("frame.dead") : String(member.hp)} />
       {member.maxMana > 0 && <MiniBar value={member.mana} max={member.maxMana} kind="mana" />}
       {member.maxEndurance > 0 && <MiniBar value={member.endurance} max={member.maxEndurance} kind="endurance" />}
-      {!dead && member.effects.length > 0 && (
+      {!dead && <GroupEffects effects={member.effects} />}
+    </div>
+  );
+}
+
+// Effets d'un coéquipier (décidé le 2026-11-21) : contrôles et affaiblissements en grand sur leur propre ligne (ce qu'il
+// faut voir pour réveiller, soigner ou purifier) ; buffs et immunités en petit dessous, les buffs permanents plus petits
+// et pâles. Deux effets du même type peuvent coexister (Renouveau de deux Prêtres) : un par lanceur.
+function GroupEffects({ effects }: { effects: EffectFrame[] }) {
+  if (effects.length === 0) return null;
+  const category = (effect: EffectFrame) => EFFECTS[effect.kind]?.category ?? "buff";
+  const afflictions = effects.filter((e) => category(e) === "control" || category(e) === "debuff");
+  const others = effects
+    .filter((e) => category(e) !== "control" && category(e) !== "debuff")
+    .sort((a, b) => (a.remaining === null ? 1 : 0) - (b.remaining === null ? 1 : 0));
+  return (
+    <>
+      {afflictions.length > 0 && (
+        <div className="group-effects group-afflictions">
+          {afflictions.map((effect) => (
+            <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="groupAffliction" />
+          ))}
+        </div>
+      )}
+      {others.length > 0 && (
         <div className="group-effects">
-          {member.effects.map((effect) => (
-            // Deux effets du même type peuvent coexister (Renouveau de deux Prêtres) : un par lanceur.
+          {others.map((effect) => (
             <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="group" />
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -684,7 +707,7 @@ function MiniBar({ value, max, kind, label }: { value: number; max: number; kind
 // buff, immunité), avec un cadran qui se vide et, sur demande, le compte à rebours dessous ; il clignote dans ses
 // dernières secondes. Infobulle : nom, durée restante, qui l'a posé.
 const ENDING_SOON = 3;
-function EffectIcon({ effect, size, timer = false }: { effect: EffectFrame; size: "self" | "buff" | "target" | "group"; timer?: boolean }) {
+function EffectIcon({ effect, size, timer = false }: { effect: EffectFrame; size: "self" | "buff" | "target" | "group" | "groupAffliction"; timer?: boolean }) {
   const icon = effectIcon(effect.kind);
   const label = effectLabel(effect.kind);
   const { remaining, duration } = effect;

@@ -1009,10 +1009,26 @@ body,
   opacity: 0.8;
 }
 
-/* Fenêtre de groupe : petites icônes, sans chiffre, les contrôles encadrés. */
+/* Fenêtre de groupe, sans chiffre : contrôles et affaiblissements en grand (les contrôles encadrés, avec leur lueur) ;
+   buffs et immunités en petit, les buffs permanents encore plus petits et pâles (décidé le 2026-11-21). */
+.aura-size-groupAffliction .aura-box {
+  width: 24px;
+  height: 24px;
+  border-width: 1px;
+  border-radius: 4px;
+}
+
+.aura-size-groupAffliction .aura-icon {
+  inset: 2px;
+}
+
+.aura-size-groupAffliction.aura-control .aura-box {
+  border-width: 2px;
+}
+
 .aura-size-group .aura-box {
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
   border-width: 1px;
   border-radius: 3px;
 }
@@ -1021,8 +1037,10 @@ body,
   inset: 1px;
 }
 
-.aura-size-group.aura-control .aura-box {
-  border-width: 2px;
+.aura-size-group.aura-permanent .aura-box {
+  width: 11px;
+  height: 11px;
+  opacity: 0.55;
 }
 
 .slot-active {
