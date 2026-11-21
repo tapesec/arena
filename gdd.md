@@ -56,7 +56,7 @@
 
 ## Règles de combat communes
 
-- **Incantation** : les sorts ont un temps d'incantation. Tout dégât reçu interrompt l'incantation.
+- **Incantation** : les sorts ont un temps d'incantation. Tout dégât reçu interrompt l'incantation, de même qu'un stun, un mez ou un root reçu (les dégâts et le root, sauf sous Concentration).
 - **Ressources** :
   - **Mana** pour les lanceurs de sorts : 1 000 points, régénération de 25/s.
   - **Endurance** pour les combattants de mêlée : 100 points, régénération de 2,5/s.
@@ -72,7 +72,7 @@
   - **Silence** : la cible ne peut plus lancer de sort (compétences à mana) ; son incantation en cours est interrompue (sauf sous Concentration). Ni cassé par les dégâts, ni retiré par le Réveil, pas d'immunité ensuite ; relancé, il repart de sa durée. Le chant d'un Barde réduit au silence se coupe, et il ne peut pas le relancer pendant l'effet. Celui du Coup de pied est un contrôle physique (le Cri de ralliement n'en protège pas).
   - **Oubli** : pendant l'effet, le prochain sort de la cible (compétence à mana) n'a aucun effet : mana dépensé, recharge lancée, et l'effet est consommé. Il n'interrompt pas : une incantation en cours qui se termine pendant l'effet est le sort oublié. Les techniques et compétences d'endurance ne sont pas touchées ; couper son chant n'est pas un sort. Aucun texte flottant. Contrôle magique : le Cri de ralliement en protège et le retire. Relancé, il repart de sa durée.
   - **Attaques spéciales de mêlée** (techniques et Coup de pied) : esquivées, bloquées au bouclier (Gardien ou Garde) ou absorbées par une bulle, elles s'arrêtent en entier, dégâts et effets (stun, ralentissement).
-  - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse. Elle garde son suivi de cible (C) : tournée vers sa cible, elle avance vers elle dès que sa vitesse remonte.
+  - **Root** : la cible est arrêtée net, puis sa vitesse remonte régulièrement jusqu'à la normale à la fin de l'effet (à mi-durée, elle avance à 50 %). Elle peut agir. Cassé par les dégâts, qui rendent aussitôt la pleine vitesse. Recevoir un root interrompt l'incantation en cours, sauf sous Concentration (décidé le 2026-11-21). Elle garde son suivi de cible (C) : tournée vers sa cible, elle avance vers elle dès que sa vitesse remonte.
   - **Snare** : ralentissement de 40 % (tous les snares). Un seul snare à la fois : le plus puissant reste jusqu'à la fin de son effet, un snare plus faible reçu entre-temps est ignoré (pas mis en attente) ; à puissance égale, on garde celui qui dure le plus longtemps. Pas d'immunité.
 - **Ballade rythmée** : immunité aux effets de mobilité (root, snare) ; ceux en place sont retirés. Les autres contrôles (stun, mez, silence…) passent.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
@@ -118,7 +118,7 @@ Gros dégâts à distance, à condition d'être protégé.
 | Déflagration | Explosion autour du lanceur, sans cible ni ligne de vue : touche tous les ennemis à 7 m (pas les alliés), 450 dégâts au centre, décroissant jusqu'à 100 au bord. | 2 s | 150 mana | — |
 | Nova de givre | Root 12 s sur les ennemis à 15 m autour du lanceur, sans cible. | 1,5 s | 200 mana | 60 s |
 | Near sight | 15 s : la portée des sorts de la cible est réduite de 75 % (30 m → 7,5 m) ; une incantation en cours échoue si la cible est trop loin à la fin. Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire. | 1,5 s | 100 mana | — |
-| Concentration | Le prochain sort ne peut pas être interrompu. | Instantané | — | 30 s (90 s avant le 2026-11-19) |
+| Concentration | Le prochain sort ne peut pas être interrompu (ni par les dégâts, le silence, la provocation ou un root ; un mez ou un stun l'interrompent toujours). | Instantané | — | 30 s (90 s avant le 2026-11-19) |
 | Puissance arcanique (ultime) | 15 s : tous les sorts de dégâts de l'Arcaniste sont critiques (× 1,5), tics de la Brûlure compris. | Instantané | 400 mana | 3 min |
 
 À débloquer (programmés, pas encore dans la barre) :
@@ -189,7 +189,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
 
 ## Choix faits pendant le prototype (provisoires, à valider en test)
 
-- **Incantation** : bouger interrompt l'incantation, et on ne peut pas commencer à incanter en bougeant (comme dans DAoC).
+- **Incantation** : bouger interrompt l'incantation, et on ne peut pas commencer à incanter en bougeant (comme dans DAoC). Suivre sa cible (C) compte comme bouger, même sous root (2026-11-21) ; mais lancer un sort à incantation lâche le suivi, et l'incantation démarre si rien d'autre ne fait bouger le personnage.
 - **Orientation** : pour attaquer ou lancer un sort offensif, la cible doit être dans un cône de 180° devant soi. Depuis le 2026-11-19, le personnage **se tourne tout seul** vers l'ennemi visé quand on lance une compétence contre lui (techniques de mêlée comprises), même si elle est ensuite refusée (portée, ligne de vue…), ou qu'on active l'attaque : un /face automatique, sans verrou (on peut se détourner ensuite, et le sort échoue alors à la fin de l'incantation). En mode classique, clic droit tenu, la caméra se tourne aussi vers la cible ; en mode moderne, le personnage reprend aussitôt sa course (on peut tirer un sort instantané en fuyant). Pas sous mez, stun ni Rempart ; rooté, on pivote. La barre de compétences et le cadre de la cible n'affichent donc plus « Pas en face ».
 - **Positions** (Lame) : devant = ±60° face à la cible, dans le dos = ±60° derrière, flanc = entre les deux.
 - **Zones d'effet** : le Mez de zone est centré sur la cible (et non sur un point du sol choisi à la souris) ; Déflagration est centrée sur le lanceur.

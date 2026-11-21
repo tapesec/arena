@@ -34,6 +34,7 @@ import {
   getAbility,
   hasLineOfSight,
   isFacing,
+  movesBody,
   isInMeleeRange,
   isMagic,
   isOffensive,
@@ -209,7 +210,12 @@ export class CombatSystem {
     const ability = getAbility(abilityId);
     if (!caster?.alive || !ability || !caster.classDef.abilities.includes(abilityId)) return;
 
-    const error = this.checkCanUse(caster, ability);
+    // Suivre sa cible (C), c'est bouger : pas d'incantation tant que le suivi fait avancer. Mais lancer un sort à
+    // incantation lâche le suivi (décidé le 2026-11-21) : si seul le suivi le faisait bouger, ce mouvement ne bloque pas
+    // le sort ; le suivi n'est lâché qu'au démarrage réel de l'incantation (un sort refusé, hors de portée par exemple,
+    // le laisse en place).
+    const onlyStickMoves = caster.state.lock === "stick" && !movesBody(caster.input);
+    const error = this.checkCanUse(caster, ability, onlyStickMoves);
     if (error) return this.sendError(caster, error);
 
     const targetId = this.pickTarget(caster, ability);
@@ -242,6 +248,8 @@ export class CombatSystem {
       this.resolveAbility(caster, ability, targetId);
       return;
     }
+    // L'incantation lâche le suivi (C) : sinon, la cible qui s'éloigne ferait avancer le lanceur et l'interromprait.
+    if (caster.state.lock === "stick") caster.state.lock = "";
     // Concentration protège la prochaine incantation, puis disparaît.
     const concentration = caster.getEffect("concentration");
     caster.castProtected = !!concentration;
@@ -904,7 +912,8 @@ export class CombatSystem {
     // L'immunité démarre dès l'application : impossible de prolonger le contrôle en le relançant.
     // Elle couvre la durée du contrôle, puis IMMUNITY_DURATION de répit après sa fin normale.
     this.addEffect(target, immunity, duration + IMMUNITY_DURATION, source.id);
-    if (cc !== "root" && target.state.castAbility) this.interrupt(target, "cc");
+    // Mez et stun interrompent toujours ; un root aussi (décidé le 2026-11-21), sauf sous Concentration.
+    if (target.state.castAbility && (cc !== "root" || !target.castProtected)) this.interrupt(target, "cc");
     this.emit({ kind: "cc", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
   }
 

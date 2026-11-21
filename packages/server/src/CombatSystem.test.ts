@@ -1305,6 +1305,63 @@ describe("Contrôles", () => {
   });
 });
 
+describe("Suivi de cible, root et incantation", () => {
+  it("recevoir un root interrompt l'incantation en cours, sauf sous Concentration", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 10, Math.PI);
+    world.cast(pretre, "heal");
+    world.cast(arcaniste, "freeze", pretre);
+    world.run(1.6);
+    assert.ok(pretre.has("root"));
+    assert.equal(pretre.state.castAbility, "", "incantation interrompue par le root");
+    assert.equal(world.interrupts.at(-1)?.reason, "cc");
+
+    // Sous Concentration : la Nova de givre (1,5 s) roote le mage pendant son Trait de feu (2 s), sans l'interrompre.
+    const mage = world.spawn("m", "arcaniste", 0, 4, 0, 0);
+    world.cast(mage, "concentration");
+    world.cast(mage, "firebolt", arcaniste);
+    world.cast(arcaniste, "frostNova");
+    world.run(1.6);
+    assert.ok(mage.has("root"), "rooté par la Nova");
+    assert.equal(mage.state.castAbility, "firebolt", "incantation protégée");
+  });
+
+  it("suivre sa cible empêche d'incanter, mais lancer un sort à incantation lâche le suivi et l'incantation démarre", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
+    const allie = world.spawn("x", "lame", 0, 0, 12, 0);
+    world.combat.setTarget(pretre.id, allie.id);
+    world.combat.lockOnTarget(pretre.id, "stick");
+    world.run(0.2);
+    assert.ok(pretre.isMoving, "le suivi fait avancer");
+    world.combat.useAbility(pretre.id, "heal");
+    assert.equal(pretre.state.lock, "", "le suivi est lâché");
+    assert.equal(pretre.state.castAbility, "heal", "l'incantation démarre");
+    const z = pretre.state.z;
+    world.run(2.1);
+    assert.ok(Math.abs(pretre.state.z - z) < 1e-6, "plus d'avance pendant l'incantation");
+    assert.ok(world.eventsOf("heal").some((e) => e.sourceId === "p"), "le soin part");
+  });
+
+  it("un sort refusé (hors de portée) ne lâche pas le suivi ; une touche de déplacement empêche toujours d'incanter", () => {
+    const mage = world.spawn("m", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 40, Math.PI);
+    world.combat.setTarget(mage.id, enemy.id);
+    world.combat.lockOnTarget(mage.id, "stick");
+    world.run(0.2);
+    world.combat.useAbility(mage.id, "firebolt");
+    assert.equal(world.errors.at(-1)?.code, "outOfRange");
+    assert.equal(mage.state.lock, "stick", "suivi conservé");
+    assert.equal(mage.state.castAbility, "");
+    // Pas de côté (garde le suivi) : on bouge soi-même, le sort est refusé et le suivi reste.
+    enemy.state.z = mage.state.z + 15;
+    world.combat.setInput(mage.id, keys({ left: true, steer: true, yaw: 0 }));
+    world.run(0.1);
+    world.combat.useAbility(mage.id, "firebolt");
+    assert.equal(world.errors.at(-1)?.code, "castWhileMoving");
+    assert.equal(mage.state.lock, "stick");
+  });
+});
+
 describe("Gardien : nouvelles compétences", () => {
   // Accès aux méthodes internes pour préparer une situation (effet déjà posé).
   const addEffect = (p: PlayerRuntime, kind: string, duration: number) =>
