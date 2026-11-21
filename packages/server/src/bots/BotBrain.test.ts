@@ -106,6 +106,59 @@ describe("Bots : comportement par classe", () => {
     assert.ok(distance(arcaniste.state, lame.state) > MELEE_RANGE + 2, `encore à ${distance(arcaniste.state, lame.state).toFixed(1)} m`);
   });
 
+  it("un Prêtre qui incante va au bout même avec une Lame au contact qui ne frappe pas", () => {
+    const sim = new Sim();
+    const pretre = sim.spawn("p", "pretre", 0, 5, 0, 0, true);
+    const ally = sim.spawn("x", "gardien", 0, 8, 0);
+    ally.state.hp = 600;
+    sim.run(0.6);
+    assert.ok(pretre.state.castAbility, "le soin est en cours");
+    sim.spawn("l", "lame", 1, 5, 1.5, Math.PI); // au contact, sans attaque automatique
+    const interrupts: string[] = [];
+    (sim.combat as unknown as { out: { broadcast: (t: string, m: unknown) => void } }).out.broadcast = (t, m) => {
+      if (t === "interrupt") interrupts.push((m as { reason: string }).reason);
+    };
+    sim.run(2.2);
+    assert.ok(!interrupts.includes("move"), `interrompu par le mouvement : ${interrupts}`);
+    assert.ok(ally.state.hp > 600, "le soin est parti");
+  });
+
+  it("un Arcaniste ne lance pas la Déflagration au contact de la mêlée sans protection : il s'éloigne", () => {
+    const sim = new Sim();
+    const arcaniste = sim.spawn("a", "arcaniste", 0, 5, 0, 0, true);
+    arcaniste.cooldowns.set("concentration", 999);
+    arcaniste.cooldowns.set("frostNova", 999);
+    const lame = sim.spawn("l", "lame", 1, 5, 2, Math.PI);
+    sim.spawn("e", "pretre", 1, 7, 2, Math.PI);
+    sim.run(0.5);
+    assert.notEqual(arcaniste.state.castAbility, "blast");
+    sim.run(1.5);
+    assert.ok(distance(arcaniste.state, lame.state) > 5, `encore à ${distance(arcaniste.state, lame.state).toFixed(1)} m`);
+  });
+
+  it("un Arcaniste lance la Déflagration sans protection contre deux lanceurs au contact", () => {
+    const sim = new Sim();
+    const arcaniste = sim.spawn("a", "arcaniste", 0, 5, 0, 0, true);
+    arcaniste.cooldowns.set("frostNova", 999);
+    sim.spawn("e1", "pretre", 1, 5, 2, Math.PI);
+    sim.spawn("e2", "barde", 1, 7, 2, Math.PI);
+    sim.run(0.5);
+    assert.equal(arcaniste.state.castAbility, "blast");
+    assert.ok(!arcaniste.castProtected, "Concentration gardée (moins de 3 ennemis)");
+  });
+
+  it("un Arcaniste protège la Déflagration par Concentration face à trois ennemis dont la mêlée", () => {
+    const sim = new Sim();
+    const arcaniste = sim.spawn("a", "arcaniste", 0, 5, 0, 0, true);
+    arcaniste.cooldowns.set("frostNova", 999);
+    sim.spawn("l", "lame", 1, 5, 2, Math.PI);
+    sim.spawn("e1", "pretre", 1, 7, 2, Math.PI);
+    sim.spawn("e2", "barde", 1, 3, 2, Math.PI);
+    sim.run(0.5);
+    assert.equal(arcaniste.state.castAbility, "blast");
+    assert.ok(arcaniste.castProtected, "Déflagration sous Concentration");
+  });
+
   it("un Prêtre soigne un allié blessé", () => {
     const sim = new Sim();
     sim.spawn("p", "pretre", 0, 5, -10, 0, true);

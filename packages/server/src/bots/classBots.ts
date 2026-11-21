@@ -54,8 +54,9 @@ function resourceFull(player: PlayerRuntime): boolean {
 const CASTER_MIN_DISTANCE = 15;
 const CASTER_MAX_DISTANCE = 26;
 
-// Rayon dans lequel un ennemi de mêlée fait fuir un lanceur de sorts (en plus d'un coup reçu).
-const CASTER_DANGER_RADIUS = 3.5;
+// Rayon dans lequel un ennemi de mêlée fait fuir un lanceur de sorts (en plus d'un coup reçu) : celui de la
+// Déflagration, pour qu'une mêlée assez proche pour l'empêcher fasse aussi fuir.
+const CASTER_DANGER_RADIUS = 5;
 // Distance minimale gardée face à un lanceur de sorts ennemi (moins dangereux au contact).
 const CASTER_VS_CASTER_MIN_DISTANCE = 8;
 
@@ -114,8 +115,8 @@ class LameBot extends BotBrain {
 
 abstract class CasterBot extends BotBrain {
   // Fuit si un ennemi de mêlée est au contact. Retourne vrai si le bot fuit (ou reste à finir son incantation).
-  // Pendant une incantation, on ne fuit pas : bouger l'interromprait à coup sûr, alors qu'un coup ne fait que risquer
-  // de l'interrompre ; si un coup l'interrompt, la fuite reprend au tour suivant (décidé le 2026-11-21 : les bots
+  // Pendant une incantation, on ne fuit pas : bouger l'interromprait à coup sûr, alors qu'un coup peut ne pas venir ou
+  // être évité ; si un coup l'interrompt, la fuite reprend au tour suivant (décidé le 2026-11-21 : les bots
   // perdaient jusqu'à 150 incantations par partie en fuyant pendant qu'ils incantaient).
   protected evadeMelee(): boolean {
     const threats = this.meleeThreats(CASTER_DANGER_RADIUS);
@@ -154,6 +155,9 @@ abstract class CasterBot extends BotBrain {
 
 // Distance en deçà de laquelle un ennemi prend assez de dégâts de Déflagration pour qu'elle vaille le coup.
 const BLAST_REACH = 5;
+// Nombre d'ennemis tout près pour dépenser Concentration sur une Déflagration : depuis que Concentration se recharge en
+// 30 s, la garder pour les grosses mêlées évite une Déflagration ininterruptible à chaque accrochage.
+const BLAST_CONCENTRATION_MIN = 3;
 // La Nova de givre (15 m) vaut le coup quand un ennemi de mêlée est déjà assez près.
 const NOVA_REACH = 8;
 
@@ -162,14 +166,19 @@ const NOVA_REACH = 8;
 // Trait de feu. Puissance arcanique dès qu'il a une cible.
 class ArcanisteBot extends CasterBot {
   protected think() {
-    // Plusieurs ennemis tout près : Déflagration. Avec des ennemis de mêlée au contact, leurs coups l'interrompraient :
-    // on ne la lance que protégée par Concentration, ou rooté (impossible de fuir) ; sinon on fuit d'abord.
+    // Plusieurs ennemis tout près : Déflagration. Avec la mêlée à portée de frappe, ses coups l'interrompraient : on ne
+    // la lance que protégée par Concentration (déjà active, ou dépensée s'ils sont nombreux), ou rooté (fuir est inutile) ;
+    // sinon on fuit d'abord (evadeMelee, plus bas, à la même distance).
     const closeEnemies = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH);
     if (closeEnemies.length >= 2 && !this.isCasting) {
       const meleeContact = closeEnemies.some((e) => MELEE_CLASSES.includes(e.classDef.id));
-      if (!meleeContact && this.tryUse("blast")) return;
-      if (meleeContact && this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
-      if (meleeContact && this.self.has("root") && this.tryUse("blast")) return;
+      const protectedBlast =
+        this.self.has("concentration") ||
+        (closeEnemies.length >= BLAST_CONCENTRATION_MIN &&
+          this.isReady("concentration") &&
+          this.combat.canUse(this.self.id, "blast", true) &&
+          this.tryUse("concentration"));
+      if ((!meleeContact || protectedBlast || this.self.has("root")) && this.tryUse("blast")) return;
     }
     // La mêlée arrive : Nova de givre (protégée par Concentration au contact) pour s'en débarrasser.
     const rootable = this.meleeThreats(NOVA_REACH).filter((e) => !e.has("immuneRoot") && !e.has("magicImmune"));
@@ -189,12 +198,20 @@ class ArcanisteBot extends CasterBot {
 
     const target = this.pickTarget(DAMAGE_PRIORITY);
     if (!target) return this.advance();
-    // Cible cachée par un obstacle : on se rapproche jusqu'à la voir, au lieu d'attendre.
-    if (!hasLineOfSight(this.self.state, target.state)) return this.moveTo(target.state, 4);
-    // Near sight : portée réduite ; on se rapproche à portée.
-    const nearSightRange = getAbility("firebolt")!.range * NEAR_SIGHT_FACTOR - 1;
-    if (this.self.has("nearSight") && this.distanceTo(target) > nearSightRange) return this.moveTo(target.state, nearSightRange - 1);
-    if (!this.self.has("nearSight") && !this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
+    const d = this.distanceTo(target);
+    // Cible cachée par un obstacle, et pas trop près : on se rapproche jusqu'à la voir (arrêt tout contre : la
+    // réflexion suivante change de branche dès que la vue est acquise). Trop près, keepDistance s'en occupe.
+    if (!hasLineOfSight(this.self.state, target.state) && d >= this.minDistanceFrom(target)) return this.moveTo(target.state, 1);
+    // Near sight : portée réduite ; on se rapproche à portée, sauf d'une mêlée libre (elle serait vite au contact).
+    const nearSighted = this.self.has("nearSight");
+    if (nearSighted) {
+      const reach = getAbility("firebolt")!.range * NEAR_SIGHT_FACTOR - 1;
+      const dangerous = MELEE_CLASSES.includes(target.classDef.id) && !target.has("root");
+      if (dangerous) return this.holdPosition();
+      if (d > reach) return this.moveTo(target.state, reach - 1);
+    } else if (!this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
+    // En place, cible en vue : on ne bouge plus (un sort à incantation doit partir immobile).
+    this.stop();
 
     this.tryUse("arcanePower");
     // Un lanceur de sorts ennemi : sa portée réduite le force à venir au contact.
@@ -238,8 +255,10 @@ class PretreBot extends CasterBot {
     const hurt = byHealth.find((a) => this.hpRatio(a) < 0.8);
     if (hurt) {
       if (this.distanceTo(hurt) > 28) return this.moveTo(hurt.state, 24);
-      // Blessé caché par un obstacle : on se rapproche jusqu'à le voir.
-      if (hurt !== self && !hasLineOfSight(self.state, hurt.state)) return this.moveTo(hurt.state, 6);
+      // Blessé caché par un obstacle : on se rapproche jusqu'à le voir (arrêt tout contre : la réflexion suivante
+      // change de branche dès que la vue est acquise).
+      if (hurt !== self && !hasLineOfSight(self.state, hurt.state)) return this.moveTo(hurt.state, 1);
+      this.stop();
       // Un blessé léger sans Renouveau de ce Prêtre : un soin sur la durée.
       const renewed = hurt.effects.some((e) => e.kind === "renew" && e.sourceId === self.id);
       if (this.hpRatio(hurt) > 0.6 && !renewed && this.tryUse("renew", hurt)) return;
@@ -258,7 +277,7 @@ class PretreBot extends CasterBot {
 
     // 7. Rester loin des ennemis, près des alliés.
     const enemy = this.nearest(this.enemies());
-    if (enemy && this.distanceTo(enemy) < this.minDistanceFrom(enemy)) return this.flee([enemy]);
+    if (enemy && this.distanceTo(enemy) < this.minDistanceFrom(enemy) && this.flee([enemy])) return;
     this.advance();
   }
 

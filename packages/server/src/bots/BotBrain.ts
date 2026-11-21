@@ -411,6 +411,8 @@ export class BotBrain {
   // S'éloigne des menaces, en se rapprochant si possible de ses alliés. Retourne faux si aucune direction n'est libre
   // (acculé contre un bord ou un obstacle).
   protected flee(threats: PlayerRuntime[]): boolean {
+    // Rooté (ou contrôlé) : fuir ne mène nulle part, le bot agit sur place.
+    if (this.player.immobilized) return false;
     const pos = this.player.state;
     let dx = 0;
     let dz = 0;
