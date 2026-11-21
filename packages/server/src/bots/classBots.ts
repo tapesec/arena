@@ -363,11 +363,21 @@ class BardeBot extends CasterBot {
 
     // 4. Dégager un lanceur de sorts allié : Mez sur la mêlée qui le frappe (il se casse aux dégâts, mais il gagne du
     // temps pour fuir ou finir son sort).
+    // Pas sur une mêlée stun ou qu'un allié frappe déjà : le mez casserait aussitôt, et l'immunité qui suit (40 s)
+    // la rendrait insensible au mez de zone. Pas pour se dégager soi-même : le coup suivant couperait l'incantation.
     const hitters = allies
-      .filter((a) => CASTER_CLASSES.includes(a.classDef.id) && this.combat.now - a.lastMeleeHitAt < 2)
+      .filter((a) => a !== this.self && CASTER_CLASSES.includes(a.classDef.id) && this.combat.now - a.lastMeleeHitAt < 2)
       .map((a) => this.world.players.get(a.lastMeleeAttackerId ?? ""))
-      .filter((e): e is PlayerRuntime => !!e && e.alive && this.world.visible.has(e.id) && !e.has("immuneMez") && !e.has("mez"));
-    if (hitters[0] && this.tryUse("mez", hitters[0])) return;
+      .filter(
+        (e): e is PlayerRuntime =>
+          !!e &&
+          e.alive &&
+          this.world.visible.has(e.id) &&
+          !e.has("immuneMez") &&
+          !e.has("stun") &&
+          !allies.some((a) => a.targetId === e.id && a.state.attacking && distance(a.state, e.state) <= MELEE_RANGE + 1),
+      );
+    if (hitters.some((e) => this.tryUse("mez", e))) return;
 
     // 5. Oubli sur un ennemi en train d'incanter : son sort n'aura aucun effet.
     const caster = this.enemies().find((e) => e.state.castAbility !== "" && !e.has("oblivion"));
@@ -475,14 +485,14 @@ class GardienBot extends BotBrain {
     // Assistez-moi : la cible du joueur, en chargeant si elle est loin.
     const assisted = this.assistTarget();
     if (assisted) {
-      if (this.distanceTo(assisted) >= CHARGE_MIN && this.tryUse("charge", assisted)) return;
+      if (this.distanceTo(assisted) >= CHARGE_MIN && this.tryCharge(assisted)) return;
       return this.fight(assisted);
     }
 
     if (!ward) {
       const target = this.pickTarget(DAMAGE_PRIORITY);
       if (!target) return this.advance();
-      if (this.distanceTo(target) >= CHARGE_MIN && this.tryUse("charge", target)) return;
+      if (this.distanceTo(target) >= CHARGE_MIN && this.tryCharge(target)) return;
       return this.fight(target);
     }
 
@@ -496,13 +506,13 @@ class GardienBot extends BotBrain {
       attacker?.alive && this.world.visible.has(attacker.id)
         ? attacker
         : this.nearest(this.enemies().filter((e) => distance(e.state, ward.state) <= 8));
-    if (threat && this.distanceTo(threat) >= CHARGE_MIN && this.tryUse("charge", threat)) return;
+    if (threat && this.distanceTo(threat) >= CHARGE_MIN && this.tryCharge(threat)) return;
     if (threat) return this.fight(threat);
 
     // Le protégé est tranquille : Charge sur un lanceur de sorts ennemi, de préférence en pleine incantation.
     const casters = this.enemies().filter((e) => CASTER_CLASSES.includes(e.classDef.id) && this.distanceTo(e) >= CHARGE_MIN);
     const caster = casters.find((e) => e.state.castAbility) ?? this.nearest(casters);
-    if (caster && this.tryUse("charge", caster)) return;
+    if (caster && this.tryCharge(caster)) return;
 
     // Rien à signaler : rejoindre le protégé (la Garde ne fonctionne qu'à 4 m),
     // puis mener le groupe : le protégé suit le Gardien.
@@ -577,6 +587,11 @@ class GardienBot extends BotBrain {
 
   // Le joueur qui a demandé sa protection ; sinon le lanceur de sorts allié attaqué le plus récemment, sinon le plus
   // proche.
+  // Charge, sauf sur une cible sous Rempart (insensible à la mêlée : ni dégâts ni stun).
+  private tryCharge(target: PlayerRuntime): boolean {
+    return !target.has("meleeImmune") && this.tryUse("charge", target);
+  }
+
   // Le protégé reste le même tant qu'il est vivant, à moins de 20 m, et attaqué (ou qu'aucun autre ne l'est) : changer
   // de protégé à chaque coup reçu par un autre lanceur faisait reposer la Garde sans arrêt et vidait l'endurance
   // (décidé le 2026-11-21).

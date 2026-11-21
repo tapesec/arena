@@ -159,6 +159,17 @@ describe("Bots : comportement par classe", () => {
     assert.ok(arcaniste.castProtected, "Déflagration sous Concentration");
   });
 
+  it("un Barde mezze la Lame qui frappe un Prêtre allié", () => {
+    const sim = new Sim();
+    sim.spawn("b", "barde", 0, 5, -20, 0, true);
+    const pretre = sim.spawn("p", "pretre", 0, 5, -10);
+    const lame = sim.spawn("l", "lame", 1, 5, -8, Math.PI);
+    sim.combat.setTarget(lame.id, pretre.id);
+    sim.combat.toggleAttack(lame.id);
+    sim.run(3, () => lame.has("mez"));
+    assert.ok(lame.has("mez"), "la Lame doit être mezzée");
+  });
+
   it("un Prêtre soigne un allié blessé", () => {
     const sim = new Sim();
     sim.spawn("p", "pretre", 0, 5, -10, 0, true);
@@ -192,6 +203,34 @@ describe("Bots : comportement par classe", () => {
 });
 
 describe("Bots : Gardien", () => {
+  it("charge la mêlée qui frappe son protégé quand elle est loin", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 5, -26, 0, true);
+    const arcaniste = sim.spawn("a", "arcaniste", 0, 5, -10);
+    const lame = sim.spawn("l", "lame", 1, 5, -8, Math.PI);
+    sim.combat.setTarget(lame.id, arcaniste.id);
+    sim.combat.toggleAttack(lame.id);
+    sim.run(3, () => lame.has("stun"));
+    assert.ok(lame.has("stun"), "la Charge doit stun la Lame");
+    assert.ok(distance(gardien.state, lame.state) <= MELEE_RANGE);
+  });
+
+  it("garde le même protégé tant qu'il est attaqué, même si un autre lanceur l'est aussi", () => {
+    const sim = new Sim();
+    const gardien = sim.spawn("g", "gardien", 0, 8, -12, 0, true);
+    const a = sim.spawn("a", "arcaniste", 0, 5, -10);
+    const b = sim.spawn("b", "pretre", 0, 11, -10);
+    for (const [id, x, victim] of [["l1", 5, a], ["l2", 11, b]] as const) {
+      const lame = sim.spawn(id, "lame", 1, x, -8, Math.PI);
+      sim.combat.setTarget(lame.id, victim.id);
+      sim.combat.toggleAttack(lame.id);
+      if (id === "l1") sim.run(1.5);
+    }
+    assert.equal(a.getEffect("guarded")?.sourceId, gardien.id);
+    sim.run(1.5);
+    assert.equal(a.getEffect("guarded")?.sourceId, gardien.id, "la Garde reste sur le premier protégé");
+  });
+
   it("charge un lanceur de sorts ennemi quand son protégé est tranquille", () => {
     const sim = new Sim();
     const gardien = sim.spawn("g", "gardien", 0, 5, -10, 0, true);
