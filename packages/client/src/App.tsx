@@ -663,33 +663,26 @@ function GroupMember({ member, hotkey, onSelect }: { member: GroupMemberFrame; h
   );
 }
 
-// Effets d'un coéquipier (décidé le 2026-11-21) : contrôles et affaiblissements en grand sur leur propre ligne (ce qu'il
-// faut voir pour réveiller, soigner ou purifier) ; buffs et immunités en petit dessous, les buffs permanents plus petits
-// et pâles. Deux effets du même type peuvent coexister (Renouveau de deux Prêtres) : un par lanceur.
+// Effets d'un coéquipier (décidé le 2026-11-21) : contrôles et affaiblissements en grand, en tête de ligne (ce qu'il
+// faut voir pour réveiller, soigner ou purifier) ; buffs et immunités en petit à leur suite, les buffs permanents plus
+// petits et pâles. Deux effets du même type peuvent coexister (Renouveau de deux Prêtres) : un par lanceur.
 function GroupEffects({ effects }: { effects: EffectFrame[] }) {
-  if (effects.length === 0) return null;
   const category = (effect: EffectFrame) => EFFECTS[effect.kind]?.category ?? "buff";
   const afflictions = effects.filter((e) => category(e) === "control" || category(e) === "debuff");
-  const others = effects
-    .filter((e) => category(e) !== "control" && category(e) !== "debuff")
-    .sort((a, b) => (a.remaining === null ? 1 : 0) - (b.remaining === null ? 1 : 0));
+  // Buffs à durée, puis buffs permanents, puis immunités.
+  const rank = (effect: EffectFrame) => (category(effect) === "immunity" ? 2 : effect.remaining === null ? 1 : 0);
+  const others = effects.filter((e) => category(e) !== "control" && category(e) !== "debuff").sort((a, b) => rank(a) - rank(b));
+  // Une seule ligne, de hauteur fixe : la fenêtre ne bouge pas quand un mez de zone frappe le groupe (on clique dedans
+  // pour réveiller).
   return (
-    <>
-      {afflictions.length > 0 && (
-        <div className="group-effects group-afflictions">
-          {afflictions.map((effect) => (
-            <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="groupAffliction" />
-          ))}
-        </div>
-      )}
-      {others.length > 0 && (
-        <div className="group-effects">
-          {others.map((effect) => (
-            <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="group" />
-          ))}
-        </div>
-      )}
-    </>
+    <div className="group-effects">
+      {afflictions.map((effect) => (
+        <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="groupAffliction" />
+      ))}
+      {others.map((effect) => (
+        <EffectIcon key={`${effect.kind}:${effect.sourceId}`} effect={effect} size="group" />
+      ))}
+    </div>
   );
 }
 

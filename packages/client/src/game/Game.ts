@@ -25,6 +25,7 @@ import {
   isFacing,
   facingTowards,
   isMagic,
+  isOffensive,
   NEAR_SIGHT_FACTOR,
   type AbilityDef,
   MELEE_RANGE,
@@ -602,7 +603,8 @@ export class Game {
       const enemyCaster = !!casterPlayer && myTeam !== undefined && casterPlayer.state.team !== myTeam;
       const ability = getAbility(event.abilityId);
       const mark = {
-        enemyZone: enemyCaster,
+        // Seules les zones offensives : un Soin de groupe ou un Cri de ralliement ennemi ne menace personne.
+        enemyZone: enemyCaster && !!ability && isOffensive(ability),
         enemyHit: enemyCaster && !!ability && isMagic(ability) && targetPlayer?.state.team === myTeam,
       };
       this.spellEffects.play(event.abilityId, casterPlayer?.root, targetPlayer?.root, undefined, mark);

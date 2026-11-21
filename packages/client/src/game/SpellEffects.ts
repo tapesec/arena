@@ -131,14 +131,15 @@ export class SpellEffects {
   ) {
     const fx = ABILITY_FX[abilityId];
     if (!fx) return;
+    const visual = VISUALS[abilityId];
+    const areaRadius = fx.area ? (getAbility(abilityId)?.radius ?? 0) : 0;
+    // L'anneau d'impact suit l'allié touché ; celui de la zone reste où elle a frappé.
     const markHit = (anchor: TransformNode) => {
-      if (mark.enemyHit && !anchor.isDisposed()) this.spawnEnemyRing(anchor.getAbsolutePosition(), ENEMY_HIT_RADIUS);
+      if (mark.enemyHit && !anchor.isDisposed()) this.spawnEnemyRing(Vector3.Zero(), ENEMY_HIT_RADIUS, anchor);
     };
     const markZone = (center: Vector3) => {
       if (mark.enemyZone && areaRadius) this.spawnEnemyRing(center, areaRadius);
     };
-    const visual = VISUALS[abilityId];
-    const areaRadius = fx.area ? (getAbility(abilityId)?.radius ?? 0) : 0;
     // Impact et zone réglés sur la page de réglage : ils remplacent ceux du code (voir TargetVisuals).
     const ownImpact = tuned.impact;
     const zoneRecipes = tuned.zone ? [] : recipes(visual?.area);
@@ -475,11 +476,14 @@ export class SpellEffects {
   }
 
   // Anneau rouge au sol (bord d'une zone ennemie, ou pieds d'un allié touché) qui s'estompe.
-  private spawnEnemyRing(center: Vector3, radius: number) {
-    const mesh = CreateTorus("enemyRing", { diameter: radius * 2, thickness: ENEMY_RING_THICKNESS, tessellation: 64 }, this.scene);
+  // parent : l'ancre que l'anneau suit (center est alors relatif à elle).
+  private spawnEnemyRing(center: Vector3, radius: number, parent?: TransformNode) {
+    const tessellation = radius > 3 ? 48 : 24;
+    const mesh = CreateTorus("enemyRing", { diameter: radius * 2, thickness: ENEMY_RING_THICKNESS, tessellation }, this.scene);
     const material = this.glowMaterial(ENEMY_MARK_COLOR, 0.95);
     mesh.material = material;
     mesh.isPickable = false;
+    if (parent) mesh.parent = parent;
     mesh.position.set(center.x, center.y + 0.08, center.z);
     this.effects.push({
       mesh,
