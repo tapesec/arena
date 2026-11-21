@@ -361,17 +361,25 @@ class BardeBot extends CasterBot {
     const mezGroup = this.bestGroup(AOE_MEZ_RADIUS, (e) => !e.has("immuneMez"));
     if (mezGroup.size >= 2 && this.tryUse("aoeMez", mezGroup.center)) return;
 
-    // 4. Oubli sur un ennemi en train d'incanter : son sort n'aura aucun effet.
+    // 4. Dégager un lanceur de sorts allié : Mez sur la mêlée qui le frappe (il se casse aux dégâts, mais il gagne du
+    // temps pour fuir ou finir son sort).
+    const hitters = allies
+      .filter((a) => CASTER_CLASSES.includes(a.classDef.id) && this.combat.now - a.lastMeleeHitAt < 2)
+      .map((a) => this.world.players.get(a.lastMeleeAttackerId ?? ""))
+      .filter((e): e is PlayerRuntime => !!e && e.alive && this.world.visible.has(e.id) && !e.has("immuneMez") && !e.has("mez"));
+    if (hitters[0] && this.tryUse("mez", hitters[0])) return;
+
+    // 5. Oubli sur un ennemi en train d'incanter : son sort n'aura aucun effet.
     const caster = this.enemies().find((e) => e.state.castAbility !== "" && !e.has("oblivion"));
     if (caster && this.tryUse("silence", caster)) return;
 
-    // 5. Mez ciblé sur un ennemi de mêlée qui approche.
+    // 6. Mez ciblé sur un ennemi de mêlée qui approche.
     const approaching = this.enemies().find(
       (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneMez"),
     );
     if (approaching && this.tryUse("mez", approaching)) return;
 
-    // 6. Buff dextérité, en gardant de quoi contrôler.
+    // 7. Buff dextérité, en gardant de quoi contrôler.
     if (this.self.state.mana > 500 && this.buffAllies()) return;
 
     this.holdPosition();
@@ -482,12 +490,13 @@ class GardienBot extends BotBrain {
     // Interception : à débloquer, hors de la barre pour l'instant (tryUse l'ignore alors).
     if (attacked && this.hpRatio(ward) < 0.4) this.tryUse("intercept", ward);
 
-    // L'agresseur du protégé, sinon l'ennemi le plus proche de lui.
+    // L'agresseur du protégé, sinon l'ennemi le plus proche de lui. Loin : Charge (stun 4 s) pour le dégager.
     const attacker = attacked ? this.world.players.get(ward.lastMeleeAttackerId ?? "") : undefined;
     const threat =
       attacker?.alive && this.world.visible.has(attacker.id)
         ? attacker
         : this.nearest(this.enemies().filter((e) => distance(e.state, ward.state) <= 8));
+    if (threat && this.distanceTo(threat) >= CHARGE_MIN && this.tryUse("charge", threat)) return;
     if (threat) return this.fight(threat);
 
     // Le protégé est tranquille : Charge sur un lanceur de sorts ennemi, de préférence en pleine incantation.
@@ -502,11 +511,14 @@ class GardienBot extends BotBrain {
   }
 
   // Au contact : Coup de bouclier (stun), sinon Frappe handicapante dans le dos, sinon Coup puissant.
-  // Une technique déjà en attente n'est pas remplacée.
+  // Une technique déjà en attente n'est pas remplacée, sauf un Coup puissant par le Coup de bouclier (le stun dégage
+  // le lanceur protégé ; le Coup puissant reviendra au coup suivant).
   private fight(target: PlayerRuntime) {
     this.meleeAttack(target);
-    if (this.distanceTo(target) > MELEE_RANGE || this.self.state.queuedAbility) return;
+    const queued = this.self.state.queuedAbility;
+    if (this.distanceTo(target) > MELEE_RANGE || (queued && queued !== "powerStrike")) return;
     if (!target.has("stun") && !target.has("immuneStun") && this.tryUse("shieldBash", target)) return;
+    if (queued) return;
     const behind = positionRelativeTo(target.state, this.self.state) === "back";
     if (behind && !target.has("snare") && this.tryUse("cripplingStrike", target)) return;
     this.tryUse("powerStrike", target);
@@ -521,6 +533,12 @@ class GardienBot extends BotBrain {
     if (ward && recent(ward)) {
       const attacker = enemies.find((e) => e.id === ward.lastMeleeAttackerId);
       if (attacker && !attacker.has("taunted")) return attacker;
+    }
+    // Une mêlée qui frappe un lanceur de sorts allié : la Provocation lui fait perdre la moitié de ses dégâts sur lui.
+    for (const ally of this.allies()) {
+      if (ally === this.self || !CASTER_CLASSES.includes(ally.classDef.id) || !recent(ally)) continue;
+      const hitter = enemies.find((e) => e.id === ally.lastMeleeAttackerId);
+      if (hitter && !hitter.has("taunted")) return hitter;
     }
     const wounded = this.allies().filter((a) => a !== this.self && this.hpRatio(a) < 0.5);
     for (const ally of wounded) {
@@ -559,12 +577,16 @@ class GardienBot extends BotBrain {
 
   // Le joueur qui a demandé sa protection ; sinon le lanceur de sorts allié attaqué le plus récemment, sinon le plus
   // proche.
+  // Le protégé reste le même tant qu'il est vivant, à moins de 20 m, et attaqué (ou qu'aucun autre ne l'est) : changer
+  // de protégé à chaque coup reçu par un autre lanceur faisait reposer la Garde sans arrêt et vidait l'endurance
+  // (décidé le 2026-11-21).
   private chooseWard(): PlayerRuntime | undefined {
     if (this.order?.kind === "protect") return this.order.issuer;
     const casters = this.allies().filter((a) => a !== this.self && CASTER_CLASSES.includes(a.classDef.id));
-    const attacked = casters
-      .filter((c) => this.combat.now - c.lastMeleeHitAt < 3)
-      .sort((a, b) => b.lastMeleeHitAt - a.lastMeleeHitAt);
+    const isAttacked = (c: PlayerRuntime) => this.combat.now - c.lastMeleeHitAt < 3;
+    const attacked = casters.filter(isAttacked).sort((a, b) => b.lastMeleeHitAt - a.lastMeleeHitAt);
+    const current = casters.find((c) => c.getEffect("guarded")?.sourceId === this.self.id);
+    if (current && this.distanceTo(current) <= 20 && (isAttacked(current) || attacked.length === 0)) return current;
     return attacked[0] ?? this.nearest(casters);
   }
 
