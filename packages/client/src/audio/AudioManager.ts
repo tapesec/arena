@@ -66,6 +66,8 @@ export class AudioManager {
   private activeSounds = 0;
   // Clé : identifiant d'un son généré ou d'un groupe de sons enregistrés.
   private lastPlayed = new Map<string, number>();
+  // Sons générés sans hasard, mixés une fois (voir fixedBuffer).
+  private fixedBuffers = new Map<SoundId, AudioBuffer | null>();
   private volume: number;
   private muted: boolean;
   private mutedKey = MUTED_KEY;
@@ -132,6 +134,11 @@ export class AudioManager {
     }
     this.lastPlayed.set(id, now);
 
+    const fixed = this.fixedBuffer(id);
+    if (fixed) {
+      this.startSynth(fixed, now, volume, pan);
+      return;
+    }
     for (const step of SOUNDS[id].steps) {
       // ZzFX calcule les échantillons du son ; on les joue nous-mêmes pour garder la main sur le circuit.
       const samples = ZZFX.buildSamples(...step.params);
@@ -149,6 +156,37 @@ export class AudioManager {
       source.onended = () => this.activeSounds--;
       source.start(now + step.at);
     }
+  }
+
+  // Son généré sans hasard (toutes ses notes à 0 de hasard, comme les cloches) : ses notes sont mixées une fois pour
+  // toutes dans un seul tampon. Un seul son occupe alors une place de la limite de sons simultanés, et rien n'est
+  // recalculé à chaque lecture. null si une note a du hasard (ZzFX en met par défaut quand il n'est pas précisé).
+  private fixedBuffer(id: SoundId): AudioBuffer | null {
+    const cached = this.fixedBuffers.get(id);
+    if (cached !== undefined) return cached;
+    const steps = SOUNDS[id].steps;
+    let buffer: AudioBuffer | null = null;
+    if (steps.length > 1 && steps.every((step) => step.params[1] === 0)) {
+      const parts = steps.map((step) => ({ offset: Math.round(step.at * ZZFX.sampleRate), samples: ZZFX.buildSamples(...step.params) }));
+      const length = Math.max(...parts.map((part) => part.offset + part.samples.length));
+      buffer = this.context.createBuffer(1, length, ZZFX.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (const { offset, samples } of parts) for (let i = 0; i < samples.length; i++) data[offset + i] += samples[i];
+    }
+    this.fixedBuffers.set(id, buffer);
+    return buffer;
+  }
+
+  private startSynth(buffer: AudioBuffer, at: number, volume: number, pan: number) {
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    const gain = this.context.createGain();
+    gain.gain.value = volume * ZZFX.volume;
+    const panner = new StereoPannerNode(this.context, { pan: Math.max(-1, Math.min(1, pan)) });
+    source.connect(panner).connect(gain).connect(this.master);
+    this.activeSounds++;
+    source.onended = () => this.activeSounds--;
+    source.start(at);
   }
 
   // Joue une variante, tirée au hasard, d'un groupe de sons enregistrés (chargé au premier usage).

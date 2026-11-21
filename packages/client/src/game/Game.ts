@@ -1269,6 +1269,7 @@ export class Game {
       campSwap: boolean;
       alive0: number;
       alive1: number;
+      teamSize: number;
     };
     const myTeam = self?.state.team ?? 0;
     const matchFrame: MatchFrame = {
@@ -1279,7 +1280,7 @@ export class Game {
       team: myTeam,
       alliesAlive: myTeam === 0 ? state.alive0 : state.alive1,
       enemiesAlive: myTeam === 0 ? state.alive1 : state.alive0,
-      teamSize: Math.floor(state.matchSize / 2),
+      teamSize: state.teamSize,
       camp: campOf(myTeam, state.campSwap),
       winner: state.winner,
     };

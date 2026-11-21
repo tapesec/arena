@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type AbilityDef, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
-import { KillBoard } from "./KillBoard";
+import { KillBoard, KillFeed } from "./KillBoard";
 import { LanguageMenu } from "./LanguageMenu";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
@@ -196,7 +196,11 @@ function Hud() {
         <SwingBar />
         <Hotbar />
       </div>
-      <HelpPanel />
+      {/* En haut à droite : le fil des éliminations, puis l'aide dessous (l'un ne cache pas l'autre). */}
+      <div className="hud-right">
+        <KillFeed />
+        <HelpPanel />
+      </div>
       <OrderWheelView />
       {phase === "ended" && <EndScreen />}
     </>

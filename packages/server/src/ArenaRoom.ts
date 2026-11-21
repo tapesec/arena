@@ -413,6 +413,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     this.state.players.forEach((p) => teamSizes[p.team]++);
     this.state.alive0 = teamSizes[0];
     this.state.alive1 = teamSizes[1];
+    this.state.teamSize = Math.max(teamSizes[0], teamSizes[1]);
 
     this.state.players.forEach((player, id) => {
       const classDef = getClass(player.classId)!;

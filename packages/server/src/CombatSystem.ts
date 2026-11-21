@@ -823,10 +823,8 @@ export class CombatSystem {
     if (killed) {
       this.handleDeath(target);
       const kill: KillEvent = {
-        victimId: target.id,
         victimName: state.name,
         victimTeam: state.team,
-        killerId: source.id,
         killerName: source.state.name,
         killerTeam: source.state.team,
         abilityId,

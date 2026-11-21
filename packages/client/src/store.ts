@@ -153,6 +153,8 @@ const shownHints = new Set<string>();
 // Élimination annoncée (voir KillEvent), vue par le joueur local : ally = de son équipe.
 export interface KillFrame {
   id: number;
+  // Heure d'arrivée (performance.now()) : l'annonce au centre dure un temps fixe à partir de là.
+  at: number;
   victimName: string;
   victimAlly: boolean;
   killerName: string;
@@ -209,7 +211,7 @@ interface HudState {
   setActions: (actions: GameActions | null) => void;
   // Éliminations de la partie, la plus récente en premier (annonce au centre et fil à droite).
   kills: KillFrame[];
-  addKill: (kill: Omit<KillFrame, "id">) => void;
+  addKill: (kill: Omit<KillFrame, "id" | "at">) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
   startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
@@ -300,7 +302,7 @@ export const useHudStore = create<HudState>((set) => ({
   // Remplacé par un bot : plus de partie (la musique revient à celle des menus).
   setStatus: (status, error) => set(status === "replaced" ? { status, error: null, match: null } : { status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
-  addKill: (kill) => set((s) => ({ kills: [{ ...kill, id: (s.kills[0]?.id ?? 0) + 1 }, ...s.kills].slice(0, KILLS_KEPT) })),
+  addKill: (kill) => set((s) => ({ kills: [{ ...kill, id: (s.kills[0]?.id ?? 0) + 1, at: performance.now() }, ...s.kills].slice(0, KILLS_KEPT) })),
   setLoading: (loading, loaded) => set({ loading, loaded }),
   setPing: (ping) => set({ ping }),
   setFrames: (self, target, group) => set({ self, target, group }),

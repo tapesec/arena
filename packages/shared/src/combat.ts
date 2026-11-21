@@ -155,10 +155,8 @@ export interface CombatEvent {
 // fil des éliminations, décidés le 2026-11-21). abilityId : la compétence qui a achevé ("auto" pour l'attaque
 // automatique).
 export interface KillEvent {
-  victimId: string;
   victimName: string;
   victimTeam: number;
-  killerId: string;
   killerName: string;
   killerTeam: number;
   abilityId: string;

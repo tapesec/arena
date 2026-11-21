@@ -121,9 +121,32 @@ body,
   line-height: 16px;
 }
 
-.help {
+/* Colonne en haut à droite, sous le bouton d'aide : le fil des éliminations puis l'aide. */
+.hud-right {
+  position: absolute;
   top: 50px;
   right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.hud-right > .hud-panel {
+  position: static;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.help {
   /* Ne passe pas sur les fiches du joueur et de la cible (en haut à gauche) quand la fenêtre est étroite. */
   max-width: max(220px, calc(100vw - 560px));
   color: #b8b8b8;
@@ -154,7 +177,7 @@ body,
 }
 
 .help-toggle {
-  position: absolute;
+  position: fixed;
   top: 12px;
   right: 12px;
   width: 28px;
@@ -877,12 +900,15 @@ body,
   display: grid;
   justify-items: center;
   pointer-events: none;
+  /* Passe devant le panneau d'aide, qui peut s'étendre jusqu'au centre. */
+  z-index: 2;
   animation: kill-out 0.3s 2s ease-in forwards;
 }
 @keyframes kill-out { to { opacity: 0; translate: 0 -12px; } }
 .kill-name {
   position: relative;
-  font: 900 56px/1.05 "Cinzel", Georgia, serif;
+  /* Rétrécit avec la longueur du nom pour tenir entre les cadres de gauche (environ 480 px) et le bord droit. */
+  font: 900 clamp(26px, calc((100vw - 960px) / (var(--kill-name-length, 6) * 0.84)), 56px) / 1.05 "Cinzel", Georgia, serif;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -927,9 +953,6 @@ body,
 @keyframes kill-by-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .kill-feed {
-  position: absolute;
-  top: 44px;
-  right: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -958,7 +981,9 @@ body,
 
 .kill-last {
   position: absolute;
-  top: 38%;
+  /* Sous les messages d'indication (30 % + 40 px), même sur un écran de 768 px de haut. */
+  top: 42%;
+  z-index: 2;
   left: 0;
   right: 0;
   display: grid;

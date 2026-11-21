@@ -387,10 +387,8 @@ describe("Annonce des éliminations", () => {
     assert.ok(!pretre.alive);
     assert.deepEqual(world.kills, [
       {
-        victimId: "p",
         victimName: "Kerra",
         victimTeam: 0,
-        killerId: "l",
         killerName: "Lorcan",
         killerTeam: 1,
         abilityId: "backstab",
