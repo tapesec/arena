@@ -67,6 +67,12 @@ const AREA_ALPHA_WITH_PARTICLES = 0.22;
 const PULSE_DURATION = 0.5;
 const MELEE_DURATION = 0.25;
 const AREA_DURATION = 0.7;
+// Repère des sorts ennemis (décidé le 2026-11-21) : un liseré rouge (celui des noms ennemis) au bord de leurs zones, et
+// un anneau rouge bref aux pieds de l'allié qu'un sort ennemi atteint. Les couleurs propres à chaque sort ne changent pas.
+const ENEMY_MARK_COLOR = Color3.FromHexString("#ff5a52");
+const ENEMY_RING_DURATION = 0.9;
+const ENEMY_RING_THICKNESS = 0.12;
+const ENEMY_HIT_RADIUS = 0.9;
 
 // Un effet passager : il vit "duration" secondes et se met à jour à chaque image.
 interface TransientEffect {
@@ -115,9 +121,22 @@ export class SpellEffects {
 
   // caster et target : les ancres des personnages (absentes si hors de vue).
   // tuned : moments réglés (la page de réglage donne ceux de son brouillon).
-  play(abilityId: string, caster: TransformNode | undefined, target: TransformNode | undefined, tuned = tunedMoments(abilityId)) {
+  // mark : repère des sorts ennemis (zone d'un lanceur ennemi, sort ennemi qui atteint un allié du joueur).
+  play(
+    abilityId: string,
+    caster: TransformNode | undefined,
+    target: TransformNode | undefined,
+    tuned = tunedMoments(abilityId),
+    mark: { enemyZone: boolean; enemyHit: boolean } = { enemyZone: false, enemyHit: false },
+  ) {
     const fx = ABILITY_FX[abilityId];
     if (!fx) return;
+    const markHit = (anchor: TransformNode) => {
+      if (mark.enemyHit && !anchor.isDisposed()) this.spawnEnemyRing(anchor.getAbsolutePosition(), ENEMY_HIT_RADIUS);
+    };
+    const markZone = (center: Vector3) => {
+      if (mark.enemyZone && areaRadius) this.spawnEnemyRing(center, areaRadius);
+    };
     const visual = VISUALS[abilityId];
     const areaRadius = fx.area ? (getAbility(abilityId)?.radius ?? 0) : 0;
     // Impact et zone réglés sur la page de réglage : ils remplacent ceux du code (voir TargetVisuals).
@@ -136,7 +155,9 @@ export class SpellEffects {
         } else if (visual) this.burst(visual, target);
         else if (fx.shape === "melee") this.spawnMelee(fx.color, target);
         else this.spawnPulse(fx.color, target, 0.6);
+        markHit(target);
         if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, target.getAbsolutePosition(), areaRadius);
+        markZone(target.getAbsolutePosition());
       });
       return;
     }
@@ -146,6 +167,8 @@ export class SpellEffects {
     // Centrée sur la cible d'un sort offensif (même sans projectile), sinon sur le lanceur.
     const center = zoneCenterIsTarget(abilityId) && target ? target : (caster ?? anchor);
     if (areaRadius) this.zone(fx, zoneRecipes, tunedZoneFx, center.getAbsolutePosition(), areaRadius);
+    markZone(center.getAbsolutePosition());
+    if (target && target !== caster) markHit(target);
     if (ownImpact) return;
     if (visual) this.burst(visual, anchor);
     else if (fx.shape === "melee") this.spawnMelee(fx.color, anchor);
@@ -447,6 +470,23 @@ export class SpellEffects {
       animate: (progress) => {
         mesh.scaling.setAll(radius * Math.min(1, 0.3 + progress * 2));
         material.alpha = alpha * (1 - progress);
+      },
+    });
+  }
+
+  // Anneau rouge au sol (bord d'une zone ennemie, ou pieds d'un allié touché) qui s'estompe.
+  private spawnEnemyRing(center: Vector3, radius: number) {
+    const mesh = CreateTorus("enemyRing", { diameter: radius * 2, thickness: ENEMY_RING_THICKNESS, tessellation: 64 }, this.scene);
+    const material = this.glowMaterial(ENEMY_MARK_COLOR, 0.95);
+    mesh.material = material;
+    mesh.isPickable = false;
+    mesh.position.set(center.x, center.y + 0.08, center.z);
+    this.effects.push({
+      mesh,
+      age: 0,
+      duration: ENEMY_RING_DURATION,
+      animate: (progress) => {
+        material.alpha = 0.95 * (1 - progress * progress);
       },
     });
   }

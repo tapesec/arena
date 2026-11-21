@@ -595,7 +595,17 @@ export class Game {
       this.players.get(event.casterId)?.playAbility(event.abilityId);
       // L'Arcaniste lance sa bulle : elle se montre un instant.
       if (event.abilityId === "bubble") this.spellEffects.statuses.bubbleWasApplied(event.casterId);
-      this.spellEffects.play(event.abilityId, this.players.get(event.casterId)?.root, this.players.get(event.targetId)?.root);
+      const casterPlayer = this.players.get(event.casterId);
+      const targetPlayer = this.players.get(event.targetId);
+      const myTeam = this.self?.state.team;
+      // Repère des sorts ennemis : leurs zones, et leurs sorts (pas les coups de mêlée) qui atteignent un allié.
+      const enemyCaster = !!casterPlayer && myTeam !== undefined && casterPlayer.state.team !== myTeam;
+      const ability = getAbility(event.abilityId);
+      const mark = {
+        enemyZone: enemyCaster,
+        enemyHit: enemyCaster && !!ability && isMagic(ability) && targetPlayer?.state.team === myTeam,
+      };
+      this.spellEffects.play(event.abilityId, casterPlayer?.root, targetPlayer?.root, undefined, mark);
       this.spellEffects.targets.onAbility(event.casterId, event.abilityId, event.targetId, this.players);
       this.gameAudio.onAbility(event.abilityId, this.players.get(event.casterId), this.players.get(event.targetId));
     });
