@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import {
   BACKWARD_SPEED_FACTOR,
+  lastStandBonus,
   ENDURANCE_REGEN,
   facingTowards,
   MANA_REGEN,
@@ -52,6 +53,8 @@ class World {
       },
       () => this.rolls.shift() ?? 0.99,
     );
+    // Les tests opposent souvent des équipes de tailles différentes : le dernier carré fausserait les dégâts attendus.
+    this.combat.lastStandRule = false;
   }
 
   // facing : 0 regarde vers +z, π vers -z.
@@ -372,6 +375,52 @@ describe("Arcaniste", () => {
     assert.ok(hit?.crit);
     world.run(15);
     assert.ok(!arcaniste.has("arcanePower"));
+  });
+});
+
+describe("Dernier carré", () => {
+  it("donne +5 % de dégâts par joueur d'écart à une équipe de 4 survivants ou moins en infériorité, jusqu'à +15 %", () => {
+    assert.equal(lastStandBonus(4, 4), 0);
+    assert.equal(lastStandBonus(5, 8), 0);
+    assert.ok(Math.abs(lastStandBonus(4, 5) - 0.05) < 1e-9);
+    assert.ok(Math.abs(lastStandBonus(2, 4) - 0.1) < 1e-9);
+    assert.ok(Math.abs(lastStandBonus(1, 8) - 0.15) < 1e-9);
+    assert.equal(lastStandBonus(6, 2), 0);
+    assert.equal(lastStandBonus(0, 3), 0);
+  });
+
+  it("frappe plus fort quand son équipe est en infériorité, et suit les morts", () => {
+    world.combat.lastStandRule = true;
+    const lame = world.spawn("l", "lame", 1, 0, -2);
+    const target = world.spawn("t", "gardien", 0, 0, 0);
+    const lastStand = (team: number) => (world.combat as unknown as { lastStand(team: number): number }).lastStand(team);
+    assert.equal(lastStand(1), 0);
+    const others = [1, 2, 3].map((i) => world.spawn(`a${i}`, "pretre", 0, i * 3, 5));
+    assert.ok(Math.abs(lastStand(1) - 0.15) < 1e-9);
+    assert.equal(lastStand(0), 0);
+    others[0].state.hp = 0;
+    others[1].state.hp = 0;
+    assert.ok(Math.abs(lastStand(1) - 0.05) < 1e-9);
+
+    // Le bonus s'applique au coup : même Attaque dans le dos, sans écart puis avec 3 joueurs d'écart.
+    target.state.hp = target.state.maxHp;
+    others[2].state.hp = 0;
+    world.cast(lame, "backstab", target);
+    world.run(0.1);
+    const plain = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")!.amount!;
+    assert.equal(lastStand(1), 0);
+    others[0].state.hp = others[0].state.maxHp;
+    others[1].state.hp = others[1].state.maxHp;
+    const second = world.spawn("t2", "gardien", 0, 6, 0);
+    assert.ok(Math.abs(lastStand(1) - 0.15) < 1e-9);
+    lame.state.x = second.state.x;
+    lame.state.z = -2;
+    world.events.length = 0;
+    world.combat.tick(20);
+    world.cast(lame, "backstab", second);
+    world.run(0.1);
+    const boosted = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")?.amount;
+    assert.ok(boosted !== undefined && Math.abs(boosted - Math.round(plain * 1.15)) <= 1, `${plain} → ${boosted}`);
   });
 });
 

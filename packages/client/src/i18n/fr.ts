@@ -110,6 +110,7 @@ export const fr: Record<TextKey, string> = {
   "kill.lastAlly": "Le dernier debout de votre équipe",
   "kill.lastEnemy": "Le dernier adversaire debout",
   "kill.score": "{allies} contre {enemies}",
+  "kill.lastStand": "Dernier carré +{percent}\u00a0%",
   "kill.spoken": "{killer} a éliminé {victim} ({move})",
   "match.spectator": "Mode spectateur",
   "match.spectatorHint": "{up}{left}{down}{right} déplace la caméra · V revient à votre corps",

@@ -65,6 +65,7 @@
   - **Endurance** pour les combattants de mêlée : 100 points, régénération de 2,5/s.
   - La régénération de base vaut le tiers de celle sous Chant de second souffle (base + 50 mana ou + 5 endurance, soit 75 et 7,5/s) : un joueur sans Barde ne reste pas à sec (décidé le 2026-11-19 ; avant : 5 mana et 2 endurance par seconde).
 - **Ligne de vue** : obligatoire pour tout sort et toute attaque à distance.
+- **Dernier carré** (décidé le 2026-11-21) : une équipe réduite à 4 survivants ou moins, et en infériorité numérique, inflige +5 % de dégâts par joueur d'écart (mêlée, sorts et tics), plafonné à +15 % ; à égalité, pas de bonus. Il suit le décompte en direct (une mort ou une résurrection le change aussitôt). Le but : rendre une remontée possible et garder la fin tendue, sans renverser l'infériorité numérique. Une étiquette « Dernier carré +10 % » s'affiche sous le chiffre de l'équipe qui en profite, dans le décompte en haut de l'écran.
 - **Portées** : mêlée 3 m, sorts 30 m.
 - **Contrôle de foule** :
   - **Mez** : la cible ne peut plus rien faire. Cassé par le moindre dégât.

@@ -71,6 +71,19 @@ export const GANGRENE_HEAL_FACTOR = 0.5;
 // Brise armure : dégâts de mêlée reçus augmentés de ce bonus.
 export const ARMOR_BREAK_BONUS = 0.25;
 
+// Dernier carré (décidé le 2026-11-21) : une équipe réduite à LAST_STAND_MAX_ALIVE survivants ou moins, et en
+// infériorité numérique, inflige LAST_STAND_BONUS_PER_PLAYER de dégâts en plus par joueur d'écart (mêlée, sorts et
+// tics), plafonné à LAST_STAND_MAX_BONUS. Il aide à remonter sans renverser l'infériorité numérique.
+export const LAST_STAND_MAX_ALIVE = 4;
+export const LAST_STAND_BONUS_PER_PLAYER = 0.05;
+export const LAST_STAND_MAX_BONUS = 0.15;
+
+// Bonus de dégâts du dernier carré (0,05 = +5 %) d'une équipe qui a own survivants face à other.
+export function lastStandBonus(own: number, other: number): number {
+  if (own <= 0 || own > LAST_STAND_MAX_ALIVE || own >= other) return 0;
+  return Math.min(LAST_STAND_MAX_BONUS, (other - own) * LAST_STAND_BONUS_PER_PLAYER);
+}
+
 // Lame
 export const EVASION_CHANCE = 0.75;
 

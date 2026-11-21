@@ -119,6 +119,7 @@ export const en = {
   "kill.lastAlly": "The last of your team still standing",
   "kill.lastEnemy": "The last opponent still standing",
   "kill.score": "{allies} versus {enemies}",
+  "kill.lastStand": "Last stand +{percent}%",
   "kill.spoken": "{killer} eliminated {victim} ({move})",
   "match.spectator": "Spectator mode",
   "match.spectatorHint": "{up}{left}{down}{right} moves the camera · V: back to your body",

@@ -890,6 +890,23 @@ body,
   box-shadow: 0 0 5px currentColor;
   transition: background 0.4s, box-shadow 0.4s;
 }
+/* Dernier carré : étiquette dorée sous le chiffre de l'équipe qui en profite, liserée à sa couleur. */
+.kill-stand {
+  justify-self: center;
+  padding: 1px 7px;
+  border: 1px solid;
+  border-radius: 4px;
+  color: #ffd76a;
+  background: rgba(40, 30, 8, 0.85);
+  font: 700 11px/1.4 "Cinzel", Georgia, serif;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #000;
+  animation: kill-stand-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.kill-stand.kill-ally { border-color: #6fa3ff; }
+.kill-stand.kill-enemy { border-color: #ff6f6f; }
+@keyframes kill-stand-in { from { opacity: 0; transform: translateY(-4px) scale(0.9); } to { opacity: 1; transform: none; } }
 .kill-pips i.off { background: rgba(255, 255, 255, 0.14); box-shadow: none; }
 
 .kill-announce {

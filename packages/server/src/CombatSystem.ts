@@ -57,6 +57,7 @@ import {
   type InterruptEvent,
   type InterruptReason,
   type KillEvent,
+  lastStandBonus,
   type MoveInput,
   type Position,
 } from "@arena/shared";
@@ -571,6 +572,22 @@ export class CombatSystem {
   }
 
   // Bonus du buff de puissance, sur les dégâts comme sur les soins du lanceur.
+  // Règle du dernier carré active (coupée dans la plupart des tests, qui opposent des équipes de tailles différentes).
+  lastStandRule = true;
+
+  // Bonus de dégâts du dernier carré de l'équipe team, d'après les survivants des deux équipes (voir lastStandBonus).
+  private lastStand(team: number): number {
+    if (!this.lastStandRule) return 0;
+    let own = 0;
+    let other = 0;
+    for (const p of this.players.values()) {
+      if (!p.alive) continue;
+      if (p.state.team === team) own++;
+      else other++;
+    }
+    return lastStandBonus(own, other);
+  }
+
   private powerFactor(source: PlayerRuntime): number {
     return source.has("buffStrength") ? 1 + STRENGTH_BUFF_BONUS : 1;
   }
@@ -794,6 +811,8 @@ export class CombatSystem {
 
     // Buff de puissance : plus de dégâts, en mêlée comme avec les sorts (tics compris).
     amount *= this.powerFactor(source);
+    // Dernier carré : l'équipe en infériorité, réduite à quelques survivants, frappe plus fort.
+    amount *= 1 + this.lastStand(source.state.team);
     // Brise armure : la cible subit plus de dégâts de mêlée (attaques automatiques et techniques).
     if (melee && target.has("armorBroken")) amount *= 1 + ARMOR_BREAK_BONUS;
 

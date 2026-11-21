@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { lastStandBonus } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { abilityIcon } from "./abilityBar";
 import { ALERTS } from "./game/commonSounds";
@@ -74,13 +75,18 @@ function useDrops(value: number): number {
   return drops.current;
 }
 
-// Décompte : gros chiffres qui sautent quand ils baissent, et un losange par joueur qui s'éteint à sa mort.
+// Décompte : gros chiffres qui sautent quand ils baissent, et un losange par joueur qui s'éteint à sa mort. Dessous,
+// le bonus du dernier carré de l'équipe qui en profite (voir lastStandBonus).
 function KillScore() {
   const allies = useHudStore((s) => s.match?.alliesAlive ?? 0);
   const enemies = useHudStore((s) => s.match?.enemiesAlive ?? 0);
   const size = useHudStore((s) => s.match?.teamSize ?? 0);
   const allyDrops = useDrops(allies);
   const enemyDrops = useDrops(enemies);
+  const stand = (own: number, other: number, ally: boolean) => {
+    const bonus = lastStandBonus(own, other);
+    return bonus > 0 ? <div className={`kill-stand ${side(ally)}`}>{t("kill.lastStand", { percent: Math.round(bonus * 100) })}</div> : <span />;
+  };
   const pips = (alive: number) => Array.from({ length: size }, (_, i) => <i key={i} className={i < alive ? "" : "off"} />);
   const num = (alive: number, ally: boolean, drops: number) => (
     <b key={`${ally ? "ally" : "enemy"}-${drops}`} className={`kill-num ${side(ally)}${drops > 0 ? " hit" : ""}`}>
@@ -99,6 +105,9 @@ function KillScore() {
       <div className="kill-pips kill-enemy" aria-hidden="true">
         {pips(enemies)}
       </div>
+      {stand(allies, enemies, true)}
+      <span />
+      {stand(enemies, allies, false)}
     </div>
   );
 }
