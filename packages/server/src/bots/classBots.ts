@@ -2,7 +2,9 @@ import {
   GARDIEN_ASSIST_DURATION,
   HEAL_ORDER_DURATION,
   MELEE_RANGE,
+  NEAR_SIGHT_FACTOR,
   RAMPART_RADIUS,
+  hasLineOfSight,
   distance,
   getAbility,
   positionRelativeTo,
@@ -119,8 +121,8 @@ abstract class CasterBot extends BotBrain {
     const threats = this.meleeThreats(CASTER_DANGER_RADIUS);
     if (threats.length === 0) return false;
     if (this.isCasting) return true;
-    this.flee(threats);
-    return true;
+    // Acculé : on reste se battre (la suite de think) au lieu de rester planté.
+    return this.flee(threats);
   }
 
   // Ni trop près ni trop loin de l'ennemi le plus proche. Retourne vrai si la position est bonne.
@@ -187,7 +189,12 @@ class ArcanisteBot extends CasterBot {
 
     const target = this.pickTarget(DAMAGE_PRIORITY);
     if (!target) return this.advance();
-    if (!this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
+    // Cible cachée par un obstacle : on se rapproche jusqu'à la voir, au lieu d'attendre.
+    if (!hasLineOfSight(this.self.state, target.state)) return this.moveTo(target.state, 4);
+    // Near sight : portée réduite ; on se rapproche à portée.
+    const nearSightRange = getAbility("firebolt")!.range * NEAR_SIGHT_FACTOR - 1;
+    if (this.self.has("nearSight") && this.distanceTo(target) > nearSightRange) return this.moveTo(target.state, nearSightRange - 1);
+    if (!this.self.has("nearSight") && !this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
 
     this.tryUse("arcanePower");
     // Un lanceur de sorts ennemi : sa portée réduite le force à venir au contact.
@@ -231,6 +238,8 @@ class PretreBot extends CasterBot {
     const hurt = byHealth.find((a) => this.hpRatio(a) < 0.8);
     if (hurt) {
       if (this.distanceTo(hurt) > 28) return this.moveTo(hurt.state, 24);
+      // Blessé caché par un obstacle : on se rapproche jusqu'à le voir.
+      if (hurt !== self && !hasLineOfSight(self.state, hurt.state)) return this.moveTo(hurt.state, 6);
       // Un blessé léger sans Renouveau de ce Prêtre : un soin sur la durée.
       const renewed = hurt.effects.some((e) => e.kind === "renew" && e.sourceId === self.id);
       if (this.hpRatio(hurt) > 0.6 && !renewed && this.tryUse("renew", hurt)) return;

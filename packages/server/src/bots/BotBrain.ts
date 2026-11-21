@@ -402,14 +402,15 @@ export class BotBrain {
       return false;
     }
     if (d < min) {
-      this.flee([target]);
-      return false;
+      // Acculé (aucune direction de fuite) : on se bat d'ici plutôt que d'attendre sans rien faire.
+      return !this.flee([target]);
     }
     return true;
   }
 
-  // S'éloigne des menaces, en se rapprochant si possible de ses alliés.
-  protected flee(threats: PlayerRuntime[]) {
+  // S'éloigne des menaces, en se rapprochant si possible de ses alliés. Retourne faux si aucune direction n'est libre
+  // (acculé contre un bord ou un obstacle).
+  protected flee(threats: PlayerRuntime[]): boolean {
     const pos = this.player.state;
     let dx = 0;
     let dz = 0;
@@ -422,7 +423,7 @@ export class BotBrain {
       dz += vz / (d * d);
     }
     let length = Math.hypot(dx, dz);
-    if (length < 1e-6) return;
+    if (length < 1e-6) return false;
     dx /= length;
     dz /= length;
 
@@ -443,19 +444,22 @@ export class BotBrain {
       }
     }
 
-    // On essaie la direction idéale, puis des directions de plus en plus écartées,
-    // en évitant les bords de l'arène où l'on finirait acculé.
-    const limit = ARENA_SIZE / 2 - EDGE_MARGIN;
-    for (const degrees of FLEE_ANGLES) {
-      const angle = (degrees * Math.PI) / 180;
-      const rx = dx * Math.cos(angle) - dz * Math.sin(angle);
-      const rz = dx * Math.sin(angle) + dz * Math.cos(angle);
-      const point = { x: pos.x + rx * FLEE_DISTANCE, z: pos.z + rz * FLEE_DISTANCE };
-      if (Math.abs(point.x) > limit || Math.abs(point.z) > limit) continue;
-      if (isInsideObstacle(point, PLAYER_RADIUS + 0.3)) continue;
-      this.moveTo(point, 0.5);
-      return;
+    // On essaie la direction idéale, puis des directions de plus en plus écartées, en évitant d'abord les bords de
+    // l'arène où l'on finirait acculé ; si tout est refusé (combat près d'une zone de départ, proche du bord), on
+    // accepte d'approcher du bord plutôt que de rester planté.
+    for (const limit of [ARENA_SIZE / 2 - EDGE_MARGIN, ARENA_SIZE / 2 - 2]) {
+      for (const degrees of FLEE_ANGLES) {
+        const angle = (degrees * Math.PI) / 180;
+        const rx = dx * Math.cos(angle) - dz * Math.sin(angle);
+        const rz = dx * Math.sin(angle) + dz * Math.cos(angle);
+        const point = { x: pos.x + rx * FLEE_DISTANCE, z: pos.z + rz * FLEE_DISTANCE };
+        if (Math.abs(point.x) > limit || Math.abs(point.z) > limit) continue;
+        if (isInsideObstacle(point, PLAYER_RADIUS + 0.3)) continue;
+        this.moveTo(point, 0.5);
+        return true;
+      }
     }
+    return false;
   }
 
   // --- Déplacement ---
