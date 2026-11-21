@@ -54,6 +54,8 @@ const FOLLOW_MAX_DISTANCE = 5;
 // Suivi d'office du début du combat (voir followHumansAtStart) : il cesse si le joueur suivi ne s'éloigne pas d'au
 // moins 1 m de sa position pendant ce temps (secondes), pour qu'un joueur absent ne retienne pas toute son équipe.
 const START_FOLLOW_IDLE = 15;
+// Chef d'une équipe sans humain : longueur minimale de chaque étape d'exploration (mètres).
+const SCOUT_MIN_LEG = 25;
 
 // Ordre donné par un joueur (roue de la molette) : qui l'a donné, sa cible (Assistez-moi), et jusqu'à quand il vaut.
 export interface BotOrder {
@@ -92,6 +94,10 @@ export class BotBrain {
   // Mémoire et exploration quand aucun ennemi n'est en vue.
   private lastSeenEnemy: Position | null = null;
   private exploreTarget: Position | null = null;
+  // Début du combat d'une équipe sans humain (voir followHumansAtStart) : attente jusqu'à holdUntil, et le chef
+  // explore la carte au hasard (scouting) jusqu'au premier ennemi aperçu.
+  private holdUntil = -Infinity;
+  private scouting = false;
   private visitedEnemyZone = false;
   private lastInput: MoveInput = NO_INPUT;
   private lastPosition: Position | null = null;
@@ -128,8 +134,17 @@ export class BotBrain {
       if (world.phase === "preparation") this.prepare();
       else if (world.phase === "fighting") {
         this.expireOrder();
+        // Attente du départ (équipe sans humain), sauf si un ennemi se montre déjà.
+        if (this.combat.now < this.holdUntil && this.enemies().length === 0) {
+          this.stop();
+          return;
+        }
+        // Chef éclaireur : il explore tant qu'aucun ennemi n'a été aperçu (ses réflexes de classe, comme rester près
+        // d'un protégé, retiendraient toute l'équipe qui le suit).
+        if (this.scouting && (this.lastSeenEnemy || this.enemies().length > 0)) this.scouting = false;
+        if (this.scouting) this.scout();
         // Hésitation : le bot continue ce qu'il faisait au lieu de réagir.
-        if (!(HUMAN_ERRORS.enabled && Math.random() < HUMAN_ERRORS.hesitation)) this.think();
+        else if (!(HUMAN_ERRORS.enabled && Math.random() < HUMAN_ERRORS.hesitation)) this.think();
         this.follow();
       } else this.stop();
     }
@@ -384,13 +399,32 @@ export class BotBrain {
     this.moveTo(this.exploreTarget, 2);
   }
 
-  // Point libre au hasard dans l'arène, à l'écart des bords.
-  private randomPoint(): Position {
+  // Point libre au hasard dans l'arène, à l'écart des bords, et si possible à au moins minDistance mètres du bot.
+  private randomPoint(minDistance = 0): Position {
     const range = ARENA_SIZE / 2 - EDGE_MARGIN;
-    for (;;) {
+    for (let attempt = 0; ; attempt++) {
       const point = { x: (Math.random() * 2 - 1) * range, z: (Math.random() * 2 - 1) * range };
-      if (!isInsideObstacle(point, PLAYER_RADIUS + 0.5)) return point;
+      if (isInsideObstacle(point, PLAYER_RADIUS + 0.5)) continue;
+      if (attempt < 50 && this.distanceTo(point) < minDistance) continue;
+      return point;
     }
+  }
+
+  // Début du combat d'une équipe sans humain : attendre ce temps (secondes) avant d'agir.
+  holdStart(seconds: number) {
+    this.holdUntil = this.combat.now + seconds;
+  }
+
+  // Chef d'une équipe sans humain : exploration au hasard, étape par étape (ses coéquipiers le suivent).
+  private scout() {
+    if (!this.exploreTarget || this.distanceTo(this.exploreTarget) < 3) this.exploreTarget = this.randomPoint(SCOUT_MIN_LEG);
+    this.moveTo(this.exploreTarget, 2);
+  }
+
+  // Début du combat d'une équipe sans humain : ce bot est le chef qui explore.
+  startScouting() {
+    this.scouting = true;
+    this.exploreTarget = null;
   }
 
   // Reste entre min et max mètres de la cible : s'approche si trop loin, recule si trop près.

@@ -434,6 +434,25 @@ describe("Bots : ordres", () => {
     assert.ok(distance(lame.state, chef.state) <= 5.5, `Lame à ${distance(lame.state, chef.state).toFixed(1)} m`);
   });
 
+  it("Début du combat : une équipe sans humain attend 5 s, puis suit son Gardien qui explore", () => {
+    const sim = new Sim();
+    const arcaniste = sim.spawn("a", "arcaniste", 0, 0, 0, 0, true);
+    const gardien = sim.spawn("g", "gardien", 0, 2, 0, 0, true);
+    const lame = sim.spawn("l", "lame", 0, 4, 0, 0, true);
+    for (const p of [arcaniste, gardien, lame]) p.state.isBot = true;
+    followHumansAtStart(sim.bots, sim.combat.players);
+    assert.equal(sim.bots[0].order?.issuer, gardien);
+    assert.equal(sim.bots[1].order, null);
+    const start = { x: gardien.state.x, z: gardien.state.z };
+    sim.run(4.5);
+    assert.ok(distance(gardien.state, start) < 0.1, "le chef attend");
+    sim.run(5);
+    assert.ok(distance(gardien.state, start) > 10, `chef à ${distance(gardien.state, start).toFixed(1)} m du départ`);
+    for (const p of [arcaniste, lame]) {
+      assert.ok(distance(p.state, gardien.state) <= 7, `${p.classDef.id} à ${distance(p.state, gardien.state).toFixed(1)} m du chef`);
+    }
+  });
+
   it("Début du combat : le suivi d'office cesse si le joueur reste sur place 15 s", () => {
     const sim = new Sim();
     sim.spawn("l", "lame", 0, 0, 0, 0, true).state.isBot = true;
