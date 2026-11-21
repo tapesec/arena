@@ -1016,7 +1016,7 @@ export class Game {
     const targetBlocked = this.targetBlocked(this.self, currentTarget);
     const campSwap = (this.room.state as { campSwap: boolean }).campSwap;
     for (const player of this.players.values()) {
-      player.update(smoothing, campSwap);
+      player.update(smoothing, campSwap, this.self?.state.team ?? null);
       const enemy = !!this.self && player.state.team !== this.self.state.team;
       const classId = player.state.classId as ClassId | "";
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.

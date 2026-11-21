@@ -69,12 +69,10 @@ const HITBOX_HEIGHT = 2.4;
 const HOVER_OUTLINE_WIDTH = 0.02;
 const DEAD_COLOR = new Color3(0.3, 0.3, 0.3);
 
-// Teinte de base par équipe : bleu ou rouge, légèrement variée d'un joueur à l'autre.
-const TEAM_HUES = [215, 5];
-
-// Couleur d'un joueur : celle de son équipe, légèrement variée d'un joueur à l'autre.
-function teamColor(team: number, colorIndex: number): Color3 {
-  const hue = TEAM_HUES[team] + ((colorIndex % 4) - 1.5) * 8;
+// Couleur de la capsule provisoire, vue par le joueur local (comme les pseudos) : bleue pour son équipe, rouge pour
+// celle d'en face, légèrement variée d'un joueur à l'autre.
+function teamColor(ally: boolean, colorIndex: number): Color3 {
+  const hue = (ally ? 215 : 5) + ((colorIndex % 4) - 1.5) * 8;
   return Color3.FromHSV((hue + 360) % 360, 0.65, 0.9);
 }
 
@@ -93,6 +91,8 @@ export class PlayerVisual {
   private aliveColor: Color3;
   private wasAlive = true;
   private team: number;
+  // Camp vu par le joueur local, pour la couleur de la capsule (son équipe ou celle d'en face).
+  private ally: boolean;
   // Zone de clic (cylindre invisible) et couleur du contour de survol (null sans survol).
   readonly hitbox: Mesh;
   private hovered: Color3 | null = null;
@@ -123,7 +123,8 @@ export class PlayerVisual {
     this.lastZ = state.z;
 
     this.team = state.team;
-    this.aliveColor = teamColor(state.team, state.colorIndex);
+    this.ally = state.team === 0;
+    this.aliveColor = teamColor(this.ally, state.colorIndex);
     this.material = new StandardMaterial("playerMat", scene);
     this.material.diffuseColor = this.aliveColor;
 
@@ -164,8 +165,9 @@ export class PlayerVisual {
   }
 
   // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame. Son propre personnage,
-  // prédit (predicted), est placé directement. campSwap : tirage des personnages de la partie (voir campOf).
-  update(smoothing: number, campSwap: boolean) {
+  // prédit (predicted), est placé directement. campSwap : tirage des personnages de la partie (voir campOf) ;
+  // localTeam : équipe du joueur local (null tant qu'elle est inconnue).
+  update(smoothing: number, campSwap: boolean, localTeam: number | null) {
     if (this.predicted) {
       // Recalage net : l'animation de course ne doit pas y voir un déplacement.
       if (this.predicted.snapped) {
@@ -185,10 +187,13 @@ export class PlayerVisual {
     // Le personnage suit le relief.
     this.root.position.y = terrainHeight(this.root.position.x, this.root.position.z);
 
-    // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur.
-    if (this.state.team !== this.team) {
-      this.team = this.state.team;
-      this.aliveColor = teamColor(this.team, this.state.colorIndex);
+    // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur ; celle du joueur local arrive
+    // avec son propre état.
+    this.team = this.state.team;
+    const ally = localTeam === null ? this.team === 0 : this.team === localTeam;
+    if (ally !== this.ally) {
+      this.ally = ally;
+      this.aliveColor = teamColor(ally, this.state.colorIndex);
       if (this.isAlive) this.material.diffuseColor = this.aliveColor;
     }
 
