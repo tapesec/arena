@@ -451,6 +451,11 @@ describe("Bots : ordres", () => {
     for (const p of [arcaniste, lame]) {
       assert.ok(distance(p.state, gardien.state) <= 7, `${p.classDef.id} à ${distance(p.state, gardien.state).toFixed(1)} m du chef`);
     }
+    // Premier ennemi aperçu : le suivi cesse, chacun reprend son comportement.
+    sim.spawn("e", "arcaniste", 1, gardien.state.x + 10, gardien.state.z, 0, false, false);
+    sim.run(1);
+    assert.equal(sim.bots[0].order, null);
+    assert.equal(sim.bots[2].order, null);
   });
 
   it("Début du combat : le suivi d'office cesse si le joueur reste sur place 15 s", () => {
