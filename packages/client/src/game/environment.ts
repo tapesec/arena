@@ -23,8 +23,8 @@ const PAVING_TILE = 4;
 // Résolution de la carte qui dit où mettre l'herbe, la terre et les pavés (environ 20 cm par pixel).
 const MIX_RESOLUTION = 1024;
 
-// Chemins de terre des zones de départ vers les entrées de la place, définis pour les Bleus
-// et reproduits par symétrie (rotation de 180° autour du centre) pour les Rouges.
+// Chemins de terre des zones de départ vers les entrées de la place, définis pour la première équipe
+// et reproduits par symétrie (rotation de 180° autour du centre) pour la seconde.
 const PATHS: [number, number][][] = [
   // Vers la large entrée sud, en passant sous la grande maison.
   [

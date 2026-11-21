@@ -91,6 +91,9 @@ export const ArenaState = schema(
     time: t.uint32().default(0),
     // Équipe gagnante une fois la partie terminée (-1 tant qu'il n'y en a pas).
     winner: t.int8().default(-1),
+    // Personnages des équipes tirés au sort à chaque partie (décidé le 2026-11-21) : faux, la première équipe prend
+    // ceux du camp 1 et la seconde ceux du camp 2 ; vrai, l'inverse.
+    campSwap: t.boolean().default(false),
     // Nombre de joueurs humains dans la partie et nombre maximal (le reste est joué par des bots).
     playerCount: t.uint8().default(0),
     matchSize: t.uint8().default(0),

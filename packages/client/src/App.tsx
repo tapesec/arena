@@ -212,10 +212,6 @@ function OrderWheelView() {
   );
 }
 
-function teamName(team: number): string {
-  return t(team === 0 ? "team.0" : "team.1");
-}
-
 function ErrorScreen({ message }: { message: string | null }) {
   const leaveGame = useHudStore((s) => s.leaveGame);
   return (
@@ -252,7 +248,7 @@ function ClassSelectScreen() {
   const leaveGame = useHudStore((s) => s.leaveGame);
   const self = teammates.find((mate) => mate.isSelf);
   const myClass = self?.classId ?? "";
-  const team = match?.team ?? 0;
+  const camp = match?.camp ?? 0;
   // Joueurs de son équipe seulement : le nombre total trahirait combien de bots il y a en face.
   const humans = teammates.filter((mate) => !mate.isBot).length;
   const full = (match?.matchSize ?? 0) > 0 && (match?.playerCount ?? 0) >= (match?.matchSize ?? 0);
@@ -271,9 +267,6 @@ function ClassSelectScreen() {
     <div className="screen lobby-screen themed-screen">
       <header className="lobby-header">
         <h1>{t("lobby.title")}</h1>
-        <p className="screen-text">
-          {t("lobby.team")} <span className={`team-name team-${team}`}>{teamName(team)}</span>
-        </p>
         <div className={`lobby-timer ${timeLeft <= 10 ? "lobby-timer-urgent" : ""}`}>
           <span className="lobby-timer-label">{t("lobby.startsIn")}</span>
           <strong className="lobby-countdown">{timeLeft} s</strong>
@@ -287,7 +280,7 @@ function ClassSelectScreen() {
       </header>
       {tutorial && <Tutorial classId={myClass as ClassId | ""} onClose={closeTutorial} />}
       <div className="lobby-body">
-        <ClassLineupView team={team} selected={myClass} onSelect={choose} />
+        <ClassLineupView camp={camp} selected={myClass} onSelect={choose} />
         <aside className="roster">
           <h2>{t("lobby.yourTeam")}</h2>
           <div className="roster-lines">
@@ -339,7 +332,7 @@ function ClassSelectScreen() {
 // Les classes alignées : en haut leurs personnages en 3D (apparence du camp du joueur, voir ClassLineup), en dessous,
 // dans la même colonne, le nom et les compétences (infobulle au survol, la même qu'en jeu). Un clic sur le personnage
 // ou sur son nom choisit la classe.
-function ClassLineupView({ team, selected, onSelect }: { team: number; selected: string; onSelect: (classId: ClassId) => void }) {
+function ClassLineupView({ camp, selected, onSelect }: { camp: number; selected: string; onSelect: (classId: ClassId) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lineupRef = useRef<ClassLineup | null>(null);
   const [hovered, setHovered] = useState(-1);
@@ -359,7 +352,7 @@ function ClassLineupView({ team, selected, onSelect }: { team: number; selected:
         lineup = new ClassLineup(
           canvasRef.current!,
           CLASS_LIST.map((c) => c.id),
-          team,
+          camp,
           () => setReady(true),
         );
       } catch {
@@ -377,7 +370,7 @@ function ClassLineupView({ team, selected, onSelect }: { team: number; selected:
       lineup?.dispose();
       lineupRef.current = null;
     };
-  }, [team]);
+  }, [camp]);
 
   useEffect(() => lineupRef.current?.setSelected(selected), [selected]);
   useEffect(() => lineupRef.current?.setHovered(hovered), [hovered]);
@@ -494,7 +487,7 @@ function LoadingScreen() {
       <div className="loading-teams">
         {[team, 1 - team].map((side) => (
           <div key={side} className="loading-team">
-            <h2 className={`team-name team-${side}`}>{teamName(side)}</h2>
+            <h2 className={`team-name ${side === team ? "team-ally" : "team-enemy"}`}>{t(side === team ? "loading.allies" : "loading.enemies")}</h2>
             {loading
               .filter((p) => p.team === side)
               .map((p) => (
@@ -552,7 +545,6 @@ function EndScreen() {
   return (
     <div className="end-overlay">
       <h1>{title}</h1>
-      {match.winner !== -1 && <p className="screen-text">{t("end.winner", { team: teamName(match.winner) })}</p>}
       <button
         className="primary-button"
         onClick={() => {

@@ -493,12 +493,13 @@ body,
   cursor: pointer;
 }
 
-.team-0 {
+/* Son équipe en bleu, celle d'en face en rouge (comme les pseudos en jeu). */
+.team-ally {
   color: #6fa3ff;
   font-weight: 700;
 }
 
-.team-1 {
+.team-enemy {
   color: #ff6f6f;
   font-weight: 700;
 }

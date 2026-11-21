@@ -92,11 +92,11 @@ export function Tutorial({ classId, onClose }: { classId: ClassId | ""; onClose:
   );
 }
 
-// 1. Le but du jeu : deux équipes de 8, la sienne à la couleur de son équipe, et trois règles.
+// 1. Le but du jeu : deux équipes de 8, la sienne en bleu et celle d'en face en rouge (comme les pseudos), et trois
+// règles.
 function GoalSlide() {
-  const team = useHudStore((s) => s.match?.team ?? 0);
-  const ours = team === 0 ? "#6fa3ff" : "#ff6f6f";
-  const theirs = team === 0 ? "#ff6f6f" : "#6fa3ff";
+  const ours = "#6fa3ff";
+  const theirs = "#ff6f6f";
   // Deux groupes de 8 pions face à face.
   const pawns = (x: number, color: string) =>
     Array.from({ length: 8 }, (_, i) => (

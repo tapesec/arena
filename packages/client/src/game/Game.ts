@@ -86,6 +86,7 @@ import { lobbyReady, waitForLobby } from "./lobbyPriority";
 import { MovementPredictor, VelocityTracker } from "./prediction";
 import { TUNING } from "./tuning";
 import { MUSIC } from "./commonSounds";
+import { campOf } from "./gameAppearances";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 import { RenderScale } from "./renderScale";
 
@@ -1013,8 +1014,9 @@ export class Game {
     this.predictSelf(dt);
     const currentTarget = this.targetId ? this.players.get(this.targetId) : undefined;
     const targetBlocked = this.targetBlocked(this.self, currentTarget);
+    const campSwap = (this.room.state as { campSwap: boolean }).campSwap;
     for (const player of this.players.values()) {
-      player.update(smoothing);
+      player.update(smoothing, campSwap);
       const enemy = !!this.self && player.state.team !== this.self.state.team;
       const classId = player.state.classId as ClassId | "";
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
@@ -1251,6 +1253,7 @@ export class Game {
       playerCount: number;
       matchSize: number;
       winner: number;
+      campSwap: boolean;
     };
     const matchFrame: MatchFrame = {
       phase: state.phase,
@@ -1258,6 +1261,7 @@ export class Game {
       playerCount: state.playerCount,
       matchSize: state.matchSize,
       team: self?.state.team ?? 0,
+      camp: campOf(self?.state.team ?? 0, state.campSwap),
       winner: state.winner,
     };
     // Le serveur ne nous envoie que nos coéquipiers pendant le choix des classes.

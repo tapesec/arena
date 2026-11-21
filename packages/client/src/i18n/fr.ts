@@ -20,8 +20,6 @@ export const fr: Record<TextKey, string> = {
   "connect.error": "Connexion impossible\u00a0: {message}",
   "connect.back": "Retour",
 
-  "team.0": "Bleus",
-  "team.1": "Rouges",
 
   "tutorial.open": "Comment jouer\u00a0?",
   "tutorial.title": "Comment jouer",
@@ -52,7 +50,6 @@ export const fr: Record<TextKey, string> = {
   "tutorial.class.wheel2": "Pointez un ordre (Soigne-moi, Protège-moi, Suivez-moi…) avec la souris.",
   "tutorial.class.wheel3": "Relâchez\u00a0: les bots de votre équipe obéissent.",
   "lobby.title": "Choisissez votre classe",
-  "lobby.team": "Équipe",
   "lobby.startsIn": "La partie commence dans",
   "lobby.full": "Salle complète.",
   "lobby.players": "{humans} / {total} joueurs dans votre équipe · les places libres sont tenues par des bots.",
@@ -73,6 +70,8 @@ export const fr: Record<TextKey, string> = {
   "ping.title": "Aller-retour avec le serveur",
   "ping.value": "{value}\u00a0ms",
   "loading.title": "Chargement",
+  "loading.allies": "Votre équipe",
+  "loading.enemies": "Adversaires",
   "loading.startsIn": "La partie commence quand tout le monde est prêt, au plus tard dans",
   "loading.hint": "Chargement des modèles et des sons…",
   "loading.late": "Le combat commence dans",
@@ -111,7 +110,6 @@ export const fr: Record<TextKey, string> = {
   "end.draw": "Égalité",
   "end.victory": "Victoire\u00a0!",
   "end.defeat": "Défaite",
-  "end.winner": "Les {team} remportent la partie.",
   "end.newMatch": "Nouvelle partie",
   "end.home": "Retour à l'accueil",
 

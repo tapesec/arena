@@ -5,10 +5,16 @@ import type { CustomCharacter } from "./characterAssets";
 // Personnages du jeu par classe et par camp, construits d'après l'éditeur d'apparence (npm run build-appearances).
 export const GAME_APPEARANCES = data as unknown as Record<string, (GameAppearance | null)[]>;
 
-// Personnage d'un joueur : l'apparence de son camp, fixe par équipe (la première équipe prend le camp 1, la seconde le
-// camp 2) ; undefined sans apparence pour ce camp (le modèle de la classe sert alors).
-export function gameCharacter(classId: string, team: number): CustomCharacter | undefined {
-  const character = GAME_APPEARANCES[classId]?.[team];
+// Camp (jeu de personnages, 0 ou 1) d'une équipe : tiré au sort à chaque partie par le serveur (campSwap), le même
+// pour tous les joueurs. Les deux équipes ont toujours des camps différents.
+export function campOf(team: number, campSwap: boolean): number {
+  return campSwap ? 1 - team : team;
+}
+
+// Personnage d'un joueur : l'apparence de son camp (voir campOf) ; undefined sans apparence pour ce camp (le modèle de
+// la classe sert alors).
+export function gameCharacter(classId: string, camp: number): CustomCharacter | undefined {
+  const character = GAME_APPEARANCES[classId]?.[camp];
   return character ? { ...character, recolors: [] } : undefined;
 }
 

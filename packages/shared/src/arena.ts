@@ -18,7 +18,7 @@ export interface Obstacle {
 export const PLAZA = { x: 0, z: 0, radius: 14 };
 
 // Carte symétrique par rotation de 180° autour du centre : (x, z) ↔ (-x, -z), pour qu'aucune équipe
-// ne soit avantagée. Bleus en (-36, -36), Rouges en (36, 36).
+// ne soit avantagée. Première équipe en (-36, -36), seconde en (36, 36).
 //  - au centre, un hameau : six maisons fermées autour de la place. Par moitié de carte, une large entrée,
 //    un coin ouvert et une ruelle étroite ; la grande maison cache la place à qui arrive de son départ ;
 //  - sur les approches, des piles de caisses qui coupent les lignes de vue ;

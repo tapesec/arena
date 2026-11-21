@@ -249,6 +249,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     trackRoom(this.roomId, () => ({ humans: this.humans(), inMatch: this.inMatch }));
     this.state.matchSize = MATCH_PLAYERS;
     this.state.phaseTimeLeft = LOBBY_SECONDS;
+    this.state.campSwap = Math.random() < 0.5;
     for (const team of [0, 1]) for (const classId of initialBotClasses(TEAM_SIZE)) this.addBot(team, classId);
     this.setSimulationInterval((deltaMs) => this.update(deltaMs / 1000), 1000 / TICK_RATE);
     this.setPatchRate(1000 / TICK_RATE);

@@ -22,8 +22,6 @@ export const en = {
   "connect.back": "Back",
 
   // Équipes
-  "team.0": "Blue",
-  "team.1": "Red",
 
   // Salle d'attente
   "tutorial.open": "How to play?",
@@ -55,7 +53,6 @@ export const en = {
   "tutorial.class.wheel2": "Point at an order (Heal me, Protect me, Follow me…) with the mouse.",
   "tutorial.class.wheel3": "Release: your team's bots obey.",
   "lobby.title": "Choose your class",
-  "lobby.team": "Team",
   "lobby.startsIn": "The match starts in",
   "lobby.full": "Match is full.",
   "lobby.players": "{humans} / {total} players on your team · empty slots are filled by bots.",
@@ -79,6 +76,8 @@ export const en = {
   "ping.title": "Round trip to the server",
   "ping.value": "{value} ms",
   "loading.title": "Loading",
+  "loading.allies": "Your team",
+  "loading.enemies": "Opponents",
   "loading.startsIn": "The match starts once everyone is ready, at most in",
   "loading.hint": "Loading models and sounds…",
   "loading.late": "The fight starts in",
@@ -120,7 +119,6 @@ export const en = {
   "end.draw": "Draw",
   "end.victory": "Victory!",
   "end.defeat": "Defeat",
-  "end.winner": "Team {team} wins the match.",
   "end.newMatch": "New match",
   "end.home": "Main menu",
 

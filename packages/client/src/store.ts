@@ -77,6 +77,8 @@ export interface MatchFrame {
   playerCount: number;
   matchSize: number;
   team: number;
+  // Jeu de personnages de son équipe pour cette partie (voir campOf).
+  camp: number;
   winner: number;
 }
 

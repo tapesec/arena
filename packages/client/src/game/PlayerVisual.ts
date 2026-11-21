@@ -15,7 +15,7 @@ import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { INSTRUMENT_ANIMATIONS, hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
-import { gameCharacter } from "./gameAppearances";
+import { campOf, gameCharacter } from "./gameAppearances";
 
 export interface EffectView {
   kind: string;
@@ -100,8 +100,8 @@ export class PlayerVisual {
   private model: CharacterInstance | null = null;
   private animator: CharacterAnimator | null = null;
   private modelClass = "";
-  // Équipe du personnage chargé (son camp, voir gameCharacter).
-  private modelTeam = -1;
+  // Camp du personnage chargé (voir campOf).
+  private modelCamp = -1;
   private loadToken = 0;
   private disposed = false;
   // Vitesse mesurée à l'écran, dans le repère du personnage.
@@ -164,8 +164,8 @@ export class PlayerVisual {
   }
 
   // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame. Son propre personnage,
-  // prédit (predicted), est placé directement.
-  update(smoothing: number) {
+  // prédit (predicted), est placé directement. campSwap : tirage des personnages de la partie (voir campOf).
+  update(smoothing: number, campSwap: boolean) {
     if (this.predicted) {
       // Recalage net : l'animation de course ne doit pas y voir un déplacement.
       if (this.predicted.snapped) {
@@ -199,8 +199,9 @@ export class PlayerVisual {
 
 
 
-    // Classe ou équipe changée : le personnage de sa classe et de son camp.
-    if (this.state.classId !== this.modelClass || this.team !== this.modelTeam) this.loadModel();
+    // Classe ou camp changé : le personnage de sa classe et de son camp.
+    const camp = campOf(this.team, campSwap);
+    if (this.state.classId !== this.modelClass || camp !== this.modelCamp) this.loadModel(camp);
     this.updateAnimation();
   }
 
@@ -247,9 +248,9 @@ export class PlayerVisual {
   }
 
   // Charge le personnage animé de la classe (la classe est choisie après l'arrivée du joueur).
-  private loadModel() {
+  private loadModel(camp: number) {
     this.modelClass = this.state.classId;
-    this.modelTeam = this.team;
+    this.modelCamp = camp;
     this.animator?.dispose();
     this.model?.dispose();
     this.model = null;
@@ -259,8 +260,7 @@ export class PlayerVisual {
     if (this.hovered) this.setHovered(this.hovered);
     if (!hasCharacterModel(this.modelClass)) return;
     const token = ++this.loadToken;
-    // Apparence de son camp, fixe par équipe (voir gameCharacter).
-    void this.assets.create(this.modelClass, this.root, undefined, gameCharacter(this.modelClass, this.team)).then((model) => {
+    void this.assets.create(this.modelClass, this.root, undefined, gameCharacter(this.modelClass, camp)).then((model) => {
       if (!model) return;
       // Le joueur a changé de classe ou a disparu pendant le chargement.
       if (token !== this.loadToken || this.disposed) {

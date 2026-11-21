@@ -60,7 +60,8 @@ export class ClassLineup {
   constructor(
     canvas: HTMLCanvasElement,
     classIds: string[],
-    private team: number,
+    // Jeu de personnages de son équipe pour cette partie (voir campOf).
+    private camp: number,
     // Appelé quand tous les personnages sont chargés.
     private onReady?: () => void,
   ) {
@@ -140,7 +141,7 @@ export class ClassLineup {
     const only = new Set([idleName, ...(gestureName ? [gestureName] : [])]);
     let instance: CharacterInstance | null = null;
     try {
-      instance = await this.assets.create(slot.classId, slot.holder, only, gameCharacter(slot.classId, this.team));
+      instance = await this.assets.create(slot.classId, slot.holder, only, gameCharacter(slot.classId, this.camp));
     } catch {
       // Un modèle qui manque ne doit pas empêcher de choisir sa classe : la colonne reste vide. (Un chargement qui
       // se termine après la fermeture de l'écran échoue aussi ici, la scène n'existant plus : c'est voulu.)
