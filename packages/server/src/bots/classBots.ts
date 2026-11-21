@@ -2,6 +2,8 @@ import {
   GARDIEN_ASSIST_DURATION,
   HEAL_ORDER_DURATION,
   MELEE_RANGE,
+  SONG_RANGE,
+  SONG_SPEED_CALM,
   NEAR_SIGHT_FACTOR,
   RAMPART_RADIUS,
   hasLineOfSight,
@@ -335,7 +337,9 @@ class PretreBot extends CasterBot {
 }
 
 // Barde : Réveil d'un allié mezzé, Ballade rythmée quand le groupe est entravé, Mez de zone, Oubli, Mez ciblé, Buff
-// dextérité ; Chant de vitesse toujours actif.
+// dextérité ; Chant de second souffle en combat, Chant de vitesse sinon.
+const SONG_COMBAT_LINGER = 8;
+const SPEED_ORDER_DURATION = 15;
 class BardeBot extends CasterBot {
   protected prepare() {
     this.stop();
@@ -417,8 +421,8 @@ class BardeBot extends CasterBot {
   }
 
   protected orderDuration(kind: OrderId): number {
-    // Vitesse : il suffit de reprendre le Chant de vitesse (fin de l'ordre « mana »).
-    if (kind === "speed") return 0;
+    // Vitesse : le Barde reprend le Chant de vitesse, même en combat, pendant un moment.
+    if (kind === "speed") return SPEED_ORDER_DURATION;
     return kind === "awaken" || kind === "buff" ? ONE_SHOT_ORDER_DURATION : Infinity;
   }
 
@@ -450,12 +454,23 @@ class BardeBot extends CasterBot {
     return this.tryUse(order.kind === "awaken" ? "awaken" : "buffDexterity", issuer);
   }
 
-  // Chant de vitesse, ou Chant de second souffle pour un joueur qui a demandé du mana ou de l'endurance.
+  // Chant de second souffle en combat, Chant de vitesse sinon (décidé le 2026-11-21). En combat, le Chant de vitesse
+  // ne sert plus aux alliés engagés (il se coupe dès qu'ils agissent ou sont touchés) : dès que deux alliés à portée de
+  // chant sont engagés, le Barde passe au second souffle, et ne revient à la vitesse qu'après SONG_COMBAT_LINGER
+  // secondes sans allié engagé. Un ordre l'emporte : « besoin de mana » (second souffle) ou « vitesse » (Chant de
+  // vitesse pendant SPEED_ORDER_DURATION secondes).
   private ensureSong() {
     if (this.order?.kind === "resource" && resourceFull(this.order.issuer)) this.order = null;
-    const wanted = this.order?.kind === "resource" ? "secondWind" : "speedSong";
+    const now = this.combat.now;
+    const engaged = this.allies().filter((a) => this.distanceTo(a) <= SONG_RANGE && now - a.lastEngagedAt < SONG_SPEED_CALM);
+    if (engaged.length >= 2) this.combatSongUntil = now + SONG_COMBAT_LINGER;
+    const kind = this.order?.kind;
+    const wanted = kind === "resource" ? "secondWind" : kind === "speed" ? "speedSong" : now < this.combatSongUntil ? "secondWind" : "speedSong";
     if (this.self.state.song !== wanted) this.tryUse(wanted);
   }
+
+  // Fin du chant de combat (voir ensureSong).
+  private combatSongUntil = -Infinity;
 }
 
 // --- Gardien : protège les lanceurs de sorts attaqués ---
