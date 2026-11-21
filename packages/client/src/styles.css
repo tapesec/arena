@@ -1254,6 +1254,48 @@ body,
   color: #ff5a52;
 }
 
+/* Incantation d'un ennemi sous son nom (décidé le 2026-11-21) : l'icône du sort et une barre à sa couleur. */
+.world-cast {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.world-cast-icon {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  padding: 1px;
+  border-radius: 3px;
+  background: rgba(10, 10, 16, 0.85);
+  box-shadow: 0 0 0 1px rgba(255, 90, 82, 0.9);
+}
+
+.world-cast-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.world-cast-bar {
+  width: 54px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(10, 10, 16, 0.8);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
+}
+
+.world-cast-fill {
+  height: 100%;
+  width: 0;
+}
+
 /* Son propre personnage : pseudo doré, chevron doré au-dessus (décidé le 2026-11-19, pour se repérer dans la
    mêlée). */
 .nameplate-self .nameplate-label {

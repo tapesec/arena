@@ -3,6 +3,8 @@ import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import type { ClassId } from "@arena/shared";
 import RAMPART_ICON from "../icons/rampart.svg?raw";
+import { abilityColor, abilityIcon } from "../abilityBar";
+import { abilityName } from "../i18n";
 
 // Durée de vie d'un texte flottant et distance parcourue vers le haut, en pixels.
 const TEXT_DURATION = 1.2;
@@ -63,6 +65,17 @@ interface Badge {
   key: string;
 }
 
+// Incantation d'un ennemi, sous son nom (décidé le 2026-11-21) : on voit qui prépare quoi sans le cibler. La progression
+// avance localement entre deux mises à jour du serveur (20 par seconde).
+interface CastPlate {
+  element: HTMLDivElement;
+  fill: HTMLDivElement;
+  anchor: TransformNode;
+  abilityId: string;
+  elapsed: number;
+  duration: number;
+}
+
 interface Bubble {
   element: HTMLDivElement;
   anchor: TransformNode;
@@ -83,6 +96,7 @@ export class WorldOverlay {
   private indicators = new Map<string, Indicator>();
   private badges = new Map<string, Badge>();
   private bubbles = new Map<string, Bubble>();
+  private casts = new Map<string, CastPlate>();
   private projected = new Vector3();
   private worldPos = new Vector3();
 
@@ -185,6 +199,39 @@ export class WorldOverlay {
     this.badges.set(playerId, { element, anchor, key });
   }
 
+  // Affiche (ou retire, avec un abilityId vide) l'incantation d'un joueur sous son nom.
+  setCast(playerId: string, anchor: TransformNode, abilityId: string, elapsed: number, duration: number) {
+    const current = this.casts.get(playerId);
+    if (!abilityId || duration <= 0) {
+      current?.element.remove();
+      this.casts.delete(playerId);
+      return;
+    }
+    if (current?.abilityId === abilityId) {
+      // Recalage sur le serveur s'il est en avance, ou nettement en retard (nouvelle incantation du même sort).
+      if (elapsed > current.elapsed || elapsed < current.elapsed - 0.3) current.elapsed = elapsed;
+      current.duration = duration;
+      return;
+    }
+    current?.element.remove();
+    const element = document.createElement("div");
+    element.className = "world-cast";
+    element.title = abilityName(abilityId);
+    const icon = document.createElement("span");
+    icon.className = "world-cast-icon";
+    icon.style.color = abilityColor(abilityId);
+    icon.innerHTML = abilityIcon(abilityId) ?? "";
+    const bar = document.createElement("div");
+    bar.className = "world-cast-bar";
+    const fill = document.createElement("div");
+    fill.className = "world-cast-fill";
+    fill.style.background = abilityColor(abilityId);
+    bar.append(fill);
+    element.append(icon, bar);
+    this.container.appendChild(element);
+    this.casts.set(playerId, { element, fill, anchor, abilityId, elapsed, duration });
+  }
+
   // Bulle de parole au-dessus d'un joueur (un bot qui répond à un ordre, ou l'ordre lui-même au-dessus du joueur) :
   // elle remplace la précédente.
   say(playerId: string, anchor: TransformNode, text: string) {
@@ -205,6 +252,8 @@ export class WorldOverlay {
     this.badges.delete(playerId);
     this.bubbles.get(playerId)?.element.remove();
     this.bubbles.delete(playerId);
+    this.casts.get(playerId)?.element.remove();
+    this.casts.delete(playerId);
   }
 
   update(dt: number) {
@@ -239,6 +288,16 @@ export class WorldOverlay {
       if (screen) badge.element.style.transform = `translate(${screen.x}px, ${screen.y}px) translate(-50%, -50%)`;
     }
 
+    for (const cast of this.casts.values()) {
+      cast.elapsed = Math.min(cast.duration, cast.elapsed + dt);
+      const screen = this.toScreen(cast.anchor, BADGE_HEIGHT);
+      cast.element.style.display = screen ? "" : "none";
+      if (!screen) continue;
+      // Juste sous le nom.
+      cast.element.style.transform = `translate(${screen.x}px, ${screen.y}px) translate(-50%, 0) translateY(10px)`;
+      cast.fill.style.width = `${(cast.elapsed / cast.duration) * 100}%`;
+    }
+
     for (const [playerId, bubble] of this.bubbles) {
       bubble.age += dt;
       if (bubble.age >= BUBBLE_DURATION || bubble.anchor.isDisposed()) {
@@ -260,6 +319,8 @@ export class WorldOverlay {
     for (const badge of this.badges.values()) badge.element.remove();
     for (const bubble of this.bubbles.values()) bubble.element.remove();
     this.bubbles.clear();
+    for (const cast of this.casts.values()) cast.element.remove();
+    this.casts.clear();
     this.texts = [];
     this.indicators.clear();
     this.badges.clear();

@@ -1009,6 +1009,9 @@ export class Game {
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       const side = enemy ? "enemy" : player === this.self ? "self" : "ally";
       this.overlay.setBadge(player.sessionId, player.root, classId, label, side, player.isAlive, player.sessionId === this.targetId ? this.targetMark(player, targetBlocked) : null);
+      // Incantation d'un ennemi, sous son nom (la sienne et celle d'un allié se lisent dans les cadres).
+      const casting = enemy && player.isAlive ? player.state.castAbility : "";
+      this.overlay.setCast(player.sessionId, player.root, casting, player.state.castElapsed, player.state.castDuration);
     }
     this.retargetAfterDeath();
     this.overlay.update(dt);
