@@ -173,7 +173,7 @@ export class MovementPredictor {
         elapsed += dt;
         for (const effect of effects) if (effect.remaining !== PERMANENT) effect.remaining -= dt;
         effects = effects.filter((e) => e.remaining === PERMANENT || e.remaining > 0);
-        if (lock && lockReleased(lock, segment.input, context.targetAlive, effects)) lock = "";
+        if (lock && lockReleased(segment.input, context.targetAlive, effects)) lock = "";
         if (isIncapacitated(effects)) continue;
         const next = simulateMovement(body, segment.input, dt, {
           effects,

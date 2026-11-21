@@ -150,7 +150,8 @@ export class CombatSystem {
     if (!player?.alive) return;
     const target = player.targetId ? this.players.get(player.targetId) : undefined;
     if (!target?.alive) return this.sendError(player, "noTarget");
-    if (player.incapacitated || (lock === "stick" && player.has("root"))) return;
+    // Rooté, on peut quand même suivre : le personnage fait face à la cible et avance dès que le root le permet.
+    if (player.incapacitated) return;
     player.state.lock = lock;
   }
 
@@ -309,7 +310,7 @@ export class CombatSystem {
     const state = player.state;
     if (!state.lock) return;
     const target = player.targetId ? this.players.get(player.targetId) : undefined;
-    if (lockReleased(state.lock, player.input, !!target?.alive, player.effects)) state.lock = "";
+    if (lockReleased(player.input, !!target?.alive, player.effects)) state.lock = "";
   }
 
   private updateRegen(player: PlayerRuntime, dt: number) {

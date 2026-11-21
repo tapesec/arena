@@ -3,6 +3,7 @@ import { beforeEach, describe, it } from "node:test";
 import {
   BACKWARD_SPEED_FACTOR,
   ENDURANCE_REGEN,
+  facingTowards,
   MANA_REGEN,
   CLASSES,
   MOVE_SPEED,
@@ -1274,14 +1275,32 @@ describe("Contrôles", () => {
     assert.equal(lame.state.lock, "");
   });
 
-  it("le stick se lâche quand on est rooté ou que la cible meurt", () => {
+  it("le stick tient sous root : face à la cible, il avance dès que le root le permet ; il se lâche à la mort de la cible", () => {
     const lame = world.spawn("l", "lame", 0, 0, 0, 0);
-    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 10, Math.PI);
+    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 14, Math.PI);
     world.combat.setTarget(lame.id, arcaniste.id);
-    world.combat.lockOnTarget(lame.id, "stick");
     world.cast(arcaniste, "freeze", lame);
     world.run(1.6);
     assert.ok(lame.has("root"));
+    // Posé en étant rooté : accepté.
+    world.combat.lockOnTarget(lame.id, "stick");
+    assert.equal(lame.state.lock, "stick");
+    // L'arcaniste passe sur le côté : la Lame pivote pour lui faire face, sans encore avancer (root tout frais).
+    arcaniste.state.x += 10;
+    arcaniste.state.z = lame.state.z + 1;
+    world.run(0.1);
+    assert.equal(lame.state.lock, "stick");
+    const wanted = facingTowards(lame.state, arcaniste.state);
+    assert.ok(Math.abs(Math.atan2(Math.sin(lame.state.facing - wanted), Math.cos(lame.state.facing - wanted))) < 0.05, "face à la cible");
+    assert.ok(Math.abs(lame.state.x - OFFSET_X) < 0.05, "presque immobile sous root");
+    // Le root s'estompe : elle avance vers la cible.
+    world.run(6);
+    assert.equal(lame.state.lock, "stick");
+    assert.ok(lame.state.x - OFFSET_X > 2, `avance sous root déclinant (${(lame.state.x - OFFSET_X).toFixed(2)} m)`);
+    // Cible morte : le stick se lâche.
+    arcaniste.state.hp = 0;
+    assert.ok(!arcaniste.alive);
+    world.run(0.1);
     assert.equal(lame.state.lock, "");
   });
 });

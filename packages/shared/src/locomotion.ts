@@ -62,16 +62,11 @@ export function isIncapacitated(effects: Iterable<MovementEffect>): boolean {
   return false;
 }
 
-// Le verrou F/C se lâche quand il n'a plus lieu d'être : cible morte ou absente, contrôlé, stick sous root, ou touche
-// d'avance, de recul ou de rotation.
-export function lockReleased(lock: string, input: MoveInput, targetAlive: boolean, effects: Iterable<MovementEffect>): boolean {
-  return (
-    !targetAlive ||
-    isIncapacitated(effects) ||
-    (lock === "stick" && !!findEffect(effects, "root")) ||
-    input.up !== input.down ||
-    isTurning(input)
-  );
+// Le verrou F/C se lâche quand il n'a plus lieu d'être : cible morte ou absente, contrôlé (mez, stun, Rempart), ou touche
+// d'avance, de recul ou de rotation. Un root ou un snare ne le lâche pas (décidé le 2026-11-21) : le personnage fait
+// toujours face à sa cible et tente d'avancer vers elle, à la vitesse que l'effet lui laisse.
+export function lockReleased(input: MoveInput, targetAlive: boolean, effects: Iterable<MovementEffect>): boolean {
+  return !targetAlive || isIncapacitated(effects) || input.up !== input.down || isTurning(input);
 }
 
 // Un pas de déplacement (le personnage ne doit pas être contrôlé : voir isIncapacitated). Orientation : verrou sur la
