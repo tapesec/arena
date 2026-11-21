@@ -11,7 +11,8 @@ const BETA = 0.8;
 const MIN_BETA = 0.3;
 const MAX_BETA = 1.35;
 // Distance de la caméra : assez près pour voir les personnages, la molette permet de reculer ou d'approcher.
-const DEFAULT_RADIUS = 26;
+// 32,5 m (26 m avant le 2026-11-21, reculée de 25 %).
+const DEFAULT_RADIUS = 32.5;
 const MIN_RADIUS = 10;
 const MAX_RADIUS = 55;
 
