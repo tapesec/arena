@@ -4,7 +4,6 @@ import type { Scene } from "@babylonjs/core/scene";
 import type { ClassId } from "@arena/shared";
 import RAMPART_ICON from "../icons/rampart.svg?raw";
 import { abilityColor, abilityIcon } from "../abilityBar";
-import { abilityName } from "../i18n";
 
 // Durée de vie d'un texte flottant et distance parcourue vers le haut, en pixels.
 const TEXT_DURATION = 1.2;
@@ -26,7 +25,7 @@ const MAX_TEXTS = 60;
 const DUPLICATE_WINDOW = 0.5;
 const MERGE_WINDOW = 0.35;
 const LINE_HEIGHT = 18;
-const STACK_WINDOW = 0.45;
+const MAX_LINES = 6;
 const AMOUNT = /^([+-])(\d+)$/;
 
 export type FloatingTextStyle = "damageDealt" | "damageTaken" | "heal" | "info" | "control";
@@ -108,8 +107,11 @@ export class WorldOverlay {
   // delay : secondes avant l'apparition (par exemple le temps de vol d'un projectile).
   addText(anchor: TransformNode, text: string, style: FloatingTextStyle, big = false, delay = 0) {
     const age = -delay;
-    const near = (other: FloatingText, window: number) => other.anchor === anchor && Math.abs(other.age - age) < window;
+    // Même tête, même moment (un texte qui attend un projectile ne se mêle pas à un texte immédiat).
+    const near = (other: FloatingText, window: number) =>
+      other.anchor === anchor && other.age < 0 === age < 0 && Math.abs(other.age - age) < window;
     const match = AMOUNT.exec(text);
+    if (match && Number(match[2]) === 0) return;
     const amount = match && !big ? Number(match[2]) : null;
     if (amount !== null) {
       // Un chiffre du même genre vient d'apparaître sur cette tête : on l'additionne.
@@ -120,14 +122,17 @@ export class WorldOverlay {
         merged.element.textContent = merged.text;
         return;
       }
-    } else if (this.texts.some((other) => other.text === text && other.style === style && near(other, DUPLICATE_WINDOW))) {
+    } else if (!match && this.texts.some((other) => other.text === text && other.style === style && near(other, DUPLICATE_WINDOW))) {
+      // Un même libellé (Root, Immunisé…) ne se répète pas ; un critique de même valeur, lui, s'affiche.
       return;
     }
     if (this.texts.length >= MAX_TEXTS) this.recycle(this.texts.shift()!);
-    // Première ligne libre parmi les textes récents de cette tête.
-    const taken = new Set(this.texts.filter((other) => near(other, STACK_WINDOW)).map((other) => other.line));
+    // Première ligne où le texte ne recouvre aucun texte de cette tête, compte tenu de leur montée.
+    const rise = (other: FloatingText) => (Math.max(0, other.age) / TEXT_DURATION) * TEXT_RISE + other.line * LINE_HEIGHT;
+    const neighbours = this.texts.filter((other) => other.anchor === anchor).map(rise);
+    const start = (Math.max(0, age) / TEXT_DURATION) * TEXT_RISE;
     let line = 0;
-    while (taken.has(line)) line++;
+    while (line < MAX_LINES && neighbours.some((y) => Math.abs(y - (start + line * LINE_HEIGHT)) < LINE_HEIGHT)) line++;
     const element = this.pool.pop() ?? document.createElement("div");
     element.className = `float-text float-${style}${big ? " float-big" : ""}`;
     element.textContent = text;
@@ -209,18 +214,22 @@ export class WorldOverlay {
     }
     if (current?.abilityId === abilityId) {
       // Recalage sur le serveur s'il est en avance, ou nettement en retard (nouvelle incantation du même sort).
-      if (elapsed > current.elapsed || elapsed < current.elapsed - 0.3) current.elapsed = elapsed;
+      // Une valeur proche de zéro alors que la barre est avancée : le sort a été relancé.
+      if (elapsed > current.elapsed || elapsed < current.elapsed - 0.3 || (elapsed < 0.1 && current.elapsed > 0.2)) {
+        current.elapsed = elapsed;
+      }
       current.duration = duration;
       return;
     }
     current?.element.remove();
     const element = document.createElement("div");
     element.className = "world-cast";
-    element.title = abilityName(abilityId);
     const icon = document.createElement("span");
     icon.className = "world-cast-icon";
     icon.style.color = abilityColor(abilityId);
-    icon.innerHTML = abilityIcon(abilityId) ?? "";
+    const svg = abilityIcon(abilityId);
+    if (svg) icon.innerHTML = svg;
+    else icon.style.display = "none";
     const bar = document.createElement("div");
     bar.className = "world-cast-bar";
     const fill = document.createElement("div");
