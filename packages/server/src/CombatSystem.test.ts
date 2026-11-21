@@ -407,7 +407,8 @@ describe("Dernier carré", () => {
     others[2].state.hp = 0;
     world.cast(lame, "backstab", target);
     world.run(0.1);
-    const plain = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")!.amount!;
+    const plain = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")?.amount;
+    assert.ok(plain !== undefined, "la première Attaque dans le dos n'a pas porté");
     assert.equal(lastStand(1), 0);
     others[0].state.hp = others[0].state.maxHp;
     others[1].state.hp = others[1].state.maxHp;
@@ -416,7 +417,7 @@ describe("Dernier carré", () => {
     lame.state.x = second.state.x;
     lame.state.z = -2;
     world.events.length = 0;
-    world.combat.tick(20);
+    world.run(20);
     world.cast(lame, "backstab", second);
     world.run(0.1);
     const boosted = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")?.amount;

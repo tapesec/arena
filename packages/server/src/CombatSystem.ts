@@ -571,7 +571,6 @@ export class CombatSystem {
     return shares;
   }
 
-  // Bonus du buff de puissance, sur les dégâts comme sur les soins du lanceur.
   // Règle du dernier carré active (coupée dans la plupart des tests, qui opposent des équipes de tailles différentes).
   lastStandRule = true;
 
@@ -588,6 +587,7 @@ export class CombatSystem {
     return lastStandBonus(own, other);
   }
 
+  // Bonus du buff de puissance, sur les dégâts comme sur les soins du lanceur.
   private powerFactor(source: PlayerRuntime): number {
     return source.has("buffStrength") ? 1 + STRENGTH_BUFF_BONUS : 1;
   }

@@ -857,7 +857,9 @@ body,
   left: 50%;
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: auto auto auto;
+  /* Colonnes des deux équipes de même largeur : les épées restent au milieu quand l'étiquette du dernier carré
+     élargit l'une d'elles. */
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   column-gap: 14px;
   row-gap: 3px;
