@@ -18,6 +18,14 @@ const BUBBLE_FADE = 0.4;
 const BUBBLE_HEIGHT = 3.5;
 // Au-delà, les textes les plus anciens disparaissent (évite d'encombrer l'écran en 8v8).
 const MAX_TEXTS = 60;
+// Regroupement des textes d'une même tête (décidé le 2026-11-21) : un même texte (Root, Immunisé…) n'est pas répété
+// pendant DUPLICATE_WINDOW secondes ; les dégâts (ou soins) non critiques arrivés en MERGE_WINDOW secondes s'additionnent
+// en un seul chiffre ; les autres textes s'empilent, chacun sur sa ligne (LINE_HEIGHT pixels), au lieu de se superposer.
+const DUPLICATE_WINDOW = 0.5;
+const MERGE_WINDOW = 0.35;
+const LINE_HEIGHT = 18;
+const STACK_WINDOW = 0.45;
+const AMOUNT = /^([+-])(\d+)$/;
 
 export type FloatingTextStyle = "damageDealt" | "damageTaken" | "heal" | "info" | "control";
 // Rempart : icône bleue sur un joueur de son camp, rouge sur un adversaire.
@@ -32,8 +40,14 @@ interface FloatingText {
   element: HTMLDivElement;
   anchor: TransformNode;
   age: number;
-  // Petit décalage horizontal aléatoire pour que les textes simultanés ne se superposent pas.
+  // Petit décalage horizontal aléatoire, et ligne dans la pile des textes de la même tête (0 en bas).
   offsetX: number;
+  line: number;
+  text: string;
+  style: FloatingTextStyle;
+  big: boolean;
+  // Montant d'un chiffre de dégâts ou de soin non critique, que les suivants viennent additionner.
+  amount: number | null;
 }
 
 interface Indicator {
@@ -79,13 +93,33 @@ export class WorldOverlay {
 
   // delay : secondes avant l'apparition (par exemple le temps de vol d'un projectile).
   addText(anchor: TransformNode, text: string, style: FloatingTextStyle, big = false, delay = 0) {
+    const age = -delay;
+    const near = (other: FloatingText, window: number) => other.anchor === anchor && Math.abs(other.age - age) < window;
+    const match = AMOUNT.exec(text);
+    const amount = match && !big ? Number(match[2]) : null;
+    if (amount !== null) {
+      // Un chiffre du même genre vient d'apparaître sur cette tête : on l'additionne.
+      const merged = this.texts.find((other) => other.amount !== null && other.style === style && near(other, MERGE_WINDOW));
+      if (merged) {
+        merged.amount! += amount;
+        merged.text = `${match![1]}${merged.amount}`;
+        merged.element.textContent = merged.text;
+        return;
+      }
+    } else if (this.texts.some((other) => other.text === text && other.style === style && near(other, DUPLICATE_WINDOW))) {
+      return;
+    }
     if (this.texts.length >= MAX_TEXTS) this.recycle(this.texts.shift()!);
+    // Première ligne libre parmi les textes récents de cette tête.
+    const taken = new Set(this.texts.filter((other) => near(other, STACK_WINDOW)).map((other) => other.line));
+    let line = 0;
+    while (taken.has(line)) line++;
     const element = this.pool.pop() ?? document.createElement("div");
     element.className = `float-text float-${style}${big ? " float-big" : ""}`;
     element.textContent = text;
     this.container.appendChild(element);
     element.style.opacity = "0";
-    this.texts.push({ element, anchor, age: -delay, offsetX: (Math.random() - 0.5) * 40 });
+    this.texts.push({ element, anchor, age, offsetX: (Math.random() - 0.5) * 24, line, text, style, big, amount });
   }
 
   // Affiche (ou retire, avec null) l'indicateur de contrôle d'un joueur.
@@ -188,7 +222,7 @@ export class WorldOverlay {
         continue;
       }
       text.element.style.transform =
-        `translate(${screen.x + text.offsetX}px, ${screen.y - progress * TEXT_RISE}px) translate(-50%, -50%)`;
+        `translate(${screen.x + text.offsetX}px, ${screen.y - progress * TEXT_RISE - text.line * LINE_HEIGHT}px) translate(-50%, -50%)`;
       // Pleinement visible, puis s'estompe sur le dernier tiers.
       text.element.style.opacity = String(progress < 0.66 ? 1 : 1 - (progress - 0.66) / 0.34);
     }
