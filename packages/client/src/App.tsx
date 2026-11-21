@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type AbilityDef, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { GameCanvas } from "./GameCanvas";
+import { KillBoard } from "./KillBoard";
 import { LanguageMenu } from "./LanguageMenu";
 import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
@@ -185,6 +186,7 @@ function Hud() {
         <TargetPanel />
       </div>
       <PhaseBanner />
+      <KillBoard />
       <SpectatorBanner />
       <FlashMessage />
       <HintMessage />

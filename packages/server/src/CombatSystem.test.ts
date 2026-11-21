@@ -13,6 +13,7 @@ import {
   type ClassId,
   type CombatEvent,
   type InterruptEvent,
+  type KillEvent,
   type MoveInput,
 } from "@arena/shared";
 import { CombatSystem } from "./CombatSystem";
@@ -30,6 +31,7 @@ class World {
   combat: CombatSystem;
   events: CombatEvent[] = [];
   interrupts: InterruptEvent[] = [];
+  kills: KillEvent[] = [];
   errors: { id: string; code: string; abilityId?: string }[] = [];
   // Valeurs renvoyées par le générateur aléatoire ; 0.99 par défaut = aucun blocage, esquive ou critique.
   rolls: number[] = [];
@@ -43,6 +45,9 @@ class World {
         },
         sendTo: (id, type, message) => {
           if (type === "error") this.errors.push({ id, ...(message as { code: string; abilityId?: string }) });
+        },
+        announce: (type, message) => {
+          if (type === "kill") this.kills.push(message as KillEvent);
         },
       },
       () => this.rolls.shift() ?? 0.99,
@@ -367,6 +372,31 @@ describe("Arcaniste", () => {
     assert.ok(hit?.crit);
     world.run(15);
     assert.ok(!arcaniste.has("arcanePower"));
+  });
+});
+
+describe("Annonce des éliminations", () => {
+  it("annonce la victime, le tueur et la compétence, et le dernier survivant de l'équipe", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    pretre.state.name = "Kerra";
+    world.spawn("g", "gardien", 0, 6, 0).state.name = "Hald";
+    const lame = world.spawn("l", "lame", 1, 0, -2);
+    lame.state.name = "Lorcan";
+    pretre.state.hp = 1;
+    world.cast(lame, "backstab", pretre);
+    assert.ok(!pretre.alive);
+    assert.deepEqual(world.kills, [
+      {
+        victimId: "p",
+        victimName: "Kerra",
+        victimTeam: 0,
+        killerId: "l",
+        killerName: "Lorcan",
+        killerTeam: 1,
+        abilityId: "backstab",
+        lastStanding: "Hald",
+      },
+    ]);
   });
 });
 

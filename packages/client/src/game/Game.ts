@@ -44,6 +44,7 @@ import {
   type EffectKind,
   type GameErrorMessage,
   type InterruptEvent,
+  type KillEvent,
   type MatchPhase,
   type MoveInput,
   ORDERS,
@@ -587,6 +588,18 @@ export class Game {
         const target = this.players.get(event.targetId);
         if (target) this.spellEffects.revived(event.abilityId, target.root);
       }
+    });
+    this.room.onMessage("kill", (event: KillEvent) => {
+      const myTeam = this.self?.state.team;
+      if (myTeam === undefined) return;
+      hud.addKill({
+        victimName: event.victimName,
+        victimAlly: event.victimTeam === myTeam,
+        killerName: event.killerName,
+        killerAlly: event.killerTeam === myTeam,
+        abilityId: event.abilityId,
+        ...(event.lastStanding && { lastStanding: { name: event.lastStanding, ally: event.victimTeam === myTeam } }),
+      });
     });
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       const caster = this.players.get(event.casterId);
@@ -1254,14 +1267,20 @@ export class Game {
       matchSize: number;
       winner: number;
       campSwap: boolean;
+      alive0: number;
+      alive1: number;
     };
+    const myTeam = self?.state.team ?? 0;
     const matchFrame: MatchFrame = {
       phase: state.phase,
       timeLeft: Math.ceil(state.phaseTimeLeft),
       playerCount: state.playerCount,
       matchSize: state.matchSize,
-      team: self?.state.team ?? 0,
-      camp: campOf(self?.state.team ?? 0, state.campSwap),
+      team: myTeam,
+      alliesAlive: myTeam === 0 ? state.alive0 : state.alive1,
+      enemiesAlive: myTeam === 0 ? state.alive1 : state.alive0,
+      teamSize: Math.floor(state.matchSize / 2),
+      camp: campOf(myTeam, state.campSwap),
       winner: state.winner,
     };
     // Le serveur ne nous envoie que nos coéquipiers pendant le choix des classes.

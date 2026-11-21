@@ -94,6 +94,10 @@ export const ArenaState = schema(
     // Personnages des équipes tirés au sort à chaque partie (décidé le 2026-11-21) : faux, la première équipe prend
     // ceux du camp 1 et la seconde ceux du camp 2 ; vrai, l'inverse.
     campSwap: t.boolean().default(false),
+    // Joueurs encore en vie dans chaque équipe pendant le combat : décompte en haut de l'écran (connu de tous, malgré
+    // le brouillard de guerre).
+    alive0: t.uint8().default(0),
+    alive1: t.uint8().default(0),
     // Nombre de joueurs humains dans la partie et nombre maximal (le reste est joué par des bots).
     playerCount: t.uint8().default(0),
     matchSize: t.uint8().default(0),

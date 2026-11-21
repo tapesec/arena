@@ -77,6 +77,10 @@ export interface MatchFrame {
   playerCount: number;
   matchSize: number;
   team: number;
+  // Survivants de son équipe et de celle d'en face pendant le combat, et taille d'une équipe (décompte en haut).
+  alliesAlive: number;
+  enemiesAlive: number;
+  teamSize: number;
   // Jeu de personnages de son équipe pour cette partie (voir campOf).
   camp: number;
   winner: number;
@@ -146,6 +150,17 @@ let hintTimeout: ReturnType<typeof setTimeout> | undefined;
 // Conseils déjà montrés pendant cette visite (au cas où le stockage local est indisponible).
 const shownHints = new Set<string>();
 
+// Élimination annoncée (voir KillEvent), vue par le joueur local : ally = de son équipe.
+export interface KillFrame {
+  id: number;
+  victimName: string;
+  victimAlly: boolean;
+  killerName: string;
+  killerAlly: boolean;
+  abilityId: string;
+  lastStanding?: { name: string; ally: boolean };
+}
+
 interface HudState {
   // Le joueur a demandé à rejoindre une partie (sinon : écran d'accueil).
   inGame: boolean;
@@ -192,6 +207,9 @@ interface HudState {
   setLoading: (loading: LoadingFrame[], loaded: boolean) => void;
   setFrames: (self: SelfFrame | null, target: TargetFrame | null, group: GroupMemberFrame[]) => void;
   setActions: (actions: GameActions | null) => void;
+  // Éliminations de la partie, la plus récente en premier (annonce au centre et fil à droite).
+  kills: KillFrame[];
+  addKill: (kill: Omit<KillFrame, "id">) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
   startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
@@ -202,6 +220,9 @@ interface HudState {
 }
 
 // Ce qui est remis à zéro à chaque nouvelle partie.
+// Éliminations gardées pour le fil (on n'en montre que les dernières).
+const KILLS_KEPT = 8;
+
 const freshGame = {
   status: "connecting" as ConnectionStatus,
   error: null,
@@ -218,6 +239,7 @@ const freshGame = {
   flashMessage: null,
   hint: null,
   orderWheel: null,
+  kills: [],
 };
 
 export type MovementMode = "modern" | "classic";
@@ -278,6 +300,7 @@ export const useHudStore = create<HudState>((set) => ({
   // Remplacé par un bot : plus de partie (la musique revient à celle des menus).
   setStatus: (status, error) => set(status === "replaced" ? { status, error: null, match: null } : { status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
+  addKill: (kill) => set((s) => ({ kills: [{ ...kill, id: (s.kills[0]?.id ?? 0) + 1 }, ...s.kills].slice(0, KILLS_KEPT) })),
   setLoading: (loading, loaded) => set({ loading, loaded }),
   setPing: (ping) => set({ ping }),
   setFrames: (self, target, group) => set({ self, target, group }),

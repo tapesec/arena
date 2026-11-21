@@ -56,6 +56,7 @@ import {
   type GameErrorMessage,
   type InterruptEvent,
   type InterruptReason,
+  type KillEvent,
   type MoveInput,
   type Position,
 } from "@arena/shared";
@@ -67,6 +68,8 @@ export interface CombatOutput {
   // involved : joueurs concernés, pour ne prévenir que ceux qui peuvent voir l'événement.
   broadcast(type: string, message: unknown, involved: string[]): void;
   sendTo(playerId: string, type: string, message: unknown): void;
+  // À tous les joueurs, sans tenir compte de ce qu'ils voient (annonce des éliminations).
+  announce?(type: string, message: unknown): void;
 }
 
 // Immunité associée à chaque type de contrôle.
@@ -819,6 +822,18 @@ export class CombatSystem {
 
     if (killed) {
       this.handleDeath(target);
+      const kill: KillEvent = {
+        victimId: target.id,
+        victimName: state.name,
+        victimTeam: state.team,
+        killerId: source.id,
+        killerName: source.state.name,
+        killerTeam: source.state.team,
+        abilityId,
+      };
+      const standing = [...this.players.values()].filter((p) => p.alive && p.state.team === state.team);
+      if (standing.length === 1) kill.lastStanding = standing[0].state.name;
+      this.out.announce?.("kill", kill);
       return;
     }
     // Tout dégât interrompt l'incantation (sauf Concentration, et sauf un dot) et brise mez et root.

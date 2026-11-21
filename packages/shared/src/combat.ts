@@ -151,6 +151,21 @@ export interface CombatEvent {
   detail?: string;
 }
 
+// Élimination, annoncée à tous les joueurs quel que soit le brouillard de guerre (annonce au centre de l'écran et
+// fil des éliminations, décidés le 2026-11-21). abilityId : la compétence qui a achevé ("auto" pour l'attaque
+// automatique).
+export interface KillEvent {
+  victimId: string;
+  victimName: string;
+  victimTeam: number;
+  killerId: string;
+  killerName: string;
+  killerTeam: number;
+  abilityId: string;
+  // Pseudo du seul survivant de l'équipe de la victime, s'il n'en reste qu'un (bandeau « Dernier survivant »).
+  lastStanding?: string;
+}
+
 export type InterruptReason = "damage" | "move" | "silence" | "cc" | "taunt";
 
 export interface InterruptEvent {

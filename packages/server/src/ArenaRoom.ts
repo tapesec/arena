@@ -60,6 +60,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private combat = new CombatSystem({
     broadcast: (type, message, involved) => this.broadcastToWitnesses(type, message, involved),
     sendTo: (playerId, type, message) => this.clients.getById(playerId)?.send(type, message),
+    announce: (type, message) => this.broadcast(type, message),
   });
 
   // Joueurs visibles par chaque équipe, recalculés à chaque tick.
@@ -410,6 +411,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     const indexInTeam = [0, 0];
     const teamSizes = [0, 0];
     this.state.players.forEach((p) => teamSizes[p.team]++);
+    this.state.alive0 = teamSizes[0];
+    this.state.alive1 = teamSizes[1];
 
     this.state.players.forEach((player, id) => {
       const classDef = getClass(player.classId)!;
@@ -476,6 +479,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       // Avant la préparation, les points de vie ne sont pas encore attribués : on compte les présents.
       if (this.phase === "classSelect" || p.hp > 0) alive[p.team]++;
     });
+    this.state.alive0 = alive[0];
+    this.state.alive1 = alive[1];
     if (alive[0] > 0 && alive[1] > 0) return;
     this.endMatch(alive[0] > 0 ? 0 : alive[1] > 0 ? 1 : -1);
   }
