@@ -343,7 +343,7 @@ const SPEED_ORDER_DURATION = 15;
 class BardeBot extends CasterBot {
   protected prepare() {
     this.stop();
-    this.ensureSong();
+    this.ensureSong(true);
     this.buffAllies();
   }
 
@@ -367,20 +367,11 @@ class BardeBot extends CasterBot {
 
     // 4. Dégager un lanceur de sorts allié : Mez sur la mêlée qui le frappe (il se casse aux dégâts, mais il gagne du
     // temps pour fuir ou finir son sort).
-    // Pas sur une mêlée stun ou qu'un allié frappe déjà : le mez casserait aussitôt, et l'immunité qui suit (40 s)
-    // la rendrait insensible au mez de zone. Pas pour se dégager soi-même : le coup suivant couperait l'incantation.
+    // Pas pour se dégager soi-même : le coup suivant couperait l'incantation.
     const hitters = allies
       .filter((a) => a !== this.self && CASTER_CLASSES.includes(a.classDef.id) && this.combat.now - a.lastMeleeHitAt < 2)
       .map((a) => this.world.players.get(a.lastMeleeAttackerId ?? ""))
-      .filter(
-        (e): e is PlayerRuntime =>
-          !!e &&
-          e.alive &&
-          this.world.visible.has(e.id) &&
-          !e.has("immuneMez") &&
-          !e.has("stun") &&
-          !allies.some((a) => a.targetId === e.id && a.state.attacking && distance(a.state, e.state) <= MELEE_RANGE + 1),
-      );
+      .filter((e): e is PlayerRuntime => !!e && e.alive && this.world.visible.has(e.id) && this.worthMezzing(e));
     if (hitters.some((e) => this.tryUse("mez", e))) return;
 
     // 5. Oubli sur un ennemi en train d'incanter : son sort n'aura aucun effet.
@@ -389,7 +380,7 @@ class BardeBot extends CasterBot {
 
     // 6. Mez ciblé sur un ennemi de mêlée qui approche.
     const approaching = this.enemies().find(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && !e.has("immuneMez"),
+      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && this.worthMezzing(e),
     );
     if (approaching && this.tryUse("mez", approaching)) return;
 
@@ -413,7 +404,8 @@ class BardeBot extends CasterBot {
       if (mana < manaCost("awaken")) return "noMana";
     }
     // Vitesse : un Barde qui la chante déjà laisse l'ordre à un autre Barde (celui qui chante le second souffle).
-    if (kind === "speed" && this.self.state.song === "speedSong" && this.order?.kind !== "resource") return "alreadySinging";
+    if (kind === "speed" && this.self.state.song === "speedSong" && this.combat.now >= this.combatSongUntil && this.order?.kind !== "resource")
+      return "alreadySinging";
     if (kind === "resource" && resourceFull(issuer)) return "full";
     if (kind === "resource" && this.self.state.song !== "secondWind" && mana < manaCost("secondWind")) return "noMana";
     if (kind === "buff" && mana < manaCost("buffDexterity")) return "noMana";
@@ -421,8 +413,8 @@ class BardeBot extends CasterBot {
   }
 
   protected orderDuration(kind: OrderId): number {
-    // Vitesse : le Barde reprend le Chant de vitesse, même en combat, pendant un moment.
-    if (kind === "speed") return SPEED_ORDER_DURATION;
+    // Vitesse : il suffit de reprendre le Chant de vitesse (voir receiveOrder).
+    if (kind === "speed") return 0;
     return kind === "awaken" || kind === "buff" ? ONE_SHOT_ORDER_DURATION : Infinity;
   }
 
@@ -454,23 +446,52 @@ class BardeBot extends CasterBot {
     return this.tryUse(order.kind === "awaken" ? "awaken" : "buffDexterity", issuer);
   }
 
+  // Un Mez ciblé qui tiendra : pas sur un ennemi immunisé, stun, ou qu'un allié frappe déjà (le mez casserait aussitôt,
+  // et l'immunité qui suit, 40 s, le rendrait insensible au mez de zone).
+  private worthMezzing(enemy: PlayerRuntime): boolean {
+    if (enemy.has("immuneMez") || enemy.has("stun")) return false;
+    return !this.allies().some(
+      (a) => a.targetId === enemy.id && a.state.attacking && distance(a.state, enemy.state) <= MELEE_RANGE + 1,
+    );
+  }
+
   // Chant de second souffle en combat, Chant de vitesse sinon (décidé le 2026-11-21). En combat, le Chant de vitesse
   // ne sert plus aux alliés engagés (il se coupe dès qu'ils agissent ou sont touchés) : dès que deux alliés à portée de
   // chant sont engagés, le Barde passe au second souffle, et ne revient à la vitesse qu'après SONG_COMBAT_LINGER
   // secondes sans allié engagé. Un ordre l'emporte : « besoin de mana » (second souffle) ou « vitesse » (Chant de
   // vitesse pendant SPEED_ORDER_DURATION secondes).
-  private ensureSong() {
+  private ensureSong(preparing = false) {
     if (this.order?.kind === "resource" && resourceFull(this.order.issuer)) this.order = null;
     const now = this.combat.now;
-    const engaged = this.allies().filter((a) => this.distanceTo(a) <= SONG_RANGE && now - a.lastEngagedAt < SONG_SPEED_CALM);
-    if (engaged.length >= 2) this.combatSongUntil = now + SONG_COMBAT_LINGER;
-    const kind = this.order?.kind;
-    const wanted = kind === "resource" ? "secondWind" : kind === "speed" ? "speedSong" : now < this.combatSongUntil ? "secondWind" : "speedSong";
+    // Engagés : alliés (sans compter le Barde) qui ont agi ou été touchés récemment, avec un ennemi en vue (les buffs
+    // de la préparation ne comptent pas).
+    const engaged =
+      !preparing && this.enemies().length > 0
+        ? this.allies().filter(
+            (a) => a !== this.self && this.distanceTo(a) <= SONG_RANGE && now - a.lastEngagedAt < SONG_SPEED_CALM,
+          ).length
+        : 0;
+    if (engaged >= 2) this.combatSongUntil = now + SONG_COMBAT_LINGER;
+    const wanted =
+      this.order?.kind === "resource"
+        ? "secondWind"
+        : now < this.speedOrderUntil || now >= this.combatSongUntil
+          ? "speedSong"
+          : "secondWind";
     if (this.self.state.song !== wanted) this.tryUse(wanted);
   }
 
-  // Fin du chant de combat (voir ensureSong).
+  // Fin du chant de combat, et de l'ordre « vitesse » (voir ensureSong).
   private combatSongUntil = -Infinity;
+  private speedOrderUntil = -Infinity;
+
+  // L'ordre « vitesse » ne dure qu'un instant (le suivi d'office reprend aussitôt) : le Barde retient seulement de
+  // chanter la vitesse pendant SPEED_ORDER_DURATION secondes.
+  receiveOrder(kind: OrderId, issuer: PlayerRuntime, target: PlayerRuntime | null, automatic = false): OrderReply {
+    const reply = super.receiveOrder(kind, issuer, target, automatic);
+    if (kind === "speed" && reply === kind) this.speedOrderUntil = this.combat.now + SPEED_ORDER_DURATION;
+    return reply;
+  }
 }
 
 // --- Gardien : protège les lanceurs de sorts attaqués ---
@@ -525,7 +546,7 @@ class GardienBot extends BotBrain {
     if (threat) return this.fight(threat);
 
     // Le protégé est tranquille : Charge sur un lanceur de sorts ennemi, de préférence en pleine incantation.
-    const casters = this.enemies().filter((e) => CASTER_CLASSES.includes(e.classDef.id) && this.distanceTo(e) >= CHARGE_MIN);
+    const casters = this.enemies().filter((e) => CASTER_CLASSES.includes(e.classDef.id) && this.distanceTo(e) >= CHARGE_MIN && !e.has("meleeImmune"));
     const caster = casters.find((e) => e.state.castAbility) ?? this.nearest(casters);
     if (caster && this.tryCharge(caster)) return;
 
@@ -600,14 +621,13 @@ class GardienBot extends BotBrain {
     return kind === "assist" ? GARDIEN_ASSIST_DURATION : Infinity;
   }
 
-  // Le joueur qui a demandé sa protection ; sinon le lanceur de sorts allié attaqué le plus récemment, sinon le plus
-  // proche.
   // Charge, sauf sur une cible sous Rempart (insensible à la mêlée : ni dégâts ni stun).
   private tryCharge(target: PlayerRuntime): boolean {
     return !target.has("meleeImmune") && this.tryUse("charge", target);
   }
 
-  // Le protégé reste le même tant qu'il est vivant, à moins de 20 m, et attaqué (ou qu'aucun autre ne l'est) : changer
+  // Le joueur qui a demandé sa protection ; sinon le lanceur de sorts allié attaqué le plus récemment, sinon le plus
+  // proche. Le protégé reste le même tant qu'il est vivant, à moins de 20 m, et attaqué (ou qu'aucun autre ne l'est) : changer
   // de protégé à chaque coup reçu par un autre lanceur faisait reposer la Garde sans arrêt et vidait l'endurance
   // (décidé le 2026-11-21).
   private chooseWard(): PlayerRuntime | undefined {

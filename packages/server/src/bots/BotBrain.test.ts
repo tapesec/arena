@@ -159,6 +159,23 @@ describe("Bots : comportement par classe", () => {
     assert.ok(arcaniste.castProtected, "Déflagration sous Concentration");
   });
 
+  it("un Barde chante la vitesse sans ennemi en vue, le second souffle en combat, et la vitesse sur ordre", () => {
+    const sim = new Sim();
+    const barde = sim.spawn("b", "barde", 0, 5, -20, 0, true);
+    const allies = [sim.spawn("x", "lame", 0, 3, -18), sim.spawn("y", "gardien", 0, 7, -18)];
+    // Des alliés qui agissent (buffs) sans ennemi en vue : toujours la vitesse.
+    sim.run(1, () => (allies.forEach((a) => (a.lastEngagedAt = sim.combat.now)), false));
+    assert.equal(barde.state.song, "speedSong");
+    // Un ennemi en vue et deux alliés engagés : second souffle.
+    sim.spawn("e", "lame", 1, 5, -6, Math.PI);
+    sim.run(3, () => (allies.forEach((a) => (a.lastEngagedAt = sim.combat.now)), false));
+    assert.equal(barde.state.song, "secondWind");
+    // Ordre « vitesse » : Chant de vitesse aussitôt, malgré le combat.
+    assert.deepEqual(sim.order("speed", allies[0]), [{ botId: "b", reply: "speed" }]);
+    sim.run(3, () => (allies.forEach((a) => (a.lastEngagedAt = sim.combat.now)), false));
+    assert.equal(barde.state.song, "speedSong");
+  });
+
   it("un Barde mezze la Lame qui frappe un Prêtre allié", () => {
     const sim = new Sim();
     sim.spawn("b", "barde", 0, 5, -20, 0, true);
