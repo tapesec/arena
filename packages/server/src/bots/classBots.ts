@@ -111,12 +111,14 @@ class LameBot extends BotBrain {
 // --- Lanceurs de sorts : fuient la mêlée et gardent leurs distances ---
 
 abstract class CasterBot extends BotBrain {
-  // Fuit si un ennemi de mêlée est au contact. Retourne vrai si le bot fuit.
+  // Fuit si un ennemi de mêlée est au contact. Retourne vrai si le bot fuit (ou reste à finir son incantation).
+  // Pendant une incantation, on ne fuit pas : bouger l'interromprait à coup sûr, alors qu'un coup ne fait que risquer
+  // de l'interrompre ; si un coup l'interrompt, la fuite reprend au tour suivant (décidé le 2026-11-21 : les bots
+  // perdaient jusqu'à 150 incantations par partie en fuyant pendant qu'ils incantaient).
   protected evadeMelee(): boolean {
     const threats = this.meleeThreats(CASTER_DANGER_RADIUS);
     if (threats.length === 0) return false;
-    // Une incantation protégée par Concentration mérite d'être terminée.
-    if (this.isCasting && this.self.castProtected) return true;
+    if (this.isCasting) return true;
     this.flee(threats);
     return true;
   }
@@ -150,9 +152,6 @@ abstract class CasterBot extends BotBrain {
 
 // Distance en deçà de laquelle un ennemi prend assez de dégâts de Déflagration pour qu'elle vaille le coup.
 const BLAST_REACH = 5;
-// Nombre d'ennemis tout près pour protéger la Déflagration par Concentration : depuis que Concentration se recharge en
-// 30 s, la garder pour les grosses mêlées évite une Déflagration ininterruptible à chaque accrochage.
-const BLAST_CONCENTRATION_MIN = 3;
 // La Nova de givre (15 m) vaut le coup quand un ennemi de mêlée est déjà assez près.
 const NOVA_REACH = 8;
 
@@ -161,11 +160,14 @@ const NOVA_REACH = 8;
 // Trait de feu. Puissance arcanique dès qu'il a une cible.
 class ArcanisteBot extends CasterBot {
   protected think() {
-    // Plusieurs ennemis tout près : Déflagration, protégée par Concentration si elle est prête et qu'ils sont nombreux.
-    const close = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH).length;
-    if (close >= 2 && !this.isCasting) {
-      if (close >= BLAST_CONCENTRATION_MIN && this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
-      if (this.tryUse("blast")) return;
+    // Plusieurs ennemis tout près : Déflagration. Avec des ennemis de mêlée au contact, leurs coups l'interrompraient :
+    // on ne la lance que protégée par Concentration, ou rooté (impossible de fuir) ; sinon on fuit d'abord.
+    const closeEnemies = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH);
+    if (closeEnemies.length >= 2 && !this.isCasting) {
+      const meleeContact = closeEnemies.some((e) => MELEE_CLASSES.includes(e.classDef.id));
+      if (!meleeContact && this.tryUse("blast")) return;
+      if (meleeContact && this.isReady("concentration") && this.tryUse("concentration") && this.tryUse("blast")) return;
+      if (meleeContact && this.self.has("root") && this.tryUse("blast")) return;
     }
     // La mêlée arrive : Nova de givre (protégée par Concentration au contact) pour s'en débarrasser.
     const rootable = this.meleeThreats(NOVA_REACH).filter((e) => !e.has("immuneRoot") && !e.has("magicImmune"));
