@@ -58,7 +58,7 @@ export interface SelfFrame extends UnitFrame {
   comboAbility: string;
   // Le Gardien fonce sur sa cible (Charge).
   charging: boolean;
-  // Roulade en cours, et recharge de la roulade (voir cooldownEnds) : case de la roulade sur la barre.
+  // Roulade en cours ; immobilisé (root, arrêt net de la Provocation) : case de la roulade sur la barre.
   rolling: boolean;
   rooted: boolean;
 }

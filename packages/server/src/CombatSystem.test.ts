@@ -513,6 +513,50 @@ describe("Roulade", () => {
     assert.ok(world.eventsOf("evaded").some((e) => e.targetId === "p"));
   });
 
+  it("un Gardien en pleine roulade n'intercepte pas : le coup touche l'allié, l'Interception reste", () => {
+    const gardien = world.spawn("g", "gardien", 0, 1, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0);
+    const lame = world.spawn("e", "lame", 1, 0, -1.5, 0);
+    world.cast(gardien, "intercept", arcaniste);
+    world.combat.roll("g");
+    world.cast(lame, "kick", arcaniste);
+    assert.equal(gardien.state.hp, gardien.state.maxHp);
+    assert.ok(!gardien.has("silenced"));
+    assert.ok(arcaniste.has("silenced"));
+    assert.ok(arcaniste.has("intercept"));
+  });
+
+  it("verrou sur la cible et touche de déplacement : roule dans la direction voulue, pas vers la cible", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    lame.state.lock = "face";
+    const start = { x: lame.state.x, z: lame.state.z };
+    lame.input = { ...NO_INPUT, up: true, steer: true, yaw: Math.PI / 2 };
+    world.combat.roll("l");
+    lame.input = NO_INPUT;
+    lame.state.lock = "";
+    world.run(0.45);
+    assert.ok(Math.abs(lame.state.x - start.x - 4) < 1e-6 && Math.abs(lame.state.z - start.z) < 1e-6, `${lame.state.x - start.x}, ${lame.state.z - start.z}`);
+    // Orientation rendue à la fin de la roulade.
+    assert.equal(lame.state.facing, 0);
+  });
+
+  it("un obstacle arrête la roulade", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, Math.PI / 2);
+    const start = { x: lame.state.x, z: lame.state.z };
+    world.combat.confine = (_p, pos) => ({ x: Math.min(pos.x, start.x + 1), z: pos.z });
+    world.combat.roll("l");
+    world.run(0.45);
+    assert.ok(Math.abs(lame.state.x - start.x - 1) < 1e-6, `${lame.state.x - start.x}`);
+    assert.ok(!lame.state.rolling);
+  });
+
+  it("impossible sous la Provocation (arrêt net)", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    lame.effects.push({ kind: "halted", remaining: 0.5, duration: 0.5, sourceId: "x", value: 0, magic: false, view: new EffectState() } as never);
+    world.combat.roll("l");
+    assert.ok(!lame.state.rolling);
+  });
+
   it("impossible sous root, mez ou stun", () => {
     const lame = world.spawn("l", "lame", 0, 0, 0, 0);
     lame.effects.push({ kind: "root", remaining: 5, duration: 5, sourceId: "x", value: 0, magic: false, view: new EffectState() } as never);

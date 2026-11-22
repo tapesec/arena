@@ -181,7 +181,7 @@ export const en = {
   "help.abilities": "1–8: abilities · Space: roll",
   "roll.name": "Roll",
   "roll.key": "Space",
-  "roll.description": "Roll {distance} m in the direction of your movement keys (forward if none) in {duration} s: nothing hostile can touch you during the roll. Interrupts casting. Not possible while mezzed, stunned, rooted or in Rampart. Cooldown: {cooldown} s.",
+  "roll.description": "Roll {distance} m in the direction of your movement keys (forward if none) in {duration} s: nothing hostile can touch you during the roll. Interrupts casting. Not possible while mezzed, stunned, rooted, in Rampart, halted by a Taunt, or charging. An obstacle stops it. Cooldown: {cooldown} s.",
   "help.orders": "Hold the mouse wheel: orders to your bots",
 
   // Raisons d'un refus (serveur et infobulle de la barre d'action), voir GameErrorCode

@@ -1252,7 +1252,7 @@ export class Game {
           comboAbility: target && self.state.comboTarget === target.sessionId ? self.state.comboAbility : "",
           charging: self.state.charging,
           rolling: self.state.rolling,
-          rooted: self.hasEffect("root"),
+          rooted: self.hasEffect("root") || self.hasEffect("halted"),
         }
       : null;
     const targetFrame: TargetFrame | null =

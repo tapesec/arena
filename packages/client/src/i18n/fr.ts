@@ -169,7 +169,7 @@ export const fr: Record<TextKey, string> = {
   "help.abilities": "1 à 8\u00a0: compétences · Espace\u00a0: roulade",
   "roll.name": "Roulade",
   "roll.key": "Espace",
-  "roll.description": "Roule de {distance}\u00a0m dans la direction de vos touches (devant si aucune), en {duration}\u00a0s\u00a0: rien d'hostile ne vous atteint pendant la roulade. Interrompt l'incantation. Impossible sous mez, stun, root ou Rempart. Recharge\u00a0: {cooldown}\u00a0s.",
+  "roll.description": "Roule de {distance}\u00a0m dans la direction de vos touches (devant si aucune), en {duration}\u00a0s\u00a0: rien d'hostile ne vous atteint pendant la roulade. Interrompt l'incantation. Impossible sous mez, stun, root, Rempart, arrêt net de la Provocation, ou pendant une Charge. Un obstacle l'arrête. Recharge\u00a0: {cooldown}\u00a0s.",
   "help.orders": "Molette maintenue\u00a0: ordres aux bots",
 
   "error.noTarget": "Aucune cible",

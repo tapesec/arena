@@ -406,7 +406,8 @@ export const CHARACTERS: Record<string, CharacterDef> = {
 // Noms de toutes les animations attribuées aux classes (attente, coups, compétences, incantations), et de celles
 // choisies dans animation-lab.html (geste du lanceur, réaction de la cible).
 export function usedAnimations(): Set<string> {
-  const names = new Set<string>();
+  // La roulade (toutes les classes, voir CharacterAnimator.roll).
+  const names = new Set<string>(["Roll"]);
   for (const { animations: set } of Object.values(CHARACTERS)) {
     names.add(set.idle);
     const lists = [

@@ -609,7 +609,10 @@ export class CombatSystem {
   private interceptorOf(target: PlayerRuntime): PlayerRuntime | undefined {
     const intercept = target.getEffect("intercept");
     const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;
-    return intercept && interceptor?.alive && distance(interceptor.state, target.state) <= INTERCEPT_RANGE ? interceptor : undefined;
+    // Un Gardien en pleine roulade n'intercepte pas : le coup touche sa cible, l'Interception reste en place.
+    return intercept && interceptor?.alive && !interceptor.roll && distance(interceptor.state, target.state) <= INTERCEPT_RANGE
+      ? interceptor
+      : undefined;
   }
 
   // Évitement d'une attaque spéciale de mêlée (cible déjà remplacée par son intercepteur), avant ses effets.
@@ -1088,16 +1091,22 @@ export class CombatSystem {
     if (!player?.alive || player.roll) return;
     if (player.incapacitated) return this.sendError(player, "incapacitated");
     if (player.charge) return this.sendError(player, "charging");
-    if (player.has("root")) return this.sendError(player, "rooted");
+    // Root, ou arrêt net de la Provocation : immobilisé, il ne roule pas.
+    if (player.has("root") || player.has("halted")) return this.sendError(player, "rooted");
     if ((player.cooldowns.get(ROLL_ID) ?? 0) > this.time) return this.sendError(player, "rollCooldown");
     const state = player.state;
     // Dans la direction des touches tenues, devant si aucune (pivoter au clavier ne compte pas). Orientation voulue par
-    // la commande (mode moderne, clic droit) plutôt que celle du dernier tic, qui peut avoir un temps de retard.
+    // la commande (mode moderne, clic droit) plutôt que celle du dernier tic, qui peut avoir un temps de retard ou
+    // pointer encore vers la cible verrouillée (F, C : une touche de déplacement les lâche au tic suivant).
     const input = player.input;
-    const facing = input.steer && input.yaw !== undefined && !state.lock ? input.yaw : state.facing;
-    const wanted = movesBody(input) ? moveDirection(input, facing) : forwardOf(facing);
+    const moving = movesBody(input);
+    const facing = input.steer && input.yaw !== undefined && (moving || !state.lock) ? input.yaw : state.facing;
+    const wanted = moving ? moveDirection(input, facing) : forwardOf(facing);
     const length = Math.hypot(wanted.x, wanted.z) || 1;
-    player.roll = { x: wanted.x / length, z: wanted.z / length, elapsed: 0 };
+    const direction = { x: wanted.x / length, z: wanted.z / length };
+    // Le personnage roule face à sa direction (animation de roulade avant), puis retrouve son orientation.
+    player.roll = { ...direction, elapsed: 0, facing: state.facing };
+    state.facing = Math.atan2(direction.x, direction.z);
     state.rolling = true;
     player.cooldowns.set(ROLL_ID, this.time + ROLL_COOLDOWN);
     const event: CooldownEvent = { abilityId: ROLL_ID, duration: ROLL_COOLDOWN };
@@ -1106,19 +1115,29 @@ export class CombatSystem {
     player.lastEngagedAt = this.time;
   }
 
-  // Avance tout droit à vitesse fixe (un snare ne la ralentit pas) ; un obstacle l'arrête net, sans l'annuler.
+  // Avance tout droit à vitesse fixe (un snare ne la ralentit pas). Un obstacle l'arrête : le déplacement s'achève
+  // dès qu'un pas fait moins de la moitié de sa longueur (on longerait le mur sinon) ; l'invulnérabilité dure quand
+  // même ROLL_DURATION.
   private updateRoll(player: PlayerRuntime, dt: number) {
     const roll = player.roll!;
     const step = Math.min(dt, ROLL_DURATION - roll.elapsed);
     roll.elapsed += dt;
-    let next = stepMovement(player.state, roll, step, ROLL_DISTANCE / ROLL_DURATION / MOVE_SPEED);
-    if (this.confine) next = this.confine(player, next);
-    player.state.x = next.x;
-    player.state.z = next.z;
+    if (!roll.blocked && step > 0) {
+      let next = stepMovement(player.state, roll, step, ROLL_DISTANCE / ROLL_DURATION / MOVE_SPEED);
+      if (this.confine) next = this.confine(player, next);
+      const moved = Math.hypot(next.x - player.state.x, next.z - player.state.z);
+      if (moved < (ROLL_DISTANCE / ROLL_DURATION) * step * 0.5) roll.blocked = true;
+      else {
+        player.state.x = next.x;
+        player.state.z = next.z;
+      }
+    }
     if (roll.elapsed >= ROLL_DURATION - 1e-9) this.stopRoll(player);
   }
 
   private stopRoll(player: PlayerRuntime) {
+    if (!player.roll) return;
+    player.state.facing = player.roll.facing;
     player.roll = null;
     player.state.rolling = false;
   }
