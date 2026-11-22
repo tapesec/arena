@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { getAbility, getClass, ORDERS, type ClassId } from "@arena/shared";
+import { getAbility, getClass, ORDERS, ROLL_COOLDOWN, type ClassId } from "@arena/shared";
 import { abilityColor, abilityIcon } from "./abilityBar";
 import { abilityName, className, moveKeys, t, type TextKey } from "./i18n";
 import { OrderWheelGraphic } from "./OrderWheelGraphic";
 import { useHudStore } from "./store";
 
 // Didacticiel « Comment jouer ? » (décidé le 2026-11-19) : 3 slides illustrées, ouvertes d'office pendant le choix de
-// classe de la première partie (le joueur a alors une minute), puis par le bouton « Comment jouer ? ». Le but du jeu,
+// classe de la première partie (le joueur a alors une minute), puis par le bouton « Comment jouer ? » ; en partie, par
+// le bouton « i » (même contenu, décidé le 2026-11-22, sans le temps restant). Le but du jeu,
 // les commandes (clavier et souris dessinés, avec les vraies touches) et sa classe avec la roue des ordres aux bots.
 
 const SEEN_KEY = "arena.tutorialSeen";
@@ -30,9 +31,14 @@ function markSeen() {
   }
 }
 
-export function Tutorial({ classId, onClose }: { classId: ClassId | ""; onClose: () => void }) {
-  const [slide, setSlide] = useState(0);
+export function Tutorial({ classId, onClose, inMatch = false }: { classId: ClassId | ""; onClose: () => void; inMatch?: boolean }) {
+  const [slide, setSlide] = useState(inMatch ? 1 : 0);
   const timeLeft = useHudStore((s) => s.match?.timeLeft ?? 0);
+  const setTutorialOpen = useHudStore((s) => s.setTutorialOpen);
+  useEffect(() => {
+    setTutorialOpen(true);
+    return () => setTutorialOpen(false);
+  }, [setTutorialOpen]);
   // « Déjà vu » seulement quand le joueur le ferme lui-même : s'il n'a pas eu le temps (partie lancée), il reviendra
   // d'office à la partie suivante.
   const close = useCallback(() => {
@@ -80,7 +86,7 @@ export function Tutorial({ classId, onClose }: { classId: ClassId | ""; onClose:
               />
             ))}
           </div>
-          <span className="tutorial-timer">{t("tutorial.timeLeft", { s: timeLeft })}</span>
+          {inMatch ? <span className="tutorial-timer" /> : <span className="tutorial-timer">{t("tutorial.timeLeft", { s: timeLeft })}</span>}
           {/* Focus d'office : Entrée avance (Tab sert au jeu et ne déplace pas le focus). */}
           <button type="button" className="primary-button" autoFocus onClick={() => (last ? close() : setSlide(slide + 1))}>
             {t(last ? "tutorial.done" : "tutorial.next")}
@@ -128,10 +134,21 @@ function Key({ label, wide, accent }: { label: string; wide?: boolean; accent?: 
 // 2. Les commandes : touches de déplacement (celles du clavier du joueur), Tab, 1 à 8, R, et la souris.
 function ControlsSlide() {
   const keys = moveKeys();
-  const modern = useHudStore((s) => s.movementMode) === "modern";
+  const mode = useHudStore((s) => s.movementMode);
+  const setMode = useHudStore((s) => s.setMovementMode);
+  const modern = mode === "modern";
   return (
     <>
       <h2>{t("tutorial.controls.title")}</h2>
+      {/* Le réglage du déplacement (avant dans l'aide du combat) : ici, avant comme pendant la partie. */}
+      <div className="tutorial-mode" role="group" aria-label={t("help.movementMode")}>
+        {t("help.movementMode")}
+        {(["modern", "classic"] as const).map((m) => (
+          <button key={m} type="button" className={`help-mode-button${mode === m ? " active" : ""}`} aria-pressed={mode === m} onClick={() => setMode(m)}>
+            {t(m === "modern" ? "help.modeModern" : "help.modeClassic")}
+          </button>
+        ))}
+      </div>
       <div className="tutorial-controls">
         <div className="tutorial-keyboard">
           <div className="tutorial-keygroup">
@@ -161,6 +178,23 @@ function ControlsSlide() {
             <div className="tutorial-keygroup">
               <Key label="R" />
               <span>{t("tutorial.controls.attack")}</span>
+            </div>
+          </div>
+          <div className="tutorial-keyrow">
+            <div className="tutorial-keygroup">
+              <Key label={t("roll.key")} wide />
+              <span>{t("tutorial.controls.roll", { s: ROLL_COOLDOWN })}</span>
+            </div>
+            <div className="tutorial-keygroup">
+              <div className="tutorial-keys">
+                <Key label="F" />
+                <Key label="C" />
+              </div>
+              <span>{t("tutorial.controls.lock")}</span>
+            </div>
+            <div className="tutorial-keygroup">
+              <Key label="F1" wide />
+              <span>{t("tutorial.controls.self")}</span>
             </div>
           </div>
         </div>

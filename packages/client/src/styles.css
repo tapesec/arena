@@ -133,18 +133,16 @@ body,
   white-space: nowrap;
 }
 
-.help {
-  /* Ne passe pas sur les fiches du joueur et de la cible (en haut à gauche) quand la fenêtre est étroite. */
-  max-width: max(220px, calc(100vw - 560px));
-  color: #b8b8b8;
-}
-
-.help-mode {
+/* Réglage du déplacement, sur la slide des commandes du didacticiel. */
+.tutorial-mode {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin: -4px 0 14px;
+  color: #c9ced8;
+  font-size: 13px;
 }
 
 .help-mode-button {

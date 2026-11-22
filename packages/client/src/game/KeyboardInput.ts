@@ -67,6 +67,9 @@ export class KeyboardInput {
   private handleKeyDown = (event: KeyboardEvent) => {
     // Partie finie : le clavier sert aux boutons de l'écran de fin (Tab, Entrée), plus au personnage.
     if (useHudStore.getState().match?.phase === "ended") return;
+    // Didacticiel ouvert (bouton « i » en combat) : flèches, Échap et Entrée sont à lui. Les relâchements de touche
+    // passent toujours (handleKeyUp) : rien ne reste enfoncé.
+    if (useHudStore.getState().tutorialOpen) return;
     const action = ACTION_BINDINGS[event.code];
     // Espace (roulade) ne doit pas aussi cliquer le bouton qui a gardé le focus (son, langue…).
     if (action === "roll" && document.activeElement instanceof HTMLButtonElement) document.activeElement.blur();

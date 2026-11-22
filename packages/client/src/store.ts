@@ -216,6 +216,9 @@ interface HudState {
   // navigateur.
   movementMode: MovementMode;
   setMovementMode: (mode: MovementMode) => void;
+  // Didacticiel « Comment jouer ? » ouvert : le clavier sert au didacticiel, plus au personnage.
+  tutorialOpen: boolean;
+  setTutorialOpen: (open: boolean) => void;
   actions: GameActions | null;
   joinGame: () => void;
   leaveGame: () => void;
@@ -293,6 +296,8 @@ export const useHudStore = create<HudState>((set) => ({
   gameKey: 0,
   playerName: initialPlayerName(),
   movementMode: initialMovementMode(),
+  tutorialOpen: false,
+  setTutorialOpen: (tutorialOpen) => set({ tutorialOpen }),
   setMovementMode: (mode) => {
     try {
       localStorage.setItem(MOVEMENT_STORAGE_KEY, mode);

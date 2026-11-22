@@ -1052,33 +1052,17 @@ function SoundControl() {
 }
 
 // L'aide des commandes est ouverte d'office à la première partie jouée dans ce navigateur (décidé le 2026-11-19).
-const HELP_SEEN_KEY = "arena.helpSeen";
-
-function helpAlreadySeen(): boolean {
-  try {
-    return !!localStorage.getItem(HELP_SEEN_KEY);
-  } catch {
-    // Stockage indisponible : aide fermée, comme avant.
-    return true;
-  }
-}
-
-// Aide des commandes, repliée derrière un bouton « i » (le bouton ne prend pas le focus : le clavier reste au jeu).
+// Aide en partie : le bouton « i » ouvre le didacticiel « Comment jouer ? » du choix de classe (même contenu, décidé le
+// 2026-11-22), sur la slide des commandes. Le bouton ne prend pas le focus : le clavier reste au jeu.
 function HelpPanel() {
-  const [open, setOpen] = useState(() => !helpAlreadySeen());
-  // Retenu une fois l'aide affichée (dans un effet : l'initialisation de l'état peut être appelée deux fois).
-  useEffect(() => {
-    try {
-      localStorage.setItem(HELP_SEEN_KEY, "1");
-    } catch {
-      // Stockage indisponible : rien à retenir.
-    }
-  }, []);
+  const [open, setOpen] = useState(false);
+  const classId = useHudStore((s) => s.self?.classId ?? "");
+  const close = useCallback(() => setOpen(false), []);
   return (
     <>
       <button
         className={`help-toggle${open ? " active" : ""}`}
-        title={t(open ? "help.hide" : "help.show")}
+        title={t("help.show")}
         aria-label={t("help.label")}
         aria-expanded={open}
         onMouseDown={(e) => e.preventDefault()}
@@ -1086,40 +1070,7 @@ function HelpPanel() {
       >
         i
       </button>
-      {open && <HelpContent />}
+      {open && <Tutorial classId={classId} onClose={close} inMatch />}
     </>
-  );
-}
-
-function HelpContent() {
-  const mode = useHudStore((s) => s.movementMode);
-  const setMode = useHudStore((s) => s.setMovementMode);
-  const modern = mode === "modern";
-  return (
-    <div className="hud-panel help">
-      <div className="help-mode" role="group" aria-label={t("help.movementMode")}>
-        {t("help.movementMode")}
-        {(["modern", "classic"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            className={`help-mode-button${mode === m ? " active" : ""}`}
-            aria-pressed={mode === m}
-            // Le bouton ne prend pas le focus : le clavier reste au jeu.
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setMode(m)}
-          >
-            {t(m === "modern" ? "help.modeModern" : "help.modeClassic")}
-          </button>
-        ))}
-      </div>
-      <div>{t(modern ? "help.moveModern" : "help.move", moveKeys())}</div>
-      <div>{t(modern ? "help.mouseModern" : "help.mouse", moveKeys())}</div>
-      <div>{t("help.target")}</div>
-      <div>{t("help.lock")}</div>
-      <div>{t("help.attack")}</div>
-      <div>{t("help.abilities")}</div>
-      <div>{t("help.orders")}</div>
-    </div>
   );
 }
