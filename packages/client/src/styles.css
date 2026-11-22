@@ -1010,7 +1010,8 @@ body,
 }
 .kill-seal-title {
   margin-top: 10px;
-  font: 900 31px/1 "Cinzel", Georgia, serif;
+  /* Rétrécit avec la longueur du titre, comme l'entaille, pour ne pas passer sur les cadres de gauche (environ 480 px). */
+  font: 900 clamp(17px, calc((100vw - 960px) / (var(--kill-name-length, 12) * 0.95)), 31px) / 1 "Cinzel", Georgia, serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1027,7 +1028,7 @@ body,
   40% { opacity: 1; stroke-dashoffset: 0; }
   100% { opacity: 0; stroke-dashoffset: 0; }
 }
-@keyframes kill-seal-title { from { opacity: 0; letter-spacing: 0.5em; filter: blur(4px); } to { opacity: 1; letter-spacing: 0.12em; filter: none; } }
+@keyframes kill-seal-title { from { opacity: 0; letter-spacing: 0.3em; filter: blur(4px); } to { opacity: 1; letter-spacing: 0.12em; filter: none; } }
 
 /* Annonce « Bandeau » (?annonce=bandeau) : le bandeau s'écrase et tremble, un reflet le traverse, la victime est barrée. */
 .kill-band-announce.enemy-fell { --kill-band-edge: rgba(255, 215, 106, 0.75); --kill-band-glow: rgba(255, 196, 80, 0.45); }
@@ -1037,9 +1038,14 @@ body,
   position: relative;
   display: flex;
   align-items: center;
-  gap: 19px;
-  padding: 11px 38px;
+  gap: 0.6em;
+  padding: 0.4em 1.2em;
   white-space: nowrap;
+  /* Taille des noms : rétrécit avec leur longueur pour tenir entre les cadres de gauche et le fil de droite ; au plus
+     petit, les noms trop longs sont coupés. */
+  font: 700 clamp(15px, calc((100vw - 1180px) / (var(--kill-name-length, 12) * 0.72)), 26px) / 1 "Cinzel", Georgia, serif;
+  max-width: max(320px, calc(100vw - 960px));
+  box-sizing: border-box;
   background: linear-gradient(90deg, transparent, rgba(12, 10, 8, 0.82) 14%, rgba(12, 10, 8, 0.82) 86%, transparent);
   border-top: 1.5px solid var(--kill-band-edge);
   border-bottom: 1.5px solid var(--kill-band-edge);
@@ -1054,8 +1060,9 @@ body,
   mix-blend-mode: overlay;
   animation: kill-band-sheen 0.6s 0.15s ease-out both;
 }
-.kill-band-who { position: relative; display: flex; align-items: center; gap: 7px; font: 700 26px/1 "Cinzel", Georgia, serif; letter-spacing: 0.03em; text-shadow: 0 2px 6px #000; }
-.kill-band-class { width: 26px; height: 26px; opacity: 0.9; }
+.kill-band-who { position: relative; min-width: 0; display: flex; align-items: center; gap: 0.27em; letter-spacing: 0.03em; text-shadow: 0 2px 6px #000; }
+.kill-band-name { overflow: hidden; text-overflow: ellipsis; }
+.kill-band-class { flex: none; width: 1em; height: 1em; opacity: 0.9; }
 .kill-band-class svg, .kill-band-move svg { display: block; width: 100%; height: 100%; }
 .kill-band-victim .kill-band-name { opacity: 0.8; }
 .kill-band-victim::after {
@@ -1071,9 +1078,10 @@ body,
   animation: kill-band-strike 0.2s 0.15s ease-out both;
 }
 .kill-band-move {
-  width: 43px;
-  height: 43px;
-  padding: 7px;
+  flex: none;
+  width: 1.65em;
+  height: 1.65em;
+  padding: 0.27em;
   box-sizing: border-box;
   transform: rotate(45deg);
   border: 1.5px solid var(--kill-band-edge);
@@ -1160,8 +1168,13 @@ body,
 
 @media (prefers-reduced-motion: reduce) {
   .kill-num, .kill-name, .kill-name *, .kill-by, .kill-feed li, .kill-last-name,
-  .kill-seal, .kill-seal *, .kill-seal-title, .kill-band-announce * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
+  .kill-seal, .kill-seal *, .kill-seal-title, .kill-band-announce *, .kill-band::after, .kill-band-victim::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
 }
+@media (prefers-reduced-motion: reduce) {
+  /* Sans le tremblement, mais en gardant la sortie de l'annonce à son heure. */
+  .kill-band-announce { animation: kill-out 0.3s 2s ease-in forwards; }
+}
+
 
 .phase-banner {
   position: absolute;

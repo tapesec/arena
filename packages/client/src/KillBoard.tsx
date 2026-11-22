@@ -19,10 +19,12 @@ const ANNOUNCE_MS = 2300;
 // tintement part à ce moment.
 type AnnounceStyle = "sceau" | "entaille" | "bandeau";
 const IMPACT_MS: Record<AnnounceStyle, number> = { sceau: 200, entaille: 220, bandeau: 150 };
-function announceStyle(): AnnounceStyle {
+const ANNOUNCE_STYLE: AnnounceStyle = (() => {
   const asked = new URLSearchParams(location.search).get("annonce");
   return asked === "entaille" || asked === "bandeau" ? asked : "sceau";
-}
+})();
+// Au-delà, l'élimination est trop ancienne pour sonner (rendu très en retard, onglet en arrière-plan).
+const BELL_LATE_MS = 1000;
 
 // Icône d'une classe, pour le sceau et le bandeau : celle de sa compétence la plus reconnaissable.
 const CLASS_ICON: Record<string, string> = { gardien: "guard", arcaniste: "firebolt", pretre: "heal", barde: "ballad", lame: "backstab" };
@@ -139,13 +141,13 @@ function KillAnnouncements() {
   // Texte lu par les lecteurs d'écran (région permanente, remplie à chaque annonce).
   const [spoken, setSpoken] = useState("");
 
-  const style = announceStyle();
-
-  // Tintement au moment du choc.
+  // Texte lu, et tintement au moment du choc (compté depuis l'arrivée de l'élimination, pas depuis ce rendu).
   useEffect(() => {
-    if (!latest || performance.now() - latest.at > IMPACT_MS[style]) return;
+    if (!latest) return;
     setSpoken(t("kill.spoken", { killer: latest.killerName, victim: latest.victimName, move: killMove(latest.abilityId) }));
-    const bell = setTimeout(() => audio.play(latest.victimAlly ? ALERTS.killAlly : ALERTS.killEnemy, { priority: true }), IMPACT_MS[style]);
+    const wait = latest.at + IMPACT_MS[ANNOUNCE_STYLE] - performance.now();
+    if (wait < -BELL_LATE_MS) return;
+    const bell = setTimeout(() => audio.play(latest.victimAlly ? ALERTS.killAlly : ALERTS.killEnemy, { priority: true }), Math.max(0, wait));
     return () => clearTimeout(bell);
   }, [latest]);
 
@@ -175,7 +177,7 @@ function KillAnnouncements() {
 
   return (
     <>
-      {shown && <KillAnnouncement key={shown.id} kill={shown} style={style} />}
+      {shown && <KillAnnouncement key={shown.id} kill={shown} style={ANNOUNCE_STYLE} />}
       {standingStill && (
         <div className="kill-last" key={last.name} aria-hidden="true">
           <div className="kill-last-kicker">{t("kill.lastStanding")}</div>
@@ -190,7 +192,7 @@ function KillAnnouncements() {
   );
 }
 
-// Annonce au centre, en trois styles à l'essai (voir announceStyle) :
+// Annonce au centre, en trois styles à l'essai (voir ANNOUNCE_STYLE) :
 // - sceau : un sceau à la couleur de la victime, frappé de l'icône de sa classe, s'écrase et se fend en deux ;
 //   dessous, « Kerra tombe », puis le tueur et la compétence qui a achevé ;
 // - entaille : le nom de la victime en grand, tranché en deux moitiés décalées (il rétrécit s'il est long, pour ne pas
@@ -202,7 +204,11 @@ function KillAnnouncement({ kill, style }: { kill: KillFrame; style: AnnounceSty
   if (style === "sceau") {
     const half = (part: string) => <div className={`kill-seal-half ${part}`} dangerouslySetInnerHTML={{ __html: classIcon(kill.victimClass) }} />;
     return (
-      <div className={`kill-announce kill-seal-announce ${fell}`} aria-hidden="true">
+      <div
+        className={`kill-announce kill-seal-announce ${fell}`}
+        aria-hidden="true"
+        style={{ "--kill-name-length": Math.max(12, kill.victimName.length + t("kill.falls").length + 1) } as CSSProperties}
+      >
         <div className="kill-seal">
           {half("left")}
           {half("right")}
@@ -229,7 +235,11 @@ function KillAnnouncement({ kill, style }: { kill: KillFrame; style: AnnounceSty
       </span>
     );
     return (
-      <div className={`kill-announce kill-band-announce ${fell}`} aria-hidden="true">
+      <div
+        className={`kill-announce kill-band-announce ${fell}`}
+        aria-hidden="true"
+        style={{ "--kill-name-length": Math.max(12, kill.killerName.length + kill.victimName.length) } as CSSProperties}
+      >
         <div className="kill-band">
           {who(kill.killerName, kill.killerAlly, kill.killerClass, false)}
           <span className="kill-band-move">
