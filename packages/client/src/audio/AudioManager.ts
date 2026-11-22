@@ -167,11 +167,14 @@ export class AudioManager {
     if (recipes.length > 1 && index === this.lastVariant.get(key)) index = (index + 1) % recipes.length;
     this.lastVariant.set(key, index);
     const recipe = recipes[index];
-    const jitter = choice.jitter ? 1 + (Math.random() * 2 - 1) * RATE_JITTER : 1;
-    const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) * jitter };
-    // Son d'origine, seulement réglé : il garde ses propres variantes et son écart de vitesse au hasard.
+    const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) };
+    // Son d'origine, seulement réglé : il garde ses propres variantes et son écart de vitesse au hasard (déjà là, pas
+    // de second écart).
     if (recipe === `${GAME_SOUND}${id}` && !choice.skip) this.playOwn(id, tuned);
-    else void this.playTrack(recipe, { ...tuned, offset: choice.skip ?? 0 });
+    else {
+      const jitter = choice.jitter ? 1 + (Math.random() * 2 - 1) * RATE_JITTER : 1;
+      void this.playTrack(recipe, { ...tuned, rate: tuned.rate * jitter, offset: choice.skip ?? 0 });
+    }
   }
 
   private playOwn(id: SoundName, options: PlayOptions) {

@@ -276,7 +276,9 @@ function CommonSoundEditor(props: {
     if (merged.volume !== undefined && merged.volume !== 1) next.volume = merged.volume;
     const rated = all.some((recipe) => !props.isSynthSound(recipe));
     if (rated && merged.rate !== undefined && merged.rate !== 1) next.rate = merged.rate;
-    if (merged.skip && all.every((recipe) => !recipe.startsWith(GAME_SOUND))) next.skip = merged.skip;
+    // Début borné par le son le plus court (sinon il ne jouerait qu'un clic).
+    const longest = Math.max(0, Math.min(...all.map(props.soundDuration)) - 0.05);
+    if (merged.skip && all.every((recipe) => !recipe.startsWith(GAME_SOUND))) next.skip = Math.min(merged.skip, longest);
     if (rated && merged.jitter) next.jitter = true;
     const untouched = next.recipe === own && Object.keys(next).length === 1;
     props.onChange(untouched ? null : next);
@@ -295,8 +297,10 @@ function CommonSoundEditor(props: {
     const group = props.soundChoices("", last).find(({ options }) => options.some(({ id }) => id === last));
     const options = group?.options.map(({ id }) => id) ?? [];
     const after = [...options.slice(options.indexOf(last) + 1), ...options];
-    return after.find((id) => !recipes.includes(id)) ?? last;
+    return after.find((id) => !recipes.includes(id)) ?? null;
   };
+  const variant = removed ? null : nextVariant();
+  // Liste d'un son : les sons déjà pris sur une autre ligne n'y sont pas (pas de doublon parmi les variantes).
   const select = (value: string, onPick: (value: string) => void, withNone: boolean) => (
     <select
       value={value}
@@ -305,12 +309,12 @@ function CommonSoundEditor(props: {
         listen(e.target.value);
       }}
     >
-      <option value={own}>{`${props.sound} (son d'origine)`}</option>
+      {(own === value || !recipes.includes(own)) && <option value={own}>{`${props.sound} (son d'origine)`}</option>}
       {withNone && <option value={NO_SOUND}>Aucun son (retiré)</option>}
       {props.soundChoices(filter, value).map(({ group, options }) => (
         <optgroup key={group} label={group}>
           {options
-            .filter(({ id }) => id !== own)
+            .filter(({ id }) => id !== own && (id === value || !recipes.includes(id)))
             .map(({ id, label }) => (
               <option key={id} value={id}>
                 {label}
@@ -362,7 +366,11 @@ function CommonSoundEditor(props: {
       ))}
       {!removed && (
         <div className="lab-controls">
-          <button title="Un autre son, tiré au hasard avec les autres (jamais deux fois de suite le même)" onClick={() => setRecipes([...recipes, nextVariant()])}>
+          <button
+            disabled={!variant}
+            title={variant ? "Un autre son, tiré au hasard avec les autres (jamais deux fois de suite le même)" : "Plus de son libre dans ce pack : choisissez-en un autre"}
+            onClick={() => variant && setRecipes([...recipes, variant])}
+          >
             + Variante
           </button>
           <button title="Écouter comme en jeu (variante au hasard)" onClick={() => audio.playChoice(props.sound, current, { priority: true })}>
