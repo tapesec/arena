@@ -161,6 +161,8 @@ export interface CombatEvent {
   killed?: boolean;
   // Tic d'un dégât sur la durée (Brûlure, poison) : pas un coup.
   dot?: boolean;
+  // Dégâts de mêlée (attaque automatique, technique, Coup de pied, Charge) : la lueur du coup reçu indique leur côté.
+  melee?: boolean;
   detail?: string;
 }
 

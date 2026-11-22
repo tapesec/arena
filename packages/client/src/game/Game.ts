@@ -80,7 +80,7 @@ import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
-import { DOT_STRENGTH, HitGlow, hitStrength } from "./HitGlow";
+import { DOT_STRENGTH, HitGlow, hitDirection, hitStrength } from "./HitGlow";
 import { TargetPointer, edgePoint } from "./TargetPointer";
 import { MAGNET_RADIUS, bestCandidate, rankEnemies, type EnemyCandidate, type EnemyRanking, type TargetCandidate } from "./targeting";
 import { CharacterAssets } from "./characterAssets";
@@ -568,19 +568,14 @@ export class Game {
   }
 
   // Coup reçu : lueur rouge au bord de l'écran, du côté de l'attaquant pour un coup de mêlée qu'on voit venir, tout
-  // autour sinon (sort, dégât sur la durée, attaquant caché).
+  // autour sinon (sort, dégât sur la durée, attaquant caché) ; un sort à projectile s'allume à son arrivée.
   private showHitGlow(event: CombatEvent) {
     const self = this.self;
     if (!self || !event.amount) return;
-    const ability = getAbility(event.abilityId);
-    const melee = !event.dot && (event.abilityId === AUTO_ATTACK_ID || !!ability?.melee || !!ability?.meleeStrike);
-    const source = melee ? this.players.get(event.sourceId) : undefined;
-    let relative: number | null = null;
-    if (source && source !== self) {
-      const from = source.root.position.subtract(self.root.position);
-      if (from.x !== 0 || from.z !== 0) relative = Math.atan2(from.x, from.z) - this.camera.yaw;
-    }
-    this.hitGlow.hit(relative, event.dot ? DOT_STRENGTH : hitStrength(event.amount, self.state.maxHp));
+    const source = event.melee ? this.players.get(event.sourceId) : undefined;
+    const relative = source && source !== self ? hitDirection(source.root.position.subtract(self.root.position), this.camera.yaw) : null;
+    const delay = isProjectile(event.abilityId) && event.sourceId !== event.targetId ? PROJECTILE_TRAVEL_TIME : 0;
+    this.hitGlow.hit(relative, event.dot ? DOT_STRENGTH : hitStrength(event.amount, self.state.maxHp), delay * 1000);
   }
 
   private bindMessages() {

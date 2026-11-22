@@ -846,7 +846,7 @@ export class CombatSystem {
     const enemy = source.state.team !== state.team;
     if (enemy) source.stats.damage += hpBefore - state.hp;
     if (killed && enemy) source.stats.kills++;
-    this.emit({ kind: "damage", sourceId: source.id, targetId: target.id, abilityId, amount, crit, killed, ...(dot && { dot }) });
+    this.emit({ kind: "damage", sourceId: source.id, targetId: target.id, abilityId, amount, crit, killed, ...(dot && { dot }), ...(melee && { melee }) });
 
     if (killed) {
       this.handleDeath(target);
