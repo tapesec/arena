@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { CLASS_LIST } from "@arena/shared";
-import { MAX_CONCURRENT_SOUNDS, MIN_REPEAT_INTERVAL, MUSIC_LEVELS, RATE_JITTER, audio, type SoundName } from "./audio/AudioManager";
+import { MAX_CONCURRENT_SOUNDS, MIN_REPEAT_INTERVAL, MUSIC_LEVELS, RATE_JITTER, audio, type CommonSoundChoice, type CommonSoundChoices, type SoundName } from "./audio/AudioManager";
+import { GAME_SOUND } from "./audio/soundEdits";
 import { SOUND_RATE_JITTER } from "./game/abilityEffects";
 import * as C from "./game/commonSounds";
 
 // Onglet « Sons communs » de animation-lab.html : les sons du jeu qui ne dépendent pas d'une compétence réglée
-// (voix, coups, pas, alertes, interface, musique) et leurs règles, en lecture seule. Tout est lu dans
-// game/commonSounds.ts, que le jeu utilise : ce qui est affiché est ce qui est joué.
+// (voix, coups, pas, alertes, interface, musique) et leurs règles. Tout est lu dans game/commonSounds.ts, que le jeu
+// utilise : ce qui est affiché est ce qui est joué. Chaque son peut être remplacé par un autre (catalogue ou jeu),
+// avec son volume, sa vitesse et son début : choix enregistrés dans audio/commonSounds.json, appliqués par
+// AudioManager.play partout où ce son est joué.
 
 interface Played {
   sound: SoundName;
@@ -83,6 +87,9 @@ function sections(): Section[] {
         { when: "Vie basse", sounds: [{ sound: C.ALERTS.lowHealth }], detail: `sous ${percent(C.LOW_HEALTH_RATIO)} de vie, toutes les ${num(C.HEARTBEAT_INTERVAL)} s` },
         { when: "Compétence de nouveau prête", sounds: [{ sound: C.ALERTS.abilityReady }], detail: `recharge d'au moins ${num(C.READY_SOUND_MIN_COOLDOWN)} s` },
         { when: "Sa propre mort", sounds: [{ sound: C.ALERTS.death }] },
+        { when: "Élimination d'un adversaire (sceau brisé)", sounds: [{ sound: C.ALERTS.killEnemy }], detail: "quand le sceau se fend" },
+        { when: "Élimination d'un allié (sceau brisé)", sounds: [{ sound: C.ALERTS.killAlly }], detail: "quand le sceau se fend" },
+        { when: "Dernier survivant d'une équipe", sounds: [{ sound: C.ALERTS.lastStanding }], detail: "avec son bandeau" },
         { when: "Compte à rebours (3 dernières secondes)", sounds: [{ sound: C.ALERTS.countdown }] },
         { when: "Début du combat", sounds: [{ sound: C.ALERTS.fightStart }] },
         { when: "Victoire", sounds: [{ sound: C.ALERTS.win }] },
@@ -114,14 +121,29 @@ function sections(): Section[] {
   ];
 }
 
-export function CommonSoundsPane() {
+type Choices = { group: string; options: { id: string; label: string }[] }[];
+
+export function CommonSoundsPane(props: {
+  choices: CommonSoundChoices;
+  saved: CommonSoundChoices;
+  onChange: (choices: CommonSoundChoices) => void;
+  // Mêmes listes que les pistes de son des compétences (animationLab).
+  soundChoices: (filter: string, current: string) => Choices;
+  soundLabel: (recipe: string) => string;
+  soundDuration: (recipe: string) => number;
+}) {
+  const { choices, saved, onChange } = props;
+  const [editing, setEditing] = useState<SoundName | null>(null);
+  const all = sections();
+  // Lignes où sert chaque son : un son remplacé l'est partout où il est joué.
+  const usedIn = (sound: SoundName) => all.flatMap((section) => section.rows.filter((row) => row.sounds.some((p) => p.sound === sound)).map((row) => row.when));
   return (
     <div className="sound-pane common-sounds">
       <p className="lab-note">
-        Sons du jeu qui ne dépendent pas d'une compétence, en lecture seule (réglés dans le code : game/commonSounds.ts). ▶ pour écouter
-        (au volume et à la vitesse du jeu).
+        Sons du jeu qui ne dépendent pas d'une compétence (game/commonSounds.ts). ▶ pour écouter (au volume et à la vitesse du jeu) ; ✎ pour
+        remplacer un son, ou régler son volume, sa vitesse et son début. Un son remplacé l'est partout où il est joué.
       </p>
-      {sections().map((section) => (
+      {all.map((section) => (
         <section key={section.title}>
           <h3>{section.title}</h3>
           {section.rows.length > 0 && (
@@ -131,16 +153,51 @@ export function CommonSoundsPane() {
                   <tr key={row.when}>
                     <td>{row.when}</td>
                     <td>
-                      {row.sounds.map((played) => (
-                        <span key={played.sound} className="common-sound">
-                          <button title="Écouter" onClick={() => audio.play(played.sound, { volume: played.volume ?? 1, rate: played.rate ?? 1, priority: true })}>
-                            ▶
-                          </button>
-                          <code>{played.sound}</code>
-                          {played.volume !== undefined && played.volume !== 1 && <small> volume {percent(played.volume)}</small>}
-                          {played.rate !== undefined && played.rate !== 1 && <small> vitesse ×{num(played.rate)}</small>}
-                        </span>
-                      ))}
+                      {row.sounds.map((played) => {
+                        const choice = choices[played.sound];
+                        const changed = JSON.stringify(choice) !== JSON.stringify(saved[played.sound]);
+                        return (
+                          <span key={played.sound} className="common-sound-cell">
+                            <span className={`common-sound${choice ? " common-sound-replaced" : ""}`}>
+                              <button title="Écouter" onClick={() => audio.play(played.sound, { volume: played.volume ?? 1, rate: played.rate ?? 1, priority: true })}>
+                                ▶
+                              </button>
+                              {choice ? (
+                                <>
+                                  <code>{props.soundLabel(choice.recipe)}</code>
+                                  <small> au lieu de {played.sound}</small>
+                                </>
+                              ) : (
+                                <code>{played.sound}</code>
+                              )}
+                              {played.volume !== undefined && played.volume !== 1 && <small> volume {percent(played.volume)}</small>}
+                              {played.rate !== undefined && played.rate !== 1 && <small> vitesse ×{num(played.rate)}</small>}
+                              {changed && <small className="common-sound-draft"> (non enregistré)</small>}
+                              <button
+                                title="Remplacer ou régler ce son"
+                                className={editing === played.sound ? "lab-tab-active" : ""}
+                                onClick={() => setEditing(editing === played.sound ? null : played.sound)}
+                              >
+                                ✎
+                              </button>
+                            </span>
+                            {editing === played.sound && (
+                              <CommonSoundEditor
+                                sound={played.sound}
+                                choice={choice}
+                                alsoIn={usedIn(played.sound).filter((when) => when !== row.when)}
+                                onChange={(next) => {
+                                  const rest = { ...choices };
+                                  delete rest[played.sound];
+                                  onChange(next ? { ...rest, [played.sound]: next } : rest);
+                                }}
+                                soundChoices={props.soundChoices}
+                                soundDuration={props.soundDuration}
+                              />
+                            )}
+                          </span>
+                        );
+                      })}
                     </td>
                     <td className="lab-hint">{row.detail ?? ""}</td>
                   </tr>
@@ -157,6 +214,86 @@ export function CommonSoundsPane() {
           )}
         </section>
       ))}
+    </div>
+  );
+}
+
+// Réglage d'un son commun : son de remplacement (ou le sien), volume, vitesse et début. Sans réglage (son d'origine,
+// tout à 1, début à 0), le choix est retiré.
+function CommonSoundEditor(props: {
+  sound: SoundName;
+  choice: CommonSoundChoice | undefined;
+  alsoIn: string[];
+  onChange: (choice: CommonSoundChoice | null) => void;
+  soundChoices: (filter: string, current: string) => Choices;
+  soundDuration: (recipe: string) => number;
+}) {
+  const own = `${GAME_SOUND}${props.sound}`;
+  const current: CommonSoundChoice = props.choice ?? { recipe: own };
+  const [filter, setFilter] = useState("");
+  const update = (patch: Partial<CommonSoundChoice>) => {
+    const next = { ...current, ...patch };
+    // Valeurs par défaut retirées : le fichier ne garde que ce qui change.
+    if (next.volume === 1) delete next.volume;
+    if (next.rate === 1) delete next.rate;
+    if (!next.skip) delete next.skip;
+    const untouched = next.recipe === own && next.volume === undefined && next.rate === undefined && next.skip === undefined;
+    props.onChange(untouched ? null : next);
+  };
+  const ownOption = { id: own, label: `${props.sound} (son d'origine)` };
+  const groups = props.soundChoices(filter, current.recipe);
+  const slider = (label: string, key: "volume" | "rate", min: number, max: number) => (
+    <label className="lab-offset" title="Double-clic : 100 %">
+      {label} {key === "volume" ? percent(current[key] ?? 1) : `×${num(Number((current[key] ?? 1).toFixed(2)))}`}
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={0.05}
+        value={current[key] ?? 1}
+        onChange={(e) => update({ [key]: Number(e.target.value) })}
+        onDoubleClick={() => update({ [key]: 1 })}
+      />
+    </label>
+  );
+  return (
+    <div className="lab-controls common-sound-editor">
+      <input type="search" placeholder="Chercher un son" value={filter} onChange={(e) => setFilter(e.target.value)} />
+      <label>
+        Son
+        <select value={current.recipe} onChange={(e) => update({ recipe: e.target.value, skip: 0 })}>
+          <option value={ownOption.id}>{ownOption.label}</option>
+          {groups.map(({ group, options }) => (
+            <optgroup key={group} label={group}>
+              {options
+                .filter(({ id }) => id !== own)
+                .map(({ id, label }) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      {slider("Volume", "volume", 0, 2)}
+      {slider("Vitesse", "rate", 0.5, 2)}
+      <label className="lab-offset" title="Le début du son est sauté · double-clic : depuis le début">
+        Commencer à {num(Number((current.skip ?? 0).toFixed(2)))} s
+        <input
+          type="range"
+          min={0}
+          max={Math.max(0.05, props.soundDuration(current.recipe) - 0.05)}
+          step={0.01}
+          value={current.skip ?? 0}
+          onChange={(e) => update({ skip: Number(e.target.value) })}
+          onDoubleClick={() => update({ skip: 0 })}
+        />
+      </label>
+      <button disabled={!props.choice} onClick={() => props.onChange(null)}>
+        Son d'origine
+      </button>
+      {props.alsoIn.length > 0 && <p className="lab-hint">Ce son sert aussi à : {props.alsoIn.join(", ")}.</p>}
     </div>
   );
 }

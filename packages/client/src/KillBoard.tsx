@@ -8,14 +8,14 @@ import { abilityName, t } from "./i18n";
 import { useHudStore, type KillFrame } from "./store";
 
 // Annonces d'élimination (décidées le 2026-11-21, décompte en chiffres) : en haut, les survivants de chaque équipe ; au
-// centre, l'annonce de l'élimination (« Sceau brisé », choisi le 2026-11-22), avec un tintement de cloche au moment
-// où le sceau se fend ; à droite, le fil des dernières éliminations (KillFeed, au-dessus du panneau d'aide). Bandeau « Dernier
+// centre, l'annonce de l'élimination (« Sceau brisé », choisi le 2026-11-22), avec le son du choc (une lame, réglée dans
+// l'onglet « Sons communs » de l'éditeur) au moment où le sceau se fend ; à droite, le fil des dernières éliminations (KillFeed, au-dessus du panneau d'aide). Bandeau « Dernier
 // survivant » quand une équipe n'a plus qu'un joueur. Son équipe en bleu, celle d'en face en rouge.
 
 // Durée de l'annonce au centre, avant qu'elle ne rejoigne le fil.
 const ANNOUNCE_MS = 2300;
 
-// Instant où le sceau se fend, calé sur l'animation CSS : le tintement part à ce moment.
+// Instant où le sceau se fend, calé sur l'animation CSS : le son du choc part à ce moment.
 const IMPACT_MS = 200;
 // Au-delà, l'élimination est trop ancienne pour sonner (rendu très en retard, onglet en arrière-plan).
 const BELL_LATE_MS = 1000;
@@ -128,7 +128,7 @@ function KillAnnouncements() {
   // Texte lu par les lecteurs d'écran (région permanente, remplie à chaque annonce).
   const [spoken, setSpoken] = useState("");
 
-  // Texte lu, et tintement au moment du choc (compté depuis l'arrivée de l'élimination, pas depuis ce rendu).
+  // Texte lu, et son du choc (compté depuis l'arrivée de l'élimination, pas depuis ce rendu).
   useEffect(() => {
     if (!latest) return;
     setSpoken(t("kill.spoken", { killer: latest.killerName, victim: latest.victimName, move: killMove(latest.abilityId) }));

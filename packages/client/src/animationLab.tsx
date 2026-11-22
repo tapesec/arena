@@ -52,7 +52,7 @@ import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile, setProjectileLookup }
 import { SpellEffects } from "./game/SpellEffects";
 import { codeImpact, codeProjectile, codeSoundTracks, codeStatus, codeZone } from "./game/codeVisuals";
 import { ABILITY_SOUNDS, type Cue } from "./game/codeSounds";
-import { audio } from "./audio/AudioManager";
+import { COMMON_SOUND_CHOICES, audio, type CommonSoundChoice, type CommonSoundChoices } from "./audio/AudioManager";
 import samples from "./audio/samples.json";
 import { SOUNDS as SYNTH_SOUNDS } from "./audio/sounds";
 import { projectileDirection, projectilePosition } from "./game/projectilePaths";
@@ -142,6 +142,7 @@ const MARKS_DRAFT_KEY = "arena.animationLab.marksDraft";
 const OBJECTS_DRAFT_KEY = "arena.animationLab.objectsDraft";
 const OVERLAYS_DRAFT_KEY = "arena.animationLab.overlaysDraft";
 const SOUNDS_DRAFT_KEY = "arena.animationLab.soundsDraft";
+const COMMON_DRAFT_KEY = "arena.animationLab.commonSoundsDraft";
 const SOUNDS = soundCatalog as CatalogSound[];
 type OverlayDefs = Record<string, OverlayDef>;
 type MarkDefs = Record<string, GroundMarkDef>;
@@ -1356,6 +1357,11 @@ function rebaseDraft<T>(stored: StoredDraft<T> | null, file: Record<string, T>):
   return result;
 }
 
+// Mêmes réglages quel que soit l'ordre des clés (comparaison, et fichier enregistré stable).
+function sortedKeys<T>(record: Record<string, T>): Record<string, T> {
+  return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)));
+}
+
 // Calage des animations à plat (« classe/compétence ») pour reprendre un brouillon compétence par compétence.
 function flatTuning(tuning: AnimationTuning): Record<string, AbilityAnimation> {
   const flat: Record<string, AbilityAnimation> = {};
@@ -1439,6 +1445,9 @@ function AnimationLab() {
   const [overlayAnchor, setOverlayAnchor] = useState<EffectAnchor>(initial?.overlayAnchor ?? "head");
   const [soundsSaved, setSoundsSaved] = useState<SoundEdits | null>(null);
   const [soundsDraft, setSoundsDraft] = useState<SoundEdits>(EMPTY_EDITS);
+  // Onglet « Sons communs » : sons communs remplacés (commonSounds.json).
+  const [commonSaved, setCommonSaved] = useState<CommonSoundChoices | null>(null);
+  const [commonDraft, setCommonDraft] = useState<CommonSoundChoices>(COMMON_SOUND_CHOICES);
   const [soundName, setSoundName] = useState(initial?.soundName ?? SOUNDS[0]?.name ?? "");
   const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
   const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
@@ -1611,6 +1620,12 @@ function AnimationLab() {
         const stored = readStorage<{ base: SoundEdits; draft: SoundEdits }>(SOUNDS_DRAFT_KEY);
         setSoundsDraft(stored?.base && sameEdits(stored.base, file) ? stored.draft : file);
       });
+    void fetch("/__dev-file/commonSounds")
+      .then((response) => response.json() as Promise<CommonSoundChoices | null>)
+      .then((choices) => {
+        setCommonSaved(choices ?? {});
+        setCommonDraft(rebaseDraft(readStorage<StoredDraft<CommonSoundChoice>>(COMMON_DRAFT_KEY), choices ?? {}));
+      });
     void fetch("/__dev-file/overlays2d")
       .then((response) => response.json() as Promise<OverlayDefs | null>)
       .then((defs) => {
@@ -1633,6 +1648,12 @@ function AnimationLab() {
   useEffect(() => setObjectDefs(objectsDraft), [objectsDraft]);
   useEffect(() => setOverlayDefs(overlaysDraft), [overlaysDraft]);
   const soundsUnsaved = soundsSaved !== null && !sameEdits(soundsDraft, soundsSaved);
+  // Les sons communs du brouillon s'entendent tout de suite dans l'éditeur (▶), avant d'être enregistrés.
+  useEffect(() => audio.setCommonSounds(commonDraft), [commonDraft]);
+  const commonUnsaved = commonSaved !== null && JSON.stringify(sortedKeys(commonDraft)) !== JSON.stringify(sortedKeys(commonSaved));
+  useEffect(() => {
+    if (commonSaved) writeStorage(COMMON_DRAFT_KEY, commonUnsaved ? { base: commonSaved, draft: commonDraft } : null);
+  }, [commonDraft, commonSaved, commonUnsaved]);
   useEffect(() => {
     if (soundsSaved) writeStorage(SOUNDS_DRAFT_KEY, soundsUnsaved ? { base: soundsSaved, draft: soundsDraft } : null);
   }, [soundsDraft, soundsSaved, soundsUnsaved]);
@@ -2300,6 +2321,17 @@ function AnimationLab() {
       }
       setSoundsSaved(soundsDraft);
     }
+    if (commonUnsaved) {
+      const file = ((await fetch("/__dev-file/commonSounds").then((r) => r.json())) ?? {}) as CommonSoundChoices;
+      const choices = sortedKeys(rebaseDraft({ base: commonSaved ?? {}, draft: commonDraft }, file));
+      const response = await fetch("/__dev-file/commonSounds", { method: "POST", body: JSON.stringify(choices) });
+      if (!response.ok) {
+        setMessage(`Échec de l'enregistrement des sons communs : ${await response.text()}`);
+        return;
+      }
+      setCommonSaved(choices);
+      setCommonDraft(choices);
+    }
     if (overlaysUnsaved) {
       const file = ((await fetch("/__dev-file/overlays2d").then((r) => r.json())) ?? {}) as OverlayDefs;
       const defs = rebaseDraft({ base: overlaysSaved ?? {}, draft: overlaysDraft }, file);
@@ -2323,7 +2355,7 @@ function AnimationLab() {
       setObjectsDraft(defs);
     }
     setMessage(
-      `Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json, overlays2d.json${soundsUnsaved ? ", src/audio/soundEdits.json" : ""}) : le jeu l'utilise au prochain chargement.${soundsUnsaved ? " Sons : dites à Claude « applique les sons »." : ""}`,
+      `Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json, overlays2d.json${soundsUnsaved ? ", src/audio/soundEdits.json" : ""}${commonUnsaved ? ", src/audio/commonSounds.json" : ""}) : le jeu l'utilise au prochain chargement.${soundsUnsaved ? " Sons : dites à Claude « applique les sons »." : ""}`,
     );
     setTimeout(() => setMessage(null), 4000);
   };
@@ -2403,11 +2435,11 @@ function AnimationLab() {
         <span className="anim-pages">
           {message && <span className="lab-message">{message}</span>}
           <button
-            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved && !overlaysUnsaved && !soundsUnsaved}
+            disabled={!unsaved && !fxUnsaved && !marksUnsaved && !objectsUnsaved && !overlaysUnsaved && !soundsUnsaved && !commonUnsaved}
             onClick={() => void save()}
-            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved || soundsUnsaved ? "lab-save" : ""}
+            className={unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved || soundsUnsaved || commonUnsaved ? "lab-save" : ""}
           >
-            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved || soundsUnsaved ? "Enregistrer" : "Tout est enregistré"}
+            {unsaved || fxUnsaved || marksUnsaved || objectsUnsaved || overlaysUnsaved || soundsUnsaved || commonUnsaved ? "Enregistrer" : "Tout est enregistré"}
           </button>
         </span>
       </div>
@@ -2507,7 +2539,16 @@ function AnimationLab() {
             <SoundPending catalog={SOUNDS} saved={soundsSaved} draft={soundsDraft} />
           </div>
         )}
-        {tab === "communs" && <CommonSoundsPane />}
+        {tab === "communs" && (
+          <CommonSoundsPane
+            choices={commonDraft}
+            saved={commonSaved ?? {}}
+            onChange={setCommonDraft}
+            soundChoices={soundChoices}
+            soundLabel={soundLabel}
+            soundDuration={soundDuration}
+          />
+        )}
         {/* La scène reste montée (son moteur), cachée sur les onglets des sons. */}
         <div className="anim-stage" style={tab === "sons" || tab === "communs" ? { display: "none" } : undefined}>
           <canvas ref={canvasRef} className="anim-canvas" />
