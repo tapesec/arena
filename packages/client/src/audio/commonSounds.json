@@ -7,7 +7,8 @@
   },
   "bouclier_blocage_sourd": {
     "recipe": "impactPlate_heavy_002",
-    "volume": 0.95
+    "volume": 0.95,
+    "jitter": true
   },
   "classSelect": {
     "recipe": "UI_Item_Select_02"
@@ -38,12 +39,31 @@
     "recipe": ""
   },
   "stepDirt": {
-    "recipe": "Footstep_Dirt_00"
+    "recipe": "Footstep_Dirt_00",
+    "variants": [
+      "Footstep_Dirt_01",
+      "Footstep_Dirt_02",
+      "Footstep_Dirt_03"
+    ],
+    "jitter": true
   },
   "stepGrass": {
-    "recipe": "footstep_grass_004"
+    "recipe": "footstep_grass_004",
+    "variants": [
+      "footstep_grass_000",
+      "footstep_grass_002",
+      "footstep_grass_001",
+      "footstep_grass_003"
+    ],
+    "jitter": true
   },
   "stepStone": {
-    "recipe": "footstep_concrete_001"
+    "recipe": "footstep_concrete_001",
+    "variants": [
+      "footstep_concrete_003",
+      "footstep_concrete_004",
+      "footstep_concrete_000"
+    ],
+    "jitter": true
   }
 }
