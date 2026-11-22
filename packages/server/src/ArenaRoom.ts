@@ -102,6 +102,11 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       this.countAction(client.sessionId);
       this.combat.useAbility(client.sessionId, abilityId);
     },
+    roll: (client: Client) => {
+      if (!this.inMatch) return;
+      this.countAction(client.sessionId);
+      this.combat.roll(client.sessionId);
+    },
     // Avancement du chargement du client, en pourcentage. Retenu dès la salle d'attente : le client commence à
     // charger en y arrivant.
     loadProgress: (client: Client, message: unknown) => {

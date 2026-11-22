@@ -51,6 +51,7 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
     return refused("disabled", "incapacitated");
   }
   if (self.charging) return refused("disabled", "charging");
+  if (self.rolling) return refused("disabled", "rolling");
   if (isMagic(ability) && self.effects.some((e) => e.kind === "silenced")) return refused("disabled", "silenced");
   if (ability.effects.some((e) => e.type === "charge") && self.effects.some((e) => e.kind === "root")) {
     return refused("disabled", "rooted");

@@ -82,6 +82,8 @@
 - **Ballade rythmée** : immunité aux effets de mobilité (root, snare) ; ceux en place sont retirés. Les autres contrôles (stun, mez, silence…) passent.
 - **Immunités** : dès qu'un mez, un stun ou un root est appliqué, la cible devient immunisée contre ce même type de contrôle, pendant la durée du contrôle plus 30 s. Relancer un contrôle ne peut donc pas le prolonger.
 
+- **Roulade** (décidée le 2026-11-22, toutes les classes, touche Espace) : on roule de 4 m tout droit en 0,4 s, dans la direction des touches de déplacement tenues (devant si aucune). Pendant la roulade, rien d'hostile ne porte : dégâts, tics de dégâts sur la durée, contrôles et autres effets ennemis sont esquivés. Pleine distance sous snare ; un obstacle l'arrête. Elle interrompt l'incantation ; ni compétence ni attaque automatique pendant la roulade. Impossible sous mez, stun, root ou Rempart, et pendant une Charge. Recharge : 8 s. Sa case est au bout de la barre de compétences, avec la touche Espace et sa recharge.
+
 ## Classes
 
 Les tableaux de compétences suivent l'ordre de la barre (touches 1 à 8), sur deux rangées de 4 (décidé le 2026-11-19) : 1 à 4, ce qu'on enchaîne pour attaquer ou soigner, dans l'ordre d'usage (les combos de la Lame côte à côte) ; 5 à 7, contrôle, défense et soutien ; 8, l'ultime.

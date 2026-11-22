@@ -314,6 +314,7 @@ export class Game {
       selectTarget: (playerId) => this.setTarget(playerId),
       selectSelf: () => this.setTarget(this.room.sessionId),
       castAbility: (abilityId) => this.castAbility(abilityId),
+      roll: () => this.handleAction("roll"),
     });
 
     // Accès à la scène depuis la console du navigateur, en développement uniquement.
@@ -821,6 +822,9 @@ export class Game {
       case "targetSelf":
         this.setTarget(this.room.sessionId);
         break;
+      case "roll":
+        this.room.send("roll");
+        break;
       case "toggleAttack":
         this.steerTowardsTarget();
         this.room.send("toggleAttack");
@@ -1186,6 +1190,7 @@ export class Game {
       (phase === "preparation" || phase === "fighting") &&
       self.isAlive &&
       !self.state.charging &&
+      !self.state.rolling &&
       !this.isSpectating &&
       this.loading.progress >= 1;
     const target = this.targetId && this.targetId !== this.room.sessionId ? this.players.get(this.targetId) : undefined;
@@ -1246,6 +1251,8 @@ export class Game {
           // Le combo ne part que sur la cible de son ouverture.
           comboAbility: target && self.state.comboTarget === target.sessionId ? self.state.comboAbility : "",
           charging: self.state.charging,
+          rolling: self.state.rolling,
+          rooted: self.hasEffect("root"),
         }
       : null;
     const targetFrame: TargetFrame | null =

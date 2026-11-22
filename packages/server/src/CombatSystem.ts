@@ -16,6 +16,12 @@ import {
   IMMUNITY_DURATION,
   INTERCEPT_RANGE,
   MOVE_SPEED,
+  ROLL_COOLDOWN,
+  ROLL_DISTANCE,
+  ROLL_DURATION,
+  ROLL_ID,
+  forwardOf,
+  moveDirection,
   RAMPART_RADIUS,
   MANA_REGEN,
   NEAR_SIGHT_FACTOR,
@@ -297,6 +303,7 @@ export class CombatSystem {
     // Temps passé sous la dernière commande reçue : le client en déduit ce qu'il lui reste à rejouer (prédiction).
     // Pas pour les bots, qui n'envoient pas de commandes numérotées (inutile de synchroniser ce champ à chaque tic).
     if (state.inputSeq > 0) state.inputTime += dt;
+    if (player.roll) return this.updateRoll(player, dt);
     if (player.charge) return this.updateCharge(player, dt);
     this.updateLock(player);
     if (player.incapacitated) return;
@@ -366,7 +373,7 @@ export class CombatSystem {
     // Le délai entre deux coups s'écoule même hors portée : le premier coup part dès le contact.
     attacker.swingTimer = Math.max(0, attacker.swingTimer - dt);
     if (attacker.state.comboAbility && this.time > attacker.comboExpiresAt) this.clearCombo(attacker);
-    if (!attacker.state.attacking || attacker.incapacitated) return;
+    if (!attacker.state.attacking || attacker.incapacitated || attacker.roll) return;
 
     const target = attacker.targetId ? this.players.get(attacker.targetId) : undefined;
     if (!target?.alive || !this.areEnemies(attacker, target)) {
@@ -412,6 +419,7 @@ export class CombatSystem {
   private checkCanUse(caster: PlayerRuntime, ability: AbilityDef, ignoreMovement = false): GameErrorCode | null {
     if (caster.incapacitated) return "incapacitated";
     if (caster.charge) return "charging";
+    if (caster.roll) return "rolling";
     if (ability.effects.some((e) => e.type === "charge") && caster.has("root")) return "rooted";
     if (caster.state.castAbility) return "alreadyCasting";
     if (caster.has("silenced") && isMagic(ability)) return "silenced";
@@ -536,6 +544,8 @@ export class CombatSystem {
       let target = reached;
       // Pris pour cible par une attaque ou un effet hostile, même évité : le Chant de vitesse attend le calme.
       if (offensive) target.lastEngagedAt = this.time;
+      // En pleine roulade : rien d'hostile ne l'atteint (dégâts et effets).
+      if (this.rollDodges(caster, target, ability.id)) continue;
       if (meleeAttack) {
         // Attaque spéciale de mêlée : un Gardien qui intercepte la prend en entier à la place de sa cible (dégâts et
         // effets : silence, poison, affaiblissements…). Puis l'évitement est tranché une fois, avant ses effets :
@@ -802,6 +812,8 @@ export class CombatSystem {
     dot = false,
   ) {
     if (!target.alive) return;
+    // En pleine roulade : ni coup ni tic ne porte (un tic évité ne s'affiche pas, il en tombe un par seconde).
+    if (this.rollDodges(source, target, abilityId, dot)) return;
     // Touché (coup, tic, même évité) : le Chant de vitesse attend le calme.
     target.lastEngagedAt = this.time;
 
@@ -941,6 +953,8 @@ export class CombatSystem {
     abilityId: string,
     options: { magic?: boolean; ignoreImmunity?: boolean } = {},
   ) {
+    // Le stun d'une Charge qui arrive pendant une roulade : déjà esquivé avec ses dégâts.
+    if (target.roll && this.areEnemies(source, target)) return;
     if (options.magic && this.resistsMagic(source, target, abilityId)) return;
     if (cc === "root" && this.resistsMobility(source, target, abilityId)) return;
     const immunity = IMMUNITY_EFFECTS[cc];
@@ -971,6 +985,7 @@ export class CombatSystem {
     state.queuedAbility = "";
     this.clearCombo(player);
     this.stopCharge(player);
+    this.stopRoll(player);
     this.endCast(player);
     for (const effect of [...player.effects]) this.removeEffect(player, effect);
     this.removeLinkedEffects(player);
@@ -1063,6 +1078,55 @@ export class CombatSystem {
   private resistsMagic(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): boolean {
     if (!target.has("magicImmune")) return false;
     this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: "magic" });
+    return true;
+  }
+
+  // --- Roulade (voir ROLL_DURATION) ---
+
+  roll(playerId: string) {
+    const player = this.players.get(playerId);
+    if (!player?.alive || player.roll) return;
+    if (player.incapacitated) return this.sendError(player, "incapacitated");
+    if (player.charge) return this.sendError(player, "charging");
+    if (player.has("root")) return this.sendError(player, "rooted");
+    if ((player.cooldowns.get(ROLL_ID) ?? 0) > this.time) return this.sendError(player, "rollCooldown");
+    const state = player.state;
+    // Dans la direction des touches tenues, devant si aucune (pivoter au clavier ne compte pas). Orientation voulue par
+    // la commande (mode moderne, clic droit) plutôt que celle du dernier tic, qui peut avoir un temps de retard.
+    const input = player.input;
+    const facing = input.steer && input.yaw !== undefined && !state.lock ? input.yaw : state.facing;
+    const wanted = movesBody(input) ? moveDirection(input, facing) : forwardOf(facing);
+    const length = Math.hypot(wanted.x, wanted.z) || 1;
+    player.roll = { x: wanted.x / length, z: wanted.z / length, elapsed: 0 };
+    state.rolling = true;
+    player.cooldowns.set(ROLL_ID, this.time + ROLL_COOLDOWN);
+    const event: CooldownEvent = { abilityId: ROLL_ID, duration: ROLL_COOLDOWN };
+    this.out.sendTo(player.id, "cooldown", event);
+    if (state.castAbility) this.interrupt(player, "move");
+    player.lastEngagedAt = this.time;
+  }
+
+  // Avance tout droit à vitesse fixe (un snare ne la ralentit pas) ; un obstacle l'arrête net, sans l'annuler.
+  private updateRoll(player: PlayerRuntime, dt: number) {
+    const roll = player.roll!;
+    const step = Math.min(dt, ROLL_DURATION - roll.elapsed);
+    roll.elapsed += dt;
+    let next = stepMovement(player.state, roll, step, ROLL_DISTANCE / ROLL_DURATION / MOVE_SPEED);
+    if (this.confine) next = this.confine(player, next);
+    player.state.x = next.x;
+    player.state.z = next.z;
+    if (roll.elapsed >= ROLL_DURATION - 1e-9) this.stopRoll(player);
+  }
+
+  private stopRoll(player: PlayerRuntime) {
+    player.roll = null;
+    player.state.rolling = false;
+  }
+
+  // Une attaque ou un effet hostile sur un joueur en pleine roulade est esquivé. silent : sans l'annoncer.
+  private rollDodges(source: PlayerRuntime, target: PlayerRuntime, abilityId: string, silent = false): boolean {
+    if (!target.roll || !this.areEnemies(source, target)) return false;
+    if (!silent) this.emit({ kind: "evaded", sourceId: source.id, targetId: target.id, abilityId });
     return true;
   }
 

@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type AbilityDef, type ClassId } from "@arena/shared";
+import {
+  CLASS_LIST,
+  EFFECTS,
+  NAME_MAX_LENGTH,
+  ROLL_COOLDOWN,
+  ROLL_DISTANCE,
+  ROLL_DURATION,
+  ROLL_ID,
+  cleanName,
+  getAbility,
+  getClass,
+  type AbilityDef,
+  type ClassId,
+} from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { EndScreen } from "./EndScreen";
 import { GameCanvas } from "./GameCanvas";
 import { KillBoard, KillFeed } from "./KillBoard";
 import { LanguageMenu } from "./LanguageMenu";
-import { abilityColor, abilityDetails, abilityIcon, abilityStatus } from "./abilityBar";
+import { abilityColor, abilityDetails, abilityIcon, abilityStatus, errorText } from "./abilityBar";
 import { effectIcon } from "./effectIcons";
 import { MUSIC, UI_SOUNDS } from "./game/commonSounds";
 import { OrderWheelGraphic } from "./OrderWheelGraphic";
@@ -810,6 +823,57 @@ function Hotbar() {
           </div>
         );
       })}
+      <RollSlot now={now} />
+    </div>
+  );
+}
+
+// Flèche qui s'enroule : icône de la roulade (dessinée pour le jeu).
+const ROLL_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 64a192 192 0 0 1 187 148l37-14-22 102-82-64 32-12A144 144 0 1 0 400 320h50A192 192 0 1 1 256 64zm-32 128a32 32 0 1 1 0 64 32 32 0 0 1 0-64zm-24 88h80l40 80h-48l-24-40-32 40h-56z"/></svg>';
+
+// Case de la roulade (Espace), à part au bout de la barre : grisée quand elle est impossible, cadran de recharge.
+function RollSlot({ now }: { now: number }) {
+  const self = useHudStore((s) => s.self);
+  const end = useHudStore((s) => s.cooldownEnds[ROLL_ID] ?? 0);
+  const actions = useHudStore((s) => s.actions);
+  const [hovered, setHovered] = useState(false);
+  if (!self) return null;
+  const remaining = Math.max(0, (end - now) / 1000);
+  const reason =
+    self.hp <= 0
+      ? errorText("dead")
+      : self.effects.some((e) => e.kind === "mez" || e.kind === "stun" || e.kind === "rampart")
+        ? errorText("incapacitated")
+        : self.rooted
+          ? errorText("rooted")
+          : self.charging
+            ? errorText("charging")
+            : null;
+  const elapsed = remaining > 0 ? (1 - remaining / ROLL_COOLDOWN) * 360 : 0;
+  return (
+    <div
+      className={`slot slot-roll ${reason ? "slot-disabled" : "slot-ready"}${self.rolling ? " slot-active" : ""}`}
+      onClick={() => actions?.roll()}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className="slot-icon" dangerouslySetInnerHTML={{ __html: ROLL_ICON }} />
+      <span className="slot-key">{t("roll.key")}</span>
+      {remaining > 0 && (
+        <span className="slot-cooldown" style={{ background: `conic-gradient(transparent ${elapsed}deg, rgba(0, 0, 0, 0.72) 0)` }}>
+          {formatCooldown(remaining)}
+        </span>
+      )}
+      {hovered && (
+        <div className="slot-tooltip">
+          <div className="tooltip-name">{t("roll.name")}</div>
+          <div className="tooltip-description">
+            {t("roll.description", { distance: ROLL_DISTANCE, duration: formatDecimal(ROLL_DURATION, 1), cooldown: ROLL_COOLDOWN })}
+          </div>
+          {reason && <div className="tooltip-reason">{reason}</div>}
+        </div>
+      )}
     </div>
   );
 }

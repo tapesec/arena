@@ -58,6 +58,9 @@ export interface SelfFrame extends UnitFrame {
   comboAbility: string;
   // Le Gardien fonce sur sa cible (Charge).
   charging: boolean;
+  // Roulade en cours, et recharge de la roulade (voir cooldownEnds) : case de la roulade sur la barre.
+  rolling: boolean;
+  rooted: boolean;
 }
 
 export interface TargetFrame extends UnitFrame {
@@ -139,6 +142,8 @@ export interface GameActions {
   selectSelf: () => void;
   // Lancer une compétence (clic sur la barre d'action).
   castAbility: (abilityId: string) => void;
+  // Roulade (clic sur sa case, comme Espace).
+  roll: () => void;
 }
 
 const ERROR_DISPLAY_MS = 2000;

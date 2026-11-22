@@ -69,6 +69,8 @@ export const PlayerState = schema(
     comboTarget: t.string().default(""),
     // Le Gardien fonce sur sa cible (Charge).
     charging: t.boolean().default(false),
+    // Roulade en cours (voir ROLL_DURATION) : invulnérable, mené par le serveur.
+    rolling: t.boolean().default(false),
     // Chant du Barde en cours (id de la compétence : speedSong, secondWind ; "" si aucun).
     song: t.string().default(""),
     // Incantation en cours ("" si aucune), visible de tous pour pouvoir l'interrompre.

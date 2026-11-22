@@ -45,6 +45,8 @@ export class PlayerRuntime {
   stickMoving = false;
   // Charge en cours : cible, temps écoulé, temps passé bloqué, dégâts et stun à l'arrivée.
   charge: { targetId: string; elapsed: number; stuck: number; damage: number; stun: number } | null = null;
+  // Roulade en cours : direction (normalisée) et temps écoulé ; invulnérable tant qu'elle dure.
+  roll: { x: number; z: number; elapsed: number } | null = null;
   // Bilan de la partie (récap de l'écran de fin).
   stats = emptyStats();
 

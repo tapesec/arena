@@ -21,7 +21,7 @@ import {
 } from "@arena/shared";
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime } from "./PlayerRuntime";
-import { PlayerState } from "./state";
+import { EffectState, PlayerState } from "./state";
 
 const DT = 0.05;
 
@@ -470,6 +470,55 @@ describe("Bilan de la partie", () => {
     world.cast(lame, "backstab", pretre);
     assert.ok(!pretre.alive);
     assert.deepEqual(lame.stats, { kills: 1, damage: 1, healing: 0, controls: 0 });
+  });
+});
+
+describe("Roulade", () => {
+  it("4 m tout droit en 0,4 s, devant sans touche tenue, puis recharge de 8 s", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    const start = { x: lame.state.x, z: lame.state.z };
+    world.combat.roll("l");
+    assert.ok(lame.state.rolling);
+    world.run(0.45);
+    assert.ok(!lame.state.rolling);
+    assert.ok(Math.abs(lame.state.z - start.z - 4) < 1e-6 && Math.abs(lame.state.x - start.x) < 1e-6, `${lame.state.x}, ${lame.state.z}`);
+    world.combat.roll("l");
+    assert.equal(world.errors.at(-1)?.code, "rollCooldown");
+    world.run(7.6);
+    world.combat.roll("l");
+    assert.ok(lame.state.rolling);
+  });
+
+  it("dans la direction des touches tenues, pleine distance sous snare", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    world.combat.setInput("l", { ...NO_INPUT, down: true });
+    world.combat.roll("l");
+    lame.input = NO_INPUT;
+    const snared = world.spawn("s", "lame", 0, 4, 0, 0);
+    snared.effects.push({ kind: "snare", remaining: 5, duration: 5, sourceId: "x", value: 0.5, magic: false, view: new EffectState() } as never);
+    world.combat.roll("s");
+    world.run(0.45);
+    assert.ok(Math.abs(lame.state.z + 4) < 1e-6, `${lame.state.z}`);
+    assert.ok(Math.abs(snared.state.z - 4) < 1e-6, `${snared.state.z}`);
+  });
+
+  it("esquive coups et effets hostiles pendant la roulade, pas après", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, Math.PI);
+    const gardien = world.spawn("g", "gardien", 1, 0, -1.5, 0);
+    world.combat.roll("p");
+    world.cast(gardien, "shieldBash", pretre);
+    world.run(0.1);
+    assert.equal(pretre.state.hp, pretre.state.maxHp);
+    assert.ok(!pretre.has("stun"));
+    assert.ok(world.eventsOf("evaded").some((e) => e.targetId === "p"));
+  });
+
+  it("impossible sous root, mez ou stun", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    lame.effects.push({ kind: "root", remaining: 5, duration: 5, sourceId: "x", value: 0, magic: false, view: new EffectState() } as never);
+    world.combat.roll("l");
+    assert.ok(!lame.state.rolling);
+    assert.equal(world.errors.at(-1)?.code, "rooted");
   });
 });
 

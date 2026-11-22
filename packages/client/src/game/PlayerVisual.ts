@@ -51,6 +51,7 @@ export interface PlayerView {
   comboAbility: string;
   comboTarget: string;
   charging: boolean;
+  rolling: boolean;
   castAbility: string;
   castElapsed: number;
   castDuration: number;
@@ -106,6 +107,8 @@ export class PlayerVisual {
   private disposed = false;
   // Vitesse mesurée à l'écran, dans le repère du personnage.
   private lastX: number;
+  // Roulade en cours à l'image précédente : l'animation part au début de la roulade.
+  private wasRolling = false;
   private lastZ: number;
   private lastTime = performance.now();
   private forwardSpeed = 0;
@@ -309,6 +312,8 @@ export class PlayerVisual {
   }
 
   private updateAnimation() {
+    if (this.state.rolling && !this.wasRolling) this.animator?.roll();
+    this.wasRolling = this.state.rolling;
     const now = performance.now();
     const dt = Math.max((now - this.lastTime) / 1000, 1e-3);
     this.lastTime = now;

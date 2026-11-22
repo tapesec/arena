@@ -178,7 +178,10 @@ export const en = {
   "help.target": "Tab: next enemy · click: target · F1: target self · Esc: cancel",
   "help.lock": "F: face the target · C: follow it (stick)",
   "help.attack": "R: toggle auto-attack · mouse wheel: zoom · V: reset camera",
-  "help.abilities": "1–8: abilities",
+  "help.abilities": "1–8: abilities · Space: roll",
+  "roll.name": "Roll",
+  "roll.key": "Space",
+  "roll.description": "Roll {distance} m in the direction of your movement keys (forward if none) in {duration} s: nothing hostile can touch you during the roll. Interrupts casting. Not possible while mezzed, stunned, rooted or in Rampart. Cooldown: {cooldown} s.",
   "help.orders": "Hold the mouse wheel: orders to your bots",
 
   // Raisons d'un refus (serveur et infobulle de la barre d'action), voir GameErrorCode
@@ -195,6 +198,8 @@ export const en = {
   "error.dead": "You are dead",
   "error.incapacitated": "You are incapacitated",
   "error.charging": "You are charging",
+  "error.rolling": "You are rolling",
+  "error.rollCooldown": "Roll is on cooldown",
   "error.chargeInterrupted": "Charge interrupted",
   "error.rooted": "Can't do that while rooted",
   "error.alreadyCasting": "Already casting",

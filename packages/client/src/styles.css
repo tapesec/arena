@@ -226,6 +226,10 @@ body,
   pointer-events: auto;
 }
 
+/* Roulade : à part, au bout de la barre (voir RollSlot). */
+.slot.slot-roll { margin-left: 10px; color: #e8dcc0; }
+.slot-roll .slot-key { font-size: 9px; }
+
 /* Case de compétence : icône à la couleur de son école (couleur du texte), touche, coût. */
 .slot {
   position: relative;
