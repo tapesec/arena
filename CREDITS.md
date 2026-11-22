@@ -11,7 +11,7 @@ importées par `scripts/import-assets.sh`.
   [soundimage.org](https://soundimage.org). Gratuite à condition de créditer l'auteur : crédit affiché sur l'écran
   d'accueil du jeu.
 
-- **Icônes de la barre d'action et des classes** — [game-icons.net](https://game-icons.net), licence CC BY 3.0 : Lorc,
+- **Icônes de la barre d'action et des classes** — [game-icons.net](https://game-icons.net), licence [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) : Lorc,
   Delapouite, Zeromancer, Sbed, Felbrigg, Skoll et DarkZaitzev. Fond retiré et couleur adaptée. Détail par compétence
   et par classe dans `packages/client/src/icons/SOURCES.txt`. Crédit affiché sur l'écran d'accueil du jeu.
 
