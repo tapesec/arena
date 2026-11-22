@@ -141,7 +141,7 @@ function HomeScreen() {
             soundimage.org
           </a>
           <br />
-          {t("home.creditsIcons")} Lorc, Delapouite, Zeromancer, Sbed, Felbrigg {t("home.and")} Skoll,{" "}
+          {t("home.creditsIcons")} Lorc, Delapouite, Zeromancer, Sbed, Felbrigg, Skoll {t("home.and")} DarkZaitzev,{" "}
           <a href="https://game-icons.net" target="_blank" rel="noreferrer">
             game-icons.net
           </a>{" "}
