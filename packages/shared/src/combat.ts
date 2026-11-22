@@ -191,7 +191,8 @@ export interface PlayerStats {
 export const emptyStats = (): PlayerStats => ({ kills: 0, damage: 0, healing: 0, controls: 0 });
 
 // Héros de la partie : le joueur de l'équipe gagnante qui a le plus de points (décidé le 2026-11-22). Une élimination
-// vaut 1000 points, un point de dégâts ou de soin 1 point, un contrôle 150 points.
+// vaut 1000 points, un point de dégâts ou de soin 1 point, un contrôle 150 points. À égalité, le plus d'éliminations
+// puis le plus de dégâts ; personne n'est héros sans aucun point.
 export const HERO_POINTS = { kill: 1000, damage: 1, healing: 1, control: 150 };
 
 export function heroScore(stats: PlayerStats): number {
@@ -207,14 +208,25 @@ export interface MatchSummaryPlayer extends PlayerStats {
   team: number;
   classId: string;
   alive: boolean;
+  // A quitté la partie pendant la préparation ou le combat (ses stats restent dans le récap).
+  left?: boolean;
 }
 
 export interface MatchSummary {
-  // Durée du combat, en secondes (sans la préparation).
-  seconds: number;
+  // Durée du combat, en secondes (sans la préparation) ; null si la partie a fini avant le combat.
+  seconds: number | null;
   players: MatchSummaryPlayer[];
-  // Héros de la partie (voir heroScore), null s'il n'y a pas de vainqueur.
+  // Héros de la partie (voir pickHero), null s'il n'y en a pas.
   heroId: string | null;
+  // Élimination qui a terminé la partie, null si elle a fini autrement (départs).
+  finalKill: KillEvent | null;
+}
+
+export function pickHero(players: MatchSummaryPlayer[], winner: number): string | null {
+  const [hero] = players
+    .filter((p) => p.team === winner && heroScore(p) > 0)
+    .sort((a, b) => heroScore(b) - heroScore(a) || b.kills - a.kills || b.damage - a.damage);
+  return hero?.id ?? null;
 }
 
 export type InterruptReason = "damage" | "move" | "silence" | "cc" | "taunt";

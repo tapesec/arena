@@ -137,6 +137,7 @@ export const fr: Record<TextKey, string> = {
   "end.colControls": "Contr.",
   "end.colControlsTitle": "Contrôles posés (mez, stun, root)",
   "end.hero": "Héros",
+  "end.left": "parti",
   "end.newMatch": "Nouvelle partie",
   "end.home": "Retour à l'accueil",
 

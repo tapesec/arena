@@ -109,6 +109,9 @@ export class CombatSystem {
     return this.time;
   }
 
+  // Dernière élimination et son instant (le récap de fin dit si c'est elle qui a terminé la partie).
+  lastKill: { event: KillEvent; time: number } | null = null;
+
   constructor(
     private out: CombatOutput,
     private random: () => number = Math.random,
@@ -744,6 +747,8 @@ export class CombatSystem {
       case "resurrect":
         if (target.alive) break;
         target.state.hp = Math.round(target.state.maxHp * effect.hpRatio);
+        // Les points de vie rendus par la résurrection comptent dans les soins du récap.
+        caster.stats.healing += target.state.hp;
         this.emit({ kind: "resurrect", sourceId: caster.id, targetId: target.id, abilityId: ability.id });
         break;
       case "buff":
@@ -838,8 +843,9 @@ export class CombatSystem {
     const hpBefore = state.hp;
     state.hp = Math.max(0, state.hp - amount);
     const killed = state.hp === 0;
-    if (source.state.team !== state.team) source.stats.damage += hpBefore - state.hp;
-    if (killed) source.stats.kills++;
+    const enemy = source.state.team !== state.team;
+    if (enemy) source.stats.damage += hpBefore - state.hp;
+    if (killed && enemy) source.stats.kills++;
     this.emit({ kind: "damage", sourceId: source.id, targetId: target.id, abilityId, amount, crit, killed, ...(dot && { dot }) });
 
     if (killed) {
@@ -854,6 +860,7 @@ export class CombatSystem {
       };
       const standing = [...this.players.values()].filter((p) => p.alive && p.state.team === state.team);
       if (standing.length === 1) kill.lastStanding = standing[0].state.name;
+      this.lastKill = { event: kill, time: this.time };
       this.out.announce?.("kill", kill);
       return;
     }

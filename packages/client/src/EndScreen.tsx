@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MatchSummaryPlayer } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { SWORDS, classIcon } from "./classIcons";
@@ -23,10 +23,10 @@ const icon = (svg: string, className = "end-icon") => <span className={className
 export function EndScreen() {
   const match = useHudStore((s) => s.match);
   const summary = useHudStore((s) => s.summary);
-  const finalKill = useHudStore((s) => s.kills[0]);
   const joinGame = useHudStore((s) => s.joinGame);
   const leaveGame = useHudStore((s) => s.leaveGame);
   const [shown, setShown] = useState(false);
+  const newMatch = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const timer = setTimeout(() => setShown(true), END_DELAY_MS);
     return () => clearTimeout(timer);
@@ -34,7 +34,10 @@ export function EndScreen() {
   if (!match || !shown) return null;
 
   const victory = match.winner === match.team;
-  const title = t(match.winner === -1 ? "end.draw" : victory ? "end.victory" : "end.defeat");
+  const outcome = match.winner === -1 ? "draw" : victory ? "victory" : "defeat";
+  const title = t(`end.${outcome}`);
+  const finalKill = summary?.finalKill;
+  const isAlly = (team: number) => (team === match.team ? "kill-ally" : "kill-enemy");
   const allyRows = summary?.players.filter((p) => p.team === match.team) ?? [];
   const enemyRows = summary?.players.filter((p) => p.team !== match.team) ?? [];
   const alive = (rows: MatchSummaryPlayer[], fallback: number) => (summary ? rows.filter((p) => p.alive).length : fallback);
@@ -50,12 +53,14 @@ export function EndScreen() {
   );
 
   return (
-    <div className={`end-overlay ${victory ? "victory" : "defeat"}`}>
+    <div className={`end-overlay ${outcome}`} role="dialog" aria-modal="true" aria-labelledby="end-title">
       <div className="end-crest">
         <div className="end-rod" />
         <div className="end-banner">
           <div className="end-emblem">{icon(SWORDS)}</div>
-          <h1 className="end-title">{title}</h1>
+          <h1 className="end-title" id="end-title">
+            {title}
+          </h1>
         </div>
       </div>
       {match.winner !== -1 && (
@@ -75,7 +80,7 @@ export function EndScreen() {
               {pips(alliesAlive, match.teamSize, "kill-ally")} {pips(enemiesAlive, match.teamSize, "kill-enemy")}
             </span>
           </div>
-          {summary && (
+          {summary?.seconds != null && (
             <div className="end-fact">
               <span className="end-fact-key">{t("end.factDuration")}</span>
               <span className="end-fact-value">
@@ -88,11 +93,11 @@ export function EndScreen() {
             <div className="end-fact">
               <span className="end-fact-key">{t("end.factFinal")}</span>
               <span className="end-fact-value">
-                <span className={finalKill.killerAlly ? "kill-ally" : "kill-enemy"}>{finalKill.killerName}</span>
+                <span className={isAlly(finalKill.killerTeam)}>{finalKill.killerName}</span>
               </span>
               <span className="end-fact-note">
                 {icon(killIcon(finalKill.abilityId))} {killMove(finalKill.abilityId)} {t("end.on")}{" "}
-                <span className={finalKill.victimAlly ? "kill-ally" : "kill-enemy"}>{finalKill.victimName}</span>
+                <span className={isAlly(finalKill.victimTeam)}>{finalKill.victimName}</span>
               </span>
             </div>
           )}
@@ -105,8 +110,11 @@ export function EndScreen() {
         )}
       </div>
 
-      <div className="end-actions">
+      {/* Focus sur « Nouvelle partie » dès que les boutons apparaissent (invisibles avant, ils ne peuvent pas le
+          prendre) : Entrée relance une partie, Tab passe au lien. */}
+      <div className="end-actions" onAnimationEnd={() => newMatch.current?.focus()}>
         <button
+          ref={newMatch}
           className="end-button"
           onClick={() => {
             audio.play(UI_SOUNDS.click);
@@ -127,22 +135,23 @@ export function EndScreen() {
 function TeamTable(props: { title: string; side: string; rows: MatchSummaryPlayer[]; survivors: number; summary: SummaryFrame }) {
   const { title, side, rows, summary } = props;
   const sorted = [...rows].sort((a, b) => b.kills - a.kills || b.damage - a.damage);
+  const headingId = `end-team-${side}`;
   return (
     <div className={`end-team ${side}`}>
-      <h2>
+      <h2 id={headingId}>
         {title} <small>{survivors(props.survivors)}</small>
       </h2>
-      <table>
+      <table aria-labelledby={headingId}>
         <thead>
           <tr>
             <th scope="col">{t("end.colPlayer")}</th>
-            <th scope="col" title={t("end.colKillsTitle")}>
-              {t("end.colKills")}
+            <th scope="col">
+              <abbr title={t("end.colKillsTitle")}>{t("end.colKills")}</abbr>
             </th>
             <th scope="col">{t("end.colDamage")}</th>
             <th scope="col">{t("end.colHealing")}</th>
-            <th scope="col" title={t("end.colControlsTitle")}>
-              {t("end.colControls")}
+            <th scope="col">
+              <abbr title={t("end.colControlsTitle")}>{t("end.colControls")}</abbr>
             </th>
           </tr>
         </thead>
@@ -152,16 +161,19 @@ function TeamTable(props: { title: string; side: string; rows: MatchSummaryPlaye
             const classes = [p.alive ? "" : "dead", p.id === summary.selfId ? "me" : "", hero ? "hero" : ""].filter(Boolean).join(" ");
             return (
               <tr key={p.id} className={classes}>
-                <td className="end-who">
-                  {icon(classIcon(p.classId))}
-                  <span>{p.name}</span>
-                  {hero && <em className="end-hero">{t("end.hero")}</em>}
+                <td>
+                  <div className="end-who">
+                    {icon(classIcon(p.classId))}
+                    <span className="end-name">{p.name}</span>
+                    {p.left && <em className="end-left">{t("end.left")}</em>}
+                    {hero && <em className="end-hero">{t("end.hero")}</em>}
+                  </div>
                 </td>
                 <td>
                   <b>{p.kills}</b>
                 </td>
                 <td>{formatNumber(p.damage)}</td>
-                <td>{p.healing ? formatNumber(p.healing) : "–"}</td>
+                <td>{formatNumber(p.healing)}</td>
                 <td>{p.controls}</td>
               </tr>
             );

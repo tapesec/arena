@@ -1,4 +1,5 @@
 import { NO_INPUT, type MoveInput } from "@arena/shared";
+import { useHudStore } from "../store";
 
 // event.code désigne la touche physique, indépendamment de la disposition :
 // "KeyW" est la touche Z sur un clavier AZERTY, W sur un QWERTY.
@@ -62,6 +63,8 @@ export class KeyboardInput {
   }
 
   private handleKeyDown = (event: KeyboardEvent) => {
+    // Partie finie : le clavier sert aux boutons de l'écran de fin (Tab, Entrée), plus au personnage.
+    if (useHudStore.getState().match?.phase === "ended") return;
     const action = ACTION_BINDINGS[event.code];
     if (action) {
       // Sans ça, Tab déplacerait le focus du navigateur.

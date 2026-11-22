@@ -143,9 +143,10 @@ export const en = {
   "end.colKillsTitle": "Eliminations",
   "end.colDamage": "Damage",
   "end.colHealing": "Healing",
-  "end.colControls": "CC",
+  "end.colControls": "Ctrl",
   "end.colControlsTitle": "Crowd control applied (mez, stun, root)",
   "end.hero": "Hero",
+  "end.left": "left",
   "end.newMatch": "New match",
   "end.home": "Main menu",
 

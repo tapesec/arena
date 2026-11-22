@@ -11,6 +11,8 @@ import {
   NO_INPUT,
   STICK_DISTANCE,
   maxResource,
+  pickHero,
+  emptyStats,
   type ClassId,
   type CombatEvent,
   type InterruptEvent,
@@ -471,6 +473,28 @@ describe("Bilan de la partie", () => {
   });
 });
 
+describe("Héros de la partie", () => {
+  const player = (id: string, team: number, stats: Partial<ReturnType<typeof emptyStats>>) => ({
+    id, name: id, team, classId: "lame", alive: true, ...emptyStats(), ...stats,
+  });
+
+  it("le meilleur score de l'équipe gagnante, départagé par les éliminations", () => {
+    const players = [
+      player("a", 0, { damage: 1000 }),
+      player("b", 0, { kills: 1 }),
+      player("c", 1, { kills: 5 }),
+    ];
+    assert.equal(pickHero(players, 0), "b");
+    assert.equal(pickHero(players, 1), "c");
+  });
+
+  it("personne sans point, ni sans vainqueur", () => {
+    const players = [player("a", 0, {}), player("b", 1, { kills: 2 })];
+    assert.equal(pickHero(players, 0), null);
+    assert.equal(pickHero(players, -1), null);
+  });
+});
+
 describe("Prêtre", () => {
   it("le buff de vie disparaît à la mort du Prêtre", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);
@@ -501,6 +525,8 @@ describe("Prêtre", () => {
     world.run(4.1);
     assert.equal(ally.state.hp, 650);
     assert.ok(!ally.has("buffStrength"));
+    // Les points de vie rendus comptent dans les soins du récap.
+    assert.equal(pretre.stats.healing, 650);
   });
 
   it("le Soin sans allié ciblé soigne le Prêtre lui-même", () => {

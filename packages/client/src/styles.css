@@ -1070,7 +1070,7 @@ body,
 }
 
 /* --- Écran de fin : « La Bannière » et le récap complet (voir EndScreen.tsx). Tailles en --u, un centième de la
-   largeur de l'écran (moins sur un écran étroit en hauteur), pour que tout tienne sans défiler. --- */
+   largeur de l'écran (moins sur un écran peu haut), avec des minimums lisibles : sur un petit écran, il défile. --- */
 .end-overlay {
   --u: min(1vw, 1.78vh);
   --end-gold: #ffd76a;
@@ -1097,13 +1097,18 @@ body,
   background: radial-gradient(ellipse at 50% 40%, rgba(8, 8, 10, 0.45), rgba(0, 0, 0, 0.9) 85%);
   backdrop-filter: grayscale(0.9) brightness(0.55);
 }
+/* Égalité (les deux équipes tombent au même instant) : décor éteint, bannière neutre. */
+.end-overlay.draw {
+  background: radial-gradient(ellipse at 50% 40%, rgba(8, 8, 10, 0.4), rgba(0, 0, 0, 0.85) 85%);
+  backdrop-filter: grayscale(0.6) brightness(0.65);
+}
 @keyframes end-in { from { opacity: 0; } to { opacity: 1; } }
 
 .end-crest { position: relative; display: grid; justify-items: center; }
 .end-banner {
   position: relative;
-  width: calc(var(--u) * 22);
-  padding: calc(var(--u) * 1.4) calc(var(--u) * 1.5) calc(var(--u) * 4.5);
+  width: max(190px, calc(var(--u) * 22));
+  padding: max(12px, calc(var(--u) * 1.4)) calc(var(--u) * 1.5) max(38px, calc(var(--u) * 4.5));
   display: grid;
   justify-items: center;
   transform-origin: top center;
@@ -1117,6 +1122,7 @@ body,
 }
 /* La bannière du vainqueur : la sienne (bleue) en victoire, celle d'en face (rouge) en défaite. */
 .defeat .end-banner { --end-cloth: #6e1d1d; }
+.draw .end-banner { --end-cloth: #3b3f46; }
 .end-banner::before {
   content: "";
   position: absolute;
@@ -1130,16 +1136,16 @@ body,
   top: calc(var(--u) * -0.2);
   left: 50%;
   translate: -50% 0;
-  width: calc(var(--u) * 26);
-  height: var(--u);
+  width: max(225px, calc(var(--u) * 26));
+  height: max(8px, var(--u));
   border-radius: calc(var(--u) * 0.5);
   background: linear-gradient(180deg, #8a6a3a, #4a3418);
   box-shadow: 0 calc(var(--u) * 0.3) calc(var(--u) * 0.6) rgba(0, 0, 0, 0.6);
   z-index: 2;
 }
 .end-emblem {
-  width: calc(var(--u) * 4.4);
-  height: calc(var(--u) * 4.4);
+  width: max(38px, calc(var(--u) * 4.4));
+  height: max(38px, calc(var(--u) * 4.4));
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1150,7 +1156,7 @@ body,
 .end-emblem .end-icon { width: 58%; height: 58%; }
 .end-title {
   margin: calc(var(--u) * 1.2) 0 0;
-  font: 900 calc(var(--u) * 3) / 1 "Cinzel", Georgia, serif;
+  font: 900 max(24px, calc(var(--u) * 3)) / 1 "Cinzel", Georgia, serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1164,13 +1170,14 @@ body,
   filter: drop-shadow(0 calc(var(--u) * 0.3) calc(var(--u) * 0.6) rgba(0, 0, 0, 0.9));
   animation-name: end-title-gold;
 }
-.defeat .end-title { color: #efe6d4; text-shadow: 0 calc(var(--u) * 0.4) calc(var(--u) * 1.4) #000; }
+.defeat .end-title, .draw .end-title { color: #efe6d4; text-shadow: 0 calc(var(--u) * 0.4) calc(var(--u) * 1.4) #000; }
 @keyframes end-unroll { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes end-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: 0.8deg; } }
-@keyframes end-title { from { opacity: 0; letter-spacing: 0.5em; filter: blur(6px); } to { opacity: 1; letter-spacing: 0.12em; filter: none; } }
+/* Entrée resserrée (0.3em) : un titre plus espacé dépasserait de la bannière, qui le coupe. */
+@keyframes end-title { from { opacity: 0; letter-spacing: 0.3em; filter: blur(6px); } to { opacity: 1; letter-spacing: 0.12em; filter: none; } }
 /* Titre doré : l'animation finit sur son ombre (et non sur filter: none, qui l'effacerait). */
 @keyframes end-title-gold {
-  from { opacity: 0; letter-spacing: 0.5em; filter: blur(6px); }
+  from { opacity: 0; letter-spacing: 0.3em; filter: blur(6px); }
   to { opacity: 1; letter-spacing: 0.12em; filter: drop-shadow(0 calc(var(--u) * 0.3) calc(var(--u) * 0.6) rgba(0, 0, 0, 0.9)); }
 }
 
@@ -1194,6 +1201,7 @@ body,
   justify-items: center;
   gap: calc(var(--u) * 0.35);
   min-width: calc(var(--u) * 13);
+  max-width: 100%;
   padding: calc(var(--u) * 0.8) calc(var(--u) * 1.4);
   background: rgba(10, 9, 8, 0.72);
   border-top: 1px solid rgba(255, 215, 106, 0.35);
@@ -1214,9 +1222,11 @@ body,
   font: 500 max(11px, calc(var(--u) * 1.05)) / 1.2 system-ui, sans-serif;
   color: #c9c3b4;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: calc(var(--u) * 0.4);
-  white-space: nowrap;
+  text-align: center;
 }
 .end-fact-note .end-icon { width: 1.2em; height: 1.2em; color: var(--end-gold); }
 .end-pips { display: flex; gap: calc(var(--u) * 0.25); margin-inline: max(4px, calc(var(--u) * 0.4)); }
@@ -1237,16 +1247,22 @@ body,
   justify-content: space-between;
 }
 .end-team h2 small { font: 500 max(11px, calc(var(--u) * 0.95)) system-ui, sans-serif; color: #9ba59d; letter-spacing: 0.04em; text-transform: none; }
-.end-team table { width: 100%; border-collapse: collapse; font: 500 max(11px, calc(var(--u) * 1.02)) / 1 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.end-team table { width: 100%; table-layout: fixed; border-collapse: collapse; font: 500 max(11px, calc(var(--u) * 1.02)) / 1 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .end-team th { font: 600 max(9px, calc(var(--u) * 0.78)) / 1 system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: #9ba59d; text-align: right; padding: calc(var(--u) * 0.3) calc(var(--u) * 0.35); }
 .end-team th:first-child { text-align: left; }
+/* Colonnes chiffrées de largeur fixe : le nom prend le reste, tronqué s'il est trop long. */
+.end-team th:not(:first-child) { width: 4.6em; }
+.end-team th:nth-child(3), .end-team th:nth-child(4) { width: 5.4em; }
+.end-team abbr { text-decoration: none; cursor: help; }
 .end-team td { padding: calc(var(--u) * 0.32) calc(var(--u) * 0.35); text-align: right; border-top: 1px solid rgba(255, 255, 255, 0.06); color: #ddd6c6; }
 .end-team td b { color: #ebe6d9; }
-.end-team td.end-who { text-align: left; display: flex; align-items: center; gap: calc(var(--u) * 0.45); white-space: nowrap; color: var(--c); min-width: 0; }
-.end-who span:not(.end-icon) { overflow: hidden; text-overflow: ellipsis; }
+.end-team td:first-child { text-align: left; }
+.end-who { display: flex; align-items: center; gap: calc(var(--u) * 0.45); white-space: nowrap; color: var(--c); min-width: 0; }
+.end-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .end-who .end-icon { width: 1.2em; height: 1.2em; opacity: 0.85; }
-.end-team tr.dead .end-who span:not(.end-icon) { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.35); opacity: 0.75; }
-.end-team tr.me .end-who span:not(.end-icon) { color: var(--end-gold); }
+.end-team tr.dead .end-name { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.35); opacity: 0.75; }
+.end-team tr.me .end-name { color: var(--end-gold); }
+.end-left { flex: none; font-style: normal; font-size: 0.85em; color: #9ba59d; }
 .end-team tr.hero td { background: rgba(255, 215, 106, 0.1); }
 .end-hero {
   font: 700 max(9px, calc(var(--u) * 0.72)) / 1 "Cinzel", Georgia, serif;
@@ -1257,9 +1273,12 @@ body,
   background: var(--end-gold);
   padding: calc(var(--u) * 0.18) calc(var(--u) * 0.4);
   border-radius: calc(var(--u) * 0.2);
+  flex: none;
 }
 
-.end-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: calc(var(--u) * 1.6); animation: end-fade-up 0.4s 1.6s ease-out both; }
+/* Les boutons restent invisibles, donc non cliquables, jusqu'à leur apparition : pas de nouvelle partie lancée à l'aveugle. */
+.end-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: calc(var(--u) * 1.6); animation: end-actions-in 0.4s 1.6s ease-out both; }
+@keyframes end-actions-in { from { opacity: 0; transform: translateY(8px); visibility: hidden; } to { opacity: 1; transform: none; visibility: visible; } }
 .end-button {
   font: 700 max(13px, calc(var(--u) * 1.35)) / 1 "Cinzel", Georgia, serif;
   letter-spacing: 0.1em;
@@ -1277,7 +1296,7 @@ body,
 .end-actions .link-button { color: #c9c3b4; font-size: max(13px, calc(var(--u) * 1.1)); }
 
 /* Écran étroit : les deux tableaux l'un sous l'autre. */
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .end-teams { grid-template-columns: 1fr; }
 }
 

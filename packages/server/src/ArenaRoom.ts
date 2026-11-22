@@ -15,8 +15,8 @@ import {
   maxResource,
   spawnPosition,
   type ClassId,
-  heroScore,
   type MatchSummary,
+  pickHero,
   type MatchPhase,
   type MoveInput,
   NO_INPUT,
@@ -156,6 +156,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private elapsedMs = 0;
   // Début du combat (après la préparation), en temps de simulation : durée affichée sur l'écran de fin ; null avant.
   private fightStartedAt: number | null = null;
+  // Joueurs partis pendant la préparation ou le combat : ils restent dans le récap de fin.
+  private departed: PlayerRuntime[] = [];
 
   // --- Observabilité (telemetry.ts) ---
   private actions = new ActionCounter();
@@ -167,21 +169,25 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private activeHumans = 0;
   // Joueurs dont le résultat est déjà enregistré (départ, remplacement par un bot).
   private reported = new Set<string>();
-  // Récap de l'écran de fin : bilan de chaque joueur encore dans la partie, et le héros de l'équipe gagnante.
+  // Récap de l'écran de fin : bilan de chaque joueur de la partie (partis compris), le héros de l'équipe gagnante et
+  // l'élimination qui a terminé la partie (de ce tic : sinon, la partie a fini par des départs).
   private summary(winner: number): MatchSummary {
-    const players = [...this.combat.players.values()].map((p) => ({
+    const row = (p: PlayerRuntime, left: boolean) => ({
       id: p.id,
       name: p.state.name,
       team: p.state.team,
       classId: p.state.classId,
-      alive: p.alive,
+      alive: !left && p.alive,
+      ...(left && { left }),
       ...p.stats,
-    }));
-    const hero = players.filter((p) => p.team === winner).sort((a, b) => heroScore(b) - heroScore(a))[0];
+    });
+    const players = [...[...this.combat.players.values()].map((p) => row(p, false)), ...this.departed.map((p) => row(p, true))];
+    const lastKill = this.combat.lastKill;
     return {
-      seconds: this.fightStartedAt === null ? 0 : Math.round((this.elapsedMs - this.fightStartedAt) / 1000),
+      seconds: this.fightStartedAt === null ? null : Math.round((this.elapsedMs - this.fightStartedAt) / 1000),
       players,
-      heroId: hero?.id ?? null,
+      heroId: pickHero(players, winner),
+      finalKill: lastKill && lastKill.time === this.combat.now ? lastKill.event : null,
     };
   }
 
@@ -327,6 +333,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     if (player && !player.isBot && this.inMatch) this.reportPlayer(client.sessionId, player, this.shuttingDown ? "arret" : "parti");
     this.browsers.delete(client.sessionId);
     this.perf.delete(client.sessionId);
+    const runtime = this.combat.players.get(client.sessionId);
+    if (runtime && this.inMatch) this.departed.push(runtime);
     this.combat.remove(client.sessionId);
     this.state.players.delete(client.sessionId);
     this.state.loading.delete(client.sessionId);
