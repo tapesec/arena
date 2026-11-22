@@ -1,7 +1,19 @@
 {
+  "abilityReady": {
+    "recipe": ""
+  },
+  "absorb": {
+    "recipe": ""
+  },
   "bouclier_blocage_sourd": {
     "recipe": "impactPlate_heavy_002",
     "volume": 0.95
+  },
+  "classSelect": {
+    "recipe": "UI_Item_Select_02"
+  },
+  "click": {
+    "recipe": "UI_Item_Select_02"
   },
   "death": {
     "recipe": "jeu:maleDeath"
@@ -15,5 +27,23 @@
   },
   "killEnemy": {
     "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14"
+  },
+  "lowHealth": {
+    "recipe": ""
+  },
+  "mezzed": {
+    "recipe": ""
+  },
+  "rooted": {
+    "recipe": ""
+  },
+  "stepDirt": {
+    "recipe": "Footstep_Dirt_00"
+  },
+  "stepGrass": {
+    "recipe": "footstep_grass_004"
+  },
+  "stepStone": {
+    "recipe": "footstep_concrete_001"
   }
 }
