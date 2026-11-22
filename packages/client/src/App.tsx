@@ -104,6 +104,14 @@ function HomeScreen() {
   return (
     <div className="screen home-screen">
       <LanguageMenu />
+      {/* Outils de réglage, en développement seulement (pages absentes de la version de production). */}
+      {import.meta.env.DEV && (
+        <nav className="home-dev-tools" aria-label="Outils de développement">
+          <a href="/animation-lab.html">Éditeur</a>
+          <a href="/animations.html">Animations</a>
+          <a href="/soundboard.html">Sons</a>
+        </nav>
+      )}
       <header className="home-title">
         <h1 className="home-logo">Win or Wipe</h1>
         <p className="home-tagline">{t("home.tagline")}</p>

@@ -2312,6 +2312,24 @@ body,
   box-shadow: 0 0 18px rgba(255, 215, 106, 0.55);
 }
 
+/* Liens vers les outils de réglage (développement seulement). */
+.home-dev-tools {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  display: flex;
+  gap: 14px;
+  padding: 6px 12px;
+  border: 1px dashed #f0b44c;
+  border-radius: 6px;
+  background: rgba(10, 12, 18, 0.75);
+  font-size: 13px;
+}
+
+.home-dev-tools a {
+  color: #f0b44c;
+}
+
 .home-credits-toggle {
   position: absolute;
   left: 16px;
