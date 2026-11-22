@@ -80,6 +80,7 @@ import { errorText } from "../abilityBar";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
+import { DOT_STRENGTH, HitGlow, hitStrength } from "./HitGlow";
 import { TargetPointer, edgePoint } from "./TargetPointer";
 import { MAGNET_RADIUS, bestCandidate, rankEnemies, type EnemyCandidate, type EnemyRanking, type TargetCandidate } from "./targeting";
 import { CharacterAssets } from "./characterAssets";
@@ -204,6 +205,7 @@ export class Game {
   private sightLineDashes = 0;
   // Flèche au bord de l'écran vers la cible hors champ.
   private targetPointer: TargetPointer;
+  private hitGlow: HitGlow;
   // Cadrage de combat : décalage actuel du point visé par la caméra par rapport au joueur.
   private framingOffset = new Vector3();
   private lastHudRefresh = 0;
@@ -243,6 +245,7 @@ export class Game {
     });
     this.overlay = new WorldOverlay(overlayElement, this.scene);
     this.targetPointer = new TargetPointer(overlayElement);
+    this.hitGlow = new HitGlow(overlayElement);
     this.spellEffects = new SpellEffects(this.scene);
     this.village = new Village(this.scene);
     // Le chargement attend que l'écran de choix ait affiché ses personnages (voir lobbyPriority) : préchargement, mais
@@ -332,6 +335,7 @@ export class Game {
     this.disposed = true;
     this.unsubscribeMovementMode();
     this.targetPointer.dispose();
+    this.hitGlow.dispose();
     clearInterval(this.pingTimer);
     clearInterval(this.perfTimer);
     useHudStore.getState().setActions(null);
@@ -563,6 +567,22 @@ export class Game {
     });
   }
 
+  // Coup reçu : lueur rouge au bord de l'écran, du côté de l'attaquant pour un coup de mêlée qu'on voit venir, tout
+  // autour sinon (sort, dégât sur la durée, attaquant caché).
+  private showHitGlow(event: CombatEvent) {
+    const self = this.self;
+    if (!self || !event.amount) return;
+    const ability = getAbility(event.abilityId);
+    const melee = !event.dot && (event.abilityId === AUTO_ATTACK_ID || !!ability?.melee || !!ability?.meleeStrike);
+    const source = melee ? this.players.get(event.sourceId) : undefined;
+    let relative: number | null = null;
+    if (source && source !== self) {
+      const from = source.root.position.subtract(self.root.position);
+      if (from.x !== 0 || from.z !== 0) relative = Math.atan2(from.x, from.z) - this.camera.yaw;
+    }
+    this.hitGlow.hit(relative, event.dot ? DOT_STRENGTH : hitStrength(event.amount, self.state.maxHp));
+  }
+
   private bindMessages() {
     const hud = useHudStore.getState();
     this.room.onMessage("combat", (event: CombatEvent) => {
@@ -579,6 +599,7 @@ export class Game {
         const target = this.players.get(event.targetId);
         if (target) this.spellEffects.bubblePop(target.root);
       }
+      if (event.kind === "damage" && event.targetId === this.room.sessionId) this.showHitGlow(event);
       if (event.kind === "damage") {
         const target = this.players.get(event.targetId);
         // Coup critique : gerbe d'étincelles dorées ; sort de feu : la cible brûle un instant.

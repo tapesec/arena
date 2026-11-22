@@ -1548,6 +1548,25 @@ body,
   pointer-events: none;
 }
 
+/* Lueur des coups reçus (voir game/HitGlow.ts) : sous le HUD, au-dessus du décor. */
+.hit-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.hit-glow.around {
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(170, 8, 8, 0.45) 80%, rgba(190, 10, 10, 0.85) 100%);
+}
+.hit-glow.side {
+  background: radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 0%), rgba(200, 12, 12, 0.85), rgba(190, 10, 10, 0.4) 16vmin, transparent 40vmin);
+}
+.hit-glow.on { animation: hit-glow 0.7s ease-out forwards; }
+@keyframes hit-glow {
+  0% { opacity: var(--hit-strength, 0.6); }
+  100% { opacity: 0; }
+}
+
 .float-text {
   position: absolute;
   left: 0;
