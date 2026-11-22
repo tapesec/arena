@@ -598,7 +598,6 @@ export class Game {
         victimClass: event.victimClass,
         killerName: event.killerName,
         killerAlly: event.killerTeam === myTeam,
-        killerClass: event.killerClass,
         abilityId: event.abilityId,
         ...(event.lastStanding && { lastStanding: { name: event.lastStanding, ally: event.victimTeam === myTeam } }),
       });

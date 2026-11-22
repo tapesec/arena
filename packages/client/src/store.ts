@@ -160,7 +160,6 @@ export interface KillFrame {
   victimClass: string;
   killerName: string;
   killerAlly: boolean;
-  killerClass: string;
   abilityId: string;
   lastStanding?: { name: string; ally: boolean };
 }

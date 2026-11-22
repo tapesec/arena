@@ -442,7 +442,6 @@ describe("Annonce des éliminations", () => {
         victimClass: "pretre",
         killerName: "Lorcan",
         killerTeam: 1,
-        killerClass: "lame",
         abilityId: "backstab",
         lastStanding: "Hald",
       },
