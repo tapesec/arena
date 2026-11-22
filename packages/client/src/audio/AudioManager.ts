@@ -69,6 +69,8 @@ export interface PlayOptions {
   pan?: number;
   // Alerte qui concerne le joueur : jouée même quand beaucoup de sons sont en cours.
   priority?: boolean;
+  // Le son lui-même, sans le remplacement choisi dans « Sons communs » (page des sons).
+  original?: boolean;
 }
 
 // Joue les sons du catalogue dans un circuit audio commun : volume général, sourdine,
@@ -140,7 +142,7 @@ export class AudioManager {
   }
 
   play(id: SoundName, options: PlayOptions = {}) {
-    const choice = this.commonSounds[id];
+    const choice = options.original ? undefined : this.commonSounds[id];
     if (choice) {
       const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) };
       // Même son, seulement réglé : il garde ses variantes et son écart de vitesse au hasard.

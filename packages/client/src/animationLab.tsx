@@ -2547,6 +2547,7 @@ function AnimationLab() {
             soundChoices={soundChoices}
             soundLabel={soundLabel}
             soundDuration={soundDuration}
+            isSynthSound={isSynthSound}
           />
         )}
         {/* La scène reste montée (son moteur), cachée sur les onglets des sons. */}

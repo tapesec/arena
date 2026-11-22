@@ -106,7 +106,7 @@ function Soundboard() {
   const play = (item: SoundItem) => {
     audio.unlock();
     playing.current?.pause();
-    if (item.kind === "generated") audio.play(item.id as SoundId, { priority: true });
+    if (item.kind === "generated") audio.play(item.id as SoundId, { priority: true, original: true });
     else if (item.kind === "group") void audio.playSample(item.id, { priority: true });
     else {
       const element = new Audio(`/dev-sounds/${item.id}.m4a`);

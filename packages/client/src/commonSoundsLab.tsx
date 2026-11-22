@@ -3,7 +3,9 @@ import { CLASS_LIST } from "@arena/shared";
 import { MAX_CONCURRENT_SOUNDS, MIN_REPEAT_INTERVAL, MUSIC_LEVELS, RATE_JITTER, audio, type CommonSoundChoice, type CommonSoundChoices, type SoundName } from "./audio/AudioManager";
 import { GAME_SOUND } from "./audio/soundEdits";
 import { SOUND_RATE_JITTER } from "./game/abilityEffects";
+import { ABILITY_SOUNDS } from "./game/codeSounds";
 import * as C from "./game/commonSounds";
+import { abilityName } from "./i18n";
 
 // Onglet « Sons communs » de animation-lab.html : les sons du jeu qui ne dépendent pas d'une compétence réglée
 // (voix, coups, pas, alertes, interface, musique) et leurs règles. Tout est lu dans game/commonSounds.ts, que le jeu
@@ -131,12 +133,19 @@ export function CommonSoundsPane(props: {
   soundChoices: (filter: string, current: string) => Choices;
   soundLabel: (recipe: string) => string;
   soundDuration: (recipe: string) => number;
+  isSynthSound: (recipe: string) => boolean;
 }) {
   const { choices, saved, onChange } = props;
   const [editing, setEditing] = useState<SoundName | null>(null);
   const all = sections();
   // Lignes où sert chaque son : un son remplacé l'est partout où il est joué.
-  const usedIn = (sound: SoundName) => all.flatMap((section) => section.rows.filter((row) => row.sounds.some((p) => p.sound === sound)).map((row) => row.when));
+  // Les sons des compétences prévus dans le code passent aussi par ce remplacement.
+  const usedIn = (sound: SoundName) => [
+    ...all.flatMap((section) => section.rows.filter((row) => row.sounds.some((p) => p.sound === sound)).map((row) => row.when)),
+    ...Object.entries(ABILITY_SOUNDS)
+      .filter(([, cues]) => [...(cues.cast ?? []), ...(cues.impact ?? [])].some((cue) => cue.sound === sound))
+      .map(([abilityId]) => `${abilityName(abilityId)} (compétence, tant qu'elle n'a pas ses sons réglés)`),
+  ];
   return (
     <div className="sound-pane common-sounds">
       <p className="lab-note">
@@ -193,6 +202,7 @@ export function CommonSoundsPane(props: {
                                 }}
                                 soundChoices={props.soundChoices}
                                 soundDuration={props.soundDuration}
+                                isSynthSound={props.isSynthSound}
                               />
                             )}
                           </span>
@@ -227,18 +237,30 @@ function CommonSoundEditor(props: {
   onChange: (choice: CommonSoundChoice | null) => void;
   soundChoices: (filter: string, current: string) => Choices;
   soundDuration: (recipe: string) => number;
+  isSynthSound: (recipe: string) => boolean;
 }) {
   const own = `${GAME_SOUND}${props.sound}`;
   const current: CommonSoundChoice = props.choice ?? { recipe: own };
   const [filter, setFilter] = useState("");
   const update = (patch: Partial<CommonSoundChoice>) => {
-    const next = { ...current, ...patch };
-    // Valeurs par défaut retirées : le fichier ne garde que ce qui change.
-    if (next.volume === 1) delete next.volume;
-    if (next.rate === 1) delete next.rate;
-    if (!next.skip) delete next.skip;
+    const merged = { ...current, ...patch };
+    // Un son rétro (généré) n'a pas de vitesse ; seul un son du catalogue a un début réglable (durée connue).
+    if (props.isSynthSound(merged.recipe)) delete merged.rate;
+    if (merged.recipe.startsWith(GAME_SOUND)) delete merged.skip;
+    // Valeurs par défaut retirées (le fichier ne garde que ce qui change), clés toujours dans le même ordre.
+    const next: CommonSoundChoice = { recipe: merged.recipe };
+    if (merged.volume !== undefined && merged.volume !== 1) next.volume = merged.volume;
+    if (merged.rate !== undefined && merged.rate !== 1) next.rate = merged.rate;
+    if (merged.skip) next.skip = merged.skip;
     const untouched = next.recipe === own && next.volume === undefined && next.rate === undefined && next.skip === undefined;
     props.onChange(untouched ? null : next);
+    return next;
+  };
+  // Écoute d'un réglage, tel que le jeu le jouera.
+  const listen = (choice: CommonSoundChoice) => {
+    const options = { volume: choice.volume ?? 1, rate: choice.rate ?? 1, priority: true };
+    if (choice.recipe === own) audio.play(props.sound, { ...options, original: true });
+    else void audio.playTrack(choice.recipe, { ...options, offset: choice.skip ?? 0 });
   };
   const ownOption = { id: own, label: `${props.sound} (son d'origine)` };
   const groups = props.soundChoices(filter, current.recipe);
@@ -261,7 +283,7 @@ function CommonSoundEditor(props: {
       <input type="search" placeholder="Chercher un son" value={filter} onChange={(e) => setFilter(e.target.value)} />
       <label>
         Son
-        <select value={current.recipe} onChange={(e) => update({ recipe: e.target.value, skip: 0 })}>
+        <select value={current.recipe} onChange={(e) => listen(update({ recipe: e.target.value, skip: 0 }))}>
           <option value={ownOption.id}>{ownOption.label}</option>
           {groups.map(({ group, options }) => (
             <optgroup key={group} label={group}>
@@ -277,19 +299,24 @@ function CommonSoundEditor(props: {
         </select>
       </label>
       {slider("Volume", "volume", 0, 2)}
-      {slider("Vitesse", "rate", 0.5, 2)}
-      <label className="lab-offset" title="Le début du son est sauté · double-clic : depuis le début">
-        Commencer à {num(Number((current.skip ?? 0).toFixed(2)))} s
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0.05, props.soundDuration(current.recipe) - 0.05)}
-          step={0.01}
-          value={current.skip ?? 0}
-          onChange={(e) => update({ skip: Number(e.target.value) })}
-          onDoubleClick={() => update({ skip: 0 })}
-        />
-      </label>
+      <button title="Écouter ce réglage" onClick={() => listen(current)}>
+        ▶
+      </button>
+      {!props.isSynthSound(current.recipe) && slider("Vitesse", "rate", 0.5, 2)}
+      {!current.recipe.startsWith(GAME_SOUND) && (
+        <label className="lab-offset" title="Le début du son est sauté · double-clic : depuis le début">
+          Commencer à {num(Number((current.skip ?? 0).toFixed(2)))} s
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0.05, props.soundDuration(current.recipe) - 0.05)}
+            step={0.01}
+            value={current.skip ?? 0}
+            onChange={(e) => update({ skip: Number(e.target.value) })}
+            onDoubleClick={() => update({ skip: 0 })}
+          />
+        </label>
+      )}
       <button disabled={!props.choice} onClick={() => props.onChange(null)}>
         Son d'origine
       </button>
