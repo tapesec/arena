@@ -168,7 +168,10 @@ export function CommonSoundsPane(props: {
                         return (
                           <span key={played.sound} className="common-sound-cell">
                             <span className={`common-sound${choice ? " common-sound-replaced" : ""}`}>
-                              <button title="Écouter" onClick={() => audio.play(played.sound, { volume: played.volume ?? 1, rate: played.rate ?? 1, priority: true })}>
+                              <button
+                                title={choice?.recipe === NO_SOUND ? "Son retiré : rien n'est joué" : "Écouter"}
+                                disabled={choice?.recipe === NO_SOUND}
+                                onClick={() => audio.play(played.sound, { volume: played.volume ?? 1, rate: played.rate ?? 1, priority: true })}>
                                 ▶
                               </button>
                               {choice?.recipe === NO_SOUND ? (
