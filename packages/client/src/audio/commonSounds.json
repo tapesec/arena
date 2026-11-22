@@ -1,4 +1,19 @@
 {
-  "killEnemy": { "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14" },
-  "killAlly": { "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14" }
+  "bouclier_blocage_sourd": {
+    "recipe": "impactPlate_heavy_002",
+    "volume": 0.95
+  },
+  "death": {
+    "recipe": "jeu:maleDeath"
+  },
+  "evade": {
+    "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+    "rate": 0.65
+  },
+  "killAlly": {
+    "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14"
+  },
+  "killEnemy": {
+    "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14"
+  }
 }
