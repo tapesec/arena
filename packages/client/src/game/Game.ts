@@ -1260,6 +1260,11 @@ export class Game {
       self && target
         ? {
             ...unitFrame(target.state, nameOf),
+            classId: target.state.classId as ClassId | "",
+            mana: Math.floor(target.state.mana),
+            maxMana: target.state.maxMana,
+            endurance: Math.floor(target.state.endurance),
+            maxEndurance: target.state.maxEndurance,
             isSelf: target === self,
             isAlly: target.state.team === self.state.team,
             distance: Math.round(distance(self.state, target.state)),
@@ -1269,9 +1274,11 @@ export class Game {
           }
         : null;
 
+    // Soi en premier (F1), puis les coéquipiers dans l'ordre de leurs touches (F2 à F8).
     const group: GroupMemberFrame[] = self
-      ? this.groupMembers().map((p) => ({
+      ? [self, ...this.groupMembers()].map((p) => ({
           id: p.sessionId,
+          isSelf: p === self,
           name: p.state.name,
           classId: p.state.classId as ClassId | "",
           hp: p.state.hp,
@@ -1282,7 +1289,7 @@ export class Game {
           maxEndurance: p.state.maxEndurance,
           casting: castFrame(p.state)?.abilityName ?? null,
           effects: sortAfflictionsFirst(effectFrames(p.state, nameOf, true)),
-          inRange: distance(self.state, p.state) <= SPELL_RANGE && hasLineOfSight(self.state, p.state),
+          inRange: p === self || (distance(self.state, p.state) <= SPELL_RANGE && hasLineOfSight(self.state, p.state)),
           isTarget: p === target,
         }))
       : [];

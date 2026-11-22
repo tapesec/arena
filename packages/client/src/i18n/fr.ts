@@ -146,6 +146,9 @@ export const fr: Record<TextKey, string> = {
   "frame.stick": "Stick",
   "frame.dead": "Mort",
   "frame.you": "Vous",
+  "frame.enemy": "Ennemi",
+  "frame.ally": "Allié",
+  "frame.noTarget": "Aucune cible",
   "frame.outOfSight": "Hors de vue",
   "frame.inMelee": "Au contact",
 

@@ -156,6 +156,9 @@ export const en = {
   "frame.stick": "Stick",
   "frame.dead": "Dead",
   "frame.you": "You",
+  "frame.enemy": "Enemy",
+  "frame.ally": "Ally",
+  "frame.noTarget": "No target",
   "frame.outOfSight": "No line of sight",
   "frame.inMelee": "In melee range",
 

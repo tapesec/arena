@@ -64,6 +64,11 @@ export interface SelfFrame extends UnitFrame {
 }
 
 export interface TargetFrame extends UnitFrame {
+  classId: ClassId | "";
+  mana: number;
+  maxMana: number;
+  endurance: number;
+  maxEndurance: number;
   isSelf: boolean;
   isAlly: boolean;
   distance: number;
@@ -89,9 +94,10 @@ export interface MatchFrame {
   winner: number;
 }
 
-// Coéquipier affiché dans la fenêtre de groupe.
+// Membre de la fenêtre de groupe : soi (en premier, F1), puis ses coéquipiers (F2 à F8).
 export interface GroupMemberFrame {
   id: string;
+  isSelf: boolean;
   name: string;
   classId: ClassId | "";
   hp: number;
