@@ -1051,12 +1051,13 @@ function SoundControl() {
   );
 }
 
-// L'aide des commandes est ouverte d'office à la première partie jouée dans ce navigateur (décidé le 2026-11-19).
 // Aide en partie : le bouton « i » ouvre le didacticiel « Comment jouer ? » du choix de classe (même contenu, décidé le
 // 2026-11-22), sur la slide des commandes. Le bouton ne prend pas le focus : le clavier reste au jeu.
 function HelpPanel() {
   const [open, setOpen] = useState(false);
   const classId = useHudStore((s) => s.self?.classId ?? "");
+  // Fermée à la fin de la partie : l'écran de fin prend la main (et le focus).
+  const ended = useHudStore((s) => s.match?.phase === "ended");
   const close = useCallback(() => setOpen(false), []);
   return (
     <>
@@ -1070,7 +1071,7 @@ function HelpPanel() {
       >
         i
       </button>
-      {open && <Tutorial classId={classId} onClose={close} inMatch />}
+      {open && !ended && <Tutorial classId={classId} onClose={close} inMatch />}
     </>
   );
 }

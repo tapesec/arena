@@ -4021,7 +4021,7 @@ body,
 .tutorial-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 14px 24px;
   align-items: center;
   justify-content: center;
 }
@@ -4029,7 +4029,7 @@ body,
 .tutorial-keyboard {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .tutorial-keyrow {

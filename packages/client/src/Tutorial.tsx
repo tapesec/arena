@@ -87,7 +87,7 @@ export function Tutorial({ classId, onClose, inMatch = false }: { classId: Class
             ))}
           </div>
           {inMatch ? <span className="tutorial-timer" /> : <span className="tutorial-timer">{t("tutorial.timeLeft", { s: timeLeft })}</span>}
-          {/* Focus d'office : Entrée avance (Tab sert au jeu et ne déplace pas le focus). */}
+          {/* Focus d'office : Entrée avance (Tab est retenu par le jeu et ne déplace pas le focus). */}
           <button type="button" className="primary-button" autoFocus onClick={() => (last ? close() : setSlide(slide + 1))}>
             {t(last ? "tutorial.done" : "tutorial.next")}
           </button>
@@ -196,13 +196,22 @@ function ControlsSlide() {
               <Key label="F1" wide />
               <span>{t("tutorial.controls.self")}</span>
             </div>
+            <div className="tutorial-keygroup">
+              <Key label={t("tutorial.controls.escapeKey")} wide />
+              <span>{t("tutorial.controls.escape")}</span>
+            </div>
+            <div className="tutorial-keygroup">
+              <Key label="V" />
+              <span>{t("tutorial.controls.recenter")}</span>
+            </div>
           </div>
         </div>
         <div className="tutorial-mouse-block">
           <MouseArt highlight={null} />
           <ul className="tutorial-points small">
             <li>{t("tutorial.controls.leftClick")}</li>
-            <li>{t(modern ? "tutorial.controls.rightClick" : "tutorial.controls.rightClickClassic")}</li>
+            <li>{t(modern ? "tutorial.controls.rightClick" : "tutorial.controls.rightClickClassic", keys)}</li>
+            <li>{t("tutorial.controls.zoom")}</li>
             <li>{t("tutorial.controls.wheel")}</li>
           </ul>
         </div>
