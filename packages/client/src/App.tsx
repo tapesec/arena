@@ -578,7 +578,7 @@ function CombatFrames() {
         <Afflictions effects={target?.effects ?? []} mirror />
       </div>
       <SelfCard self={self} />
-      {target ? <TargetCard target={target} /> : <div className="unit-card unit-card-empty">{t("frame.noTarget")}</div>}
+      {target ? <TargetCard target={target} /> : <div className="unit-card unit-card-mirror unit-card-empty">{t("frame.noTarget")}</div>}
     </div>
   );
 }
