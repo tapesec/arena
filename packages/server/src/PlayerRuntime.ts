@@ -1,4 +1,4 @@
-import { NO_INPUT, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
+import { NO_INPUT, emptyStats, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
 import type { EffectState, PlayerState } from "./state";
 
 export interface ActiveEffect {
@@ -45,6 +45,8 @@ export class PlayerRuntime {
   stickMoving = false;
   // Charge en cours : cible, temps écoulé, temps passé bloqué, dégâts et stun à l'arrivée.
   charge: { targetId: string; elapsed: number; stuck: number; damage: number; stun: number } | null = null;
+  // Bilan de la partie (récap de l'écran de fin).
+  stats = emptyStats();
 
   constructor(
     readonly id: string,

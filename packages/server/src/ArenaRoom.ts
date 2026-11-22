@@ -15,6 +15,8 @@ import {
   maxResource,
   spawnPosition,
   type ClassId,
+  heroScore,
+  type MatchSummary,
   type MatchPhase,
   type MoveInput,
   NO_INPUT,
@@ -152,6 +154,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private replacedByBot = new Set<string>();
   // Temps de simulation écoulé (ms), non arrondi.
   private elapsedMs = 0;
+  // Début du combat (après la préparation), en temps de simulation : durée affichée sur l'écran de fin ; null avant.
+  private fightStartedAt: number | null = null;
 
   // --- Observabilité (telemetry.ts) ---
   private actions = new ActionCounter();
@@ -163,6 +167,24 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private activeHumans = 0;
   // Joueurs dont le résultat est déjà enregistré (départ, remplacement par un bot).
   private reported = new Set<string>();
+  // Récap de l'écran de fin : bilan de chaque joueur encore dans la partie, et le héros de l'équipe gagnante.
+  private summary(winner: number): MatchSummary {
+    const players = [...this.combat.players.values()].map((p) => ({
+      id: p.id,
+      name: p.state.name,
+      team: p.state.team,
+      classId: p.state.classId,
+      alive: p.alive,
+      ...p.stats,
+    }));
+    const hero = players.filter((p) => p.team === winner).sort((a, b) => heroScore(b) - heroScore(a))[0];
+    return {
+      seconds: this.fightStartedAt === null ? 0 : Math.round((this.elapsedMs - this.fightStartedAt) / 1000),
+      players,
+      heroId: hero?.id ?? null,
+    };
+  }
+
   // Arrêt du serveur (déploiement) : les départs qui suivent ne sont pas des abandons.
   private shuttingDown = false;
 
@@ -440,6 +462,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private startFight() {
     this.state.phase = "fighting";
     this.state.phaseTimeLeft = 0;
+    this.fightStartedAt = this.elapsedMs;
     this.combat.confine = null;
     this.replaceUnloadedPlayers();
     followHumansAtStart(this.bots, this.combat.players);
@@ -495,6 +518,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       this.state.players.forEach((p) => client.view?.add(p));
     }
     this.clock.setTimeout(() => this.disconnect(), ENDED_ROOM_LIFETIME_MS);
+    this.broadcast("summary", this.summary(winner));
     console.log(`[arena ${this.roomId}] fin de partie, vainqueur : équipe ${winner + 1}`);
     if (this.matchStartedAt === null) return;
     this.state.players.forEach((player, id) => {

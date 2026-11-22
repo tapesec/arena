@@ -449,6 +449,28 @@ describe("Annonce des éliminations", () => {
   });
 });
 
+describe("Bilan de la partie", () => {
+  it("compte éliminations, points de vie réellement retirés ou rendus, et contrôles posés", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 0, 3, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 2, Math.PI);
+    world.cast(gardien, "shieldBash", enemy);
+    assert.equal(gardien.stats.controls, 1);
+
+    // Soin plafonné aux points de vie manquants.
+    gardien.state.hp = gardien.state.maxHp - 50;
+    world.cast(pretre, "instantHeal", gardien);
+    assert.equal(pretre.stats.healing, 50);
+
+    // Coup fatal sur une cible à 1 point de vie : 1 point de dégâts, une élimination.
+    const lame = world.spawn("l", "lame", 1, 3, -2);
+    pretre.state.hp = 1;
+    world.cast(lame, "backstab", pretre);
+    assert.ok(!pretre.alive);
+    assert.deepEqual(lame.stats, { kills: 1, damage: 1, healing: 0, controls: 0 });
+  });
+});
+
 describe("Prêtre", () => {
   it("le buff de vie disparaît à la mort du Prêtre", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);

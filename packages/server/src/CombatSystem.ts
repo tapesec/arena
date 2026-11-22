@@ -835,8 +835,11 @@ export class CombatSystem {
     amount = Math.round(amount);
 
     const state = target.state;
+    const hpBefore = state.hp;
     state.hp = Math.max(0, state.hp - amount);
     const killed = state.hp === 0;
+    if (source.state.team !== state.team) source.stats.damage += hpBefore - state.hp;
+    if (killed) source.stats.kills++;
     this.emit({ kind: "damage", sourceId: source.id, targetId: target.id, abilityId, amount, crit, killed, ...(dot && { dot }) });
 
     if (killed) {
@@ -917,6 +920,7 @@ export class CombatSystem {
     if (target.has("gangrene")) amount *= GANGRENE_HEAL_FACTOR;
     const healed = Math.min(Math.round(amount), target.state.maxHp - target.state.hp);
     target.state.hp += healed;
+    source.stats.healing += healed;
     this.emit({ kind: "heal", sourceId: source.id, targetId: target.id, abilityId, amount: healed });
   }
 
@@ -938,6 +942,7 @@ export class CombatSystem {
       return;
     }
     this.addEffect(target, cc, duration, source.id, 0, options.magic);
+    source.stats.controls++;
     // Un Gardien mez ou stun perd son Rempart.
     const rampart = cc !== "root" ? target.getEffect("rampart") : undefined;
     if (rampart) this.removeEffect(target, rampart);

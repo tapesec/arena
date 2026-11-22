@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { currentLanguage, setLanguage as applyLanguage, type Language } from "./i18n";
-import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type OrderId, type RelativePosition } from "@arena/shared";
+import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type MatchSummary, type OrderId, type RelativePosition } from "@arena/shared";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
@@ -151,6 +151,9 @@ let hintTimeout: ReturnType<typeof setTimeout> | undefined;
 const shownHints = new Set<string>();
 
 // Élimination annoncée (voir KillEvent), vue par le joueur local : ally = de son équipe.
+// Récap de fin de partie (voir MatchSummary), avec l'identifiant du joueur local pour le repérer dans le tableau.
+export type SummaryFrame = MatchSummary & { selfId: string };
+
 export interface KillFrame {
   id: number;
   // Heure d'arrivée (performance.now()) : l'annonce au centre dure un temps fixe à partir de là.
@@ -213,6 +216,9 @@ interface HudState {
   // Éliminations de la partie, la plus récente en premier (annonce au centre et fil à droite).
   kills: KillFrame[];
   addKill: (kill: Omit<KillFrame, "id" | "at">) => void;
+  // Récap envoyé par le serveur à la fin de la partie (null avant).
+  summary: SummaryFrame | null;
+  setSummary: (summary: SummaryFrame) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
   startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
@@ -243,6 +249,7 @@ const freshGame = {
   hint: null,
   orderWheel: null,
   kills: [],
+  summary: null,
 };
 
 export type MovementMode = "modern" | "classic";
@@ -303,6 +310,7 @@ export const useHudStore = create<HudState>((set) => ({
   // Remplacé par un bot : plus de partie (la musique revient à celle des menus).
   setStatus: (status, error) => set(status === "replaced" ? { status, error: null, match: null } : { status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
+  setSummary: (summary) => set({ summary }),
   addKill: (kill) => set((s) => ({ kills: [{ ...kill, id: (s.kills[0]?.id ?? 0) + 1, at: performance.now() }, ...s.kills].slice(0, KILLS_KEPT) })),
   setLoading: (loading, loaded) => set({ loading, loaded }),
   setPing: (ping) => set({ ping }),

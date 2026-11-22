@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CLASS_LIST, EFFECTS, NAME_MAX_LENGTH, cleanName, getAbility, getClass, type AbilityDef, type ClassId } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
+import { EndScreen } from "./EndScreen";
 import { GameCanvas } from "./GameCanvas";
 import { KillBoard, KillFeed } from "./KillBoard";
 import { LanguageMenu } from "./LanguageMenu";
@@ -538,31 +539,6 @@ function SpectatorBanner() {
       {t("match.dead")} · <strong>{t("match.spectator")}</strong>
       {t("punct.colon")}
       {t("match.spectatorHint", moveKeys())}
-    </div>
-  );
-}
-
-function EndScreen() {
-  const match = useHudStore((s) => s.match);
-  const joinGame = useHudStore((s) => s.joinGame);
-  const leaveGame = useHudStore((s) => s.leaveGame);
-  if (!match) return null;
-  const title = t(match.winner === -1 ? "end.draw" : match.winner === match.team ? "end.victory" : "end.defeat");
-  return (
-    <div className="end-overlay">
-      <h1>{title}</h1>
-      <button
-        className="primary-button"
-        onClick={() => {
-          audio.play(UI_SOUNDS.click);
-          joinGame();
-        }}
-      >
-        {t("end.newMatch")}
-      </button>
-      <button className="link-button" onClick={leaveGame}>
-        {t("end.home")}
-      </button>
     </div>
   );
 }

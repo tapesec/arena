@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { lastStandBonus } from "@arena/shared";
 import { audio } from "./audio/AudioManager";
 import { abilityIcon } from "./abilityBar";
+import { SWORDS, classIcon } from "./classIcons";
 import { ALERTS } from "./game/commonSounds";
 import { abilityName, t } from "./i18n";
 import { useHudStore, type KillFrame } from "./store";
@@ -19,9 +20,6 @@ const IMPACT_MS = 200;
 // Au-delà, l'élimination est trop ancienne pour sonner (rendu très en retard, onglet en arrière-plan).
 const BELL_LATE_MS = 1000;
 
-// Icône d'une classe, frappée sur le sceau : celle de sa compétence la plus reconnaissable.
-const CLASS_ICON: Record<string, string> = { gardien: "guard", arcaniste: "firebolt", pretre: "heal", barde: "ballad", lame: "backstab" };
-const classIcon = (classId: string) => abilityIcon(CLASS_ICON[classId] ?? "") ?? SWORDS;
 // Lignes du fil.
 const FEED_SIZE = 5;
 // Bandeau « Dernier survivant » : après l'annonce de l'élimination, pendant LAST_STANDING_MS ; tintement un peu après.
@@ -32,15 +30,11 @@ const LAST_STANDING_BELL_MS = 250;
 // Identifiant de l'attaque automatique dans les événements de combat.
 const AUTO_ATTACK_ID = "auto";
 
-// Deux épées croisées : séparateur du décompte, et icône de l'attaque automatique.
-const SWORDS =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M64 32l176 176-32 32L32 64zm384 0L272 208l32 32L480 64zM176 272l-80 80-48-16 16 48-32 32 32 32 32-32 48 16-16-48 80-80zm160 0-32 32 80 80-16 48 48-16 32 32 32-32-32-32 16-48-48 16z"/></svg>';
-
-function killIcon(abilityId: string): string {
+export function killIcon(abilityId: string): string {
   return (abilityId !== AUTO_ATTACK_ID && abilityIcon(abilityId)) || SWORDS;
 }
 
-function killMove(abilityId: string): string {
+export function killMove(abilityId: string): string {
   return abilityId === AUTO_ATTACK_ID ? t("kill.auto") : abilityName(abilityId);
 }
 

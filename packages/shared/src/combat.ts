@@ -179,6 +179,44 @@ export interface KillEvent {
   lastStanding?: string;
 }
 
+// Bilan d'un joueur pendant la partie (récap de l'écran de fin) : éliminations (coup fatal), dégâts infligés aux
+// ennemis (points de vie réellement perdus), soins (points de vie réellement rendus) et contrôles posés (mez, stun, root).
+export interface PlayerStats {
+  kills: number;
+  damage: number;
+  healing: number;
+  controls: number;
+}
+
+export const emptyStats = (): PlayerStats => ({ kills: 0, damage: 0, healing: 0, controls: 0 });
+
+// Héros de la partie : le joueur de l'équipe gagnante qui a le plus de points (décidé le 2026-11-22). Une élimination
+// vaut 1000 points, un point de dégâts ou de soin 1 point, un contrôle 150 points.
+export const HERO_POINTS = { kill: 1000, damage: 1, healing: 1, control: 150 };
+
+export function heroScore(stats: PlayerStats): number {
+  return (
+    stats.kills * HERO_POINTS.kill + stats.damage * HERO_POINTS.damage + stats.healing * HERO_POINTS.healing + stats.controls * HERO_POINTS.control
+  );
+}
+
+// Récap envoyé à tous à la fin de la partie.
+export interface MatchSummaryPlayer extends PlayerStats {
+  id: string;
+  name: string;
+  team: number;
+  classId: string;
+  alive: boolean;
+}
+
+export interface MatchSummary {
+  // Durée du combat, en secondes (sans la préparation).
+  seconds: number;
+  players: MatchSummaryPlayer[];
+  // Héros de la partie (voir heroScore), null s'il n'y a pas de vainqueur.
+  heroId: string | null;
+}
+
 export type InterruptReason = "damage" | "move" | "silence" | "cc" | "taunt";
 
 export interface InterruptEvent {

@@ -45,6 +45,7 @@ import {
   type GameErrorMessage,
   type InterruptEvent,
   type KillEvent,
+  type MatchSummary,
   type MatchPhase,
   type MoveInput,
   ORDERS,
@@ -602,6 +603,7 @@ export class Game {
         ...(event.lastStanding && { lastStanding: { name: event.lastStanding, ally: event.victimTeam === myTeam } }),
       });
     });
+    this.room.onMessage("summary", (summary: MatchSummary) => hud.setSummary({ ...summary, selfId: this.room.sessionId }));
     this.room.onMessage("interrupt", (event: InterruptEvent) => {
       const caster = this.players.get(event.casterId);
       if (caster) this.overlay.addText(caster.root, t("float.interrupted"), "info");
