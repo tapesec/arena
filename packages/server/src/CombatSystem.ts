@@ -844,8 +844,10 @@ export class CombatSystem {
       const kill: KillEvent = {
         victimName: state.name,
         victimTeam: state.team,
+        victimClass: state.classId,
         killerName: source.state.name,
         killerTeam: source.state.team,
+        killerClass: source.state.classId,
         abilityId,
       };
       const standing = [...this.players.values()].filter((p) => p.alive && p.state.team === state.team);

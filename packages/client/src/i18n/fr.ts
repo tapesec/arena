@@ -106,6 +106,8 @@ export const fr: Record<TextKey, string> = {
   "match.preparation": "Préparation\u00a0: le combat commence dans",
   "match.dead": "Vous êtes mort",
   "kill.auto": "Attaque",
+  "kill.falls": "tombe",
+  "kill.by": "par",
   "kill.lastStanding": "Dernier survivant",
   "kill.lastAlly": "Le dernier debout de votre équipe",
   "kill.lastEnemy": "Le dernier adversaire debout",

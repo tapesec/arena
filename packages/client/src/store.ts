@@ -157,8 +157,10 @@ export interface KillFrame {
   at: number;
   victimName: string;
   victimAlly: boolean;
+  victimClass: string;
   killerName: string;
   killerAlly: boolean;
+  killerClass: string;
   abilityId: string;
   lastStanding?: { name: string; ally: boolean };
 }

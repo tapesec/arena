@@ -115,6 +115,8 @@ export const en = {
   "match.preparation": "Preparation: the fight starts in",
   "match.dead": "You are dead",
   "kill.auto": "Attack",
+  "kill.falls": "falls",
+  "kill.by": "by",
   "kill.lastStanding": "Last one standing",
   "kill.lastAlly": "The last of your team still standing",
   "kill.lastEnemy": "The last opponent still standing",

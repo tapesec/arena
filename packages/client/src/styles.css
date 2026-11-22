@@ -971,6 +971,139 @@ body,
 .kill-by-icon { width: 19px; height: 19px; color: #ffd76a; }
 @keyframes kill-by-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* Annonce « Sceau brisé » (?annonce=sceau) : le sceau s'écrase, une fissure le parcourt, il se fend en deux. */
+.kill-seal-announce.ally-fell { --kill-seal: #6fa3ff; }
+.kill-seal-announce.enemy-fell { --kill-seal: #ff6f6f; }
+.kill-seal { position: relative; width: 76px; height: 76px; animation: kill-seal-stamp 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.kill-seal-half {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.4) 70%), var(--kill-seal);
+  border: 3px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.6), inset 0 0 0 4px rgba(255, 255, 255, 0.12);
+  color: rgba(15, 12, 10, 0.8);
+}
+.kill-seal-half svg { width: 52%; height: 52%; display: block; }
+.kill-seal-half.left {
+  clip-path: polygon(0 0, 56% 0, 44% 38%, 58% 62%, 46% 100%, 0 100%);
+  animation: kill-seal-left 0.4s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.kill-seal-half.right {
+  clip-path: polygon(56% 0, 100% 0, 100% 100%, 46% 100%, 58% 62%, 44% 38%);
+  animation: kill-seal-right 0.4s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.kill-seal-crack {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  fill: none;
+  stroke: #fff6d8;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 140;
+  filter: drop-shadow(0 0 4px #ffd76a);
+  animation: kill-seal-crack 0.5s 0.1s ease-out both;
+}
+.kill-seal-title {
+  margin-top: 10px;
+  font: 900 31px/1 "Cinzel", Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #f1ead8;
+  text-shadow: 0 3px 8px #000;
+  animation: kill-seal-title 0.55s 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.kill-seal-by { font-weight: 500; }
+@keyframes kill-seal-stamp { 0% { transform: scale(2.4); opacity: 0; } 60% { transform: scale(0.92); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes kill-seal-left { from { transform: none; } to { transform: translate(-5px, 1px) rotate(-9deg); } }
+@keyframes kill-seal-right { from { transform: none; } to { transform: translate(5px, 3px) rotate(7deg); } }
+@keyframes kill-seal-crack {
+  0% { opacity: 1; stroke-dashoffset: 140; }
+  40% { opacity: 1; stroke-dashoffset: 0; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes kill-seal-title { from { opacity: 0; letter-spacing: 0.5em; filter: blur(4px); } to { opacity: 1; letter-spacing: 0.12em; filter: none; } }
+
+/* Annonce « Bandeau » (?annonce=bandeau) : le bandeau s'écrase et tremble, un reflet le traverse, la victime est barrée. */
+.kill-band-announce.enemy-fell { --kill-band-edge: rgba(255, 215, 106, 0.75); --kill-band-glow: rgba(255, 196, 80, 0.45); }
+.kill-band-announce.ally-fell { --kill-band-edge: rgba(200, 40, 40, 0.85); --kill-band-glow: rgba(170, 20, 20, 0.55); }
+.kill-band-announce { animation: kill-band-shake 0.28s 0.15s linear both, kill-out 0.3s 2s ease-in forwards; }
+.kill-band {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  padding: 11px 38px;
+  white-space: nowrap;
+  background: linear-gradient(90deg, transparent, rgba(12, 10, 8, 0.82) 14%, rgba(12, 10, 8, 0.82) 86%, transparent);
+  border-top: 1.5px solid var(--kill-band-edge);
+  border-bottom: 1.5px solid var(--kill-band-edge);
+  animation: kill-band-slam 0.42s cubic-bezier(0.15, 0.9, 0.25, 1.15) both;
+}
+.kill-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  background-size: 250% 100%;
+  mix-blend-mode: overlay;
+  animation: kill-band-sheen 0.6s 0.15s ease-out both;
+}
+.kill-band-who { position: relative; display: flex; align-items: center; gap: 7px; font: 700 26px/1 "Cinzel", Georgia, serif; letter-spacing: 0.03em; text-shadow: 0 2px 6px #000; }
+.kill-band-class { width: 26px; height: 26px; opacity: 0.9; }
+.kill-band-class svg, .kill-band-move svg { display: block; width: 100%; height: 100%; }
+.kill-band-victim .kill-band-name { opacity: 0.8; }
+.kill-band-victim::after {
+  content: "";
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  top: 52%;
+  height: 3px;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+  transform-origin: left;
+  animation: kill-band-strike 0.2s 0.15s ease-out both;
+}
+.kill-band-move {
+  width: 43px;
+  height: 43px;
+  padding: 7px;
+  box-sizing: border-box;
+  transform: rotate(45deg);
+  border: 1.5px solid var(--kill-band-edge);
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 17px var(--kill-band-glow);
+  color: #ffd76a;
+}
+.kill-band-announce.ally-fell .kill-band-move { color: #ff8a80; }
+.kill-band-move > span { display: block; width: 100%; height: 100%; transform: rotate(-45deg); }
+.kill-band-caption {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c9c3b4;
+  text-shadow: 0 1px 3px #000;
+  animation: kill-by-in 0.3s 0.3s ease-out both;
+}
+@keyframes kill-band-slam {
+  0% { transform: scale(1.9); opacity: 0; filter: blur(6px); }
+  36% { transform: scale(0.95); opacity: 1; filter: blur(0); }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+@keyframes kill-band-sheen { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+@keyframes kill-band-strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes kill-band-shake { 0%, 100% { translate: 0 0; } 20% { translate: -4px 1px; } 45% { translate: 4px -1px; } 70% { translate: -2px 0; } }
+
 .kill-feed {
   margin: 0;
   padding: 0;
@@ -1026,7 +1159,8 @@ body,
 @keyframes kill-last-name { from { opacity: 0; letter-spacing: 0.5em; filter: blur(4px); } to { opacity: 1; letter-spacing: 0.08em; filter: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .kill-num, .kill-name, .kill-name *, .kill-by, .kill-feed li, .kill-last-name { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
+  .kill-num, .kill-name, .kill-name *, .kill-by, .kill-feed li, .kill-last-name,
+  .kill-seal, .kill-seal *, .kill-seal-title, .kill-band-announce * { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }
 }
 
 .phase-banner {

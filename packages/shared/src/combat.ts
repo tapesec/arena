@@ -170,8 +170,11 @@ export interface CombatEvent {
 export interface KillEvent {
   victimName: string;
   victimTeam: number;
+  // Classes de la victime et du tueur : leur icône dans l'annonce (sceau, bandeau).
+  victimClass: string;
   killerName: string;
   killerTeam: number;
+  killerClass: string;
   abilityId: string;
   // Pseudo du seul survivant de l'équipe de la victime, s'il n'en reste qu'un (bandeau « Dernier survivant »).
   lastStanding?: string;

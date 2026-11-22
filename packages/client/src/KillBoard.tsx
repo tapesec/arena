@@ -6,14 +6,27 @@ import { ALERTS } from "./game/commonSounds";
 import { abilityName, t } from "./i18n";
 import { useHudStore, type KillFrame } from "./store";
 
-// Annonces d'élimination (décidées le 2026-11-21, style « Entaille » et décompte en chiffres) : en haut, les survivants
-// de chaque équipe ; au centre, le nom de la victime tranché par une entaille, avec un tintement de cloche au moment de
-// l'entaille ; à droite, le fil des dernières éliminations (KillFeed, au-dessus du panneau d'aide). Bandeau « Dernier
+// Annonces d'élimination (décidées le 2026-11-21, décompte en chiffres) : en haut, les survivants de chaque équipe ; au
+// centre, l'annonce de l'élimination (sceau brisé, entaille ou bandeau, à l'essai), avec un tintement de cloche au
+// moment du choc ; à droite, le fil des dernières éliminations (KillFeed, au-dessus du panneau d'aide). Bandeau « Dernier
 // survivant » quand une équipe n'a plus qu'un joueur. Son équipe en bleu, celle d'en face en rouge.
 
-// Durée de l'annonce au centre, avant qu'elle ne rejoigne le fil, et instant de l'entaille (calé sur l'animation CSS).
+// Durée de l'annonce au centre, avant qu'elle ne rejoigne le fil.
 const ANNOUNCE_MS = 2300;
-const IMPACT_MS = 220;
+
+// Animation de l'annonce, à l'essai : choisie par ?annonce=sceau|entaille|bandeau dans l'adresse (sceau par défaut).
+// impactMs : instant du choc (sceau qui se fend, entaille, bandeau qui s'écrase), calé sur l'animation CSS ; le
+// tintement part à ce moment.
+type AnnounceStyle = "sceau" | "entaille" | "bandeau";
+const IMPACT_MS: Record<AnnounceStyle, number> = { sceau: 200, entaille: 220, bandeau: 150 };
+function announceStyle(): AnnounceStyle {
+  const asked = new URLSearchParams(location.search).get("annonce");
+  return asked === "entaille" || asked === "bandeau" ? asked : "sceau";
+}
+
+// Icône d'une classe, pour le sceau et le bandeau : celle de sa compétence la plus reconnaissable.
+const CLASS_ICON: Record<string, string> = { gardien: "guard", arcaniste: "firebolt", pretre: "heal", barde: "ballad", lame: "backstab" };
+const classIcon = (classId: string) => abilityIcon(CLASS_ICON[classId] ?? "") ?? SWORDS;
 // Lignes du fil.
 const FEED_SIZE = 5;
 // Bandeau « Dernier survivant » : après l'annonce de l'élimination, pendant LAST_STANDING_MS ; tintement un peu après.
@@ -126,11 +139,13 @@ function KillAnnouncements() {
   // Texte lu par les lecteurs d'écran (région permanente, remplie à chaque annonce).
   const [spoken, setSpoken] = useState("");
 
-  // Tintement au moment de l'entaille.
+  const style = announceStyle();
+
+  // Tintement au moment du choc.
   useEffect(() => {
-    if (!latest || performance.now() - latest.at > IMPACT_MS) return;
+    if (!latest || performance.now() - latest.at > IMPACT_MS[style]) return;
     setSpoken(t("kill.spoken", { killer: latest.killerName, victim: latest.victimName, move: killMove(latest.abilityId) }));
-    const bell = setTimeout(() => audio.play(latest.victimAlly ? ALERTS.killAlly : ALERTS.killEnemy, { priority: true }), IMPACT_MS);
+    const bell = setTimeout(() => audio.play(latest.victimAlly ? ALERTS.killAlly : ALERTS.killEnemy, { priority: true }), IMPACT_MS[style]);
     return () => clearTimeout(bell);
   }, [latest]);
 
@@ -160,7 +175,7 @@ function KillAnnouncements() {
 
   return (
     <>
-      {shown && <KillAnnouncement key={shown.id} kill={shown} />}
+      {shown && <KillAnnouncement key={shown.id} kill={shown} style={style} />}
       {standingStill && (
         <div className="kill-last" key={last.name} aria-hidden="true">
           <div className="kill-last-kicker">{t("kill.lastStanding")}</div>
@@ -175,9 +190,57 @@ function KillAnnouncements() {
   );
 }
 
-// Le nom de la victime en grand, tranché en deux moitiés décalées ; dessous, le tueur et la compétence qui a achevé.
-// Le nom rétrécit s'il est long, pour ne pas passer sur les cadres en haut à gauche.
-function KillAnnouncement({ kill }: { kill: KillFrame }) {
+// Annonce au centre, en trois styles à l'essai (voir announceStyle) :
+// - sceau : un sceau à la couleur de la victime, frappé de l'icône de sa classe, s'écrase et se fend en deux ;
+//   dessous, « Kerra tombe », puis le tueur et la compétence qui a achevé ;
+// - entaille : le nom de la victime en grand, tranché en deux moitiés décalées (il rétrécit s'il est long, pour ne pas
+//   passer sur les cadres en haut à gauche) ; dessous, le tueur et la compétence ;
+// - bandeau : un bandeau s'écrase avec le tueur, la compétence dans un losange et la victime barrée.
+function KillAnnouncement({ kill, style }: { kill: KillFrame; style: AnnounceStyle }) {
+  const fell = kill.victimAlly ? "ally-fell" : "enemy-fell";
+  const move = <span className="kill-by-icon" dangerouslySetInnerHTML={{ __html: killIcon(kill.abilityId) }} />;
+  if (style === "sceau") {
+    const half = (part: string) => <div className={`kill-seal-half ${part}`} dangerouslySetInnerHTML={{ __html: classIcon(kill.victimClass) }} />;
+    return (
+      <div className={`kill-announce kill-seal-announce ${fell}`} aria-hidden="true">
+        <div className="kill-seal">
+          {half("left")}
+          {half("right")}
+          <svg className="kill-seal-crack" viewBox="0 0 100 100">
+            <path d="M54 2 46 36 60 58 47 80 52 98" />
+          </svg>
+        </div>
+        <div className="kill-seal-title">
+          <span className={side(kill.victimAlly)}>{kill.victimName}</span> {t("kill.falls")}
+        </div>
+        <div className="kill-by kill-seal-by">
+          {t("kill.by")} <span className={side(kill.killerAlly)}>{kill.killerName}</span>
+          {move}
+          {killMove(kill.abilityId)}
+        </div>
+      </div>
+    );
+  }
+  if (style === "bandeau") {
+    const who = (name: string, ally: boolean, classId: string, victim: boolean) => (
+      <span className={`kill-band-who ${side(ally)}${victim ? " kill-band-victim" : ""}`}>
+        <span className="kill-band-class" dangerouslySetInnerHTML={{ __html: classIcon(classId) }} />
+        <span className="kill-band-name">{name}</span>
+      </span>
+    );
+    return (
+      <div className={`kill-announce kill-band-announce ${fell}`} aria-hidden="true">
+        <div className="kill-band">
+          {who(kill.killerName, kill.killerAlly, kill.killerClass, false)}
+          <span className="kill-band-move">
+            <span dangerouslySetInnerHTML={{ __html: killIcon(kill.abilityId) }} />
+          </span>
+          {who(kill.victimName, kill.victimAlly, kill.victimClass, true)}
+        </div>
+        <div className="kill-band-caption">{killMove(kill.abilityId)}</div>
+      </div>
+    );
+  }
   return (
     <div className="kill-announce" aria-hidden="true">
       <div className={`kill-name ${side(kill.victimAlly)}`} style={{ "--kill-name-length": Math.max(6, kill.victimName.length) } as CSSProperties}>
@@ -188,7 +251,7 @@ function KillAnnouncement({ kill }: { kill: KillFrame }) {
       </div>
       <div className="kill-by">
         <span className={side(kill.killerAlly)}>{kill.killerName}</span>
-        <span className="kill-by-icon" dangerouslySetInnerHTML={{ __html: killIcon(kill.abilityId) }} />
+        {move}
         {killMove(kill.abilityId)}
       </div>
     </div>
