@@ -3362,9 +3362,15 @@ body,
 }
 
 .common-sound-editor {
-  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 6px 0 10px;
   max-width: 900px;
+}
+
+.common-sound-editor .lab-controls {
+  flex-wrap: wrap;
 }
 
 .common-sounds ul {

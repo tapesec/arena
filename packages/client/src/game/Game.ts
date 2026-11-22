@@ -68,7 +68,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay, type StatusIndicator, type TargetMark } from "./WorldOverlay";
 import { createGround, createLights, createSky } from "./environment";
-import { COMMON_SOUND_CHOICES, audio } from "../audio/AudioManager";
+import { COMMON_SOUND_CHOICES, audio, choiceRecipes } from "../audio/AudioManager";
 import { Nature } from "./nature";
 import { Shadows } from "./shadows";
 import { Village } from "./village";
@@ -264,7 +264,7 @@ export class Game {
         const launches = [
           () => this.characterAssets.preload(track),
           // Avec les sons communs remplacés (annonce d'élimination…), pour qu'ils partent à l'heure dès la première fois.
-          () => audio.preloadGame(new Set([...soundRecipes(TUNING), ...Object.values(COMMON_SOUND_CHOICES).map((c) => c.recipe).filter(Boolean)]), [MUSIC.match], track),
+          () => audio.preloadGame(new Set([...soundRecipes(TUNING), ...Object.values(COMMON_SOUND_CHOICES).flatMap(choiceRecipes)]), [MUSIC.match], track),
           // Les obstacles (même définition que celle du serveur) sont habillés en hameau.
           () => void track(this.village.load(), 10),
           () => void track(new Nature(this.scene).load(), 10),

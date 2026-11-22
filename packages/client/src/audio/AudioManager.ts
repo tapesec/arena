@@ -13,12 +13,20 @@ export type SoundName = SoundId | SampleId;
 
 // Son commun remplacé dans l'onglet « Sons communs » de animation-lab.html (commonSounds.json) : un son du catalogue
 // (son nom) ou du jeu (« jeu:<id> »), avec son volume, sa vitesse et l'instant où il commence (multipliés par ceux de
-// l'appel, sauf skip).
+// l'appel, sauf skip). variants : d'autres sons tirés au hasard avec le premier (jamais deux fois de suite le même) ;
+// jitter : vitesse qui varie un peu à chaque fois (±RATE_JITTER), pour qu'un son répété (les pas) ne sonne pas pareil.
 export interface CommonSoundChoice {
   recipe: string;
+  variants?: string[];
   volume?: number;
   rate?: number;
   skip?: number;
+  jitter?: boolean;
+}
+
+// Sons d'un choix : le premier et ses variantes.
+export function choiceRecipes(choice: CommonSoundChoice): string[] {
+  return choice.recipe === NO_SOUND ? [] : [choice.recipe, ...(choice.variants ?? [])];
 }
 export type CommonSoundChoices = Record<string, CommonSoundChoice>;
 // Son commun retiré : plus rien n'est joué à sa place.
@@ -145,15 +153,25 @@ export class AudioManager {
 
   play(id: SoundName, options: PlayOptions = {}) {
     const choice = options.original ? undefined : this.commonSounds[id];
-    if (choice?.recipe === NO_SOUND) return;
-    if (choice) {
-      const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) };
-      // Même son, seulement réglé : il garde ses variantes et son écart de vitesse au hasard.
-      if (choice.recipe === `${GAME_SOUND}${id}` && !choice.skip) this.playOwn(id, tuned);
-      else void this.playTrack(choice.recipe, { ...tuned, offset: choice.skip ?? 0 });
-      return;
-    }
-    this.playOwn(id, options);
+    if (choice) this.playChoice(id, choice, options);
+    else this.playOwn(id, options);
+  }
+
+  // Joue un son commun réglé (aussi utilisé par l'éditeur pour écouter un réglage pas encore enregistré).
+  playChoice(id: SoundName, choice: CommonSoundChoice, options: PlayOptions = {}) {
+    const recipes = choiceRecipes(choice);
+    if (!recipes.length) return;
+    // Jamais deux fois de suite la même variante.
+    const key = `common:${id}`;
+    let index = Math.floor(Math.random() * recipes.length);
+    if (recipes.length > 1 && index === this.lastVariant.get(key)) index = (index + 1) % recipes.length;
+    this.lastVariant.set(key, index);
+    const recipe = recipes[index];
+    const jitter = choice.jitter ? 1 + (Math.random() * 2 - 1) * RATE_JITTER : 1;
+    const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) * jitter };
+    // Son d'origine, seulement réglé : il garde ses propres variantes et son écart de vitesse au hasard.
+    if (recipe === `${GAME_SOUND}${id}` && !choice.skip) this.playOwn(id, tuned);
+    else void this.playTrack(recipe, { ...tuned, offset: choice.skip ?? 0 });
   }
 
   private playOwn(id: SoundName, options: PlayOptions) {
