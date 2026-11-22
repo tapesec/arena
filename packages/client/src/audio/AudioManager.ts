@@ -21,6 +21,8 @@ export interface CommonSoundChoice {
   skip?: number;
 }
 export type CommonSoundChoices = Record<string, CommonSoundChoice>;
+// Son commun retiré : plus rien n'est joué à sa place.
+export const NO_SOUND = "";
 export const COMMON_SOUND_CHOICES = commonSoundsFile as CommonSoundChoices;
 
 // Au-delà de ce nombre de sons en cours, les sons ordinaires sont ignorés (les alertes passent toujours).
@@ -143,6 +145,7 @@ export class AudioManager {
 
   play(id: SoundName, options: PlayOptions = {}) {
     const choice = options.original ? undefined : this.commonSounds[id];
+    if (choice?.recipe === NO_SOUND) return;
     if (choice) {
       const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) };
       // Même son, seulement réglé : il garde ses variantes et son écart de vitesse au hasard.

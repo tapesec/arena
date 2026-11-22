@@ -52,7 +52,8 @@ for (const entries of Object.values(tuning)) {
 }
 // Et les sons du catalogue choisis à la place des sons communs (onglet « Sons communs », commonSounds.json).
 const commonSounds = JSON.parse(readFileSync(path.join(ROOT, "packages/client/src/audio/commonSounds.json"), "utf8"));
-for (const choice of Object.values(commonSounds)) if (!choice.recipe.startsWith("jeu:")) used.add(choice.recipe);
+// Un son retiré (recette vide) n'a pas de fichier.
+for (const choice of Object.values(commonSounds)) if (choice.recipe && !choice.recipe.startsWith("jeu:")) used.add(choice.recipe);
 // Vérifiés avant de toucher à quoi que ce soit (un nom inconnu arrêterait sinon le script à mi-chemin).
 for (const name of used) {
   if (!soundCatalog.some((s) => s.name === name)) throw new Error(`Son de compétence introuvable dans le catalogue : ${name}`);
