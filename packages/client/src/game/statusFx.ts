@@ -101,6 +101,9 @@ const AURAS: Record<string, Aura> = {
   fireCharge: { recipe: recipeById("fireCharge"), at: "hands", active: (p) => codeCharge(p, "firebolt") },
   frostCharge: { recipe: recipeById("frostCharge"), at: "hands", active: (p) => codeCharge(p, "frostbolt") },
 };
+// Parcourues à chaque image pour chaque joueur : listes construites une fois.
+const AURA_ENTRIES = Object.entries(AURAS);
+const AURA_LIST = Object.values(AURAS);
 
 // Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
 const NOVA_RINGS = 3;
@@ -158,7 +161,7 @@ export class StatusFx {
       const stun = alive && player.hasEffect("stun");
       const root = alive ? remaining(player, "root") : 0;
       const bubble = alive && player.hasEffect("bubble");
-      const aura = alive && Object.values(AURAS).some((a) => a.active(player, Infinity));
+      const aura = alive && AURA_LIST.some((a) => a.active(player, Infinity));
       const nova = alive && player.state.castAbility === "frostNova";
       const rampart = alive ? remaining(player, "rampart") : 0;
       const playing = player.playingAbility();
@@ -245,7 +248,7 @@ export class StatusFx {
 
   // Démarre ou arrête chaque aura continue selon l'état du personnage.
   private updateAuras(status: PlayerStatus, alive: boolean, player: PlayerVisual, speed: number) {
-    for (const [name, aura] of Object.entries(AURAS)) {
+    for (const [name, aura] of AURA_ENTRIES) {
       const active = alive && aura.active(player, speed) && !(aura.kind && this.tuned(player, aura.kind));
       const system = status.auras.get(name);
       if (active && !system) {

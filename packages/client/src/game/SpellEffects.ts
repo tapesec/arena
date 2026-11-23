@@ -325,6 +325,8 @@ export class SpellEffects {
         line.color = new Color3(0.85, 0.9, 1);
         line.alpha = 0.6;
         line.isPickable = false;
+        // Mis à jour sans recalculer son volume englobant : toujours dessiné (sinon éliminé hors de sa place d'origine).
+        line.alwaysSelectAsActiveMesh = true;
         this.guardLinks.set(id, line);
       }
     }

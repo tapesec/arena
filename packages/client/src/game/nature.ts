@@ -121,6 +121,7 @@ export class Nature {
         matrices.forEach((matrix, i) => matrix.copyToArray(buffer, i * 16));
         mesh.thinInstanceSetBuffer("matrix", buffer, 16, true);
         mesh.thinInstanceRefreshBoundingInfo(false);
+        mesh.freezeWorldMatrix();
       }
     }
     root.dispose();

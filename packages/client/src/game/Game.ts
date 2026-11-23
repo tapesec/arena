@@ -67,6 +67,7 @@ import {
 } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay, type StatusIndicator, type TargetMark } from "./WorldOverlay";
+import { ScreenProjector } from "./screenProjection";
 import { createGround, createLights, createSky } from "./environment";
 import { COMMON_SOUND_CHOICES, audio, choiceRecipes } from "../audio/AudioManager";
 import { Nature } from "./nature";
@@ -114,6 +115,11 @@ const SMOOTHING = 15;
 
 // Fréquence de mise à jour de l'interface React (inutile de la recalculer à chaque frame).
 const HUD_REFRESH_MS = 100;
+const HOVER_REFRESH_MS = 100;
+// Arène cachée derrière un écran opaque (choix de classe, chargement) : la dessiner à pleine cadence ne sert à rien et
+// prenait autant que le combat. On la dessine quand même quelques fois par seconde, pour que les matériaux se compilent
+// pendant l'attente plutôt qu'au premier instant de la préparation.
+const HIDDEN_RENDER_MS = 250;
 // Mesure de l'aller-retour avec le serveur (affiché à côté du son).
 const PING_INTERVAL_MS = 2000;
 const PERF_REPORT_MS = 30_000;
@@ -168,6 +174,7 @@ export class Game {
   private scene: Scene;
   private camera: CameraController;
   private overlay: WorldOverlay;
+  private projector: ScreenProjector;
   private spellEffects: SpellEffects;
   private village: Village;
   private shadows: Shadows | null = null;
@@ -209,6 +216,7 @@ export class Game {
   // Cadrage de combat : décalage actuel du point visé par la caméra par rapport au joueur.
   private framingOffset = new Vector3();
   private lastHudRefresh = 0;
+  private lastHiddenRender = 0;
   private lastHudSnapshot = "";
   // Chargement du jeu, suivi pour l'écran de chargement ; dernier pourcentage envoyé au serveur.
   private loading: LoadingTracker;
@@ -224,6 +232,8 @@ export class Game {
   // Personnage survolé par la souris (contour), et souris au-dessus du canvas.
   private hoveredId: string | null = null;
   private hoveredColor: Color3 | null = null;
+  // Dernier calcul du survol : souris immobile, il n'est refait que HOVER_REFRESH_MS plus tard (les personnages bougent).
+  private hoverCheck = { x: NaN, y: NaN, at: 0, active: false };
   private pointerInside = false;
 
   constructor(
@@ -243,7 +253,8 @@ export class Game {
     this.camera = new CameraController(this.scene, canvas, () => {
       if (!this.isSpectating) this.sendMove();
     });
-    this.overlay = new WorldOverlay(overlayElement, this.scene);
+    this.projector = new ScreenProjector(this.scene, canvas);
+    this.overlay = new WorldOverlay(overlayElement, this.projector);
     this.targetPointer = new TargetPointer(overlayElement);
     this.hitGlow = new HitGlow(overlayElement);
     this.spellEffects = new SpellEffects(this.scene);
@@ -348,6 +359,7 @@ export class Game {
     this.orderWheel.dispose();
     this.camera.dispose();
     this.overlay.dispose();
+    this.projector.dispose();
     this.spellEffects.dispose();
     this.fog.dispose();
     this.shadows?.dispose();
@@ -877,29 +889,26 @@ export class Game {
     const near: TargetCandidate[] = [];
     for (const player of this.players.values()) {
       if (player === self || !player.root.isEnabled()) continue;
-      const screen = this.toScreen(player.root.position.add(BODY_CENTER));
-      if (!screen) continue;
+      const position = player.root.position;
+      const screen = this.projector.project(position.x + BODY_CENTER.x, position.y + BODY_CENTER.y, position.z + BODY_CENTER.z);
+      if (!screen.visible) continue;
       const distance = Math.hypot(screen.x - x, screen.y - y);
       if (distance <= MAGNET_RADIUS) near.push(describe(player, distance));
     }
     return bestCandidate(near);
   }
 
-  // Position à l'écran (pixels CSS du canvas, comme scene.pointerX) d'un point du monde, ou null hors champ.
-  private toScreen(point: Vector3): { x: number; y: number } | null {
-    const camera = this.scene.activeCamera;
-    if (!camera) return null;
-    const width = this.engine.getRenderWidth();
-    const height = this.engine.getRenderHeight();
-    const projected = Vector3.Project(point, Matrix.IdentityReadOnly, this.scene.getTransformMatrix(), camera.viewport.toGlobal(width, height));
-    if (projected.z < 0 || projected.z > 1) return null;
-    return { x: (projected.x * this.canvas.clientWidth) / width, y: (projected.y * this.canvas.clientHeight) / height };
-  }
-
   // Contour léger sur le personnage que la souris vise (celui qu'un clic ciblerait), et curseur en main. Pas pendant
   // qu'on oriente la caméra (clic droit) ni pendant la roue des ordres.
   private updateHover() {
     const active = this.pointerInside && !this.camera.steering && !useHudStore.getState().orderWheel;
+    // Lancer de rayon et projection des joueurs : refaits à chaque mouvement de souris, sinon quelques fois par seconde.
+    const now = performance.now();
+    const check = this.hoverCheck;
+    const x = this.scene.pointerX;
+    const y = this.scene.pointerY;
+    if (active === check.active && x === check.x && y === check.y && now - check.at < HOVER_REFRESH_MS) return;
+    Object.assign(check, { x, y, at: now, active });
     const id = active ? this.playerUnderPointer() : null;
     const player = id ? this.players.get(id) : undefined;
     const enemy = !!player && !!this.self && player.state.team !== this.self.state.team;
@@ -1045,6 +1054,7 @@ export class Game {
 
   private renderFrame() {
     const dt = this.engine.getDeltaTime() / 1000;
+    PlayerVisual.nextFrame();
     // Lissage exponentiel : on rattrape la position reçue du serveur sans à-coups,
     // le serveur n'envoyant que 20 mises à jour par seconde.
     const smoothing = 1 - Math.exp(-SMOOTHING * dt);
@@ -1097,7 +1107,17 @@ export class Game {
     this.updateTargetPointer(self, target);
 
     this.refreshHud(self, target);
+    if (this.arenaHidden(match.phase)) {
+      const now = performance.now();
+      if (now - this.lastHiddenRender < HIDDEN_RENDER_MS) return;
+      this.lastHiddenRender = now;
+    }
     this.scene.render();
+  }
+
+  // Écrans opaques au-dessus du canvas : choix de classe, chargement (et préparation tant que tout n'est pas chargé).
+  private arenaHidden(phase: MatchPhase): boolean {
+    return phase === "classSelect" || phase === "loading" || (phase === "preparation" && this.loading.progress < 1);
   }
 
   // Marque de la cible au-dessus de son pseudo (même couleur que son anneau).
@@ -1161,23 +1181,9 @@ export class Game {
     }
     // La caméra vient de bouger (follow) : matrices de cette image, pas de la précédente.
     this.scene.updateTransformMatrix(true);
-    const width = this.engine.getRenderWidth();
-    const height = this.engine.getRenderHeight();
-    const projected = Vector3.Project(
-      target.root.position.add(BODY_CENTER),
-      Matrix.IdentityReadOnly,
-      this.scene.getTransformMatrix(),
-      camera.viewport.toGlobal(width, height),
-    );
-    const cssWidth = this.canvas.clientWidth;
-    const cssHeight = this.canvas.clientHeight;
-    const point = edgePoint(
-      (projected.x * cssWidth) / width,
-      (projected.y * cssHeight) / height,
-      projected.z < 0 || projected.z > 1,
-      cssWidth,
-      cssHeight,
-    );
+    const position = target.root.position;
+    const screen = this.projector.project(position.x + BODY_CENTER.x, position.y + BODY_CENTER.y, position.z + BODY_CENTER.z);
+    const point = edgePoint(screen.x, screen.y, !screen.visible, this.projector.width, this.projector.height);
     this.targetPointer.update(point, target.state.team !== self.state.team, distance(self.state, target.state));
   }
 

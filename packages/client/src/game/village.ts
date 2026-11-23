@@ -177,6 +177,7 @@ export class Village {
     box.position.set(position.x, position.y + height / 2, position.z);
     box.material = this.interiorMaterial ??= darkMaterial(this.scene);
     box.isPickable = false;
+    box.freezeWorldMatrix();
     return box;
   }
 
@@ -188,6 +189,7 @@ export class Village {
     for (const mesh of meshes) {
       mesh.setEnabled(true);
       mesh.isPickable = false;
+      mesh.freezeWorldMatrix();
     }
     this.shadows?.cast(meshes);
     return meshes;
@@ -230,6 +232,8 @@ export class Village {
       if (!mesh) continue;
       mesh.name = name;
       mesh.isPickable = false;
+      // Décor immobile : sa matrice est calculée une fois pour toutes (moins de travail à chaque image).
+      mesh.freezeWorldMatrix();
       merged.push(mesh);
     }
     holder.dispose();

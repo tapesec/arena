@@ -1,6 +1,5 @@
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
-import type { Scene } from "@babylonjs/core/scene";
+import type { ScreenPoint, ScreenProjector } from "./screenProjection";
 import type { ClassId } from "@arena/shared";
 import RAMPART_ICON from "../icons/rampart.svg?raw";
 import { abilityColor, abilityIcon } from "../abilityBar";
@@ -96,12 +95,10 @@ export class WorldOverlay {
   private badges = new Map<string, Badge>();
   private bubbles = new Map<string, Bubble>();
   private casts = new Map<string, CastPlate>();
-  private projected = new Vector3();
-  private worldPos = new Vector3();
 
   constructor(
     private container: HTMLElement,
-    private scene: Scene,
+    private projector: ScreenProjector,
   ) {}
 
   // delay : secondes avant l'apparition (par exemple le temps de vol d'un projectile).
@@ -266,7 +263,9 @@ export class WorldOverlay {
   }
 
   update(dt: number) {
-    for (const text of [...this.texts]) {
+    // À l'envers : un texte terminé est retiré sans sauter le suivant.
+    for (let i = this.texts.length - 1; i >= 0; i--) {
+      const text = this.texts[i];
       text.age += dt;
       if (text.age >= TEXT_DURATION || text.anchor.isDisposed()) {
         this.removeText(text);
@@ -336,32 +335,16 @@ export class WorldOverlay {
   }
 
   // Position à l'écran (en pixels CSS) d'un point situé à "height" au-dessus de l'ancre, ou null s'il est hors champ.
-  private toScreen(anchor: TransformNode, height: number): { x: number; y: number } | null {
-    const camera = this.scene.activeCamera;
-    if (!camera) return null;
-    const engine = this.scene.getEngine();
-    const width = engine.getRenderWidth();
-    const renderHeight = engine.getRenderHeight();
-    this.worldPos.copyFrom(anchor.getAbsolutePosition());
-    this.worldPos.y += height;
-    Vector3.ProjectToRef(
-      this.worldPos,
-      Matrix.IdentityReadOnly,
-      this.scene.getTransformMatrix(),
-      camera.viewport.toGlobal(width, renderHeight),
-      this.projected,
-    );
-    if (this.projected.z < 0 || this.projected.z > 1) return null;
-    // Le canvas peut être rendu à une résolution différente de sa taille affichée.
-    const canvas = engine.getRenderingCanvas()!;
-    return {
-      x: (this.projected.x * canvas.clientWidth) / width,
-      y: (this.projected.y * canvas.clientHeight) / renderHeight,
-    };
+  // L'objet renvoyé est réutilisé : à lire avant l'appel suivant.
+  private toScreen(anchor: TransformNode, height: number): ScreenPoint | null {
+    const position = anchor.getAbsolutePosition();
+    const screen = this.projector.project(position.x, position.y + height, position.z);
+    return screen.visible ? screen : null;
   }
 
   private removeText(text: FloatingText) {
-    this.texts = this.texts.filter((t) => t !== text);
+    const index = this.texts.indexOf(text);
+    if (index >= 0) this.texts.splice(index, 1);
     this.recycle(text);
   }
 

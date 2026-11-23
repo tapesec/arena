@@ -83,6 +83,9 @@ const VELOCITY_SMOOTHING = 12;
 // Représentation 3D d'un joueur : un personnage animé quand sa classe a un modèle, sinon une capsule
 // avec un "nez" pour l'orientation ; un anneau au sol pour son propre personnage.
 export class PlayerVisual {
+  private static frame = 0;
+  private effectFrame = -1;
+  private effects = new Map<string, number>();
   // Position et orientation prédites (son propre personnage, voir MovementPredictor), sinon null : on suit le serveur.
   predicted: PredictedBody | null = null;
   readonly root: TransformNode;
@@ -156,15 +159,29 @@ export class PlayerVisual {
     return this.state.hp > 0;
   }
 
+  // Une nouvelle image commence : les effets des joueurs seront relus (voir effectTimes).
+  static nextFrame() {
+    PlayerVisual.frame++;
+  }
+
   hasEffect(kind: EffectKind): boolean {
-    for (const effect of this.state.effects) if (effect.kind === kind) return true;
-    return false;
+    return this.effectTimes().has(kind);
   }
 
   // Temps restant d'un effet, en secondes (0 s'il est absent).
   effectRemaining(kind: EffectKind): number {
-    for (const effect of this.state.effects) if (effect.kind === kind) return effect.remaining;
-    return 0;
+    return this.effectTimes().get(kind) ?? 0;
+  }
+
+  // Temps restant de chaque effet du joueur (le premier de chaque type), relu une fois par image : hasEffect est appelé
+  // des dizaines de fois par joueur et par image, et l'état n'arrive du serveur qu'entre deux images.
+  private effectTimes(): Map<string, number> {
+    if (this.effectFrame !== PlayerVisual.frame) {
+      this.effectFrame = PlayerVisual.frame;
+      this.effects.clear();
+      for (const effect of this.state.effects) if (!this.effects.has(effect.kind)) this.effects.set(effect.kind, effect.remaining);
+    }
+    return this.effects;
   }
 
   // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame. Son propre personnage,

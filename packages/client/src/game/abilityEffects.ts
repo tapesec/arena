@@ -203,6 +203,8 @@ export class AbilityEffectPlayer {
 
   // Geste de compétence en cours du personnage.
   update(character: CharacterInstance | null, playing: PlayingAbility | null, ally?: boolean, silent = false) {
+    // Appelé à chaque image pour chaque joueur suivi : rien à faire sans geste ni effet en cours (le cas courant).
+    if (!playing && this.running.size === 0) return;
     this.updateTracks(
       character,
       // Les temps du lanceur sont en secondes réelles.
