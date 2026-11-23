@@ -13,9 +13,21 @@ const SQRT2 = Math.SQRT2;
 export class Pathfinder {
   private readonly size = Math.round(ARENA_SIZE / CELL_SIZE);
   private readonly blocked: Uint8Array;
+  // Tableaux de travail de l'A*, gardés d'une recherche à l'autre (un bot en relance plusieurs par seconde) : une case
+  // n'est valable que si son tampon vaut la recherche en cours, ce qui évite de tout remettre à zéro.
+  private readonly cost: Float32Array;
+  private readonly cameFrom: Int32Array;
+  private readonly stamp: Uint32Array;
+  private readonly closedStamp: Uint32Array;
+  private search = 0;
+  private readonly open = new MinHeap();
 
   constructor() {
     this.blocked = new Uint8Array(this.size * this.size);
+    this.cost = new Float32Array(this.size * this.size);
+    this.cameFrom = new Int32Array(this.size * this.size);
+    this.stamp = new Uint32Array(this.size * this.size);
+    this.closedStamp = new Uint32Array(this.size * this.size);
     const limit = ARENA_SIZE / 2 - MARGIN;
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
@@ -44,10 +56,9 @@ export class Pathfinder {
 
   private aStar(start: number, goal: number): number[] | null {
     const n = this.size;
-    const cost = new Float32Array(n * n).fill(Infinity);
-    const cameFrom = new Int32Array(n * n).fill(-1);
-    const closed = new Uint8Array(n * n);
-    const open = new MinHeap();
+    const { cost, cameFrom, stamp, closedStamp, open } = this;
+    const search = ++this.search;
+    open.clear();
     const gx = goal % n;
     const gz = Math.floor(goal / n);
     // Distance "octile" : exacte sur une grille à 8 directions sans obstacle.
@@ -58,12 +69,14 @@ export class Pathfinder {
     };
 
     cost[start] = 0;
+    cameFrom[start] = -1;
+    stamp[start] = search;
     open.push(start, heuristic(start));
     while (open.size > 0) {
       const current = open.pop();
       if (current === goal) return this.reconstruct(cameFrom, goal);
-      if (closed[current]) continue;
-      closed[current] = 1;
+      if (closedStamp[current] === search) continue;
+      closedStamp[current] = search;
 
       const cx = current % n;
       const cz = Math.floor(current / n);
@@ -74,12 +87,13 @@ export class Pathfinder {
           const z = cz + dz;
           if (x < 0 || z < 0 || x >= n || z >= n) continue;
           const next = z * n + x;
-          if (this.blocked[next] || closed[next]) continue;
+          if (this.blocked[next] || closedStamp[next] === search) continue;
           // En diagonale, on ne coupe pas le coin d'un obstacle.
           if (dx !== 0 && dz !== 0 && (this.blocked[cz * n + x] || this.blocked[z * n + cx])) continue;
 
           const newCost = cost[current] + (dx !== 0 && dz !== 0 ? SQRT2 : 1);
-          if (newCost >= cost[next]) continue;
+          if (stamp[next] === search && newCost >= cost[next]) continue;
+          stamp[next] = search;
           cost[next] = newCost;
           cameFrom[next] = current;
           open.push(next, newCost + heuristic(next));
@@ -164,6 +178,11 @@ class MinHeap {
     return this.items.length;
   }
 
+  clear() {
+    this.items.length = 0;
+    this.priorities.length = 0;
+  }
+
   push(item: number, priority: number) {
     this.items.push(item);
     this.priorities.push(priority);
@@ -198,8 +217,13 @@ class MinHeap {
     return top;
   }
 
+  // Échange par variables temporaires (la déstructuration alloue des tableaux, deux fois plus lente ici).
   private swap(a: number, b: number) {
-    [this.items[a], this.items[b]] = [this.items[b], this.items[a]];
-    [this.priorities[a], this.priorities[b]] = [this.priorities[b], this.priorities[a]];
+    const item = this.items[a];
+    this.items[a] = this.items[b];
+    this.items[b] = item;
+    const priority = this.priorities[a];
+    this.priorities[a] = this.priorities[b];
+    this.priorities[b] = priority;
   }
 }

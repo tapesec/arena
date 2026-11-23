@@ -90,6 +90,8 @@ export class BotBrain {
   private destination: Position | null = null;
   private stopDistance = 0;
   private path: Position[] = [];
+  // La dernière recherche n'a trouvé aucun chemin.
+  private pathMissing = false;
   private repathTimer = 0;
   // Décalage aléatoire pour que les bots ne réfléchissent pas tous au même moment.
   private thinkTimer = Math.random() * THINK_INTERVAL;
@@ -534,8 +536,12 @@ export class BotBrain {
     }
 
     this.repathTimer -= dt;
-    if (this.repathTimer <= 0 || this.path.length === 0) {
-      this.path = this.pathfinder.findPath(pos, this.destination) ?? [];
+    // Sans chemin possible, on ne recherche pas à chaque tick (une recherche sans issue parcourt toute la grille) : on
+    // avance tout droit et on réessaie au prochain recalcul.
+    if (this.repathTimer <= 0 || (this.path.length === 0 && !this.pathMissing)) {
+      const path = this.pathfinder.findPath(pos, this.destination);
+      this.path = path ?? [];
+      this.pathMissing = !path;
       this.repathTimer = REPATH_INTERVAL;
     }
     while (this.path.length > 1 && distance(pos, this.path[0]) < WAYPOINT_REACHED) this.path.shift();

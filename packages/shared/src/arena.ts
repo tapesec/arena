@@ -93,24 +93,27 @@ export function isInsideObstacle(pos: Position, margin: number): boolean {
 }
 
 // Méthode des "slabs" : on intersecte le segment avec chaque paire de bords du rectangle
-// (élargi de "margin" de chaque côté).
+// (élargi de "margin" de chaque côté). Appelée des dizaines de milliers de fois par seconde (lignes de vue, chemins des
+// bots) : calcul en nombres simples, sans tableau.
 function segmentIntersectsObstacle(a: Position, b: Position, o: Obstacle, margin: number): boolean {
   let tMin = 0;
   let tMax = 1;
-  const axes: [number, number, number, number][] = [
-    [a.x, b.x - a.x, o.x - o.halfWidth - margin, o.x + o.halfWidth + margin],
-    [a.z, b.z - a.z, o.z - o.halfDepth - margin, o.z + o.halfDepth + margin],
-  ];
-  for (const [start, delta, min, max] of axes) {
+  // Axe x, puis axe z.
+  for (let axis = 0; axis < 2; axis++) {
+    const start = axis === 0 ? a.x : a.z;
+    const delta = axis === 0 ? b.x - a.x : b.z - a.z;
+    const center = axis === 0 ? o.x : o.z;
+    const half = (axis === 0 ? o.halfWidth : o.halfDepth) + margin;
+    const min = center - half;
+    const max = center + half;
     if (Math.abs(delta) < 1e-9) {
       if (start < min || start > max) return false;
       continue;
     }
-    let t1 = (min - start) / delta;
-    let t2 = (max - start) / delta;
-    if (t1 > t2) [t1, t2] = [t2, t1];
-    tMin = Math.max(tMin, t1);
-    tMax = Math.min(tMax, t2);
+    const t1 = (min - start) / delta;
+    const t2 = (max - start) / delta;
+    tMin = Math.max(tMin, Math.min(t1, t2));
+    tMax = Math.min(tMax, Math.max(t1, t2));
     if (tMin > tMax) return false;
   }
   return true;
