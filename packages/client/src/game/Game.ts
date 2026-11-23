@@ -244,7 +244,8 @@ export class Game {
     this.engine = new Engine(canvas, true);
     this.renderScale = new RenderScale(this.engine, () => {
       const phase = (this.room.state as { phase?: MatchPhase }).phase;
-      return phase === "preparation" || phase === "fighting";
+      // Pas derrière l'écran de chargement : l'arène n'y est presque pas dessinée, les images/s n'y voudraient rien dire.
+      return (phase === "preparation" && this.loading.progress >= 1) || phase === "fighting";
     });
     this.scene = new Scene(this.engine);
     // Le chargement commence dès la salle d'attente ; le serveur attend que chacun ait fini avant la préparation.
@@ -577,6 +578,7 @@ export class Game {
       if (this.hoveredId === key) {
         this.hoveredId = null;
         this.hoveredColor = null;
+        this.hoverCheck.at = 0;
       }
     });
   }
@@ -814,6 +816,8 @@ export class Game {
 
   private handleAction(action: KeyAction) {
     if (this.loading.progress < 1) return;
+    // Entre deux images : relire les effets (le serveur a pu en retirer un depuis la dernière image).
+    PlayerVisual.nextFrame();
     if (action.startsWith("group")) {
       const member = this.groupMembers()[Number(action.slice(5)) - 1];
       if (member) this.setTarget(member.sessionId);
@@ -859,6 +863,8 @@ export class Game {
 
   // Clic gauche sur un personnage (allié, ennemi ou mort) : il devient la cible.
   private handlePointer(info: PointerInfo) {
+    // Tout événement de souris refait le survol à l'image suivante.
+    this.hoverCheck.at = 0;
     if (info.type !== PointerEventTypes.POINTERDOWN || info.event.button !== 0) return;
     const sessionId = this.playerUnderPointer();
     if (sessionId) this.setTarget(sessionId);
@@ -935,6 +941,7 @@ export class Game {
 
   // Touche de la barre ou clic sur une case : ciblage automatique si besoin, puis lancement.
   private castAbility(abilityId: string) {
+    PlayerVisual.nextFrame();
     this.autoTarget(abilityId);
     const ability = getAbility(abilityId);
     if (ability?.target === "enemy") this.steerTowardsTarget();
