@@ -8,7 +8,7 @@ import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { terrainHeight, type EffectKind } from "@arena/shared";
+import { terrainHeight, type ClassId, type EffectKind } from "@arena/shared";
 import type { PredictedBody } from "./prediction";
 import type { TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
@@ -32,7 +32,8 @@ export interface PlayerView {
   name: string;
   isBot: boolean;
   leader: boolean;
-  classId: string;
+  // Vide tant que le joueur n'a pas de classe.
+  classId: ClassId | "";
   team: number;
   x: number;
   z: number;

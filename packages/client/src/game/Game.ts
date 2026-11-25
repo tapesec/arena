@@ -68,6 +68,7 @@ import {
 import { CameraController } from "./CameraController";
 import { WorldOverlay, type StatusIndicator, type TargetMark } from "./WorldOverlay";
 import { ScreenProjector } from "./screenProjection";
+import type { MatchStateView } from "./matchState";
 import { createGround, createLights, createSky } from "./environment";
 import { COMMON_SOUND_CHOICES, audio, choiceRecipes } from "../audio/AudioManager";
 import { Nature } from "./nature";
@@ -254,7 +255,7 @@ export class Game {
     this.engine = new Engine(canvas, true);
     decodeImagesOffThread(this.engine);
     this.renderScale = new RenderScale(this.engine, () => {
-      const phase = (this.room.state as { phase?: MatchPhase }).phase;
+      const phase = this.matchState.phase;
       // Pas derrière l'écran de chargement : l'arène n'y est presque pas dessinée, les images/s n'y voudraient rien dire.
       return (phase === "preparation" && this.loading.progress >= 1) || phase === "fighting";
     });
@@ -476,7 +477,7 @@ export class Game {
   // Mort pendant le combat : la caméra devient libre et le brouillard de guerre disparaît (côté serveur).
   private get isSpectating(): boolean {
     const self = this.self;
-    return !!self && !self.isAlive && (this.room.state as { phase: MatchPhase }).phase === "fighting";
+    return !!self && !self.isAlive && this.matchState.phase === "fighting";
   }
 
   // Suit son personnage, ou en mode spectateur un point que l'on déplace avec ZQSD.
@@ -778,7 +779,7 @@ export class Game {
   // est grisé (aucun bot pour l'exécuter, pas de cible, déjà à pleine vie…).
   private orderWheelItems() {
     const self = this.self;
-    const phase = (this.room.state as { phase: MatchPhase }).phase;
+    const phase = this.matchState.phase;
     if (!self || !self.isAlive || phase !== "fighting" || this.loading.progress < 1) return null;
     const kinds = (p: PlayerVisual) => new Set([...p.state.effects].map((e) => e.kind));
     const state = self.state;
@@ -786,6 +787,7 @@ export class Game {
     const target = this.targetId ? this.players.get(this.targetId) : undefined;
     const situation: OrderSituation = {
       issuer: {
+        // En combat, chacun a sa classe (attribuée d'office au plus tard au chargement).
         classId: state.classId as ClassId,
         hurt: state.hp < state.maxHp,
         mezzed: selfEffects.has("mez"),
@@ -1028,7 +1030,7 @@ export class Game {
     if (!best) return;
     this.setTarget(best);
     // La première fois, en combat : comment choisir soi-même sa cible.
-    if ((this.room.state as { phase: MatchPhase }).phase === "fighting") useHudStore.getState().showHint("autoTarget", t("hint.autoTarget"));
+    if (this.matchState.phase === "fighting") useHudStore.getState().showHint("autoTarget", t("hint.autoTarget"));
   }
 
   // Vrai si rien chez le joueur n'empêche la compétence de partir (la cible mise à part).
@@ -1072,11 +1074,16 @@ export class Game {
     return [...this.players.values()].filter((p) => p !== self && p.state.team === self.state.team);
   }
 
+  // État de la partie synchronisé par le serveur, typé (voir MatchStateView).
+  private get matchState(): MatchStateView {
+    return this.room.state as MatchStateView;
+  }
+
   // Moment de lancer le préchargement de l'arène (voir ARENA_AFTER_CHOICE_MS).
   private arenaTurn(): Promise<void> {
     return new Promise((resolve) => {
       const check = () => {
-        const state = this.room.state as { phase?: MatchPhase; phaseTimeLeft?: number };
+        const state = this.matchState;
         const chosenAt = this.classChosenAt;
         const now = performance.now();
         const go =
@@ -1102,11 +1109,11 @@ export class Game {
     this.predictSelf(dt);
     const currentTarget = this.targetId ? this.players.get(this.targetId) : undefined;
     const targetBlocked = this.targetBlocked(this.self, currentTarget);
-    const campSwap = (this.room.state as { campSwap: boolean }).campSwap;
+    const campSwap = this.matchState.campSwap;
     for (const player of this.players.values()) {
       player.update(smoothing, campSwap, this.self?.state.team ?? null);
       const enemy = !!this.self && player.state.team !== this.self.state.team;
-      const classId = player.state.classId as ClassId | "";
+      const classId = player.state.classId;
       // Un allié se reconnaît à son pseudo, un ennemi à sa classe.
       const label = enemy ? (classId ? className(classId) : "") : player.state.name;
       const side = enemy ? "enemy" : player === this.self ? "self" : "ally";
@@ -1130,7 +1137,7 @@ export class Game {
     if (this.self) this.village.camps.setLocalTeam(this.self.state.team);
     this.shadows?.update(this.camera.camera.target);
     this.village.update(dt, this.camera.camera, this.self ? this.self.root.position.add(VILLAGE_FOCUS_HEIGHT) : null);
-    const match = this.room.state as { phase: MatchPhase; phaseTimeLeft: number; winner: number };
+    const match = this.matchState;
     // Arrivée après le choix de classe (pas d'écran de choix) : le préchargement n'a rien à attendre.
     if (match.phase && match.phase !== "classSelect") lobbyReady();
     this.gameAudio.update(dt, this.players.values(), this.self, match.phase, match.phaseTimeLeft, match.winner);
@@ -1233,7 +1240,7 @@ export class Game {
   private predictSelf(dt: number) {
     const self = this.self;
     if (!self) return;
-    const phase = (this.room.state as { phase: MatchPhase }).phase;
+    const phase = this.matchState.phase;
     const active =
       (phase === "preparation" || phase === "fighting") &&
       self.isAlive &&
@@ -1252,7 +1259,7 @@ export class Game {
         targetVelocity: this.targetVelocity.update(
           target ? target.sessionId : null,
           target ? target.state : null,
-          (this.room.state as { time: number }).time,
+          this.matchState.time,
         ),
         targetAlive: !!target?.isAlive,
         confine: phase === "preparation" && zone ? (pos) => confineToZone(pos, zone) : null,
@@ -1287,7 +1294,7 @@ export class Game {
     const selfFrame: SelfFrame | null = self
       ? {
           ...unitFrame(self.state, nameOf),
-          classId: self.state.classId as ClassId,
+          classId: self.state.classId,
           mana: Math.floor(self.state.mana),
           maxMana: self.state.maxMana,
           endurance: Math.floor(self.state.endurance),
@@ -1307,7 +1314,7 @@ export class Game {
       self && target
         ? {
             ...unitFrame(target.state, nameOf),
-            classId: target.state.classId as ClassId | "",
+            classId: target.state.classId,
             mana: Math.floor(target.state.mana),
             maxMana: target.state.maxMana,
             endurance: Math.floor(target.state.endurance),
@@ -1327,7 +1334,7 @@ export class Game {
           id: p.sessionId,
           isSelf: p === self,
           name: p.state.name,
-          classId: p.state.classId as ClassId | "",
+          classId: p.state.classId,
           hp: p.state.hp,
           maxHp: p.state.maxHp,
           mana: Math.floor(p.state.mana),
@@ -1341,17 +1348,7 @@ export class Game {
         }))
       : [];
 
-    const state = this.room.state as {
-      phase: MatchPhase;
-      phaseTimeLeft: number;
-      playerCount: number;
-      matchSize: number;
-      winner: number;
-      campSwap: boolean;
-      alive0: number;
-      alive1: number;
-      teamSize: number;
-    };
+    const state = this.matchState;
     const myTeam = self?.state.team ?? 0;
     const matchFrame: MatchFrame = {
       phase: state.phase,
@@ -1372,7 +1369,7 @@ export class Game {
           .map((p) => ({
             id: p.sessionId,
             name: p.state.name,
-            classId: p.state.classId as ClassId | "",
+            classId: p.state.classId,
             isSelf: p === self,
             isBot: p.state.isBot,
             leader: p.state.leader,
@@ -1383,8 +1380,7 @@ export class Game {
 
     // Écran de chargement : tous les joueurs de la partie (le serveur les envoie tous, sans leur classe). Le sien est
     // pris du suivi local, plus à jour.
-    const loadingState = (this.room.state as { loading?: Map<string, { name: string; team: number; isBot: boolean; progress: number }> })
-      .loading;
+    const loadingState = this.matchState.loading;
     const loading: LoadingFrame[] = loadingState
       ? [...loadingState.entries()].map(([id, entry]) => ({
           id,
