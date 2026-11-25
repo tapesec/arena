@@ -115,6 +115,8 @@ export class Village {
     for (const obstacle of OBSTACLES) {
       this.build(obstacle);
       await yieldToBrowser();
+      // Jeu quitté entre deux bâtiments : la scène n'existe plus.
+      if (this.scene.isDisposed) return;
     }
     this.camps.build((piece, x, y, z, rotation) => this.placePiece(piece, x, y, z, rotation));
   }
