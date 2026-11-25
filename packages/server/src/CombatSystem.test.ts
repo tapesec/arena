@@ -13,6 +13,7 @@ import {
   pickHero,
   emptyStats,
   type ClassId,
+  type EffectKind,
   type CombatEvent,
   type InterruptEvent,
   type KillEvent,
@@ -21,6 +22,7 @@ import {
 import { CombatSystem } from "./CombatSystem";
 import { PlayerRuntime, initVitals } from "./PlayerRuntime";
 import { EffectState, PlayerState } from "./state";
+import { addEffect } from "./combat/effectStore";
 
 const DT = 0.05;
 
@@ -1350,7 +1352,7 @@ describe("Règles communes", () => {
 
     // Sous mez : l'attaque activée ne le tourne pas (ce chemin ne passe pas par checkCanUse).
     const gardien = world.spawn("g", "gardien", 0, -3, 0, Math.PI);
-    (world.combat as unknown as { addEffect(p: PlayerRuntime, kind: string, duration: number, sourceId: string): void }).addEffect(gardien, "mez", 10, "x");
+    addEffect(gardien, "mez", 10, "x");
     world.combat.setTarget(gardien.id, enemy.id);
     world.combat.toggleAttack(gardien.id);
     assert.equal(gardien.state.facing, Math.PI, "sous mez, pas de rotation");
@@ -1581,8 +1583,7 @@ describe("Suivi de cible, root et incantation", () => {
 
 describe("Gardien : nouvelles compétences", () => {
   // Accès aux méthodes internes pour préparer une situation (effet déjà posé).
-  const addEffect = (p: PlayerRuntime, kind: string, duration: number) =>
-    (world.combat as unknown as { addEffect: (...args: unknown[]) => void }).addEffect(p, kind, duration, "test");
+  const addTestEffect = (p: PlayerRuntime, kind: EffectKind, duration: number) => addEffect(p, kind, duration, "test");
 
   it("la Charge fonce sur la cible, puis frappe et stun à l'arrivée", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
@@ -1610,7 +1611,7 @@ describe("Gardien : nouvelles compétences", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
     const enemy = world.spawn("e", "lame", 1, 0, 15, Math.PI);
     world.cast(enemy, "evasion");
-    addEffect(enemy, "immuneStun", 30);
+    addTestEffect(enemy, "immuneStun", 30);
     world.rolls = [0, 0, 0, 0];
     world.cast(gardien, "charge", enemy);
     world.run(1);

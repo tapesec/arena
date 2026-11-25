@@ -4,15 +4,12 @@ import {
   CHARGE_SPEED_MULTIPLIER,
   CRIT_CHANCE,
   CRIT_MULTIPLIER,
-  DEXTERITY_FACTOR,
   DOT_INTERVAL,
-  ENDURANCE_REGEN,
   EVASION_CHANCE,
   GANGRENE_HEAL_FACTOR,
   GUARD_BLOCK_CHANCE,
   GUARD_RANGE,
   HOT_INTERVAL,
-  HP_BUFF_AMOUNT,
   IMMUNITY_DURATION,
   INTERCEPT_RANGE,
   MOVE_SPEED,
@@ -23,16 +20,11 @@ import {
   forwardOf,
   moveDirection,
   RAMPART_RADIUS,
-  MANA_REGEN,
   spellRange,
   NO_INPUT,
-  PERMANENT,
-  SECOND_WIND_ENDURANCE_REGEN,
-  SECOND_WIND_MANA_REGEN,
   SHIELD_BLOCK_CHANCE,
   SONG_RANGE,
   SONG_SPEED_CALM,
-  STRENGTH_BUFF_BONUS,
   TAUNT_DAMAGE_FACTOR,
   TAUNT_HALT_DURATION,
   distance,
@@ -68,7 +60,8 @@ import {
   type Position,
 } from "@arena/shared";
 import type { ActiveEffect, PlayerRuntime } from "./PlayerRuntime";
-import { EffectState } from "./state";
+import { addEffect, removeEffect } from "./combat/effectStore";
+import { comboError, costOf, dexterityFactor, isSong, powerFactor, splitHealShares, stopsSong, updateRegen, withFalloff } from "./combat/rules";
 
 // Ce dont le système de combat a besoin pour communiquer avec les clients.
 export interface CombatOutput {
@@ -215,7 +208,7 @@ export class CombatSystem {
     if (!caster?.alive || !ability || !caster.classDef.abilities.includes(abilityId)) return false;
     if (this.checkCanUse(caster, ability, ignoreMovement)) return false;
     const targetId = this.pickTarget(caster, ability);
-    return !!targetId && !this.validateTarget(caster, ability, targetId) && !this.comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
+    return !!targetId && !this.validateTarget(caster, ability, targetId) && !comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
   }
 
   useAbility(casterId: string, abilityId: string) {
@@ -241,8 +234,8 @@ export class CombatSystem {
       const target = this.players.get(targetId);
       if (!target?.alive) return this.sendError(caster, "targetDead");
       if (!this.areEnemies(caster, target)) return this.sendError(caster, "notHostile");
-      const comboError = this.comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
-      if (comboError) return this.sendError(caster, comboError, ability.after);
+      const combo = comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
+      if (combo) return this.sendError(caster, combo, ability.after);
       this.noteAction(caster);
       caster.state.queuedAbility = ability.id;
       caster.state.attacking = true;
@@ -254,7 +247,7 @@ export class CombatSystem {
     if (targetError) return this.sendError(caster, targetError);
     // Ballade rythmée : agir (autre chose que se déplacer) la fait perdre ; couper son chant ne compte pas.
     // Chant de vitesse : lancer ou couper un chant ne compte pas comme une action.
-    if (!this.stopsSong(caster, ability)) this.endBallad(caster);
+    if (!stopsSong(caster, ability)) this.endBallad(caster);
     if (!isSong(ability)) caster.lastEngagedAt = this.time;
 
     if (ability.castTime === 0) {
@@ -266,12 +259,12 @@ export class CombatSystem {
     // Concentration protège la prochaine incantation, puis disparaît.
     const concentration = caster.getEffect("concentration");
     caster.castProtected = !!concentration;
-    if (concentration) this.removeEffect(caster, concentration);
+    if (concentration) removeEffect(caster, concentration);
 
     caster.state.castAbility = ability.id;
     caster.state.castElapsed = 0;
     // Buff dextérité : incantation plus rapide.
-    caster.state.castDuration = ability.castTime * this.dexterityFactor(caster);
+    caster.state.castDuration = ability.castTime * dexterityFactor(caster);
     caster.castTargetId = targetId;
   }
 
@@ -287,7 +280,7 @@ export class CombatSystem {
     this.tickStart = new Map(alive.map((p) => [p.id, { x: p.state.x, z: p.state.z }]));
     for (const p of alive) {
       this.updateMovement(p, dt);
-      this.updateRegen(p, dt);
+      updateRegen(p, dt);
     }
     // Les actions sont résolues après tous les déplacements, sur des positions à jour.
     for (const p of alive) {
@@ -335,19 +328,6 @@ export class CombatSystem {
     if (lockReleased(player.input, !!target?.alive, player.effects)) state.lock = "";
   }
 
-  private updateRegen(player: PlayerRuntime, dt: number) {
-    const state = player.state;
-    // Chant de second souffle d'un Barde proche : régénération en plus.
-    const song = player.has("secondWind");
-    if (state.maxMana > 0) {
-      state.mana = Math.min(state.maxMana, state.mana + (MANA_REGEN + (song ? SECOND_WIND_MANA_REGEN : 0)) * dt);
-    }
-    if (state.maxEndurance > 0) {
-      const regen = ENDURANCE_REGEN + (song ? SECOND_WIND_ENDURANCE_REGEN : 0);
-      state.endurance = Math.min(state.maxEndurance, state.endurance + regen * dt);
-    }
-  }
-
   private updateCast(caster: PlayerRuntime, dt: number) {
     const state = caster.state;
     if (!state.castAbility) return;
@@ -362,7 +342,7 @@ export class CombatSystem {
 
     // Les conditions sont revérifiées à la fin : la cible a pu s'éloigner ou se cacher.
     const error =
-      state[ability.resource] < this.costOf(caster, ability) ? (ability.resource === "mana" ? "noMana" : "noEndurance") : this.validateTarget(caster, ability, targetId);
+      state[ability.resource] < costOf(caster, ability) ? (ability.resource === "mana" ? "noMana" : "noEndurance") : this.validateTarget(caster, ability, targetId);
     if (error) return this.sendError(caster, error);
     // Un sort commencé avant la Ballade rythmée la fait perdre en partant.
     this.noteAction(caster);
@@ -385,7 +365,7 @@ export class CombatSystem {
     if (!isFacing(attacker.state, target.state)) return;
 
     // Buff dextérité : coups d'arme plus rapprochés.
-    const interval = attacker.classDef.autoAttack.interval * this.dexterityFactor(attacker);
+    const interval = attacker.classDef.autoAttack.interval * dexterityFactor(attacker);
     attacker.swingTimer = interval;
     this.noteAction(attacker);
     this.sendSwing(attacker, true);
@@ -400,7 +380,7 @@ export class CombatSystem {
       const error =
         this.checkCanUse(attacker, queued, true) ??
         this.validateTarget(attacker, queued, target.id) ??
-        this.comboError(queued, opener, openerTargetId, target.id);
+        comboError(queued, opener, openerTargetId, target.id);
       if (!error) {
         if (this.resolveAbility(attacker, queued, target.id)) {
           attacker.state.comboAbility = queued.id;
@@ -424,24 +404,11 @@ export class CombatSystem {
     if (caster.state.castAbility) return "alreadyCasting";
     if (caster.has("silenced") && isMagic(ability)) return "silenced";
     if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "cooldown";
-    if (caster.state[ability.resource] < this.costOf(caster, ability)) {
+    if (caster.state[ability.resource] < costOf(caster, ability)) {
       return ability.resource === "mana" ? "noMana" : "noEndurance";
     }
     if (ability.castTime > 0 && caster.isMoving && !ignoreMovement) return "castWhileMoving";
     return null;
-  }
-
-  // Couper son chant ne coûte rien : seule l'activation se paie.
-  private costOf(caster: PlayerRuntime, ability: AbilityDef): number {
-    return this.stopsSong(caster, ability) ? 0 : ability.cost;
-  }
-
-  private stopsSong(caster: PlayerRuntime, ability: AbilityDef): boolean {
-    return caster.state.song === ability.id && ability.effects.some((e) => e.type === "toggleSong");
-  }
-
-  private dexterityFactor(player: PlayerRuntime): number {
-    return player.has("buffDexterity") ? DEXTERITY_FACTOR : 1;
   }
 
   // Agir (attaquer, lancer une compétence ; pas se déplacer) : la Ballade rythmée se perd, et le Chant de vitesse
@@ -454,18 +421,12 @@ export class CombatSystem {
   // Ballade rythmée : elle se perd dès qu'on agit (attaquer, lancer une compétence) ; se déplacer ne compte pas.
   private endBallad(player: PlayerRuntime) {
     const ballad = player.getEffect("ballad");
-    if (ballad) this.removeEffect(player, ballad);
+    if (ballad) removeEffect(player, ballad);
   }
 
   private clearCombo(player: PlayerRuntime) {
     player.state.comboAbility = "";
     player.state.comboTarget = "";
-  }
-
-  // Combo : la technique d'ouverture (opener) doit avoir porté sur la même cible au coup d'arme précédent.
-  private comboError(ability: AbilityDef, opener: string, openerTargetId: string, targetId: string): GameErrorCode | null {
-    if (!ability.after || (opener === ability.after && openerTargetId === targetId)) return null;
-    return "combo";
   }
 
   // Détermine la cible de la compétence selon son type.
@@ -516,7 +477,7 @@ export class CombatSystem {
 
   // Retourne vrai si une attaque de mêlée a porté sur sa cible (ni évitée ni interceptée) : elle ouvre un combo.
   private resolveAbility(caster: PlayerRuntime, ability: AbilityDef, targetId: string): boolean {
-    caster.state[ability.resource] -= this.costOf(caster, ability);
+    caster.state[ability.resource] -= costOf(caster, ability);
     if (ability.cooldown > 0) {
       caster.cooldowns.set(ability.id, this.time + ability.cooldown);
       const event: CooldownEvent = { abilityId: ability.id, duration: ability.cooldown };
@@ -524,9 +485,9 @@ export class CombatSystem {
     }
     // Oubli : le premier sort fini pendant l'effet n'a aucun effet (mana dépensé, recharge lancée) et le consomme.
     // Couper son chant n'est pas un sort lancé.
-    const oblivion = isMagic(ability) && !this.stopsSong(caster, ability) ? caster.getEffect("oblivion") : undefined;
+    const oblivion = isMagic(ability) && !stopsSong(caster, ability) ? caster.getEffect("oblivion") : undefined;
     if (oblivion) {
-      this.removeEffect(caster, oblivion);
+      removeEffect(caster, oblivion);
       return false;
     }
     const used: AbilityUsedEvent = { casterId: caster.id, abilityId: ability.id, targetId };
@@ -535,7 +496,7 @@ export class CombatSystem {
     const center = this.areaCenter(caster, ability, targetId);
     const affected = this.affectedBy(caster, ability, targetId);
     const split = ability.effects.find((effect) => effect.type === "splitHeal");
-    const shares = split ? this.splitHealShares(caster, split.amount, affected) : undefined;
+    const shares = split ? splitHealShares(caster, split.amount, affected) : undefined;
     // Technique de mêlée ou coup instantané (Coup de pied) : un coup d'arme, qui peut être évité.
     const meleeAttack = !!ability.melee || !!ability.meleeStrike;
     let landed = false;
@@ -552,7 +513,7 @@ export class CombatSystem {
         // esquivée, bloquée au bouclier ou absorbée par une bulle, elle s'arrête en entier.
         const interceptor = this.interceptorOf(target);
         if (interceptor) {
-          this.removeEffect(target, target.getEffect("intercept")!);
+          removeEffect(target, target.getEffect("intercept")!);
           this.emit({ kind: "intercepted", sourceId: caster.id, targetId: interceptor.id, abilityId: ability.id, detail: target.id });
           target = interceptor;
           target.lastEngagedAt = this.time;
@@ -570,20 +531,6 @@ export class CombatSystem {
     return landed;
   }
 
-  // Soin réparti (Soin de groupe) : le total, augmenté par le buff de puissance, est partagé au prorata des points de
-  // vie qui manquent à chacun ; personne n'en reçoit plus qu'il ne lui en manque, le surplus est perdu.
-  private splitHealShares(caster: PlayerRuntime, amount: number, targets: PlayerRuntime[]): Map<string, number> {
-    const shares = new Map<string, number>();
-    const total = amount * this.powerFactor(caster);
-    const missing = targets.map((p) => Math.max(0, p.state.maxHp - p.state.hp));
-    const totalMissing = missing.reduce((sum, value) => sum + value, 0);
-    targets.forEach((p, i) => {
-      // Arrondi à l'unité inférieure : le total distribué ne dépasse jamais le soin.
-      shares.set(p.id, totalMissing <= total ? missing[i] : Math.floor((total * missing[i]) / totalMissing));
-    });
-    return shares;
-  }
-
   // Règle du dernier carré active (coupée dans la plupart des tests, qui opposent des équipes de tailles différentes).
   lastStandRule = true;
 
@@ -598,11 +545,6 @@ export class CombatSystem {
       else other++;
     }
     return lastStandBonus(own, other);
-  }
-
-  // Bonus du buff de puissance, sur les dégâts comme sur les soins du lanceur.
-  private powerFactor(source: PlayerRuntime): number {
-    return source.has("buffStrength") ? 1 + STRENGTH_BUFF_BONUS : 1;
   }
 
   // Gardien qui intercepte le prochain coup visant la cible, s'il est vivant et assez proche.
@@ -666,7 +608,7 @@ export class CombatSystem {
       case "dot": {
         // Relancer la Brûlure (ou le Poison) la fait repartir de zéro.
         const ticks = Math.round(effect.duration / DOT_INTERVAL);
-        const dot = this.addEffect(target, effect.effect ?? "burning", effect.duration, caster.id, effect.amount / ticks);
+        const dot = addEffect(target, effect.effect ?? "burning", effect.duration, caster.id, effect.amount / ticks);
         dot.ticks = { abilityId: ability.id, done: 0, total: ticks, kind: "damage" };
         if (effect.effect === "poisoned") this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "poisoned" });
         break;
@@ -675,7 +617,7 @@ export class CombatSystem {
         // Contrôle physique quand il vient d'une compétence d'endurance (Coup de pied) : le Cri de ralliement n'en
         // protège pas. Ni immunité ensuite, ni cassé par les dégâts ; relancé, il repart de sa durée.
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
-        this.addEffect(target, "silenced", effect.duration, caster.id, 0, magic);
+        addEffect(target, "silenced", effect.duration, caster.id, 0, magic);
         // Le chant du Barde se tait : il ne peut pas le relancer tant que dure le silence (c'est une compétence à mana),
         // et devra repayer son activation ensuite.
         target.state.song = "";
@@ -683,14 +625,14 @@ export class CombatSystem {
         this.emit({ kind: "cc", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "silenced" });
         break;
       case "debuff":
-        this.addEffect(target, effect.debuff, effect.duration, caster.id);
+        addEffect(target, effect.debuff, effect.duration, caster.id);
         this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: effect.debuff });
         break;
       case "oblivion":
         // Contrôle magique (le Cri de ralliement en protège et le retire). Il n'interrompt pas : une incantation en
         // cours qui se termine pendant l'effet est le sort oublié. Relancé, il repart de sa durée.
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
-        this.addEffect(target, "oblivion", effect.duration, caster.id, 0, magic);
+        addEffect(target, "oblivion", effect.duration, caster.id, 0, magic);
         this.emit({ kind: "cc", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "oblivion" });
         break;
       case "ballad":
@@ -698,15 +640,15 @@ export class CombatSystem {
         for (const ally of this.players.values()) {
           if (!ally.alive || this.areEnemies(caster, ally)) continue;
           for (const active of [...ally.effects]) {
-            if (MOBILITY_EFFECTS.includes(active.kind)) this.removeEffect(ally, active);
+            if (MOBILITY_EFFECTS.includes(active.kind)) removeEffect(ally, active);
           }
-          this.addEffect(ally, "ballad", effect.duration, caster.id);
+          addEffect(ally, "ballad", effect.duration, caster.id);
           this.emit({ kind: "buff", sourceId: caster.id, targetId: ally.id, abilityId: ability.id, detail: "ballad" });
         }
         break;
       case "nearSight":
         // Pas un contrôle magique : le Cri de ralliement ne l'empêche ni ne le retire.
-        this.addEffect(target, "nearSight", effect.duration, caster.id);
+        addEffect(target, "nearSight", effect.duration, caster.id);
         this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "nearSight" });
         break;
       case "heal":
@@ -719,7 +661,7 @@ export class CombatSystem {
       case "hot": {
         // Relancé par le même lanceur, il repart de zéro ; ceux de lanceurs différents se cumulent.
         const ticks = Math.round(effect.duration / HOT_INTERVAL);
-        const renew = this.addEffect(target, "renew", effect.duration, caster.id, effect.amount / ticks, false, true);
+        const renew = addEffect(target, "renew", effect.duration, caster.id, effect.amount / ticks, false, true);
         renew.ticks = { abilityId: ability.id, done: 0, total: ticks, kind: "heal" };
         this.emit({ kind: "buff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "renew" });
         break;
@@ -740,12 +682,12 @@ export class CombatSystem {
       case "rallyCry":
         // Retire les contrôles magiques déjà en place, puis protège des suivants.
         for (const active of [...target.effects]) {
-          if (active.magic && MAGIC_CONTROLS.includes(active.kind)) this.removeEffect(target, active);
+          if (active.magic && MAGIC_CONTROLS.includes(active.kind)) removeEffect(target, active);
         }
-        this.addEffect(target, "magicImmune", effect.duration, caster.id);
+        addEffect(target, "magicImmune", effect.duration, caster.id);
         break;
       case "rampart":
-        this.addEffect(caster, "rampart", effect.duration, caster.id);
+        addEffect(caster, "rampart", effect.duration, caster.id);
         caster.state.attacking = false;
         caster.state.queuedAbility = "";
         caster.state.lock = "";
@@ -753,7 +695,7 @@ export class CombatSystem {
       case "cleanse": {
         // Le Réveil retire le mez, pas le stun.
         const control = target.getEffect("mez");
-        if (control) this.removeEffect(target, control);
+        if (control) removeEffect(target, control);
         this.emit({ kind: "cleanse", sourceId: caster.id, targetId: target.id, abilityId: ability.id });
         break;
       }
@@ -765,17 +707,17 @@ export class CombatSystem {
         this.emit({ kind: "resurrect", sourceId: caster.id, targetId: target.id, abilityId: ability.id });
         break;
       case "buff":
-        this.addEffect(target, effect.buff, Infinity, caster.id);
+        addEffect(target, effect.buff, Infinity, caster.id);
         this.emit({ kind: "buff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: effect.buff });
         break;
       case "status":
-        this.addEffect(target, effect.status, effect.duration, caster.id);
+        addEffect(target, effect.status, effect.duration, caster.id);
         break;
       case "guard":
         this.toggleGuard(caster, target, ability.id);
         break;
       case "intercept":
-        this.addEffect(target, "intercept", effect.duration, caster.id);
+        addEffect(target, "intercept", effect.duration, caster.id);
         break;
       case "toggleSong":
         // Un seul chant à la fois : en lancer un autre remplace le premier.
@@ -791,13 +733,13 @@ export class CombatSystem {
       const guard = p.getEffect("guarded");
       if (guard?.sourceId !== guardian.id) continue;
       if (p === target) wasGuardingTarget = true;
-      this.removeEffect(p, guard);
+      removeEffect(p, guard);
     }
     if (wasGuardingTarget) {
       this.emit({ kind: "unguard", sourceId: guardian.id, targetId: target.id, abilityId });
       return;
     }
-    this.addEffect(target, "guarded", Infinity, guardian.id);
+    addEffect(target, "guarded", Infinity, guardian.id);
     this.emit({ kind: "guard", sourceId: guardian.id, targetId: target.id, abilityId });
   }
 
@@ -823,14 +765,14 @@ export class CombatSystem {
     // Interception : le Gardien prend le coup s'il est assez proche (une attaque spéciale l'a déjà tranchée).
     const interceptor = dot || avoidanceDone ? undefined : this.interceptorOf(target);
     if (interceptor) {
-      this.removeEffect(target, target.getEffect("intercept")!);
+      removeEffect(target, target.getEffect("intercept")!);
       this.emit({ kind: "intercepted", sourceId: source.id, targetId: interceptor.id, abilityId, detail: target.id });
       target = interceptor;
       target.lastEngagedAt = this.time;
     }
 
     // Buff de puissance : plus de dégâts, en mêlée comme avec les sorts (tics compris).
-    amount *= this.powerFactor(source);
+    amount *= powerFactor(source);
     // Dernier carré : l'équipe en infériorité, réduite à quelques survivants, frappe plus fort.
     amount *= 1 + this.lastStand(source.state.team);
     // Brise armure : la cible subit plus de dégâts de mêlée (attaques automatiques et techniques).
@@ -883,7 +825,7 @@ export class CombatSystem {
     if (state.castAbility && !target.castProtected && !dot) this.interrupt(target, "damage");
     for (const kind of ["mez", "root"] as const) {
       const control = target.getEffect(kind);
-      if (control) this.removeEffect(target, control);
+      if (control) removeEffect(target, control);
     }
   }
 
@@ -905,7 +847,7 @@ export class CombatSystem {
     // Bulle de l'Arcaniste : elle absorbe le coup et disparaît.
     const bubble = target.getEffect("bubble");
     if (bubble) {
-      this.removeEffect(target, bubble);
+      removeEffect(target, bubble);
       this.emit({ kind: "absorbed", ...base });
       return "absorbed";
     }
@@ -932,7 +874,7 @@ export class CombatSystem {
 
   // Soin augmenté par le buff de puissance du lanceur.
   private heal(source: PlayerRuntime, target: PlayerRuntime, amount: number, abilityId: string) {
-    this.restoreHp(source, target, amount * this.powerFactor(source), abilityId);
+    this.restoreHp(source, target, amount * powerFactor(source), abilityId);
   }
 
   // Soin sans bonus, plafonné aux points de vie manquants. L'événement part même à 0 : pour le Soin de groupe, il
@@ -965,15 +907,15 @@ export class CombatSystem {
       this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
       return;
     }
-    this.addEffect(target, cc, duration, source.id, 0, options.magic);
+    addEffect(target, cc, duration, source.id, 0, options.magic);
     source.stats.controls++;
     // Un Gardien mez ou stun perd son Rempart.
     const rampart = cc !== "root" ? target.getEffect("rampart") : undefined;
-    if (rampart) this.removeEffect(target, rampart);
+    if (rampart) removeEffect(target, rampart);
     if (target.charge) this.stopCharge(target);
     // L'immunité démarre dès l'application : impossible de prolonger le contrôle en le relançant.
     // Elle couvre la durée du contrôle, puis IMMUNITY_DURATION de répit après sa fin normale.
-    this.addEffect(target, immunity, duration + IMMUNITY_DURATION, source.id);
+    addEffect(target, immunity, duration + IMMUNITY_DURATION, source.id);
     // Mez et stun interrompent toujours ; un root aussi (décidé le 2026-11-21), sauf sous Concentration.
     if (target.state.castAbility && (cc !== "root" || !target.castProtected)) this.interrupt(target, "cc");
     this.emit({ kind: "cc", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
@@ -990,7 +932,7 @@ export class CombatSystem {
     this.stopCharge(player);
     this.stopRoll(player);
     this.endCast(player);
-    for (const effect of [...player.effects]) this.removeEffect(player, effect);
+    for (const effect of [...player.effects]) removeEffect(player, effect);
     this.removeLinkedEffects(player);
   }
 
@@ -998,7 +940,7 @@ export class CombatSystem {
   private removeLinkedEffects(source: PlayerRuntime) {
     for (const p of this.players.values()) {
       for (const effect of [...p.effects]) {
-        if (effect.sourceId === source.id && LINKED_EFFECTS.includes(effect.kind)) this.removeEffect(p, effect);
+        if (effect.sourceId === source.id && LINKED_EFFECTS.includes(effect.kind)) removeEffect(p, effect);
       }
     }
   }
@@ -1011,7 +953,7 @@ export class CombatSystem {
       effect.remaining -= dt;
       if (effect.ticks) this.updateTicks(player, effect);
       if (!player.effects.includes(effect)) continue;
-      if (effect.remaining <= 0 || (effect.ticks && effect.ticks.done >= effect.ticks.total)) this.removeEffect(player, effect);
+      if (effect.remaining <= 0 || (effect.ticks && effect.ticks.done >= effect.ticks.total)) removeEffect(player, effect);
       else effect.view.remaining = effect.remaining;
     }
   }
@@ -1020,7 +962,7 @@ export class CombatSystem {
   private updateTicks(player: PlayerRuntime, effect: ActiveEffect) {
     const ticks = effect.ticks!;
     const source = this.players.get(effect.sourceId);
-    if (!source) return this.removeEffect(player, effect);
+    if (!source) return removeEffect(player, effect);
     const elapsed = effect.duration - effect.remaining;
     const interval = ticks.kind === "heal" ? HOT_INTERVAL : DOT_INTERVAL;
     while (ticks.done < ticks.total && elapsed >= (ticks.done + 1) * interval - 1e-6 && player.alive) {
@@ -1056,8 +998,8 @@ export class CombatSystem {
 
   private setDerivedEffect(player: PlayerRuntime, kind: EffectKind, active: boolean) {
     const effect = player.getEffect(kind);
-    if (active && !effect) this.addEffect(player, kind, Infinity, player.id);
-    if (!active && effect) this.removeEffect(player, effect);
+    if (active && !effect) addEffect(player, kind, Infinity, player.id);
+    if (!active && effect) removeEffect(player, effect);
   }
 
   // Un effet déjà présent est rafraîchi plutôt que cumulé.
@@ -1067,7 +1009,7 @@ export class CombatSystem {
     if (this.resistsMobility(source, target, abilityId)) return;
     const current = target.getEffect("snare");
     if (current && (current.value > slow || (current.value === slow && current.remaining >= duration))) return;
-    this.addEffect(target, "snare", duration, source.id, slow, magic);
+    addEffect(target, "snare", duration, source.id, slow, magic);
   }
 
   // Ballade rythmée : root et snares sont sans effet. Retourne vrai s'il est résisté.
@@ -1210,66 +1152,14 @@ export class CombatSystem {
   // Provocation : la cible s'arrête net, son incantation est interrompue, son attaque s'arrête et elle se tourne vers
   // le Gardien ; pendant la durée, elle inflige moins de dégâts à tout autre que lui (voir dealDamage).
   private applyTaunt(caster: PlayerRuntime, target: PlayerRuntime, duration: number, abilityId: string) {
-    this.addEffect(target, "taunted", duration, caster.id);
-    this.addEffect(target, "halted", TAUNT_HALT_DURATION, caster.id);
+    addEffect(target, "taunted", duration, caster.id);
+    addEffect(target, "halted", TAUNT_HALT_DURATION, caster.id);
     if (target.state.castAbility && !target.castProtected) this.interrupt(target, "taunt");
     target.state.attacking = false;
     target.state.queuedAbility = "";
     target.state.lock = "";
     target.state.facing = facingTowards(target.state, caster.state);
     this.emit({ kind: "taunt", sourceId: caster.id, targetId: target.id, abilityId });
-  }
-
-  private addEffect(
-    player: PlayerRuntime,
-    kind: EffectKind,
-    duration: number,
-    sourceId: string,
-    value = 0,
-    magic = false,
-    // Un effet par lanceur (Renouveau) : seul celui du même lanceur est rafraîchi.
-    perSource = false,
-  ): ActiveEffect {
-    const existing = perSource ? player.effects.find((e) => e.kind === kind && e.sourceId === sourceId) : player.getEffect(kind);
-    if (existing) {
-      existing.remaining = duration;
-      existing.duration = duration;
-      existing.sourceId = sourceId;
-      existing.value = value;
-      existing.magic = magic;
-      existing.ticks = undefined;
-      existing.view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
-      existing.view.duration = Number.isFinite(duration) ? duration : PERMANENT;
-      existing.view.source = sourceId;
-      existing.view.value = value;
-      return existing;
-    }
-    const view = new EffectState();
-    view.kind = kind;
-    view.remaining = Number.isFinite(duration) ? duration : PERMANENT;
-    view.duration = Number.isFinite(duration) ? duration : PERMANENT;
-    view.source = sourceId;
-    view.value = value;
-    player.state.effects.push(view);
-    const effect: ActiveEffect = { kind, remaining: duration, duration, sourceId, value, magic, view };
-    player.effects.push(effect);
-
-    if (kind === "buffHp") {
-      player.state.maxHp += HP_BUFF_AMOUNT;
-      player.state.hp += HP_BUFF_AMOUNT;
-    }
-    return effect;
-  }
-
-  private removeEffect(player: PlayerRuntime, effect: ActiveEffect) {
-    player.effects = player.effects.filter((e) => e !== effect);
-    const index = player.state.effects.indexOf(effect.view);
-    if (index >= 0) player.state.effects.splice(index, 1);
-
-    if (effect.kind === "buffHp") {
-      player.state.maxHp -= HP_BUFF_AMOUNT;
-      player.state.hp = Math.min(player.state.hp, player.state.maxHp);
-    }
   }
 
   // --- Utilitaires ---
@@ -1308,14 +1198,3 @@ export class CombatSystem {
   }
 }
 
-// Chant du Barde (à activer ou couper).
-function isSong(ability: AbilityDef): boolean {
-  return ability.effects.some((effect) => effect.type === "toggleSong");
-}
-
-// Dégâts décroissants du centre vers le bord d'une zone d'effet (edgeAmount au bord du rayon).
-function withFalloff(effect: AbilityEffect, ability: AbilityDef, center: PlayerRuntime, target: PlayerRuntime): AbilityEffect {
-  if (effect.type !== "damage" || effect.edgeAmount === undefined || !ability.radius) return effect;
-  const ratio = Math.min(1, distance(center.state, target.state) / ability.radius);
-  return { ...effect, amount: Math.round(effect.amount + (effect.edgeAmount - effect.amount) * ratio) };
-}

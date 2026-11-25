@@ -10,6 +10,7 @@ import { createBotBrain } from "./classBots";
 import { pickBotClass } from "./composition";
 import { dispatchOrder, followHumansAtStart } from "./orders";
 import { Pathfinder } from "./Pathfinder";
+import { addEffect } from "../combat/effectStore";
 
 const DT = 0.05;
 
@@ -506,7 +507,7 @@ describe("Bots : ordres", () => {
     const proche = sim.spawn("b1", "barde", 0, 1, 0, 0, true);
     sim.spawn("b2", "barde", 0, 6, 0, 0, true);
     const joueur = sim.spawn("j", "lame", 0, 0, 2);
-    const mez = (p: PlayerRuntime) => (sim.combat as unknown as { addEffect(p: PlayerRuntime, kind: string, duration: number, sourceId: string): void }).addEffect(p, "mez", 10, "x");
+    const mez = (p: PlayerRuntime) => addEffect(p, "mez", 10, "x");
     mez(proche);
     mez(joueur);
     assert.deepEqual(sim.order("awaken", joueur), [{ botId: "b2", reply: "awaken" }]);
