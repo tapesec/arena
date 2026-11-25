@@ -52,7 +52,7 @@ import { ABILITY_FX, PROJECTILE_TRAVEL_TIME, isProjectile, setProjectileLookup }
 import { SpellEffects } from "./game/SpellEffects";
 import { codeImpact, codeProjectile, codeSoundTracks, codeStatus, codeZone } from "./game/codeVisuals";
 import { ABILITY_SOUNDS, type Cue } from "./game/codeSounds";
-import { COMMON_SOUND_CHOICES, audio, type CommonSoundChoice, type CommonSoundChoices } from "./audio/AudioManager";
+import { COMMON_SOUND_CHOICES, audio, type CommonSoundChoice } from "./audio/AudioManager";
 import samples from "./audio/samples.json";
 import { SOUNDS as SYNTH_SOUNDS } from "./audio/sounds";
 import { projectileDirection, projectilePosition } from "./game/projectilePaths";
@@ -128,6 +128,7 @@ import { ParticleFactory, type Recipe } from "./game/particles";
 import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import catalog from "./animationCatalog.json";
 import "./styles.css";
+import { rebaseDraft, readStorage, useDevFileDraft, writeStorage, type DevFileDraft, type StoredDraft } from "./labDrafts";
 
 // Page de réglage des animations de compétence (http://localhost:5173/animation-lab.html), en développement
 // seulement. Pour chaque compétence d'une classe : l'animation, la portion jouée et la vitesse, sur une timeline.
@@ -144,11 +145,7 @@ const OVERLAYS_DRAFT_KEY = "arena.animationLab.overlaysDraft";
 const SOUNDS_DRAFT_KEY = "arena.animationLab.soundsDraft";
 const COMMON_DRAFT_KEY = "arena.animationLab.commonSoundsDraft";
 const SOUNDS = soundCatalog as CatalogSound[];
-type OverlayDefs = Record<string, OverlayDef>;
-type MarkDefs = Record<string, GroundMarkDef>;
-type ObjectDefs = Record<string, ObjectDef>;
 type Tab = "animations" | "effets" | "sol" | "objets" | "2d" | "sons" | "communs" | "apparence" | "placement";
-type ParticleDefs = Record<string, ParticleEffectDef>;
 // Pause dans la pose normale entre deux lectures « comme en jeu ».
 const IDLE_PAUSE = 0.8;
 // Pas de la timeline : une image d'animation à 60 images/s.
@@ -1329,37 +1326,12 @@ function sameEntry(a: AbilityAnimation | undefined, b: AbilityAnimation | undefi
   return JSON.stringify(a && roundEntry(a)) === JSON.stringify(b && roundEntry(b));
 }
 
-// Brouillon gardé dans le navigateur, avec la version enregistrée sur laquelle il a été fait (base).
-interface StoredDraft<T> {
-  base: Record<string, T>;
-  draft: Record<string, T>;
-}
-
 // Brouillon de réglages enregistré à l'ancien format (une seule animation) : converti.
 function normalizeStoredDraft(stored: StoredDraft<AbilityAnimation> | null): StoredDraft<AbilityAnimation> | null {
   if (!stored?.base || !stored.draft) return stored;
   const convert = (entries: Record<string, AbilityAnimation>) =>
     Object.fromEntries(Object.entries(entries).map(([id, entry]) => [id, normalizeAbilityAnimation(entry)]));
   return { base: convert(stored.base), draft: convert(stored.draft) };
-}
-
-// Reprend un brouillon en y ajoutant ce qui a changé dans le fichier depuis (effet créé par Claude, réglage
-// enregistré depuis un autre onglet) : seuls les éléments modifiés dans le brouillon gardent leur version.
-function rebaseDraft<T>(stored: StoredDraft<T> | null, file: Record<string, T>): Record<string, T> {
-  if (!stored?.base || !stored.draft) return file;
-  const result = { ...stored.draft };
-  const same = (a: T | undefined, b: T | undefined) => JSON.stringify(a) === JSON.stringify(b);
-  for (const id of new Set([...Object.keys(file), ...Object.keys(stored.base)])) {
-    if (same(file[id], stored.base[id]) || !same(stored.draft[id], stored.base[id])) continue;
-    if (file[id] === undefined) delete result[id];
-    else result[id] = file[id];
-  }
-  return result;
-}
-
-// Mêmes réglages quel que soit l'ordre des clés (comparaison, et fichier enregistré stable).
-function sortedKeys<T>(record: Record<string, T>): Record<string, T> {
-  return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b)));
 }
 
 // Calage des animations à plat (« classe/compétence ») pour reprendre un brouillon compétence par compétence.
@@ -1377,24 +1349,6 @@ function nestedTuning(flat: Record<string, AbilityAnimation>): AnimationTuning {
     (tuning[classId] ??= {})[id] = entry;
   }
   return tuning;
-}
-
-function readStorage<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStorage(key: string, value: unknown) {
-  try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Stockage indisponible (navigation privée) : le brouillon n'est simplement pas gardé.
-  }
 }
 
 const seconds = (value: number) => `${value.toFixed(2).replace(".", ",")} s`;
@@ -1432,25 +1386,28 @@ function AnimationLab() {
     soundPlayer.setMuted(!muted);
     setMuted(!muted);
   };
-  const [marksSaved, setMarksSaved] = useState<MarkDefs | null>(null);
-  const [marksDraft, setMarksDraft] = useState<MarkDefs>({});
+  // Fichiers de réglages des effets, chacun avec son brouillon (voir useDevFileDraft) ; relus régulièrement hors de
+  // l'onglet des animations (réglages ajoutés par Claude pendant qu'on règle).
+  const polling = tab !== "animations";
+  const marks = useDevFileDraft<GroundMarkDef>("groundMarks", MARKS_DRAFT_KEY, { poll: polling });
+  const { saved: marksSaved, draft: marksDraft, setDraft: setMarksDraft, unsaved: marksUnsaved } = marks;
   const [markId, setMarkId] = useState(initial?.markId ?? Object.keys(BUILTIN_MARKS)[0]);
-  const [objectsSaved, setObjectsSaved] = useState<ObjectDefs | null>(null);
-  const [objectsDraft, setObjectsDraft] = useState<ObjectDefs>({});
+  const objects = useDevFileDraft<ObjectDef>("objects3d", OBJECTS_DRAFT_KEY, { poll: polling });
+  const { saved: objectsSaved, draft: objectsDraft, setDraft: setObjectsDraft, unsaved: objectsUnsaved } = objects;
   const [objectId, setObjectId] = useState(initial?.objectId ?? Object.keys(BUILTIN_OBJECTS)[0]);
   const [objectAnchor, setObjectAnchor] = useState<EffectAnchor>(initial?.objectAnchor ?? "chest");
-  const [overlaysSaved, setOverlaysSaved] = useState<OverlayDefs | null>(null);
-  const [overlaysDraft, setOverlaysDraft] = useState<OverlayDefs>({});
+  const overlays = useDevFileDraft<OverlayDef>("overlays2d", OVERLAYS_DRAFT_KEY, { poll: polling });
+  const { saved: overlaysSaved, draft: overlaysDraft, setDraft: setOverlaysDraft, unsaved: overlaysUnsaved } = overlays;
   const [overlayId, setOverlayId] = useState(initial?.overlayId ?? Object.keys(BUILTIN_OVERLAYS)[0]);
   const [overlayAnchor, setOverlayAnchor] = useState<EffectAnchor>(initial?.overlayAnchor ?? "head");
   const [soundsSaved, setSoundsSaved] = useState<SoundEdits | null>(null);
   const [soundsDraft, setSoundsDraft] = useState<SoundEdits>(EMPTY_EDITS);
   // Onglet « Sons communs » : sons communs remplacés (commonSounds.json).
-  const [commonSaved, setCommonSaved] = useState<CommonSoundChoices | null>(null);
-  const [commonDraft, setCommonDraft] = useState<CommonSoundChoices>(COMMON_SOUND_CHOICES);
+  const common = useDevFileDraft<CommonSoundChoice>("commonSounds", COMMON_DRAFT_KEY, { initial: COMMON_SOUND_CHOICES, sorted: true });
+  const { saved: commonSaved, draft: commonDraft, setDraft: setCommonDraft, unsaved: commonUnsaved } = common;
   const [soundName, setSoundName] = useState(initial?.soundName ?? SOUNDS[0]?.name ?? "");
-  const [fxSaved, setFxSaved] = useState<ParticleDefs | null>(null);
-  const [fxDraft, setFxDraft] = useState<ParticleDefs>({});
+  const fx = useDevFileDraft<ParticleEffectDef>("particleEffects", FX_DRAFT_KEY, { poll: polling });
+  const { saved: fxSaved, draft: fxDraft, setDraft: setFxDraft, unsaved: fxUnsaved } = fx;
   const [fxId, setFxId] = useState(initial?.fxId ?? "fireCharge");
   const [fxAnchor, setFxAnchor] = useState<EffectAnchor>(initial?.fxAnchor ?? "hands");
   const [fxCompare, setFxCompare] = useState(false);
@@ -1596,21 +1553,9 @@ function AnimationLab() {
         setDraft(nestedTuning(rebaseDraft(normalizeStoredDraft(readStorage<StoredDraft<AbilityAnimation>>(DRAFT_KEY)), flatTuning(tuning))));
       })
       .catch(() => setError("Impossible de lire les réglages : la page doit être servie par le serveur de développement (npm run dev)."));
-    void fetch("/__dev-file/particleEffects")
-      .then((response) => response.json() as Promise<ParticleDefs | null>)
-      .then((defs) => {
-        setFxSaved(defs ?? {});
-        setFxDraft(rebaseDraft(readStorage<StoredDraft<ParticleEffectDef>>(FX_DRAFT_KEY), defs ?? {}));
-      });
     void fetch("/__dev-file/particleRequests")
       .then((response) => response.json() as Promise<ParticleRequest[] | null>)
       .then((list) => setRequests(list ?? []));
-    void fetch("/__dev-file/groundMarks")
-      .then((response) => response.json() as Promise<MarkDefs | null>)
-      .then((defs) => {
-        setMarksSaved(defs ?? {});
-        setMarksDraft(rebaseDraft(readStorage<StoredDraft<GroundMarkDef>>(MARKS_DRAFT_KEY), defs ?? {}));
-      });
     void fetch("/__dev-file/soundEdits")
       .then((response) => response.json() as Promise<SoundEdits | null>)
       .then((edits) => {
@@ -1619,24 +1564,6 @@ function AnimationLab() {
         // Un brouillon fait sur une autre version du fichier (sons appliqués depuis) n'est pas repris.
         const stored = readStorage<{ base: SoundEdits; draft: SoundEdits }>(SOUNDS_DRAFT_KEY);
         setSoundsDraft(stored?.base && sameEdits(stored.base, file) ? stored.draft : file);
-      });
-    void fetch("/__dev-file/commonSounds")
-      .then((response) => response.json() as Promise<CommonSoundChoices | null>)
-      .then((choices) => {
-        setCommonSaved(choices ?? {});
-        setCommonDraft(rebaseDraft(readStorage<StoredDraft<CommonSoundChoice>>(COMMON_DRAFT_KEY), choices ?? {}));
-      });
-    void fetch("/__dev-file/overlays2d")
-      .then((response) => response.json() as Promise<OverlayDefs | null>)
-      .then((defs) => {
-        setOverlaysSaved(defs ?? {});
-        setOverlaysDraft(rebaseDraft(readStorage<StoredDraft<OverlayDef>>(OVERLAYS_DRAFT_KEY), defs ?? {}));
-      });
-    void fetch("/__dev-file/objects3d")
-      .then((response) => response.json() as Promise<ObjectDefs | null>)
-      .then((defs) => {
-        setObjectsSaved(defs ?? {});
-        setObjectsDraft(rebaseDraft(readStorage<StoredDraft<ObjectDef>>(OBJECTS_DRAFT_KEY), defs ?? {}));
       });
   }, []);
 
@@ -1650,110 +1577,16 @@ function AnimationLab() {
   const soundsUnsaved = soundsSaved !== null && !sameEdits(soundsDraft, soundsSaved);
   // Les sons communs du brouillon s'entendent tout de suite dans l'éditeur (▶), avant d'être enregistrés.
   useEffect(() => audio.setCommonSounds(commonDraft), [commonDraft]);
-  const commonUnsaved = commonSaved !== null && JSON.stringify(sortedKeys(commonDraft)) !== JSON.stringify(sortedKeys(commonSaved));
-  useEffect(() => {
-    if (commonSaved) writeStorage(COMMON_DRAFT_KEY, commonUnsaved ? { base: commonSaved, draft: commonDraft } : null);
-  }, [commonDraft, commonSaved, commonUnsaved]);
   useEffect(() => {
     if (soundsSaved) writeStorage(SOUNDS_DRAFT_KEY, soundsUnsaved ? { base: soundsSaved, draft: soundsDraft } : null);
   }, [soundsDraft, soundsSaved, soundsUnsaved]);
-  useEffect(() => {
-    if (!overlaysSaved) return;
-    writeStorage(
-      OVERLAYS_DRAFT_KEY,
-      JSON.stringify(overlaysDraft) !== JSON.stringify(overlaysSaved) ? { base: overlaysSaved, draft: overlaysDraft } : null,
-    );
-  }, [overlaysDraft, overlaysSaved]);
-  useEffect(() => {
-    if (!objectsSaved) return;
-    writeStorage(
-      OBJECTS_DRAFT_KEY,
-      JSON.stringify(objectsDraft) !== JSON.stringify(objectsSaved) ? { base: objectsSaved, draft: objectsDraft } : null,
-    );
-  }, [objectsDraft, objectsSaved]);
-
-  useEffect(() => {
-    if (!marksSaved) return;
-    writeStorage(MARKS_DRAFT_KEY, JSON.stringify(marksDraft) !== JSON.stringify(marksSaved) ? { base: marksSaved, draft: marksDraft } : null);
-  }, [marksDraft, marksSaved]);
-
-  useEffect(() => {
-    if (!fxSaved) return;
-    writeStorage(FX_DRAFT_KEY, JSON.stringify(fxDraft) !== JSON.stringify(fxSaved) ? { base: fxSaved, draft: fxDraft } : null);
-  }, [fxDraft, fxSaved]);
-
-  // Onglet des effets : suit les demandes traitées par Claude et les effets qu'il ajoute (sans écraser un effet en
-  // cours de modification ici).
+  // Onglet des effets : suit les demandes traitées par Claude (les fichiers d'effets sont relus par useDevFileDraft).
   useEffect(() => {
     if (tab === "animations") return;
     const timer = setInterval(() => {
       void fetch("/__dev-file/particleRequests")
         .then((response) => response.json() as Promise<ParticleRequest[] | null>)
         .then((list) => setRequests(list ?? []));
-      void fetch("/__dev-file/particleEffects")
-        .then((response) => response.json() as Promise<ParticleDefs | null>)
-        .then((file) => {
-          if (!file) return;
-          setFxSaved((previous) => {
-            if (!previous) return previous;
-            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
-            if (!changed.length) return previous;
-            setFxDraft((draft) => {
-              const next = { ...draft };
-              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
-              return next;
-            });
-            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
-          });
-        });
-      void fetch("/__dev-file/overlays2d")
-        .then((response) => response.json() as Promise<OverlayDefs | null>)
-        .then((file) => {
-          if (!file) return;
-          setOverlaysSaved((previous) => {
-            if (!previous) return previous;
-            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
-            if (!changed.length) return previous;
-            setOverlaysDraft((draft) => {
-              const next = { ...draft };
-              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
-              return next;
-            });
-            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
-          });
-        });
-      void fetch("/__dev-file/objects3d")
-        .then((response) => response.json() as Promise<ObjectDefs | null>)
-        .then((file) => {
-          if (!file) return;
-          setObjectsSaved((previous) => {
-            if (!previous) return previous;
-            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
-            if (!changed.length) return previous;
-            setObjectsDraft((draft) => {
-              const next = { ...draft };
-              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
-              return next;
-            });
-            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
-          });
-        });
-      void fetch("/__dev-file/groundMarks")
-        .then((response) => response.json() as Promise<MarkDefs | null>)
-        .then((file) => {
-          if (!file) return;
-          setMarksSaved((previous) => {
-            if (!previous) return previous;
-            const changed = Object.keys(file).filter((id) => JSON.stringify(file[id]) !== JSON.stringify(previous[id]));
-            if (!changed.length) return previous;
-            setMarksDraft((draft) => {
-              const next = { ...draft };
-              for (const id of changed) if (JSON.stringify(draft[id]) === JSON.stringify(previous[id])) next[id] = file[id];
-              return next;
-            });
-            return { ...previous, ...Object.fromEntries(changed.map((id) => [id, file[id]])) };
-          });
-        });
     }, 4000);
     return () => clearInterval(timer);
   }, [tab]);
@@ -1783,7 +1616,6 @@ function AnimationLab() {
     if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_DEFS) ? "new" : "draft";
     return s ? "saved" : "code";
   };
-  const fxUnsaved = fxSaved !== null && JSON.stringify(fxDraft) !== JSON.stringify(fxSaved);
   useEffect(() => {
     // Attendre la lecture des effets enregistrés : l'effet choisi peut en faire partie.
     if (fxSaved && !fxIds.includes(fxId)) setFxId(fxIds[0]);
@@ -1806,7 +1638,6 @@ function AnimationLab() {
     if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_MARKS) ? "new" : "draft";
     return s ? "saved" : "code";
   };
-  const marksUnsaved = marksSaved !== null && JSON.stringify(marksDraft) !== JSON.stringify(marksSaved);
   useEffect(() => {
     if (marksSaved && !markIds.includes(markId)) setMarkId(markIds[0]);
   }, [marksSaved, markIds, markId]);
@@ -1842,7 +1673,6 @@ function AnimationLab() {
     if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_OVERLAYS) ? "new" : "draft";
     return s ? "saved" : "code";
   };
-  const overlaysUnsaved = overlaysSaved !== null && JSON.stringify(overlaysDraft) !== JSON.stringify(overlaysSaved);
   useEffect(() => {
     if (overlaysSaved && !overlayIds.includes(overlayId)) setOverlayId(overlayIds[0]);
   }, [overlaysSaved, overlayIds, overlayId]);
@@ -1878,7 +1708,6 @@ function AnimationLab() {
     if (JSON.stringify(d) !== JSON.stringify(s)) return !s && !(id in BUILTIN_OBJECTS) ? "new" : "draft";
     return s ? "saved" : "code";
   };
-  const objectsUnsaved = objectsSaved !== null && JSON.stringify(objectsDraft) !== JSON.stringify(objectsSaved);
   useEffect(() => {
     if (objectsSaved && !objectIds.includes(objectId)) setObjectId(objectIds[0]);
   }, [objectsSaved, objectIds, objectId]);
@@ -2279,6 +2108,14 @@ function AnimationLab() {
   // Enregistre ce qui a changé : le calage des animations et les effets à particules.
   // Le fichier a pu changer depuis la lecture (effet ajouté par Claude, autre onglet) : on n'y écrit que ses propres
   // modifications, par-dessus sa version actuelle.
+  // Enregistre un fichier de réglages s'il a changé ; faux (avec le message d'erreur affiché) en cas d'échec.
+  const saveDevFile = async <T,>(store: DevFileDraft<T>, label: string): Promise<boolean> => {
+    if (!store.unsaved) return true;
+    const error = await store.save();
+    if (error === null) return true;
+    setMessage(`Échec de l'enregistrement ${label} : ${error}`);
+    return false;
+  };
   const save = async () => {
     if (unsaved) {
       const file = normalizeTuning(await fetch("/__dev-file/animationTuning").then((r) => r.json()));
@@ -2291,28 +2128,8 @@ function AnimationLab() {
       setSaved(tuning);
       setDraft(tuning);
     }
-    if (fxUnsaved) {
-      const file = ((await fetch("/__dev-file/particleEffects").then((r) => r.json())) ?? {}) as ParticleDefs;
-      const defs = rebaseDraft({ base: fxSaved ?? {}, draft: fxDraft }, file);
-      const response = await fetch("/__dev-file/particleEffects", { method: "POST", body: JSON.stringify(defs) });
-      if (!response.ok) {
-        setMessage(`Échec de l'enregistrement des effets : ${await response.text()}`);
-        return;
-      }
-      setFxSaved(defs);
-      setFxDraft(defs);
-    }
-    if (marksUnsaved) {
-      const file = ((await fetch("/__dev-file/groundMarks").then((r) => r.json())) ?? {}) as MarkDefs;
-      const defs = rebaseDraft({ base: marksSaved ?? {}, draft: marksDraft }, file);
-      const response = await fetch("/__dev-file/groundMarks", { method: "POST", body: JSON.stringify(defs) });
-      if (!response.ok) {
-        setMessage(`Échec de l'enregistrement des marques au sol : ${await response.text()}`);
-        return;
-      }
-      setMarksSaved(defs);
-      setMarksDraft(defs);
-    }
+    if (!(await saveDevFile(fx, "des effets"))) return;
+    if (!(await saveDevFile(marks, "des marques au sol"))) return;
     if (soundsUnsaved) {
       const response = await fetch("/__dev-file/soundEdits", { method: "POST", body: JSON.stringify(soundsDraft) });
       if (!response.ok) {
@@ -2321,39 +2138,9 @@ function AnimationLab() {
       }
       setSoundsSaved(soundsDraft);
     }
-    if (commonUnsaved) {
-      const file = ((await fetch("/__dev-file/commonSounds").then((r) => r.json())) ?? {}) as CommonSoundChoices;
-      const choices = sortedKeys(rebaseDraft({ base: commonSaved ?? {}, draft: commonDraft }, file));
-      const response = await fetch("/__dev-file/commonSounds", { method: "POST", body: JSON.stringify(choices) });
-      if (!response.ok) {
-        setMessage(`Échec de l'enregistrement des sons communs : ${await response.text()}`);
-        return;
-      }
-      setCommonSaved(choices);
-      setCommonDraft(choices);
-    }
-    if (overlaysUnsaved) {
-      const file = ((await fetch("/__dev-file/overlays2d").then((r) => r.json())) ?? {}) as OverlayDefs;
-      const defs = rebaseDraft({ base: overlaysSaved ?? {}, draft: overlaysDraft }, file);
-      const response = await fetch("/__dev-file/overlays2d", { method: "POST", body: JSON.stringify(defs) });
-      if (!response.ok) {
-        setMessage(`Échec de l'enregistrement de l'affichage 2D : ${await response.text()}`);
-        return;
-      }
-      setOverlaysSaved(defs);
-      setOverlaysDraft(defs);
-    }
-    if (objectsUnsaved) {
-      const file = ((await fetch("/__dev-file/objects3d").then((r) => r.json())) ?? {}) as ObjectDefs;
-      const defs = rebaseDraft({ base: objectsSaved ?? {}, draft: objectsDraft }, file);
-      const response = await fetch("/__dev-file/objects3d", { method: "POST", body: JSON.stringify(defs) });
-      if (!response.ok) {
-        setMessage(`Échec de l'enregistrement des objets 3D : ${await response.text()}`);
-        return;
-      }
-      setObjectsSaved(defs);
-      setObjectsDraft(defs);
-    }
+    if (!(await saveDevFile(common, "des sons communs"))) return;
+    if (!(await saveDevFile(overlays, "de l'affichage 2D"))) return;
+    if (!(await saveDevFile(objects, "des objets 3D"))) return;
     setMessage(
       `Enregistré (src/game/animationTuning.json, particleEffects.json, groundMarks.json, objects3d.json, overlays2d.json${soundsUnsaved ? ", src/audio/soundEdits.json" : ""}${commonUnsaved ? ", src/audio/commonSounds.json" : ""}) : le jeu l'utilise au prochain chargement.${soundsUnsaved ? " Sons : dites à Claude « applique les sons »." : ""}`,
     );
