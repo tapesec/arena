@@ -1,4 +1,4 @@
-import { isIncapacitated, isMagic, type AbilityDef, type GameErrorCode } from "@arena/shared";
+import { isIncapacitated, isMagic, spellRange, type AbilityDef, type GameErrorCode } from "@arena/shared";
 import { abilityName, quote, t, type TextKey } from "./i18n";
 import type { SelfFrame, TargetFrame } from "./store";
 
@@ -54,16 +54,16 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
     case "ally":
       // Sans allié ciblé, la compétence s'applique au lanceur.
       if (!target || !target.isAlly || target.isSelf || target.hp <= 0) return READY;
-      return reach(ability, target);
+      return reach(ability, self, target);
     case "otherAlly":
       if (!target || !target.isAlly || target.isSelf || target.hp <= 0) return refused("noTarget", "needOtherAlly");
-      return reach(ability, target);
+      return reach(ability, self, target);
     case "deadAlly":
       if (!target || !target.isAlly || target.hp > 0) return refused("noTarget", "needDeadAlly");
-      return reach(ability, target);
+      return reach(ability, self, target);
     case "enemy": {
       if (!target || target.isAlly || target.hp <= 0) return refused("noTarget", "needEnemy");
-      const status = reach(ability, target);
+      const status = reach(ability, self, target);
       if (status !== READY) return status;
       // Pas face à la cible : le personnage se tourne tout seul vers elle en lançant la compétence (voir le serveur).
       if (ability.position && target.position !== ability.position) {
@@ -74,8 +74,16 @@ export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: Targ
   }
 }
 
-function reach(ability: AbilityDef, target: TargetFrame): AbilityStatus {
-  if (ability.melee || ability.meleeStrike ? !target.inMeleeRange : target.distance > ability.range) return refused("range", "outOfRange");
+function reach(ability: AbilityDef, self: SelfFrame, target: TargetFrame): AbilityStatus {
+  if (ability.melee || ability.meleeStrike) {
+    if (!target.inMeleeRange) return refused("range", "outOfRange");
+  } else {
+    // Near sight : la portée des sorts est réduite, comme sur le serveur (spellRange).
+    const nearSighted = self.effects.some((e) => e.kind === "nearSight");
+    if (target.distance > spellRange(ability, nearSighted)) {
+      return refused("range", nearSighted && isMagic(ability) ? "outOfRangeNearSight" : "outOfRange");
+    }
+  }
   if (ability.minRange && target.distance < ability.minRange) return refused("range", "tooClose");
   if (!target.inLineOfSight) return refused("range", "noLineOfSight");
   return READY;
