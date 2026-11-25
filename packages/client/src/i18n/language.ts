@@ -1,3 +1,5 @@
+import { readItem, writeItem } from "../storage";
+
 // Langue courante (module à part : content.ts et index.ts la lisent sans s'importer l'un l'autre).
 export type Language = "en" | "fr";
 
@@ -10,13 +12,8 @@ let current: Language = readSavedLanguage();
 if (typeof document !== "undefined") document.documentElement.lang = current;
 
 function readSavedLanguage(): Language {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "en" || saved === "fr") return saved;
-  } catch {
-    // Stockage indisponible (navigation privée…) : langue par défaut.
-  }
-  return "en";
+  const saved = readItem(STORAGE_KEY);
+  return saved === "en" || saved === "fr" ? saved : "en";
 }
 
 export function currentLanguage(): Language {
@@ -26,9 +23,5 @@ export function currentLanguage(): Language {
 export function setLanguage(language: Language) {
   current = language;
   if (typeof document !== "undefined") document.documentElement.lang = language;
-  try {
-    localStorage.setItem(STORAGE_KEY, language);
-  } catch {
-    // Stockage indisponible : la langue vaut pour cette visite seulement.
-  }
+  writeItem(STORAGE_KEY, language);
 }

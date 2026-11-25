@@ -5,6 +5,7 @@ import { abilityColor, abilityIcon } from "./abilityBar";
 import { abilityName, className, moveKeys, t, type TextKey } from "./i18n";
 import { OrderWheelGraphic } from "./OrderWheelGraphic";
 import { useHudStore } from "./store";
+import { readItem, writeItem } from "./storage";
 
 // Didacticiel « Comment jouer ? » (décidé le 2026-11-19) : 3 slides illustrées, ouvertes d'office pendant le choix de
 // classe de la première partie (le joueur a alors une minute), puis par le bouton « Comment jouer ? » ; en partie, par
@@ -16,19 +17,11 @@ const SLIDES = 3;
 
 // Déjà vu dans ce navigateur (stockage indisponible : comme déjà vu, pour ne pas l'imposer à chaque partie).
 export function tutorialSeen(): boolean {
-  try {
-    return !!localStorage.getItem(SEEN_KEY);
-  } catch {
-    return true;
-  }
+  return !!readItem(SEEN_KEY, "1");
 }
 
 function markSeen() {
-  try {
-    localStorage.setItem(SEEN_KEY, "1");
-  } catch {
-    // Stockage indisponible : rien à retenir.
-  }
+  writeItem(SEEN_KEY, "1");
 }
 
 export function Tutorial({ classId, onClose, inMatch = false }: { classId: ClassId | ""; onClose: () => void; inMatch?: boolean }) {

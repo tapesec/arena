@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { currentLanguage, setLanguage as applyLanguage, type Language } from "./i18n";
 import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type MatchSummary, type OrderId, type RelativePosition } from "@arena/shared";
+import { readItem, writeItem } from "./storage";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
@@ -271,24 +272,14 @@ const MOVEMENT_STORAGE_KEY = "arena.movementMode";
 
 // Mode moderne par défaut (décidé le 2026-11-19 : plus simple pour un nouveau venu) ; le mode DAoC reste au choix.
 function initialMovementMode(): MovementMode {
-  try {
-    return localStorage.getItem(MOVEMENT_STORAGE_KEY) === "classic" ? "classic" : "modern";
-  } catch {
-    return "modern";
-  }
+  return readItem(MOVEMENT_STORAGE_KEY) === "classic" ? "classic" : "modern";
 }
 
 // Le dernier pseudo saisi est retenu par le navigateur ; à la première visite, un pseudo par défaut est proposé.
 const NAME_STORAGE_KEY = "arena.playerName";
 
 function initialPlayerName(): string {
-  try {
-    const saved = cleanName(localStorage.getItem(NAME_STORAGE_KEY) ?? "");
-    if (saved) return saved;
-  } catch {
-    // Stockage indisponible (navigation privée…) : pseudo par défaut.
-  }
-  return defaultPlayerName();
+  return cleanName(readItem(NAME_STORAGE_KEY) ?? "") || defaultPlayerName();
 }
 
 export const useHudStore = create<HudState>((set) => ({
@@ -299,11 +290,7 @@ export const useHudStore = create<HudState>((set) => ({
   tutorialOpen: false,
   setTutorialOpen: (tutorialOpen) => set({ tutorialOpen }),
   setMovementMode: (mode) => {
-    try {
-      localStorage.setItem(MOVEMENT_STORAGE_KEY, mode);
-    } catch {
-      // Stockage indisponible : le choix vaut pour cette visite seulement.
-    }
+    writeItem(MOVEMENT_STORAGE_KEY, mode);
     set({ movementMode: mode });
   },
   language: currentLanguage(),
@@ -312,11 +299,7 @@ export const useHudStore = create<HudState>((set) => ({
     set({ language });
   },
   setPlayerName: (name) => {
-    try {
-      localStorage.setItem(NAME_STORAGE_KEY, name);
-    } catch {
-      // Stockage indisponible : le pseudo vaut pour cette visite seulement.
-    }
+    writeItem(NAME_STORAGE_KEY, name);
     set({ playerName: name });
   },
   actions: null,
@@ -343,12 +326,9 @@ export const useHudStore = create<HudState>((set) => ({
     const storageKey = `arena.hint.${key}`;
     if (shownHints.has(key)) return;
     shownHints.add(key);
-    try {
-      if (localStorage.getItem(storageKey)) return;
-      localStorage.setItem(storageKey, "1");
-    } catch {
-      // Stockage indisponible : le conseil est montré à chaque fois.
-    }
+    // Stockage indisponible : le conseil est montré à chaque fois.
+    if (readItem(storageKey)) return;
+    writeItem(storageKey, "1");
     clearTimeout(hintTimeout);
     set({ hint: message });
     hintTimeout = setTimeout(() => set({ hint: null }), HINT_DISPLAY_MS);

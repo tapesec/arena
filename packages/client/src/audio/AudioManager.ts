@@ -5,6 +5,7 @@ import { SOUNDS, type SoundId } from "./sounds";
 import { assetUrl } from "../assets";
 import { parseSoundKey, scramble } from "./scramble";
 import { GAME_SOUND } from "./soundEdits";
+import { readItem, writeItem } from "../storage";
 
 // Groupe de sons enregistrés (voir samples.json).
 export type SampleId = keyof typeof samples.groups;
@@ -128,13 +129,13 @@ export class AudioManager {
 
   setVolume(volume: number) {
     this.volume = volume;
-    write(VOLUME_KEY, String(volume));
+    writeItem(VOLUME_KEY, String(volume));
     this.applyVolume();
   }
 
   setMuted(muted: boolean) {
     this.muted = muted;
-    write(this.mutedKey, muted ? "1" : "0");
+    writeItem(this.mutedKey, muted ? "1" : "0");
     this.applyVolume();
   }
 
@@ -510,20 +511,8 @@ function soundStart(buffer: AudioBuffer): number {
 
 // Le stockage du navigateur peut être indisponible (navigation privée…) : on s'en passe alors.
 function readNumber(key: string, fallback: number): number {
-  try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : Number(value);
-  } catch {
-    return fallback;
-  }
-}
-
-function write(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Réglage simplement non mémorisé.
-  }
+  const value = readItem(key);
+  return value === null ? fallback : Number(value);
 }
 
 export const audio = new AudioManager();
