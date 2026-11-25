@@ -705,6 +705,12 @@ export function isMagic(ability: AbilityDef): boolean {
   return !ability.melee && ability.resource === "mana";
 }
 
+// Portée d'une compétence pour un lanceur sous Near sight ou non : celle des sorts est réduite (NEAR_SIGHT_FACTOR).
+// Seule définition de la règle, pour le serveur, les bots et le ciblage automatique du client.
+export function spellRange(ability: AbilityDef, nearSighted: boolean): number {
+  return nearSighted && isMagic(ability) ? ability.range * NEAR_SIGHT_FACTOR : ability.range;
+}
+
 // Rayon autour du Gardien protégé par le Rempart.
 export const RAMPART_RADIUS = 30;
 

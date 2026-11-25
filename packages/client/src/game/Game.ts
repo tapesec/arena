@@ -26,7 +26,7 @@ import {
   facingTowards,
   isMagic,
   isOffensive,
-  NEAR_SIGHT_FACTOR,
+  spellRange,
   type AbilityDef,
   MELEE_RANGE,
   positionRelativeTo,
@@ -1022,8 +1022,7 @@ export class Game {
     const current = this.targetId ? this.players.get(this.targetId) : undefined;
     if (current && current.isAlive && current.state.team !== self.state.team) return;
     // Near sight : la portée des sorts est réduite (comme sur le serveur).
-    const nearSight = isMagic(ability) && self.hasEffect("nearSight") ? NEAR_SIGHT_FACTOR : 1;
-    const range = ability.melee ? MELEE_RANGE : ability.range * nearSight;
+    const range = ability.melee ? MELEE_RANGE : spellRange(ability, self.hasEffect("nearSight"));
     const best = this.bestEnemy({ preferFree: true, preferInRange: true, preferFront: true }, range, ability.minRange ?? 0);
     if (!best) return;
     this.setTarget(best);

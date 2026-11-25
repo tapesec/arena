@@ -24,7 +24,7 @@ import {
   moveDirection,
   RAMPART_RADIUS,
   MANA_REGEN,
-  NEAR_SIGHT_FACTOR,
+  spellRange,
   NO_INPUT,
   PERMANENT,
   SECOND_WIND_ENDURANCE_REGEN,
@@ -502,7 +502,7 @@ export class CombatSystem {
     if (target !== caster) {
       // Near sight : la portée des sorts du lanceur est réduite (une incantation finit donc hors de portée).
       const reduced = isMagic(ability) && caster.has("nearSight");
-      const range = reduced ? ability.range * NEAR_SIGHT_FACTOR : ability.range;
+      const range = spellRange(ability, caster.has("nearSight"));
       if (distance(caster.state, target.state) > range) return reduced ? "outOfRangeNearSight" : "outOfRange";
       if (ability.minRange && distance(caster.state, target.state) < ability.minRange) return "tooClose";
       if (!hasLineOfSight(caster.state, target.state)) return "noLineOfSight";

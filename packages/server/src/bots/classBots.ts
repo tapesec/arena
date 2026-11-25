@@ -4,7 +4,7 @@ import {
   MELEE_RANGE,
   SONG_RANGE,
   SONG_SPEED_CALM,
-  NEAR_SIGHT_FACTOR,
+  spellRange,
   RAMPART_RADIUS,
   hasLineOfSight,
   distance,
@@ -207,7 +207,7 @@ class ArcanisteBot extends CasterBot {
     // Near sight : portée réduite ; on se rapproche à portée, sauf d'une mêlée libre (elle serait vite au contact).
     const nearSighted = this.self.has("nearSight");
     if (nearSighted) {
-      const reach = getAbility("firebolt")!.range * NEAR_SIGHT_FACTOR - 1;
+      const reach = spellRange(getAbility("firebolt")!, true) - 1;
       const dangerous = MELEE_CLASSES.includes(target.classDef.id) && !target.has("root");
       if (dangerous) return this.holdPosition();
       if (d > reach) return this.moveTo(target.state, reach - 1);
