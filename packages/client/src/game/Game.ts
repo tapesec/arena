@@ -93,6 +93,7 @@ import { MUSIC } from "./commonSounds";
 import { campOf } from "./gameAppearances";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 import { RenderScale } from "./renderScale";
+import { decodeImagesOffThread } from "./imageDecoding";
 
 // Textes flottants des événements de combat : contrôles et affaiblissements affichés (nom de l'effet), et
 // issues d'un coup. Pas de texte pour l'Oubli : la cible ne doit pas le voir venir.
@@ -125,6 +126,13 @@ const PING_INTERVAL_MS = 2000;
 const PERF_REPORT_MS = 30_000;
 // Attente maximale de l'écran de choix avant de lancer le préchargement du jeu (voir lobbyPriority).
 const LOBBY_PRIORITY_MAX_MS = 10_000;
+// Préchargement de l'arène pendant le choix de classe (décidé le 2026-11-25) : il faisait saccader les personnages du
+// lobby pendant 8 s. Il part ARENA_AFTER_CHOICE_MS après le choix (le geste du personnage a le temps de se jouer), au
+// plus tard quand il reste ARENA_LATEST_SECONDS au compte à rebours, et tout de suite si la partie démarre plus tôt.
+// Il lui faut une dizaine de secondes : le compte à rebours en laisse assez.
+const ARENA_AFTER_CHOICE_MS = 2000;
+const ARENA_LATEST_SECONDS = 25;
+const ARENA_CHECK_MS = 250;
 
 // Quand la caméra tourne pendant un déplacement, on renvoie la direction au plus 20 fois par seconde.
 const YAW_RESEND_MS = 50;
@@ -217,6 +225,8 @@ export class Game {
   private framingOffset = new Vector3();
   private lastHudRefresh = 0;
   private lastHiddenRender = 0;
+  // Premier clic sur une classe de l'écran de choix (le serveur attribue d'office la première à l'arrivée).
+  private classChosenAt: number | null = null;
   private lastHudSnapshot = "";
   // Chargement du jeu, suivi pour l'écran de chargement ; dernier pourcentage envoyé au serveur.
   private loading: LoadingTracker;
@@ -242,6 +252,7 @@ export class Game {
     private room: Room,
   ) {
     this.engine = new Engine(canvas, true);
+    decodeImagesOffThread(this.engine);
     this.renderScale = new RenderScale(this.engine, () => {
       const phase = (this.room.state as { phase?: MatchPhase }).phase;
       // Pas derrière l'écran de chargement : l'arène n'y est presque pas dessinée, les images/s n'y voudraient rien dire.
@@ -264,7 +275,7 @@ export class Game {
     // aussi les personnages des joueurs déjà connus (bots, coéquipiers), qui passent par les mêmes fichiers. L'attente
     // compte dans le chargement : la barre n'atteint pas 100 % avant que le reste soit lancé (le serveur croirait sinon
     // que le joueur a fini).
-    const lobbyFirst = waitForLobby(LOBBY_PRIORITY_MAX_MS);
+    const lobbyFirst = waitForLobby(LOBBY_PRIORITY_MAX_MS).then(() => this.arenaTurn());
     this.characterAssets = new CharacterAssets(this.scene);
     this.characterAssets.gate = lobbyFirst;
     void this.loading.track(
@@ -321,7 +332,10 @@ export class Game {
 
     // Commandes accessibles depuis l'interface React (choix de classe, lancement anticipé).
     useHudStore.getState().setActions({
-      selectClass: (classId) => this.room.send("selectClass", { classId }),
+      selectClass: (classId) => {
+        this.classChosenAt ??= performance.now();
+        this.room.send("selectClass", { classId });
+      },
       forceStart: () => this.room.send("forceStart"),
       setBotClass: (botId, classId) => this.room.send("setBotClass", { botId, classId }),
       selectTarget: (playerId) => this.setTarget(playerId),
@@ -1057,6 +1071,27 @@ export class Game {
     const self = this.self;
     if (!self) return [];
     return [...this.players.values()].filter((p) => p !== self && p.state.team === self.state.team);
+  }
+
+  // Moment de lancer le préchargement de l'arène (voir ARENA_AFTER_CHOICE_MS).
+  private arenaTurn(): Promise<void> {
+    return new Promise((resolve) => {
+      const check = () => {
+        const state = this.room.state as { phase?: MatchPhase; phaseTimeLeft?: number };
+        const chosenAt = this.classChosenAt;
+        const now = performance.now();
+        const go =
+          this.disposed ||
+          (!!state.phase && state.phase !== "classSelect") ||
+          (state.phaseTimeLeft ?? Infinity) <= ARENA_LATEST_SECONDS ||
+          (chosenAt !== null && now - chosenAt >= ARENA_AFTER_CHOICE_MS);
+        if (!go) return;
+        clearInterval(timer);
+        resolve();
+      };
+      const timer = setInterval(check, ARENA_CHECK_MS);
+      check();
+    });
   }
 
   private renderFrame() {

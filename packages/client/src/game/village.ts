@@ -16,6 +16,7 @@ import { OBSTACLES, PLAZA, terrainHeight, type Obstacle } from "@arena/shared";
 import { assetUrl } from "../assets";
 import { Camps } from "./camps";
 import type { Shadows } from "./shadows";
+import { yieldToBrowser } from "./yieldToBrowser";
 
 export const VILLAGE_MODEL = "models/village/village.glb";
 
@@ -109,7 +110,12 @@ export class Village {
       const pbr = material as PBRMaterial;
       if (pbr.transparencyMode === PBRMaterial.PBRMATERIAL_OPAQUE) pbr.transparencyMode = null;
     }
-    for (const obstacle of OBSTACLES) this.build(obstacle);
+    // Un bâtiment à la fois, en laissant l'écran s'afficher entre deux (tout d'un bloc, l'assemblage figeait le lobby
+    // près d'une seconde).
+    for (const obstacle of OBSTACLES) {
+      this.build(obstacle);
+      await yieldToBrowser();
+    }
     this.camps.build((piece, x, y, z, rotation) => this.placePiece(piece, x, y, z, rotation));
   }
 

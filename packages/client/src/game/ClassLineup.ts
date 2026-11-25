@@ -15,6 +15,7 @@ import { HighlightLayer } from "@babylonjs/core/Layers/highlightLayer";
 import { CHARACTERS, CharacterAssets, hasCharacterModel, type CharacterInstance } from "./characterAssets";
 import { gameCharacter } from "./gameAppearances";
 import { lobbyReady } from "./lobbyPriority";
+import { decodeImagesOffThread } from "./imageDecoding";
 
 // Choix de la classe (salle d'attente) : les personnages des classes alignés côte à côte, en 3D, avec l'apparence du
 // camp du joueur. Chacun occupe une colonne de même largeur que la colonne HTML (nom et compétences) placée dessous :
@@ -67,6 +68,7 @@ export class ClassLineup {
   ) {
     // Rendu à la densité de l'écran (net sur un écran Retina).
     this.engine = new Engine(canvas, true, { alpha: true }, true);
+    decodeImagesOffThread(this.engine);
     this.scene = new Scene(this.engine);
     // Fond transparent : celui de la page passe derrière les personnages.
     this.scene.clearColor = new Color4(0, 0, 0, 0);
