@@ -30,6 +30,9 @@ export interface BotWorld {
 
 export const CASTER_CLASSES: ClassId[] = ["arcaniste", "pretre", "barde"];
 export const MELEE_CLASSES: ClassId[] = ["lame", "gardien"];
+// Combattant au contact, ou lanceur de sorts.
+export const isMelee = (p: PlayerRuntime): boolean => MELEE_CLASSES.includes(p.classDef.id);
+export const isCaster = (p: PlayerRuntime): boolean => CASTER_CLASSES.includes(p.classDef.id);
 
 // Fréquence des décisions (le déplacement, lui, est ajusté à chaque tick).
 const THINK_INTERVAL = 0.25;
@@ -288,6 +291,11 @@ export class BotBrain {
     return [...this.world.players.values()].filter((p) => p.alive && p.state.team === this.player.state.team);
   }
 
+  // Alliés vivants, sans soi-même.
+  protected otherAllies(): PlayerRuntime[] {
+    return this.allies().filter((p) => p !== this.player);
+  }
+
   protected deadAllies(): PlayerRuntime[] {
     return [...this.world.players.values()].filter((p) => !p.alive && p.state.team === this.player.state.team);
   }
@@ -336,7 +344,7 @@ export class BotBrain {
     const recentlyHit = this.combat.now - this.player.lastMeleeHitAt < 1.5;
     return this.enemies().filter(
       (p) =>
-        (MELEE_CLASSES.includes(p.classDef.id) && this.distanceTo(p) <= radius) ||
+        (isMelee(p) && this.distanceTo(p) <= radius) ||
         (recentlyHit && p.id === this.player.lastMeleeAttackerId),
     );
   }
@@ -386,9 +394,9 @@ export class BotBrain {
   // les autres vont là où un ennemi a été vu pour la dernière fois, puis vers le camp adverse, puis explorent.
   protected advance() {
     if (CASTER_CLASSES.includes(this.classId)) {
-      const others = this.allies().filter((p) => p !== this.player);
+      const others = this.otherAllies();
       const escort =
-        this.nearest(others.filter((p) => MELEE_CLASSES.includes(p.classDef.id))) ??
+        this.nearest(others.filter((p) => isMelee(p))) ??
         this.nearest(others.filter((p) => !p.state.isBot));
       if (escort) {
         this.moveTo(escort.state, ESCORT_DISTANCE);
@@ -477,7 +485,7 @@ export class BotBrain {
     dz /= length;
 
     // Attirance vers le reste du groupe, qui pourra nous protéger.
-    const others = this.allies().filter((p) => p !== this.player);
+    const others = this.otherAllies();
     if (others.length > 0) {
       const cx = others.reduce((sum, p) => sum + p.state.x, 0) / others.length;
       const cz = others.reduce((sum, p) => sum + p.state.z, 0) / others.length;

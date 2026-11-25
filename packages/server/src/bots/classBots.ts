@@ -17,7 +17,7 @@ import {
 } from "@arena/shared";
 import type { CombatSystem } from "../CombatSystem";
 import type { PlayerRuntime } from "../PlayerRuntime";
-import { BotBrain, CASTER_CLASSES, MELEE_CLASSES } from "./BotBrain";
+import { BotBrain, CASTER_CLASSES, isCaster, isMelee } from "./BotBrain";
 import type { Pathfinder } from "./Pathfinder";
 
 // Priorité de cible des Lames et des Arcanistes : lanceurs de sorts, puis Lames, puis Gardiens.
@@ -140,7 +140,7 @@ abstract class CasterBot extends BotBrain {
 
   // On garde plus de distance avec un combattant de mêlée qu'avec un lanceur de sorts.
   protected minDistanceFrom(enemy: PlayerRuntime): number {
-    return MELEE_CLASSES.includes(enemy.classDef.id) ? CASTER_MIN_DISTANCE : CASTER_VS_CASTER_MIN_DISTANCE;
+    return isMelee(enemy) ? CASTER_MIN_DISTANCE : CASTER_VS_CASTER_MIN_DISTANCE;
   }
 
   // Ennemi au centre du plus grand groupe d'ennemis satisfaisant le critère, avec sa taille.
@@ -173,7 +173,7 @@ class ArcanisteBot extends CasterBot {
     // sinon on fuit d'abord (evadeMelee, plus bas, à la même distance).
     const closeEnemies = this.enemies().filter((e) => this.distanceTo(e) <= BLAST_REACH);
     if (closeEnemies.length >= 2 && !this.isCasting) {
-      const meleeContact = closeEnemies.some((e) => MELEE_CLASSES.includes(e.classDef.id));
+      const meleeContact = closeEnemies.some((e) => isMelee(e));
       const protectedBlast =
         this.self.has("concentration") ||
         (closeEnemies.length >= BLAST_CONCENTRATION_MIN &&
@@ -194,7 +194,7 @@ class ArcanisteBot extends CasterBot {
 
     // Un ennemi de mêlée qui approche : on le ralentit avant qu'il arrive.
     const approaching = this.enemies().find(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 15 && !e.has("snare") && !e.has("root"),
+      (e) => isMelee(e) && this.distanceTo(e) <= 15 && !e.has("snare") && !e.has("root"),
     );
     if (approaching && this.tryUse("frostbolt", approaching)) return;
 
@@ -208,7 +208,7 @@ class ArcanisteBot extends CasterBot {
     const nearSighted = this.self.has("nearSight");
     if (nearSighted) {
       const reach = spellRange(getAbility("firebolt")!, true) - 1;
-      const dangerous = MELEE_CLASSES.includes(target.classDef.id) && !target.has("root");
+      const dangerous = isMelee(target) && !target.has("root");
       if (dangerous) return this.holdPosition();
       if (d > reach) return this.moveTo(target.state, reach - 1);
     } else if (!this.keepDistance(target, this.minDistanceFrom(target), CASTER_MAX_DISTANCE)) return;
@@ -217,7 +217,7 @@ class ArcanisteBot extends CasterBot {
 
     this.tryUse("arcanePower");
     // Un lanceur de sorts ennemi : sa portée réduite le force à venir au contact.
-    if (CASTER_CLASSES.includes(target.classDef.id) && !target.has("nearSight") && this.tryUse("nearSight", target)) return;
+    if (isCaster(target) && !target.has("nearSight") && this.tryUse("nearSight", target)) return;
     if (!target.has("burning") && this.tryUse("burn", target)) return;
     this.tryUse("firebolt", target);
   }
@@ -256,7 +256,7 @@ class PretreBot extends CasterBot {
     // 4. Soigner le plus blessé, en s'approchant si besoin.
     const hurt = byHealth.find((a) => this.hpRatio(a) < 0.8);
     if (hurt) {
-      if (this.distanceTo(hurt) > 28) return this.moveTo(hurt.state, 24);
+      if (this.distanceTo(hurt) > SUPPORT_REACH) return this.moveTo(hurt.state, SUPPORT_APPROACH);
       // Blessé caché par un obstacle : on se rapproche jusqu'à le voir (arrêt tout contre : la réflexion suivante
       // change de branche dès que la vue est acquise).
       if (hurt !== self && !hasLineOfSight(self.state, hurt.state)) return this.moveTo(hurt.state, 1);
@@ -270,7 +270,7 @@ class PretreBot extends CasterBot {
     // 5. Relever un allié mort si aucun ennemi n'est trop près.
     const dead = this.nearest(this.deadAllies());
     if (dead && safe) {
-      if (this.distanceTo(dead) > 28) return this.moveTo(dead.state, 24);
+      if (this.distanceTo(dead) > SUPPORT_REACH) return this.moveTo(dead.state, SUPPORT_APPROACH);
       if (this.tryUse("resurrect", dead)) return;
     }
 
@@ -355,7 +355,7 @@ class BardeBot extends CasterBot {
     const allies = this.allies();
 
     // 1. Réveiller un allié mezzé (pas soi-même : on ne peut rien faire sous mez).
-    const mezzed = allies.find((a) => a !== this.self && a.has("mez") && this.distanceTo(a) <= 28);
+    const mezzed = allies.find((a) => a !== this.self && a.has("mez") && this.distanceTo(a) <= SUPPORT_REACH);
     if (mezzed && this.tryUse("awaken", mezzed)) return;
 
     // 2. Ballade rythmée : au moins trois alliés rootés ou ralentis.
@@ -369,7 +369,7 @@ class BardeBot extends CasterBot {
     // temps pour fuir ou finir son sort).
     // Pas pour se dégager soi-même : le coup suivant couperait l'incantation.
     const hitters = allies
-      .filter((a) => a !== this.self && CASTER_CLASSES.includes(a.classDef.id) && this.combat.now - a.lastMeleeHitAt < 2)
+      .filter((a) => a !== this.self && isCaster(a) && this.combat.now - a.lastMeleeHitAt < 2)
       .map((a) => this.world.players.get(a.lastMeleeAttackerId ?? ""))
       .filter((e): e is PlayerRuntime => !!e && e.alive && this.world.visible.has(e.id) && this.worthMezzing(e));
     if (hitters.some((e) => this.tryUse("mez", e))) return;
@@ -380,7 +380,7 @@ class BardeBot extends CasterBot {
 
     // 6. Mez ciblé sur un ennemi de mêlée qui approche.
     const approaching = this.enemies().find(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && this.distanceTo(e) <= 12 && this.worthMezzing(e),
+      (e) => isMelee(e) && this.distanceTo(e) <= 12 && this.worthMezzing(e),
     );
     if (approaching && this.tryUse("mez", approaching)) return;
 
@@ -392,7 +392,7 @@ class BardeBot extends CasterBot {
 
   // Buff dextérité sur un allié qui ne l'a pas encore. Retourne vrai si un buff est lancé.
   private buffAllies(): boolean {
-    const ally = this.allies().find((a) => !a.has("buffDexterity") && this.distanceTo(a) <= 28);
+    const ally = this.allies().find((a) => !a.has("buffDexterity") && this.distanceTo(a) <= SUPPORT_REACH);
     return !!ally && this.tryUse("buffDexterity", ally);
   }
 
@@ -546,7 +546,7 @@ class GardienBot extends BotBrain {
     if (threat) return this.fight(threat);
 
     // Le protégé est tranquille : Charge sur un lanceur de sorts ennemi, de préférence en pleine incantation.
-    const casters = this.enemies().filter((e) => CASTER_CLASSES.includes(e.classDef.id) && this.distanceTo(e) >= CHARGE_MIN && !e.has("meleeImmune"));
+    const casters = this.enemies().filter((e) => isCaster(e) && this.distanceTo(e) >= CHARGE_MIN && !e.has("meleeImmune"));
     const caster = casters.find((e) => e.state.castAbility) ?? this.nearest(casters);
     if (caster && this.tryCharge(caster)) return;
 
@@ -582,11 +582,11 @@ class GardienBot extends BotBrain {
     }
     // Une mêlée qui frappe un lanceur de sorts allié : la Provocation lui fait perdre la moitié de ses dégâts sur lui.
     for (const ally of this.allies()) {
-      if (ally === this.self || !CASTER_CLASSES.includes(ally.classDef.id) || !recent(ally)) continue;
+      if (ally === this.self || !isCaster(ally) || !recent(ally)) continue;
       const hitter = enemies.find((e) => e.id === ally.lastMeleeAttackerId);
       if (hitter && !hitter.has("taunted")) return hitter;
     }
-    const wounded = this.allies().filter((a) => a !== this.self && this.hpRatio(a) < 0.5);
+    const wounded = this.otherAllies().filter((a) => this.hpRatio(a) < 0.5);
     for (const ally of wounded) {
       const hitter = recent(ally) ? enemies.find((e) => e.id === ally.lastMeleeAttackerId) : undefined;
       const caster = enemies.find((e) => e.state.castAbility && e.castTargetId === ally.id);
@@ -610,7 +610,7 @@ class GardienBot extends BotBrain {
     if (!this.isReady("rampart")) return false;
     const group = this.allies().filter((a) => this.distanceTo(a) <= RAMPART_RADIUS);
     const attackers = this.enemies().filter(
-      (e) => MELEE_CLASSES.includes(e.classDef.id) && group.some((a) => distance(e.state, a.state) <= MELEE_RANGE + 1),
+      (e) => isMelee(e) && group.some((a) => distance(e.state, a.state) <= MELEE_RANGE + 1),
     );
     if (attackers.length >= 3) return true;
     return !!ward && group.includes(ward) && this.hpRatio(ward) < 0.3 && this.combat.now - ward.lastMeleeHitAt < 2;
@@ -632,7 +632,7 @@ class GardienBot extends BotBrain {
   // (décidé le 2026-11-21).
   private chooseWard(): PlayerRuntime | undefined {
     if (this.order?.kind === "protect") return this.order.issuer;
-    const casters = this.allies().filter((a) => a !== this.self && CASTER_CLASSES.includes(a.classDef.id));
+    const casters = this.otherAllies().filter((a) => isCaster(a));
     const isAttacked = (c: PlayerRuntime) => this.combat.now - c.lastMeleeHitAt < 3;
     const attacked = casters.filter(isAttacked).sort((a, b) => b.lastMeleeHitAt - a.lastMeleeHitAt);
     const current = casters.find((c) => c.getEffect("guarded")?.sourceId === this.self.id);
