@@ -2105,9 +2105,6 @@ function AnimationLab() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  // Enregistre ce qui a changé : le calage des animations et les effets à particules.
-  // Le fichier a pu changer depuis la lecture (effet ajouté par Claude, autre onglet) : on n'y écrit que ses propres
-  // modifications, par-dessus sa version actuelle.
   // Enregistre un fichier de réglages s'il a changé ; faux (avec le message d'erreur affiché) en cas d'échec.
   const saveDevFile = async <T,>(store: DevFileDraft<T>, label: string): Promise<boolean> => {
     if (!store.unsaved) return true;
@@ -2116,6 +2113,9 @@ function AnimationLab() {
     setMessage(`Échec de l'enregistrement ${label} : ${error}`);
     return false;
   };
+  // Enregistre ce qui a changé : le calage des animations et les effets à particules.
+  // Le fichier a pu changer depuis la lecture (effet ajouté par Claude, autre onglet) : on n'y écrit que ses propres
+  // modifications, par-dessus sa version actuelle.
   const save = async () => {
     if (unsaved) {
       const file = normalizeTuning(await fetch("/__dev-file/animationTuning").then((r) => r.json()));

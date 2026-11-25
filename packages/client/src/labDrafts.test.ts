@@ -18,6 +18,8 @@ test("fichier relu : les changements arrivent dans la version enregistrée et da
   const saved = { a: 1, b: 2 };
   const draft = { a: 10, b: 2 };
   assert.equal(mergeFileChanges(saved, draft, { a: 1, b: 2 }), null);
+  // Un élément retiré du fichier n'est pas retiré pendant qu'on règle (seulement à l'enregistrement).
+  assert.equal(mergeFileChanges(saved, draft, { a: 1 }), null);
   assert.deepEqual(mergeFileChanges(saved, draft, { a: 5, b: 3, c: 7 }), {
     saved: { a: 5, b: 3, c: 7 },
     draft: { a: 10, b: 3, c: 7 },
