@@ -78,7 +78,7 @@ import { FogOfWar, type FogWatcher } from "./FogOfWar";
 import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
-import { errorText } from "../abilityBar";
+import { errorText } from "../abilityStatus";
 import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
