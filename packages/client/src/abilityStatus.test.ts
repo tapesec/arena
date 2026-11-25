@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getAbility, type AbilityDef, type EffectKind } from "@arena/shared";
+import { getAbility, spellRange, type AbilityDef, type EffectKind } from "@arena/shared";
 import { abilityStatus, errorText } from "./abilityStatus";
 import type { SelfFrame, TargetFrame } from "./store";
 
@@ -114,4 +114,20 @@ test("combo : ne part qu'après son ouverture", () => {
   assert.equal(poison.after, "backstab");
   assert.equal(state(poison, self(), enemy({ inMeleeRange: true })), "combo");
   assert.equal(state(poison, self({ comboAbility: "backstab" }), enemy({ inMeleeRange: true })), "ready");
+});
+
+test("sous Near sight, un sort hors de la portée réduite est grisé, comme le serveur le refuserait", () => {
+  const firebolt = ability("firebolt");
+  const reduced = spellRange(firebolt, true);
+  const near = self({}, ["nearSight"]);
+  assert.equal(state(firebolt, near, enemy({ distance: reduced })), "ready");
+  assert.deepEqual(abilityStatus(firebolt, near, enemy({ distance: reduced + 1 })), {
+    state: "range",
+    reason: errorText("outOfRangeNearSight"),
+  });
+  // Sans Near sight, la même distance est à portée.
+  assert.equal(state(firebolt, self(), enemy({ distance: reduced + 1 })), "ready");
+  // Une technique de mêlée n'est pas concernée.
+  const backstab = ability("backstab");
+  assert.equal(state(backstab, near, enemy({ inMeleeRange: true, position: "back" })), "ready");
 });
