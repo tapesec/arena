@@ -403,7 +403,7 @@ export class CombatSystem {
     if (ability.effects.some((e) => e.type === "charge") && caster.has("root")) return "rooted";
     if (caster.state.castAbility) return "alreadyCasting";
     if (caster.has("silenced") && isMagic(ability)) return "silenced";
-    if ((caster.cooldowns.get(ability.id) ?? 0) > this.time) return "cooldown";
+    if (!caster.isReady(ability.id, this.time)) return "cooldown";
     if (caster.state[ability.resource] < costOf(caster, ability)) {
       return ability.resource === "mana" ? "noMana" : "noEndurance";
     }
@@ -479,9 +479,7 @@ export class CombatSystem {
   private resolveAbility(caster: PlayerRuntime, ability: AbilityDef, targetId: string): boolean {
     caster.state[ability.resource] -= costOf(caster, ability);
     if (ability.cooldown > 0) {
-      caster.cooldowns.set(ability.id, this.time + ability.cooldown);
-      const event: CooldownEvent = { abilityId: ability.id, duration: ability.cooldown };
-      this.out.sendTo(caster.id, "cooldown", event);
+      this.startCooldown(caster, ability.id, ability.cooldown);
     }
     // Oubli : le premier sort fini pendant l'effet n'a aucun effet (mana dépensé, recharge lancée) et le consomme.
     // Couper son chant n'est pas un sort lancé.
@@ -511,16 +509,12 @@ export class CombatSystem {
         // Attaque spéciale de mêlée : un Gardien qui intercepte la prend en entier à la place de sa cible (dégâts et
         // effets : silence, poison, affaiblissements…). Puis l'évitement est tranché une fois, avant ses effets :
         // esquivée, bloquée au bouclier ou absorbée par une bulle, elle s'arrête en entier.
-        const interceptor = this.interceptorOf(target);
-        if (interceptor) {
-          removeEffect(target, target.getEffect("intercept")!);
-          this.emit({ kind: "intercepted", sourceId: caster.id, targetId: interceptor.id, abilityId: ability.id, detail: target.id });
-          target = interceptor;
-          target.lastEngagedAt = this.time;
-        }
+        const struck = this.redirectToInterceptor(caster, target, ability.id);
+        const intercepted = struck !== target;
+        target = struck;
         if (this.meleeAvoidance(caster, target, ability.id)) continue;
         // Un coup intercepté n'ouvre pas de combo : il n'a pas porté sur sa cible.
-        if (!interceptor) landed = true;
+        if (!intercepted) landed = true;
       }
       for (const effect of ability.effects) {
         // Les effets suivants ne s'appliquent pas à une cible tuée par le premier.
@@ -548,6 +542,17 @@ export class CombatSystem {
   }
 
   // Gardien qui intercepte le prochain coup visant la cible, s'il est vivant et assez proche.
+  // Un Gardien intercepte le coup : il le prend à la place de sa cible, et l'interception est consommée. Renvoie celui
+  // qui reçoit le coup (la cible elle-même sans interception).
+  private redirectToInterceptor(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): PlayerRuntime {
+    const interceptor = this.interceptorOf(target);
+    if (!interceptor) return target;
+    removeEffect(target, target.getEffect("intercept")!);
+    this.emit({ kind: "intercepted", sourceId: source.id, targetId: interceptor.id, abilityId, detail: target.id });
+    interceptor.lastEngagedAt = this.time;
+    return interceptor;
+  }
+
   private interceptorOf(target: PlayerRuntime): PlayerRuntime | undefined {
     const intercept = target.getEffect("intercept");
     const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;
@@ -763,13 +768,7 @@ export class CombatSystem {
     target.lastEngagedAt = this.time;
 
     // Interception : le Gardien prend le coup s'il est assez proche (une attaque spéciale l'a déjà tranchée).
-    const interceptor = dot || avoidanceDone ? undefined : this.interceptorOf(target);
-    if (interceptor) {
-      removeEffect(target, target.getEffect("intercept")!);
-      this.emit({ kind: "intercepted", sourceId: source.id, targetId: interceptor.id, abilityId, detail: target.id });
-      target = interceptor;
-      target.lastEngagedAt = this.time;
-    }
+    if (!dot && !avoidanceDone) target = this.redirectToInterceptor(source, target, abilityId);
 
     // Buff de puissance : plus de dégâts, en mêlée comme avec les sorts (tics compris).
     amount *= powerFactor(source);
@@ -1035,7 +1034,7 @@ export class CombatSystem {
     if (player.charge) return this.sendError(player, "charging");
     // Root, ou arrêt net de la Provocation : immobilisé, il ne roule pas.
     if (player.has("root") || player.has("halted")) return this.sendError(player, "rooted");
-    if ((player.cooldowns.get(ROLL_ID) ?? 0) > this.time) return this.sendError(player, "rollCooldown");
+    if (!player.isReady(ROLL_ID, this.time)) return this.sendError(player, "rollCooldown");
     const state = player.state;
     // Dans la direction des touches tenues, devant si aucune (pivoter au clavier ne compte pas). Orientation voulue par
     // la commande (mode moderne, clic droit) plutôt que celle du dernier tic, qui peut avoir un temps de retard ou
@@ -1050,9 +1049,7 @@ export class CombatSystem {
     player.roll = { ...direction, elapsed: 0, facing: state.facing };
     state.facing = Math.atan2(direction.x, direction.z);
     state.rolling = true;
-    player.cooldowns.set(ROLL_ID, this.time + ROLL_COOLDOWN);
-    const event: CooldownEvent = { abilityId: ROLL_ID, duration: ROLL_COOLDOWN };
-    this.out.sendTo(player.id, "cooldown", event);
+    this.startCooldown(player, ROLL_ID, ROLL_COOLDOWN);
     if (state.castAbility) this.interrupt(player, "move");
     player.lastEngagedAt = this.time;
   }
@@ -1163,6 +1160,13 @@ export class CombatSystem {
   }
 
   // --- Utilitaires ---
+
+  // Recharge d'une compétence (ou de la roulade), annoncée au joueur pour sa barre.
+  private startCooldown(player: PlayerRuntime, abilityId: string, duration: number) {
+    player.cooldowns.set(abilityId, this.time + duration);
+    const event: CooldownEvent = { abilityId, duration };
+    this.out.sendTo(player.id, "cooldown", event);
+  }
 
   private interrupt(caster: PlayerRuntime, reason: InterruptReason) {
     const event: InterruptEvent = { casterId: caster.id, abilityId: caster.state.castAbility, reason };

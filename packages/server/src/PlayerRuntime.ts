@@ -44,6 +44,12 @@ export class PlayerRuntime {
   lastEngagedAt = -Infinity;
   // Instant (temps de la partie, en secondes) où chaque compétence redevient disponible.
   cooldowns = new Map<string, number>();
+
+  // Compétence (ou roulade) rechargée à l'instant now.
+  isReady(abilityId: string, now: number): boolean {
+    return (this.cooldowns.get(abilityId) ?? 0) <= now;
+  }
+
   effects: ActiveEffect[] = [];
   // Dernier coup de mêlée reçu (temps de la partie) et son auteur : sert aux bots pour fuir ou protéger.
   lastMeleeHitAt = -Infinity;

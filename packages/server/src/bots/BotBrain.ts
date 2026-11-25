@@ -375,7 +375,7 @@ export class BotBrain {
   }
 
   protected isReady(abilityId: string): boolean {
-    return (this.player.cooldowns.get(abilityId) ?? 0) <= this.combat.now;
+    return this.player.isReady(abilityId, this.combat.now);
   }
 
   // Rejoint la cible au corps à corps et active l'attaque automatique.
