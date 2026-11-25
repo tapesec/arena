@@ -1,6 +1,6 @@
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { CLASSES, getAbility, type ClassId, type CombatEvent, type EffectKind } from "@arena/shared";
+import { CLASSES, getAbility, type CombatEvent, type EffectKind } from "@arena/shared";
 import { momentLength, statusKindsOf, tuningOf, zoneCenterIsTarget, type AbilityAnimation, type AnimationTuning } from "./abilityAnimations";
 import { AbilityEffectPlayer, effectPosition, type Scenery } from "./abilityEffects";
 import { projectileDirection, projectilePosition } from "./projectilePaths";
@@ -379,7 +379,7 @@ export class TargetVisuals {
   private originOf(targetId: string, kind: string, source: string, players: Map<string, PlayerVisual>): string {
     const known = this.origins.get(targetId)?.get(kind);
     if (known && known.source === source) return known.abilityId;
-    const classId = players.get(source)?.state.classId as ClassId | undefined;
+    const classId = players.get(source)?.state.classId;
     const candidates = classId && CLASSES[classId] ? CLASSES[classId].abilities : [];
     return candidates.find((id) => statusKindsOf(id).includes(kind)) ?? "";
   }

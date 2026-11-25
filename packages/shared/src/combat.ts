@@ -6,9 +6,10 @@ export type ResourceType = "mana" | "endurance";
 export const MAX_MANA = 1000;
 export const MAX_ENDURANCE = 100;
 
-// Régénération de base par seconde.
-export const MANA_REGEN = 5;
-export const ENDURANCE_REGEN = 2;
+// Régénération de base par seconde : le tiers de celle sous Chant de second souffle (base + bonus du chant), pour
+// qu'un joueur sans Barde ne reste pas à sec (décidé le 2026-11-19 ; avant : 5 mana et 2 endurance).
+export const MANA_REGEN = 25;
+export const ENDURANCE_REGEN = 2.5;
 
 // Distance maximale entre les centres de deux personnages pour frapper au corps à corps.
 export const MELEE_RANGE = 3;
@@ -70,6 +71,19 @@ export const GANGRENE_HEAL_FACTOR = 0.5;
 // Brise armure : dégâts de mêlée reçus augmentés de ce bonus.
 export const ARMOR_BREAK_BONUS = 0.25;
 
+// Dernier carré (décidé le 2026-11-21) : une équipe réduite à LAST_STAND_MAX_ALIVE survivants ou moins, et en
+// infériorité numérique, inflige LAST_STAND_BONUS_PER_PLAYER de dégâts en plus par joueur d'écart (mêlée, sorts et
+// tics), plafonné à LAST_STAND_MAX_BONUS. Il aide à remonter sans renverser l'infériorité numérique.
+export const LAST_STAND_MAX_ALIVE = 4;
+export const LAST_STAND_BONUS_PER_PLAYER = 0.05;
+export const LAST_STAND_MAX_BONUS = 0.15;
+
+// Bonus de dégâts du dernier carré (0,05 = +5 %) d'une équipe qui a own survivants face à other.
+export function lastStandBonus(own: number, other: number): number {
+  if (own <= 0 || own > LAST_STAND_MAX_ALIVE || own >= other) return 0;
+  return Math.min(LAST_STAND_MAX_BONUS, (other - own) * LAST_STAND_BONUS_PER_PLAYER);
+}
+
 // Lame
 export const EVASION_CHANCE = 0.75;
 
@@ -118,7 +132,7 @@ export function positionRelativeTo(target: Position & { facing: number }, attack
   return "side";
 }
 
-// Événement diffusé à tous les clients pour le journal de combat.
+// Événement diffusé à tous les clients pour les textes flottants, les sons et les effets.
 // abilityId vaut "auto" pour l'attaque automatique.
 export type CombatEventKind =
   | "damage"
@@ -147,7 +161,74 @@ export interface CombatEvent {
   killed?: boolean;
   // Tic d'un dégât sur la durée (Brûlure, poison) : pas un coup.
   dot?: boolean;
+  // Dégâts de mêlée (attaque automatique, technique, Coup de pied, Charge) : la lueur du coup reçu indique leur côté.
+  melee?: boolean;
   detail?: string;
+}
+
+// Élimination, annoncée à tous les joueurs quel que soit le brouillard de guerre (annonce au centre de l'écran et
+// fil des éliminations, décidés le 2026-11-21). abilityId : la compétence qui a achevé ("auto" pour l'attaque
+// automatique).
+export interface KillEvent {
+  victimName: string;
+  victimTeam: number;
+  // Classe de la victime : son icône sur le sceau de l'annonce.
+  victimClass: string;
+  killerName: string;
+  killerTeam: number;
+  abilityId: string;
+  // Pseudo du seul survivant de l'équipe de la victime, s'il n'en reste qu'un (bandeau « Dernier survivant »).
+  lastStanding?: string;
+}
+
+// Bilan d'un joueur pendant la partie (récap de l'écran de fin) : éliminations (coup fatal), dégâts infligés aux
+// ennemis (points de vie réellement perdus), soins (points de vie réellement rendus) et contrôles posés (mez, stun, root).
+export interface PlayerStats {
+  kills: number;
+  damage: number;
+  healing: number;
+  controls: number;
+}
+
+export const emptyStats = (): PlayerStats => ({ kills: 0, damage: 0, healing: 0, controls: 0 });
+
+// Héros de la partie : le joueur de l'équipe gagnante qui a le plus de points (décidé le 2026-11-22). Une élimination
+// vaut 1000 points, un point de dégâts ou de soin 1 point, un contrôle 150 points. À égalité, le plus d'éliminations
+// puis le plus de dégâts ; personne n'est héros sans aucun point.
+export const HERO_POINTS = { kill: 1000, damage: 1, healing: 1, control: 150 };
+
+export function heroScore(stats: PlayerStats): number {
+  return (
+    stats.kills * HERO_POINTS.kill + stats.damage * HERO_POINTS.damage + stats.healing * HERO_POINTS.healing + stats.controls * HERO_POINTS.control
+  );
+}
+
+// Récap envoyé à tous à la fin de la partie.
+export interface MatchSummaryPlayer extends PlayerStats {
+  id: string;
+  name: string;
+  team: number;
+  classId: string;
+  alive: boolean;
+  // A quitté la partie pendant la préparation ou le combat (ses stats restent dans le récap).
+  left?: boolean;
+}
+
+export interface MatchSummary {
+  // Durée du combat, en secondes (sans la préparation) ; null si la partie a fini avant le combat.
+  seconds: number | null;
+  players: MatchSummaryPlayer[];
+  // Héros de la partie (voir pickHero), null s'il n'y en a pas.
+  heroId: string | null;
+  // Élimination qui a terminé la partie, null si elle a fini autrement (départs).
+  finalKill: KillEvent | null;
+}
+
+export function pickHero(players: MatchSummaryPlayer[], winner: number): string | null {
+  const [hero] = players
+    .filter((p) => p.team === winner && heroScore(p) > 0)
+    .sort((a, b) => heroScore(b) - heroScore(a) || b.kills - a.kills || b.damage - a.damage);
+  return hero?.id ?? null;
 }
 
 export type InterruptReason = "damage" | "move" | "silence" | "cc" | "taunt";

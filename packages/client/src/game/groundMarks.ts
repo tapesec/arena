@@ -7,6 +7,9 @@ import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
+import { hexToRgb } from "./color";
+import { seededRandom } from "./seededRandom";
+import { createDefRegistry } from "./defRegistry";
 
 // Marques au sol (onglet « Marques au sol » de animation-lab.html), enregistrées dans groundMarks.json : un dessin
 // (cercle, anneau, runes, rayons, fissures, créneaux) posé à plat sur le terrain, qui apparaît en grandissant,
@@ -115,28 +118,12 @@ export const PATTERNS: Record<GroundPattern, string> = {
   crosses: "Croix de vie",
 };
 
-// Marques réglées et enregistrées (groundMarks.json), données par le jeu ou par la page de réglage.
-let savedMarks: Record<string, GroundMarkDef> = {};
-
-export function setGroundMarkDefs(defs: Record<string, GroundMarkDef>) {
-  savedMarks = defs;
-}
-
-// Marque par son nom : sa version réglée, sinon celle de départ.
-// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de la marque de départ.
-export function groundMarkDef(id: string): GroundMarkDef | null {
-  if (!savedMarks[id] && !BUILTIN_MARKS[id]) return null;
-  return { ...DEFAULT_MARK, ...BUILTIN_MARKS[id], ...savedMarks[id] };
-}
-
-export function groundMarkChoices(): { id: string; label: string }[] {
-  const ids = new Set([...Object.keys(BUILTIN_MARKS), ...Object.keys(savedMarks)]);
-  return [...ids].map((id) => ({ id, label: groundMarkLabel(id) }));
-}
-
-export function groundMarkLabel(id: string): string {
-  return savedMarks[id]?.label ?? BUILTIN_MARKS[id]?.label ?? id;
-}
+// Réglages enregistrés (fichier JSON) et de départ.
+const marks = createDefRegistry(DEFAULT_MARK, BUILTIN_MARKS);
+export const setGroundMarkDefs = marks.set;
+export const groundMarkDef = marks.get;
+export const groundMarkChoices = marks.choices;
+export const groundMarkLabel = marks.label;
 
 // Hauteur au-dessus du sol (évite le scintillement avec le terrain).
 const LIFT = 0.05;
@@ -308,15 +295,6 @@ export class GroundMarks {
   }
 }
 
-// Tirage pseudo-aléatoire répétable (même graine, même dessin).
-function random(seed: number): () => number {
-  let state = Math.floor(seed * 9301 + 49297) % 233280 || 1;
-  return () => {
-    state = (state * 9301 + 49297) % 233280;
-    return state / 233280;
-  };
-}
-
 // Dessine la marque sur une texture transparente (centre au milieu, rayon au bord).
 export function drawMark(scene: Scene, def: GroundMarkDef, size = TEXTURE_SIZE): DynamicTexture {
   const texture = new DynamicTexture("groundMark", size, scene, true);
@@ -326,7 +304,7 @@ export function drawMark(scene: Scene, def: GroundMarkDef, size = TEXTURE_SIZE):
   const rgb = hexToRgb(def.color);
   const color = (alpha: number) => `rgba(${rgb},${Math.max(0, Math.min(1, alpha))})`;
   const line = Math.max(1.5, def.thickness * r);
-  const rand = random(def.seed);
+  const rand = seededRandom(def.seed);
   ctx.clearRect(0, 0, size, size);
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -489,7 +467,3 @@ export function drawMark(scene: Scene, def: GroundMarkDef, size = TEXTURE_SIZE):
   return texture;
 }
 
-function hexToRgb(hex: string): string {
-  const value = parseInt(hex.replace("#", ""), 16) || 0;
-  return `${(value >> 16) & 255},${(value >> 8) & 255},${value & 255}`;
-}

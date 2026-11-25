@@ -3,7 +3,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
-import { ARENA_SIZE, EYE_HEIGHT, OBSTACLES, VISION_RANGE, terrainHeight, type Position } from "@arena/shared";
+import { ARENA_SIZE, EYE_HEIGHT, OBSTACLES, VISION_RANGE, terrainHeight, type Obstacle, type Position } from "@arena/shared";
 import { createTerrainMesh } from "./terrainMesh";
 
 // Une case par mètre : la texture est étirée sur l'arène, le filtrage adoucit les bords.
@@ -172,13 +172,22 @@ function computeViewshed(from: Position): Viewshed {
       const x = from.x + dirX * d;
       const z = from.z + dirZ * d;
       if (x < -half || x > half || z < -half || z > half) break;
-      if (nearbyObstacles.some((o) => Math.abs(x - o.x) <= o.halfWidth && Math.abs(z - o.z) <= o.halfDepth)) break;
+      if (insideAny(nearbyObstacles, x, z)) break;
       const ground = terrainHeight(x, z);
       if ((ground + EYE_HEIGHT - eye) / d >= horizon) markCell(cells, x, z);
       horizon = Math.max(horizon, (ground - eye) / d);
     }
   }
   return { x: from.x, z: from.z, cells };
+}
+
+// Boucle simple : appelée à chaque pas de chaque rayon (des dizaines de milliers de fois par champ de vision).
+function insideAny(obstacles: readonly Obstacle[], x: number, z: number): boolean {
+  for (let i = 0; i < obstacles.length; i++) {
+    const o = obstacles[i];
+    if (Math.abs(x - o.x) <= o.halfWidth && Math.abs(z - o.z) <= o.halfDepth) return true;
+  }
+  return false;
 }
 
 function markCell(cells: Uint8Array, x: number, z: number) {

@@ -11,6 +11,8 @@ import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
+import { seededRandom } from "./seededRandom";
+import { createDefRegistry } from "./defRegistry";
 
 // Objets 3D (onglet « Objets 3D » de animation-lab.html), enregistrés dans objects3d.json : une forme simple
 // (sphère, anneau, cylindre, cône, cube, cristal, croissant), seule ou répétée en cercle, lumineuse ou éclairée,
@@ -297,26 +299,12 @@ export const FORMS: Record<ObjectForm, string> = {
   arcs: "Arcs électriques",
 };
 
-let savedObjects: Record<string, ObjectDef> = {};
-
-export function setObjectDefs(defs: Record<string, ObjectDef>) {
-  savedObjects = defs;
-}
-
-// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de l'objet de départ.
-export function objectDef(id: string): ObjectDef | null {
-  if (!savedObjects[id] && !BUILTIN_OBJECTS[id]) return null;
-  return { ...DEFAULT_OBJECT, ...BUILTIN_OBJECTS[id], ...savedObjects[id] };
-}
-
-export function objectChoices(): { id: string; label: string }[] {
-  const ids = new Set([...Object.keys(BUILTIN_OBJECTS), ...Object.keys(savedObjects)]);
-  return [...ids].map((id) => ({ id, label: objectLabel(id) }));
-}
-
-export function objectLabel(id: string): string {
-  return savedObjects[id]?.label ?? BUILTIN_OBJECTS[id]?.label ?? id;
-}
+// Réglages enregistrés (fichier JSON) et de départ.
+const objectDefs = createDefRegistry(DEFAULT_OBJECT, BUILTIN_OBJECTS);
+export const setObjectDefs = objectDefs.set;
+export const objectDef = objectDefs.get;
+export const objectChoices = objectDefs.choices;
+export const objectLabel = objectDefs.label;
 
 // Rayon d'un objet (mètres), pour l'étendre à une zone : celui de son cercle, sinon de sa forme.
 export function objectRadius(def: ObjectDef): number {
@@ -353,9 +341,17 @@ interface Live {
 }
 
 const DEG = Math.PI / 180;
+// Matériaux gardés prêts au-delà desquels ceux qui ne servent plus sont détruits.
+const MAX_SPARE_MATERIALS = 48;
+// Modèles de formes gardés au-delà desquels ceux qui ne servent plus sont détruits.
+const MAX_SPARE_FORMS = 32;
 
 export class Objects3D {
   private live: Live[] = [];
+  // Formes et matériaux partagés entre les exemplaires (un même sort revient sans cesse) : copier un maillage modèle
+  // et réutiliser un matériau déjà compilé coûte bien moins que les recréer (0,5 à 1 ms par exemplaire).
+  private forms = new Map<string, Mesh>();
+  private materials = new Map<string, { material: StandardMaterial; users: number }>();
 
   constructor(private scene: Scene) {}
 
@@ -369,8 +365,8 @@ export class Objects3D {
 
   createFromDef(def: ObjectDef, at: Vector3, radius?: number): PlacedObject {
     const root = new TransformNode("object3d", this.scene);
-    const material = objectMaterial(this.scene, def);
-    const rand = random(def.seed);
+    const material = this.takeMaterial(def);
+    const rand = seededRandom(def.seed);
     const meshes: Mesh[] = [];
     const count = Math.max(1, Math.round(def.count));
     const arcs = def.form === "arcs";
@@ -385,7 +381,7 @@ export class Objects3D {
       meshes.push(mesh);
     }
     for (let i = 0; i < count && !arcs; i++) {
-      const mesh = buildForm(this.scene, def);
+      const mesh = this.form(def);
       mesh.material = material;
       mesh.isPickable = false;
       mesh.parent = root;
@@ -490,6 +486,10 @@ export class Objects3D {
 
   dispose() {
     for (const live of [...this.live]) this.remove(live);
+    for (const model of this.forms.values()) model.dispose();
+    this.forms.clear();
+    for (const { material } of this.materials.values()) material.dispose();
+    this.materials.clear();
   }
 
   private animate(live: Live) {
@@ -541,8 +541,59 @@ export class Objects3D {
   private remove(live: Live) {
     if (!this.live.includes(live)) return;
     live.root.dispose(false, false);
-    live.material.dispose();
+    this.releaseMaterial(live.material);
     this.live = this.live.filter((l) => l !== live);
+  }
+
+  // Maillage d'un exemplaire, qui partage la géométrie du modèle de sa forme (créé à la première demande, caché).
+  private form(def: ObjectDef): Mesh {
+    const key = `${def.form}|${def.thickness}|${def.open}`;
+    let model = this.forms.get(key);
+    if (!model) {
+      model = buildForm(this.scene, def);
+      model.isPickable = false;
+      model.setEnabled(false);
+      this.forms.set(key, model);
+      this.dropSpareForms();
+    }
+    const mesh = new Mesh("object3d", this.scene);
+    model.geometry?.applyToMesh(mesh);
+    return mesh;
+  }
+
+  // Trop de modèles (épaisseurs essayées à la suite sur la page de réglage) : ceux qu'aucun exemplaire n'utilise sont
+  // détruits.
+  private dropSpareForms() {
+    if (this.forms.size <= MAX_SPARE_FORMS) return;
+    for (const [key, model] of this.forms) {
+      if ((model.geometry?.meshes.length ?? 0) > 1) continue;
+      model.dispose();
+      this.forms.delete(key);
+    }
+  }
+
+  // Matériau d'un réglage, partagé par ses exemplaires (il n'est jamais modifié après sa création).
+  private takeMaterial(def: ObjectDef): StandardMaterial {
+    const key = `${def.form === "arcs"}|${def.color}|${def.glow}|${def.alpha}|${def.open}|${def.form === "crescent"}|${def.additive}`;
+    let entry = this.materials.get(key);
+    if (!entry) {
+      entry = { material: objectMaterial(this.scene, def), users: 0 };
+      this.materials.set(key, entry);
+    }
+    entry.users++;
+    return entry.material;
+  }
+
+  // Un exemplaire disparaît : son matériau reste prêt pour le prochain, sauf s'il y en a trop d'inutilisés (réglages
+  // essayés à la suite sur la page de réglage).
+  private releaseMaterial(material: StandardMaterial) {
+    for (const entry of this.materials.values()) if (entry.material === material) entry.users--;
+    if (this.materials.size <= MAX_SPARE_MATERIALS) return;
+    for (const [key, entry] of this.materials) {
+      if (entry.users > 0) continue;
+      entry.material.dispose();
+      this.materials.delete(key);
+    }
   }
 }
 
@@ -655,10 +706,3 @@ function objectMaterial(scene: Scene, def: ObjectDef): StandardMaterial {
   return material;
 }
 
-function random(seed: number): () => number {
-  let state = Math.floor(seed * 9301 + 49297) % 233280 || 1;
-  return () => {
-    state = (state * 9301 + 49297) % 233280;
-    return state / 233280;
-  };
-}

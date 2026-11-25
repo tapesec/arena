@@ -48,3 +48,9 @@ Effets sans compétence propre (icons/effects/) :
 stun ← delapouite/knocked-out-stars
 root ← delapouite/tree-roots
 snare ← lorc/snail
+Classes (icons/classes/, sceau des annonces et tableau de fin) :
+gardien ← lorc/checked-shield
+arcaniste ← lorc/pointy-hat
+pretre ← delapouite/sun-priest
+barde ← lorc/lyre
+lame ← darkzaitzev/hooded-assassin

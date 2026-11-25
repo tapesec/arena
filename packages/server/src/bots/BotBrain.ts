@@ -30,6 +30,9 @@ export interface BotWorld {
 
 export const CASTER_CLASSES: ClassId[] = ["arcaniste", "pretre", "barde"];
 export const MELEE_CLASSES: ClassId[] = ["lame", "gardien"];
+// Combattant au contact, ou lanceur de sorts.
+export const isMelee = (p: PlayerRuntime): boolean => MELEE_CLASSES.includes(p.classDef.id);
+export const isCaster = (p: PlayerRuntime): boolean => CASTER_CLASSES.includes(p.classDef.id);
 
 // Fréquence des décisions (le déplacement, lui, est ajusté à chaque tick).
 const THINK_INTERVAL = 0.25;
@@ -51,6 +54,13 @@ const FLEE_ANGLES = [0, 30, -30, 60, -60, 90, -90, 120, -120];
 // Suivez-moi : distance à laquelle chaque bot suit le joueur (tirée au hasard pour qu'ils ne s'empilent pas).
 const FOLLOW_MIN_DISTANCE = 2.5;
 const FOLLOW_MAX_DISTANCE = 5;
+// Suivi d'office du début du combat (voir followHumansAtStart) : il cesse si le joueur suivi ne s'éloigne pas d'au
+// moins 1 m de sa position pendant ce temps (secondes), pour qu'un joueur absent ne retienne pas toute son équipe.
+const START_FOLLOW_IDLE = 15;
+// Chef d'une équipe sans humain : longueur minimale de chaque étape d'exploration (mètres).
+const SCOUT_MIN_LEG = 25;
+// Durée maximale de l'exploration au hasard du chef (secondes).
+const SCOUT_MAX_TIME = 45;
 
 // Ordre donné par un joueur (roue de la molette) : qui l'a donné, sa cible (Assistez-moi), et jusqu'à quand il vaut.
 export interface BotOrder {
@@ -58,6 +68,8 @@ export interface BotOrder {
   issuer: PlayerRuntime;
   target: PlayerRuntime | null;
   until: number;
+  // Donné d'office au début du combat, et non par le joueur.
+  automatic?: boolean;
 }
 
 // Erreur humaine : les bots ne sont pas des machines parfaites. Modifiable (les tests la coupent).
@@ -81,12 +93,19 @@ export class BotBrain {
   private destination: Position | null = null;
   private stopDistance = 0;
   private path: Position[] = [];
+  // La dernière recherche n'a trouvé aucun chemin.
+  private pathMissing = false;
   private repathTimer = 0;
   // Décalage aléatoire pour que les bots ne réfléchissent pas tous au même moment.
   private thinkTimer = Math.random() * THINK_INTERVAL;
   // Mémoire et exploration quand aucun ennemi n'est en vue.
   private lastSeenEnemy: Position | null = null;
   private exploreTarget: Position | null = null;
+  // Début du combat d'une équipe sans humain (voir followHumansAtStart) : attente jusqu'à holdUntil, et le chef
+  // explore la carte au hasard (scouting) jusqu'au premier ennemi aperçu.
+  private holdUntil = -Infinity;
+  private scouting = false;
+  private scoutUntil = Infinity;
   private visitedEnemyZone = false;
   private lastInput: MoveInput = NO_INPUT;
   private lastPosition: Position | null = null;
@@ -96,6 +115,10 @@ export class BotBrain {
   // Ordre en cours (un seul à la fois : un nouvel ordre remplace le précédent).
   order: BotOrder | null = null;
   private followDistance = FOLLOW_MIN_DISTANCE + Math.random() * (FOLLOW_MAX_DISTANCE - FOLLOW_MIN_DISTANCE);
+  // Suivi d'office : dernière position où le joueur suivi a bougé, et quand.
+  private guideMark: { x: number; z: number; at: number } | null = null;
+  // Suivi d'office mis de côté par un ordre ponctuel (buff, soin, vitesse…) : il reprend quand cet ordre est fini.
+  private resumeFollow: BotOrder | null = null;
 
   constructor(
     readonly player: PlayerRuntime,
@@ -106,6 +129,7 @@ export class BotBrain {
   update(dt: number, world: BotWorld) {
     if (!this.player.alive) {
       this.order = null;
+      this.resumeFollow = null;
       this.stop();
       return;
     }
@@ -118,8 +142,20 @@ export class BotBrain {
       if (world.phase === "preparation") this.prepare();
       else if (world.phase === "fighting") {
         this.expireOrder();
+        // Attente du départ (équipe sans humain), sauf si un ennemi se montre déjà : l'attente cesse alors pour de bon.
+        if (this.enemies().length > 0) this.holdUntil = -Infinity;
+        if (this.combat.now < this.holdUntil) {
+          this.stop();
+          return;
+        }
+        // Chef éclaireur : il explore tant qu'aucun ennemi n'a été aperçu (ses réflexes de classe, comme rester près
+        // d'un protégé, retiendraient toute l'équipe qui le suit).
+        if (this.scouting && (this.lastSeenEnemy || this.enemies().length > 0 || this.combat.now > this.scoutUntil)) {
+          this.scouting = false;
+        }
+        if (this.scouting) this.scout();
         // Hésitation : le bot continue ce qu'il faisait au lieu de réagir.
-        if (!(HUMAN_ERRORS.enabled && Math.random() < HUMAN_ERRORS.hesitation)) this.think();
+        else if (!(HUMAN_ERRORS.enabled && Math.random() < HUMAN_ERRORS.hesitation)) this.think();
         this.follow();
       } else this.stop();
     }
@@ -152,10 +188,13 @@ export class BotBrain {
   // --- Ordres ---
 
   // Reçoit un ordre d'un joueur de son équipe : retourne la réponse du bot. S'il refuse, il garde son ordre précédent.
-  receiveOrder(kind: OrderId, issuer: PlayerRuntime, target: PlayerRuntime | null): OrderReply {
+  receiveOrder(kind: OrderId, issuer: PlayerRuntime, target: PlayerRuntime | null, automatic = false): OrderReply {
     const refusal = this.refuseOrder(kind, issuer);
     if (refusal) return refusal;
-    this.order = { kind, issuer, target, until: this.combat.now + this.orderDuration(kind) };
+    // Un ordre du joueur qui n'est pas Suivez-moi interrompt le suivi d'office sans l'annuler.
+    this.resumeFollow = kind !== "follow" && this.order?.automatic ? this.order : null;
+    this.order = { kind, issuer, target, until: this.combat.now + this.orderDuration(kind), automatic };
+    if (automatic) this.guideMark = { x: issuer.state.x, z: issuer.state.z, at: this.combat.now };
     return kind;
   }
 
@@ -186,12 +225,28 @@ export class BotBrain {
   // Suivez-moi : tant qu'aucun ennemi n'est en vue, le bot suit le joueur ; au premier ennemi aperçu, l'ordre cesse
   // et le bot engage le combat comme d'habitude.
   private follow() {
+    if (this.enemies().length > 0) this.resumeFollow = null;
+    // Ordre ponctuel terminé : le suivi d'office reprend, si le joueur suivi est toujours là.
+    const resume = this.resumeFollow;
+    if (!this.order && resume) {
+      this.resumeFollow = null;
+      if (resume.issuer.alive && this.world.players.get(resume.issuer.id) === resume.issuer) this.order = resume;
+    }
     if (this.order?.kind !== "follow") return;
-    if (this.enemies().length > 0) {
+    if (this.enemies().length > 0 || this.guideIdle()) {
       this.order = null;
       return;
     }
     if (!this.isCasting) this.moveTo(this.order.issuer.state, this.followDistance);
+  }
+
+  // Suivi d'office : le joueur suivi n'a pas bougé depuis START_FOLLOW_IDLE secondes.
+  private guideIdle(): boolean {
+    if (!this.order?.automatic) return false;
+    const { x, z } = this.order.issuer.state;
+    const now = this.combat.now;
+    if (!this.guideMark || distance(this.guideMark, { x, z }) > 1) this.guideMark = { x, z, at: now };
+    return now - this.guideMark.at > START_FOLLOW_IDLE;
   }
 
   // Assistez-moi : la cible du joueur, tant que l'équipe la voit.
@@ -234,6 +289,11 @@ export class BotBrain {
   // Alliés vivants, soi-même compris.
   protected allies(): PlayerRuntime[] {
     return [...this.world.players.values()].filter((p) => p.alive && p.state.team === this.player.state.team);
+  }
+
+  // Alliés vivants, sans soi-même.
+  protected otherAllies(): PlayerRuntime[] {
+    return this.allies().filter((p) => p !== this.player);
   }
 
   protected deadAllies(): PlayerRuntime[] {
@@ -284,7 +344,7 @@ export class BotBrain {
     const recentlyHit = this.combat.now - this.player.lastMeleeHitAt < 1.5;
     return this.enemies().filter(
       (p) =>
-        (MELEE_CLASSES.includes(p.classDef.id) && this.distanceTo(p) <= radius) ||
+        (isMelee(p) && this.distanceTo(p) <= radius) ||
         (recentlyHit && p.id === this.player.lastMeleeAttackerId),
     );
   }
@@ -315,7 +375,7 @@ export class BotBrain {
   }
 
   protected isReady(abilityId: string): boolean {
-    return (this.player.cooldowns.get(abilityId) ?? 0) <= this.combat.now;
+    return this.player.isReady(abilityId, this.combat.now);
   }
 
   // Rejoint la cible au corps à corps et active l'attaque automatique.
@@ -334,9 +394,9 @@ export class BotBrain {
   // les autres vont là où un ennemi a été vu pour la dernière fois, puis vers le camp adverse, puis explorent.
   protected advance() {
     if (CASTER_CLASSES.includes(this.classId)) {
-      const others = this.allies().filter((p) => p !== this.player);
+      const others = this.otherAllies();
       const escort =
-        this.nearest(others.filter((p) => MELEE_CLASSES.includes(p.classDef.id))) ??
+        this.nearest(others.filter((p) => isMelee(p))) ??
         this.nearest(others.filter((p) => !p.state.isBot));
       if (escort) {
         this.moveTo(escort.state, ESCORT_DISTANCE);
@@ -355,13 +415,37 @@ export class BotBrain {
     this.moveTo(this.exploreTarget, 2);
   }
 
-  // Point libre au hasard dans l'arène, à l'écart des bords.
-  private randomPoint(): Position {
+  // Point libre au hasard dans l'arène, à l'écart des bords, et si possible à au moins minDistance mètres du bot.
+  private randomPoint(minDistance = 0): Position {
     const range = ARENA_SIZE / 2 - EDGE_MARGIN;
-    for (;;) {
+    for (let attempt = 0; ; attempt++) {
       const point = { x: (Math.random() * 2 - 1) * range, z: (Math.random() * 2 - 1) * range };
-      if (!isInsideObstacle(point, PLAYER_RADIUS + 0.5)) return point;
+      if (isInsideObstacle(point, PLAYER_RADIUS + 0.5)) continue;
+      if (attempt < 50 && this.distanceTo(point) < minDistance) continue;
+      return point;
     }
+  }
+
+  // Début du combat d'une équipe sans humain : attendre ce temps (secondes) avant d'agir.
+  // Sans chef (mort avant le contact), le bot explore lui aussi au hasard au lieu de foncer vers le camp adverse.
+  holdStart(seconds: number) {
+    this.holdUntil = this.combat.now + seconds;
+    this.visitedEnemyZone = true;
+  }
+
+  // Chef d'une équipe sans humain : exploration au hasard, étape par étape (ses coéquipiers le suivent).
+  private scout() {
+    if (!this.exploreTarget || this.distanceTo(this.exploreTarget) < 3) this.exploreTarget = this.randomPoint(SCOUT_MIN_LEG);
+    this.moveTo(this.exploreTarget, 2);
+  }
+
+  // Début du combat d'une équipe sans humain : ce bot est le chef qui explore.
+  // L'exploration au hasard dure au plus SCOUT_MAX_TIME secondes ; ensuite, le chef va vers le camp adverse.
+  startScouting() {
+    this.scouting = true;
+    this.scoutUntil = this.holdUntil + SCOUT_MAX_TIME;
+    this.exploreTarget = null;
+    this.visitedEnemyZone = false;
   }
 
   // Reste entre min et max mètres de la cible : s'approche si trop loin, recule si trop près.
@@ -373,14 +457,17 @@ export class BotBrain {
       return false;
     }
     if (d < min) {
-      this.flee([target]);
-      return false;
+      // Acculé (aucune direction de fuite) : on se bat d'ici plutôt que d'attendre sans rien faire.
+      return !this.flee([target]);
     }
     return true;
   }
 
-  // S'éloigne des menaces, en se rapprochant si possible de ses alliés.
-  protected flee(threats: PlayerRuntime[]) {
+  // S'éloigne des menaces, en se rapprochant si possible de ses alliés. Retourne faux si aucune direction n'est libre
+  // (acculé contre un bord ou un obstacle).
+  protected flee(threats: PlayerRuntime[]): boolean {
+    // Rooté (ou contrôlé) : fuir ne mène nulle part, le bot agit sur place.
+    if (this.player.immobilized) return false;
     const pos = this.player.state;
     let dx = 0;
     let dz = 0;
@@ -393,12 +480,12 @@ export class BotBrain {
       dz += vz / (d * d);
     }
     let length = Math.hypot(dx, dz);
-    if (length < 1e-6) return;
+    if (length < 1e-6) return false;
     dx /= length;
     dz /= length;
 
     // Attirance vers le reste du groupe, qui pourra nous protéger.
-    const others = this.allies().filter((p) => p !== this.player);
+    const others = this.otherAllies();
     if (others.length > 0) {
       const cx = others.reduce((sum, p) => sum + p.state.x, 0) / others.length;
       const cz = others.reduce((sum, p) => sum + p.state.z, 0) / others.length;
@@ -414,19 +501,22 @@ export class BotBrain {
       }
     }
 
-    // On essaie la direction idéale, puis des directions de plus en plus écartées,
-    // en évitant les bords de l'arène où l'on finirait acculé.
-    const limit = ARENA_SIZE / 2 - EDGE_MARGIN;
-    for (const degrees of FLEE_ANGLES) {
-      const angle = (degrees * Math.PI) / 180;
-      const rx = dx * Math.cos(angle) - dz * Math.sin(angle);
-      const rz = dx * Math.sin(angle) + dz * Math.cos(angle);
-      const point = { x: pos.x + rx * FLEE_DISTANCE, z: pos.z + rz * FLEE_DISTANCE };
-      if (Math.abs(point.x) > limit || Math.abs(point.z) > limit) continue;
-      if (isInsideObstacle(point, PLAYER_RADIUS + 0.3)) continue;
-      this.moveTo(point, 0.5);
-      return;
+    // On essaie la direction idéale, puis des directions de plus en plus écartées, en évitant d'abord les bords de
+    // l'arène où l'on finirait acculé ; si tout est refusé (combat près d'une zone de départ, proche du bord), on
+    // accepte d'approcher du bord plutôt que de rester planté.
+    for (const limit of [ARENA_SIZE / 2 - EDGE_MARGIN, ARENA_SIZE / 2 - 2]) {
+      for (const degrees of FLEE_ANGLES) {
+        const angle = (degrees * Math.PI) / 180;
+        const rx = dx * Math.cos(angle) - dz * Math.sin(angle);
+        const rz = dx * Math.sin(angle) + dz * Math.cos(angle);
+        const point = { x: pos.x + rx * FLEE_DISTANCE, z: pos.z + rz * FLEE_DISTANCE };
+        if (Math.abs(point.x) > limit || Math.abs(point.z) > limit) continue;
+        if (isInsideObstacle(point, PLAYER_RADIUS + 0.3)) continue;
+        this.moveTo(point, 0.5);
+        return true;
+      }
     }
+    return false;
   }
 
   // --- Déplacement ---
@@ -454,8 +544,12 @@ export class BotBrain {
     }
 
     this.repathTimer -= dt;
-    if (this.repathTimer <= 0 || this.path.length === 0) {
-      this.path = this.pathfinder.findPath(pos, this.destination) ?? [];
+    // Sans chemin possible, on ne recherche pas à chaque tick (une recherche sans issue parcourt toute la grille) : on
+    // avance tout droit et on réessaie au prochain recalcul.
+    if (this.repathTimer <= 0 || (this.path.length === 0 && !this.pathMissing)) {
+      const path = this.pathfinder.findPath(pos, this.destination);
+      this.path = path ?? [];
+      this.pathMissing = !path;
       this.repathTimer = REPATH_INTERVAL;
     }
     while (this.path.length > 1 && distance(pos, this.path[0]) < WAYPOINT_REACHED) this.path.shift();

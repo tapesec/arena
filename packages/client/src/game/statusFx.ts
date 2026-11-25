@@ -20,7 +20,8 @@ import { recipeById, setParticleEffectDefs, type ParticleEffectDef } from "./par
 import particleEffects from "./particleEffects.json";
 import type { PlayerVisual } from "./PlayerVisual";
 import { hasTunedEffects } from "./abilityAnimations";
-import { AbilityEffectPlayer, type Scenery } from "./abilityEffects";
+import { AbilityEffectPlayer, TEAM_COLORS, type Scenery } from "./abilityEffects";
+import { hexToRgb } from "./color";
 import { TUNING } from "./tuning";
 
 // Effets à particules réglés sur la page de réglage (ils remplacent ceux du code de même nom).
@@ -101,6 +102,9 @@ const AURAS: Record<string, Aura> = {
   fireCharge: { recipe: recipeById("fireCharge"), at: "hands", active: (p) => codeCharge(p, "firebolt") },
   frostCharge: { recipe: recipeById("frostCharge"), at: "hands", active: (p) => codeCharge(p, "frostbolt") },
 };
+// Parcourues à chaque image pour chaque joueur : listes construites une fois.
+const AURA_ENTRIES = Object.entries(AURAS);
+const AURA_LIST = Object.values(AURAS);
 
 // Incantation de la Nova de givre : cercles concentriques bleus qui s'élargissent depuis l'Arcaniste.
 const NOVA_RINGS = 3;
@@ -116,8 +120,8 @@ const RAMPART_SPIN_BOOST = 2.5;
 const RAMPART_SPIN_UP = 0.8;
 const RAMPART_LIFT = 0.12;
 // Couleur de la zone (r,g,b) : bleue pour le camp du joueur, rouge pour l'adversaire (comme les tenues).
-const RAMPART_ALLY = "40,120,255";
-const RAMPART_ENEMY = "235,45,20";
+const RAMPART_ALLY = hexToRgb(TEAM_COLORS.ally);
+const RAMPART_ENEMY = hexToRgb(TEAM_COLORS.enemy);
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root, bulle irisée.
 export class StatusFx {
@@ -158,7 +162,7 @@ export class StatusFx {
       const stun = alive && player.hasEffect("stun");
       const root = alive ? remaining(player, "root") : 0;
       const bubble = alive && player.hasEffect("bubble");
-      const aura = alive && Object.values(AURAS).some((a) => a.active(player, Infinity));
+      const aura = alive && AURA_LIST.some((a) => a.active(player, Infinity));
       const nova = alive && player.state.castAbility === "frostNova";
       const rampart = alive ? remaining(player, "rampart") : 0;
       const playing = player.playingAbility();
@@ -177,7 +181,7 @@ export class StatusFx {
       this.updateAuras(status, alive, player, speed);
       status.abilityFx.update(player.character, playing, localTeam === null ? undefined : player.state.team === localTeam);
       this.updateMez(status, mez && !this.tuned(player, "mez"));
-      this.updateStars(status, stun && !this.tuned(player, "stun"), player);
+      this.updateStars(status, stun && !this.tuned(player, "stun"));
       this.updateRoot(status, this.tuned(player, "root") ? 0 : root, player);
       this.updateBubble(status, bubble && !this.tuned(player, "bubble"), this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);
@@ -245,7 +249,7 @@ export class StatusFx {
 
   // Démarre ou arrête chaque aura continue selon l'état du personnage.
   private updateAuras(status: PlayerStatus, alive: boolean, player: PlayerVisual, speed: number) {
-    for (const [name, aura] of Object.entries(AURAS)) {
+    for (const [name, aura] of AURA_ENTRIES) {
       const active = alive && aura.active(player, speed) && !(aura.kind && this.tuned(player, aura.kind));
       const system = status.auras.get(name);
       if (active && !system) {
@@ -270,13 +274,13 @@ export class StatusFx {
   }
 
   // Étoiles dorées qui tournent autour de la tête.
-  private updateStars(status: PlayerStatus, active: boolean, player: PlayerVisual) {
+  private updateStars(status: PlayerStatus, active: boolean) {
     if (active && !status.stars) {
       status.stars = new TransformNode("stunStars", this.scene);
       status.stars.parent = status.anchor;
       status.stars.position.y = HEAD + 0.1;
       for (let i = 0; i < STARS; i++) {
-        const star = CreatePlane("stunStar", { size: 0.32 }, this.scene);
+        const star = sharedForm(this.scene, "stunStar", () => CreatePlane("stunStar", { size: 0.32 }, this.scene));
         star.material = this.starMaterial;
         star.billboardMode = Mesh.BILLBOARDMODE_ALL;
         star.isPickable = false;
@@ -418,12 +422,32 @@ function remaining(player: PlayerVisual, kind: string): number {
   return 0;
 }
 
+// Modèles cachés des formes répétées (étoiles du stun, cristaux du root), un par scène : chaque exemplaire partage
+// leur géométrie au lieu de la recalculer (bien plus rapide qu'un nouveau maillage à chaque contrôle).
+const formModels = new WeakMap<Scene, Map<string, Mesh>>();
+function sharedForm(scene: Scene, key: string, build: () => Mesh): Mesh {
+  let models = formModels.get(scene);
+  if (!models) formModels.set(scene, (models = new Map()));
+  let model = models.get(key);
+  if (!model || model.isDisposed()) {
+    model = build();
+    model.isPickable = false;
+    model.setEnabled(false);
+    models.set(key, model);
+  }
+  const mesh = new Mesh(key, scene);
+  model.geometry?.applyToMesh(mesh);
+  return mesh;
+}
+
 // Cristaux pointus, légèrement inclinés vers l'extérieur, en cercle autour des pieds.
 function crystalCrown(scene: Scene, material: StandardMaterial): TransformNode {
   const crown = new TransformNode("rootCrystals", scene);
   for (let i = 0; i < CRYSTALS; i++) {
     const height = 0.55 + ((i * 37) % 10) / 20;
-    const crystal = CreateCylinder("crystal", { height, diameterTop: 0, diameterBottom: 0.28, tessellation: 4 }, scene);
+    // Cristal de hauteur 1, étiré à sa hauteur.
+    const crystal = sharedForm(scene, "crystal", () => CreateCylinder("crystal", { height: 1, diameterTop: 0, diameterBottom: 0.28, tessellation: 4 }, scene));
+    crystal.scaling.y = height;
     crystal.material = material;
     crystal.isPickable = false;
     crystal.parent = crown;

@@ -89,6 +89,9 @@ export const ALERTS = {
   fightStart: "fightStart",
   win: "jingleWin",
   lose: "jingleLose",
+  killEnemy: "killEnemy",
+  killAlly: "killAlly",
+  lastStanding: "lastStanding",
 } satisfies Record<string, SoundName>;
 
 // Interface (App) et musiques selon la phase.

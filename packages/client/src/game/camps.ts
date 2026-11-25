@@ -74,6 +74,7 @@ export class Camps {
       ringMaterial.alpha = 0.6;
       ring.material = ringMaterial;
       ring.isPickable = false;
+      ring.freezeWorldMatrix();
       this.rings.push(ring);
       this.ringMaterials.push(ringMaterial);
 
@@ -86,6 +87,7 @@ export class Camps {
         pole.position.set(x, ground + POLE_HEIGHT / 2, z);
         pole.material = poleMaterial;
         pole.isPickable = false;
+        pole.freezeWorldMatrix();
         // Le bras de la bannière part du mât, perpendiculaire à la direction de l'arène.
         const facing = outward + angle;
         for (const mesh of place("Banner_1", x, ground + POLE_HEIGHT - 0.3, z, facing + Math.PI)) {

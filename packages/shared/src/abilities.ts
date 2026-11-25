@@ -251,7 +251,8 @@ const list: AbilityDef[] = [
     resource: "mana",
     cost: 0,
     range: 0,
-    cooldown: 90,
+    // 30 s (au lieu de 90, décidé le 2026-11-19) : un lanceur pris pour cible peut s'en servir à chaque combat.
+    cooldown: 30,
     target: "self",
     effects: [{ type: "status", status: "concentration", duration: INFINITE }],
   },
@@ -702,6 +703,12 @@ export function getAbility(id: string): AbilityDef | undefined {
 // ralliement en protège. Les techniques et compétences d'endurance sont physiques.
 export function isMagic(ability: AbilityDef): boolean {
   return !ability.melee && ability.resource === "mana";
+}
+
+// Portée d'une compétence pour un lanceur sous Near sight ou non : celle des sorts est réduite (NEAR_SIGHT_FACTOR).
+// Seule définition de la règle, pour le serveur, les bots et le ciblage automatique du client.
+export function spellRange(ability: AbilityDef, nearSighted: boolean): number {
+  return nearSighted && isMagic(ability) ? ability.range * NEAR_SIGHT_FACTOR : ability.range;
 }
 
 // Rayon autour du Gardien protégé par le Rempart.

@@ -16,6 +16,16 @@ export interface MoveInput {
 
 export const NO_INPUT: MoveInput = { up: false, down: false, left: false, right: false };
 
+// Roulade (touche Espace, toutes les classes, décidée le 2026-11-22) : ROLL_DISTANCE mètres tout droit en ROLL_DURATION
+// secondes, dans la direction des touches tenues (devant si aucune), invulnérable à tout ce qui est hostile pendant
+// la roulade ; recharge de ROLL_COOLDOWN secondes. Impossible sous mez, stun, root ou Rempart ; pleine distance sous
+// snare ; elle interrompt l'incantation.
+export const ROLL_DISTANCE = 4;
+export const ROLL_DURATION = 0.4;
+export const ROLL_COOLDOWN = 8;
+// Identifiant de la roulade dans les recharges (événement « cooldown ») et les événements de combat.
+export const ROLL_ID = "roll";
+
 // Vitesse de rotation au clavier, en radians par seconde.
 export const TURN_SPEED = 3;
 

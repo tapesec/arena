@@ -1,0 +1,69 @@
+{
+  "abilityReady": {
+    "recipe": ""
+  },
+  "absorb": {
+    "recipe": ""
+  },
+  "bouclier_blocage_sourd": {
+    "recipe": "impactPlate_heavy_002",
+    "volume": 0.95,
+    "jitter": true
+  },
+  "classSelect": {
+    "recipe": "UI_Item_Select_02"
+  },
+  "click": {
+    "recipe": "UI_Item_Select_02"
+  },
+  "death": {
+    "recipe": "jeu:maleDeath"
+  },
+  "evade": {
+    "recipe": "WHSH_Whoosh_HoveAud_SwordCombat_07",
+    "rate": 0.65
+  },
+  "killAlly": {
+    "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14"
+  },
+  "killEnemy": {
+    "recipe": "METLFric_SWING_SCRAPE_Swift_Melee_Weapon_Swing_With_A_Long_Blade_14"
+  },
+  "lowHealth": {
+    "recipe": ""
+  },
+  "mezzed": {
+    "recipe": ""
+  },
+  "rooted": {
+    "recipe": ""
+  },
+  "stepDirt": {
+    "recipe": "Footstep_Dirt_00",
+    "variants": [
+      "Footstep_Dirt_01",
+      "Footstep_Dirt_02",
+      "Footstep_Dirt_03"
+    ],
+    "jitter": true
+  },
+  "stepGrass": {
+    "recipe": "footstep_grass_004",
+    "variants": [
+      "footstep_grass_000",
+      "footstep_grass_002",
+      "footstep_grass_001",
+      "footstep_grass_003"
+    ],
+    "jitter": true
+  },
+  "stepStone": {
+    "recipe": "footstep_concrete_001",
+    "variants": [
+      "footstep_concrete_003",
+      "footstep_concrete_004",
+      "footstep_concrete_000"
+    ],
+    "jitter": true
+  }
+}

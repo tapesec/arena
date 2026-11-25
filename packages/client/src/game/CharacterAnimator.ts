@@ -1,5 +1,5 @@
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
-import { normalizeAngle } from "@arena/shared";
+import { ROLL_DURATION, normalizeAngle } from "@arena/shared";
 import { casterLength, castTimeOf, clipAt, legacyCastGesture, type AbilityAnimation, type ClassAnimationTuning, type TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import type { CharacterAnimationSet } from "./characterAssets";
@@ -61,6 +61,8 @@ const GESTURE_RELEASE_GRACE = 0.35;
 const GESTURE_MAX_DRIFT = 0.15;
 // Stun : une fois relevé de la projection, un « non » de la tête, puis il titube jusqu'à la fin du stun.
 const STUN_GETUP = "Idle_No_Loop";
+// Roulade, commune à toutes les classes.
+const ROLL_ANIMATION = "Roll";
 const STUN_LOOP = "Zombie_Idle_Loop";
 // Root : marche entravée tant que la vitesse n'est pas revenue (vitesse d'enregistrement mesurée comme la marche).
 const ROOT_WALK = "Zombie_Walk_Fwd_Loop";
@@ -174,6 +176,15 @@ export class CharacterAnimator {
   // Animation en cours de lecture ("" si aucune).
   get currentAnimation(): string {
     return this.current?.name ?? "";
+  }
+
+  // Roulade : l'animation Roll de la bibliothèque, accélérée pour tenir dans la durée de la roulade ; elle coupe le
+  // geste en cours.
+  roll() {
+    const group = this.animations.get(ROLL_ANIMATION);
+    if (!group) return;
+    this.stopSequence();
+    this.playAction(ROLL_ANIMATION, "reaction", (group.to - group.from) / framesPerSecond(group) / ROLL_DURATION);
   }
 
   ability(abilityId: string) {

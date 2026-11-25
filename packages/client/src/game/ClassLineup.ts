@@ -11,21 +11,25 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Scene } from "@babylonjs/core/scene";
+import { HighlightLayer } from "@babylonjs/core/Layers/highlightLayer";
 import { CHARACTERS, CharacterAssets, hasCharacterModel, type CharacterInstance } from "./characterAssets";
 import { gameCharacter } from "./gameAppearances";
 import { lobbyReady } from "./lobbyPriority";
+import { decodeImagesOffThread } from "./imageDecoding";
 
 // Choix de la classe (salle d'attente) : les personnages des classes alignés côte à côte, en 3D, avec l'apparence du
 // camp du joueur. Chacun occupe une colonne de même largeur que la colonne HTML (nom et compétences) placée dessous :
 // la caméra orthographique couvre exactement la largeur du canvas, divisée en autant de colonnes que de classes.
-// La classe choisie a son socle allumé à la couleur de l'équipe et joue un petit geste ; les autres sont assombries.
+// La classe choisie a son socle allumé en doré et joue un petit geste ; les autres sont assombries (lueur comprise).
 
 // Hauteur de scène visible (m) : un personnage et son arme tiennent dedans, pieds compris.
 const VISIBLE_HEIGHT = 2.6;
 // Point visé par la caméra (m) : le milieu du personnage, un peu au-dessus pour garder le socle en bas.
 const TARGET_Y = 1.05;
-// Couleurs des équipes (les mêmes que .team-0 et .team-1 dans styles.css).
-const TEAM_COLORS = [Color3.FromHexString("#6fa3ff"), Color3.FromHexString("#ff6f6f")];
+// Socle de la classe choisie : doré, comme le cadre de son nom (il ne prend plus la couleur de l'équipe).
+const CHOSEN_COLOR = Color3.FromHexString("#ffc94d");
+// Lueur autour de la silhouette des personnages.
+const GLOW_COLOR = new Color3(1, 0.82, 0.45);
 // Assombrissement des classes non choisies (0 : aucun), et de celle survolée.
 const DIMMED = 0.5;
 const DIMMED_HOVER = 0.2;
@@ -51,22 +55,38 @@ export class ClassLineup {
   private pedestalOff: StandardMaterial;
   private pedestalOn: StandardMaterial;
   private observer: ResizeObserver;
+  // Lueur dorée autour des personnages.
+  private glow: HighlightLayer;
 
   constructor(
     canvas: HTMLCanvasElement,
     classIds: string[],
-    private team: number,
+    // Jeu de personnages de son équipe pour cette partie (voir campOf).
+    private camp: number,
     // Appelé quand tous les personnages sont chargés.
     private onReady?: () => void,
   ) {
     // Rendu à la densité de l'écran (net sur un écran Retina).
     this.engine = new Engine(canvas, true, { alpha: true }, true);
+    decodeImagesOffThread(this.engine);
     this.scene = new Scene(this.engine);
     // Fond transparent : celui de la page passe derrière les personnages.
     this.scene.clearColor = new Color4(0, 0, 0, 0);
     new HemisphericLight("sky", new Vector3(0, 1, 0.3), this.scene).intensity = 0.95;
     const sun = new DirectionalLight("sun", new Vector3(-0.4, -1, -0.8), this.scene);
     sun.intensity = 1.5;
+    // Mise en valeur sur le fond de l'écran (décidé le 2026-11-20) : un contre-jour chaud et une lueur dorée autour de
+    // la silhouette des personnages.
+    const rim = new DirectionalLight("rim", new Vector3(0.25, -0.35, 1), this.scene);
+    rim.intensity = 2.6;
+    rim.diffuse = new Color3(1, 0.93, 0.8);
+    rim.specular = new Color3(1, 0.93, 0.8);
+    // Taille du flou en pixels de rendu : divisée par le niveau de mise à l'échelle (0,5 sur un écran Retina), pour que le
+    // halo ait la même épaisseur à l'écran quelle que soit la densité.
+    const blur = 1.2 / this.engine.getHardwareScalingLevel();
+    this.glow = new HighlightLayer("glow", this.scene, { blurHorizontalSize: blur, blurVerticalSize: blur });
+    this.glow.outerGlow = true;
+    this.glow.innerGlow = false;
     // Caméra orthographique légèrement plongeante, face aux personnages (elle regarde vers -z).
     this.camera = new FreeCamera("camera", new Vector3(0, TARGET_Y + 4, 40), this.scene);
     this.camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
@@ -77,9 +97,8 @@ export class ClassLineup {
     this.pedestalOff.diffuseColor = new Color3(0.2, 0.22, 0.26);
     this.pedestalOff.specularColor = Color3.Black();
     this.pedestalOn = new StandardMaterial("pedestal-on", this.scene);
-    const color = TEAM_COLORS[this.team] ?? TEAM_COLORS[0];
-    this.pedestalOn.diffuseColor = color.scale(0.5);
-    this.pedestalOn.emissiveColor = color.scale(0.8);
+    this.pedestalOn.diffuseColor = CHOSEN_COLOR.scale(0.5);
+    this.pedestalOn.emissiveColor = CHOSEN_COLOR.scale(0.8);
     this.pedestalOn.specularColor = Color3.Black();
 
     // Seules les animations jouées ici (attente et geste de chaque classe) sont chargées : le jeu charge le reste dans
@@ -124,7 +143,7 @@ export class ClassLineup {
     const only = new Set([idleName, ...(gestureName ? [gestureName] : [])]);
     let instance: CharacterInstance | null = null;
     try {
-      instance = await this.assets.create(slot.classId, slot.holder, only, gameCharacter(slot.classId, this.team));
+      instance = await this.assets.create(slot.classId, slot.holder, only, gameCharacter(slot.classId, this.camp));
     } catch {
       // Un modèle qui manque ne doit pas empêcher de choisir sa classe : la colonne reste vide. (Un chargement qui
       // se termine après la fermeture de l'écran échoue aussi ici, la scène n'existant plus : c'est voulu.)
@@ -206,6 +225,8 @@ export class ClassLineup {
       mesh.renderOverlay = dim > 0;
       mesh.overlayColor = Color3.Black();
       mesh.overlayAlpha = dim;
+      // La lueur s'atténue avec l'assombrissement (ajouter un maillage déjà présent ne fait que changer sa couleur).
+      if (mesh.getTotalVertices() > 0) this.glow.addMesh(mesh as Mesh, GLOW_COLOR.scale(1 - dim));
     }
   }
 

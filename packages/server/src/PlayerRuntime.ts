@@ -1,4 +1,4 @@
-import { NO_INPUT, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
+import { NO_INPUT, emptyStats, isIncapacitated, maxResource, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
 import type { EffectState, PlayerState } from "./state";
 
 export interface ActiveEffect {
@@ -20,6 +20,13 @@ export interface ActiveEffect {
   view: EffectState;
 }
 
+// PV et ressource de départ d'un joueur selon sa classe : tout plein (mana pour les lanceurs, endurance sinon).
+export function initVitals(state: PlayerState, classDef: ClassDef) {
+  state.hp = state.maxHp = classDef.maxHp;
+  if (classDef.resource === "mana") state.mana = state.maxMana = maxResource("mana");
+  else state.endurance = state.maxEndurance = maxResource("endurance");
+}
+
 // Tout ce que le serveur sait d'un joueur, y compris ce qui n'est jamais envoyé aux clients.
 export class PlayerRuntime {
   input: MoveInput = NO_INPUT;
@@ -37,6 +44,12 @@ export class PlayerRuntime {
   lastEngagedAt = -Infinity;
   // Instant (temps de la partie, en secondes) où chaque compétence redevient disponible.
   cooldowns = new Map<string, number>();
+
+  // Compétence (ou roulade) rechargée à l'instant now.
+  isReady(abilityId: string, now: number): boolean {
+    return (this.cooldowns.get(abilityId) ?? 0) <= now;
+  }
+
   effects: ActiveEffect[] = [];
   // Dernier coup de mêlée reçu (temps de la partie) et son auteur : sert aux bots pour fuir ou protéger.
   lastMeleeHitAt = -Infinity;
@@ -45,6 +58,11 @@ export class PlayerRuntime {
   stickMoving = false;
   // Charge en cours : cible, temps écoulé, temps passé bloqué, dégâts et stun à l'arrivée.
   charge: { targetId: string; elapsed: number; stuck: number; damage: number; stun: number } | null = null;
+  // Roulade en cours : direction (normalisée), temps écoulé, orientation d'avant la roulade (rendue à la fin), arrêtée
+  // par un obstacle ; invulnérable tant qu'elle dure.
+  roll: { x: number; z: number; elapsed: number; facing: number; blocked?: boolean } | null = null;
+  // Bilan de la partie (récap de l'écran de fin).
+  stats = emptyStats();
 
   constructor(
     readonly id: string,
@@ -66,7 +84,7 @@ export class PlayerRuntime {
 
   // Mez, stun, ou Rempart (le Gardien se fige) : ne peut plus agir du tout.
   get incapacitated(): boolean {
-    return this.has("mez") || this.has("stun") || this.has("rampart");
+    return isIncapacitated(this.effects);
   }
 
   // Mez, stun, ou root (qui ne laisse que lentement reprendre de la vitesse).

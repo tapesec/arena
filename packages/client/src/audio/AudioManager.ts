@@ -1,14 +1,38 @@
 import { ZZFX } from "zzfx";
+import commonSoundsFile from "./commonSounds.json";
 import samples from "./samples.json";
 import { SOUNDS, type SoundId } from "./sounds";
 import { assetUrl } from "../assets";
 import { parseSoundKey, scramble } from "./scramble";
 import { GAME_SOUND } from "./soundEdits";
+import { readItem, writeItem } from "../storage";
 
 // Groupe de sons enregistrés (voir samples.json).
 export type SampleId = keyof typeof samples.groups;
 // Un son du jeu : généré (sounds.ts) ou enregistré (samples.json).
 export type SoundName = SoundId | SampleId;
+
+// Son commun remplacé dans l'onglet « Sons communs » de animation-lab.html (commonSounds.json) : un son du catalogue
+// (son nom) ou du jeu (« jeu:<id> »), avec son volume, sa vitesse et l'instant où il commence (multipliés par ceux de
+// l'appel, sauf skip). variants : d'autres sons tirés au hasard avec le premier (jamais deux fois de suite le même) ;
+// jitter : vitesse qui varie un peu à chaque fois (±RATE_JITTER), pour qu'un son répété (les pas) ne sonne pas pareil.
+export interface CommonSoundChoice {
+  recipe: string;
+  variants?: string[];
+  volume?: number;
+  rate?: number;
+  skip?: number;
+  jitter?: boolean;
+}
+
+// Sons d'un choix : le premier et ses variantes.
+export function choiceRecipes(choice: CommonSoundChoice): string[] {
+  return choice.recipe === NO_SOUND ? [] : [choice.recipe, ...(choice.variants ?? [])];
+}
+export type CommonSoundChoices = Record<string, CommonSoundChoice>;
+// Son commun retiré : plus rien n'est joué à sa place.
+export const NO_SOUND = "";
+export const COMMON_SOUND_CHOICES = commonSoundsFile as CommonSoundChoices;
 
 // Au-delà de ce nombre de sons en cours, les sons ordinaires sont ignorés (les alertes passent toujours).
 export const MAX_CONCURRENT_SOUNDS = 20;
@@ -56,6 +80,8 @@ export interface PlayOptions {
   pan?: number;
   // Alerte qui concerne le joueur : jouée même quand beaucoup de sons sont en cours.
   priority?: boolean;
+  // Le son lui-même, sans le remplacement choisi dans « Sons communs » (page des sons).
+  original?: boolean;
 }
 
 // Joue les sons du catalogue dans un circuit audio commun : volume général, sourdine,
@@ -66,6 +92,8 @@ export class AudioManager {
   private activeSounds = 0;
   // Clé : identifiant d'un son généré ou d'un groupe de sons enregistrés.
   private lastPlayed = new Map<string, number>();
+  // Sons générés sans hasard, mixés une fois (voir fixedBuffer).
+  private fixedBuffers = new Map<SoundId, AudioBuffer | null>();
   private volume: number;
   private muted: boolean;
   private mutedKey = MUTED_KEY;
@@ -78,6 +106,7 @@ export class AudioManager {
   private music: MusicTrack | null = null;
   private musicLevel: MusicLevel = "normal";
   private musicIndex: Promise<Record<string, { duration: number }>> | null = null;
+  private commonSounds: CommonSoundChoices = COMMON_SOUND_CHOICES;
 
   constructor() {
     this.master = this.context.createGain();
@@ -100,13 +129,13 @@ export class AudioManager {
 
   setVolume(volume: number) {
     this.volume = volume;
-    write(VOLUME_KEY, String(volume));
+    writeItem(VOLUME_KEY, String(volume));
     this.applyVolume();
   }
 
   setMuted(muted: boolean) {
     this.muted = muted;
-    write(this.mutedKey, muted ? "1" : "0");
+    writeItem(this.mutedKey, muted ? "1" : "0");
     this.applyVolume();
   }
 
@@ -118,7 +147,38 @@ export class AudioManager {
     this.applyVolume();
   }
 
+  // Choix des sons communs : ceux du fichier, ou le brouillon de l'éditeur (écoute avant d'enregistrer).
+  setCommonSounds(choices: CommonSoundChoices) {
+    this.commonSounds = choices;
+  }
+
   play(id: SoundName, options: PlayOptions = {}) {
+    const choice = options.original ? undefined : this.commonSounds[id];
+    if (choice) this.playChoice(id, choice, options);
+    else this.playOwn(id, options);
+  }
+
+  // Joue un son commun réglé (aussi utilisé par l'éditeur pour écouter un réglage pas encore enregistré).
+  playChoice(id: SoundName, choice: CommonSoundChoice, options: PlayOptions = {}) {
+    const recipes = choiceRecipes(choice);
+    if (!recipes.length) return;
+    // Jamais deux fois de suite la même variante.
+    const key = `common:${id}`;
+    let index = Math.floor(Math.random() * recipes.length);
+    if (recipes.length > 1 && index === this.lastVariant.get(key)) index = (index + 1) % recipes.length;
+    this.lastVariant.set(key, index);
+    const recipe = recipes[index];
+    const tuned = { ...options, volume: (options.volume ?? 1) * (choice.volume ?? 1), rate: (options.rate ?? 1) * (choice.rate ?? 1) };
+    // Son d'origine, seulement réglé : il garde ses propres variantes et son écart de vitesse au hasard (déjà là, pas
+    // de second écart).
+    if (recipe === `${GAME_SOUND}${id}` && !choice.skip) this.playOwn(id, tuned);
+    else {
+      const jitter = choice.jitter ? 1 + (Math.random() * 2 - 1) * RATE_JITTER : 1;
+      void this.playTrack(recipe, { ...tuned, rate: tuned.rate * jitter, offset: choice.skip ?? 0 });
+    }
+  }
+
+  private playOwn(id: SoundName, options: PlayOptions) {
     if (id in SOUNDS) this.playSynth(id as SoundId, options);
     else void this.playSample(id, options);
   }
@@ -132,6 +192,11 @@ export class AudioManager {
     }
     this.lastPlayed.set(id, now);
 
+    const fixed = this.fixedBuffer(id);
+    if (fixed) {
+      this.startSynth(fixed, now, volume, pan);
+      return;
+    }
     for (const step of SOUNDS[id].steps) {
       // ZzFX calcule les échantillons du son ; on les joue nous-mêmes pour garder la main sur le circuit.
       const samples = ZZFX.buildSamples(...step.params);
@@ -149,6 +214,37 @@ export class AudioManager {
       source.onended = () => this.activeSounds--;
       source.start(now + step.at);
     }
+  }
+
+  // Son généré sans hasard (toutes ses notes à 0 de hasard, comme les cloches) : ses notes sont mixées une fois pour
+  // toutes dans un seul tampon. Un seul son occupe alors une place de la limite de sons simultanés, et rien n'est
+  // recalculé à chaque lecture. null si une note a du hasard (ZzFX en met par défaut quand il n'est pas précisé).
+  private fixedBuffer(id: SoundId): AudioBuffer | null {
+    const cached = this.fixedBuffers.get(id);
+    if (cached !== undefined) return cached;
+    const steps = SOUNDS[id].steps;
+    let buffer: AudioBuffer | null = null;
+    if (steps.length > 1 && steps.every((step) => step.params[1] === 0)) {
+      const parts = steps.map((step) => ({ offset: Math.round(step.at * ZZFX.sampleRate), samples: ZZFX.buildSamples(...step.params) }));
+      const length = Math.max(...parts.map((part) => part.offset + part.samples.length));
+      buffer = this.context.createBuffer(1, length, ZZFX.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (const { offset, samples } of parts) for (let i = 0; i < samples.length; i++) data[offset + i] += samples[i];
+    }
+    this.fixedBuffers.set(id, buffer);
+    return buffer;
+  }
+
+  private startSynth(buffer: AudioBuffer, at: number, volume: number, pan: number) {
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    const gain = this.context.createGain();
+    gain.gain.value = volume * ZZFX.volume;
+    const panner = new StereoPannerNode(this.context, { pan: Math.max(-1, Math.min(1, pan)) });
+    source.connect(panner).connect(gain).connect(this.master);
+    this.activeSounds++;
+    source.onended = () => this.activeSounds--;
+    source.start(at);
   }
 
   // Joue une variante, tirée au hasard, d'un groupe de sons enregistrés (chargé au premier usage).
@@ -195,18 +291,21 @@ export class AudioManager {
       }
       const variants = await this.loadSample(id).catch(() => [] as Variant[]);
       const variant = variants[Math.floor(Math.random() * variants.length)];
-      return variant ? this.startBuffer(recipe, variant.buffer, variant.start + offset, volume, pan, rate, loop) : null;
+      return variant ? this.startBuffer(recipe, variant.buffer, variant.start + offset, volume, pan, rate, loop, options.priority) : null;
     }
     const buffer = await this.loadCatalogSound(recipe);
-    return buffer ? this.startBuffer(recipe, buffer, soundStart(buffer) + offset, volume, pan, rate, loop) : null;
+    return buffer ? this.startBuffer(recipe, buffer, soundStart(buffer) + offset, volume, pan, rate, loop, options.priority) : null;
   }
 
   // Mêmes limites que les autres sons : nombre de sons simultanés, et pas deux fois le même son au même instant (un
   // sort de zone qui touche huit joueurs ne joue son impact qu'une fois).
-  private startBuffer(id: string, buffer: AudioBuffer, start: number, volume: number, pan: number, rate: number, loop: boolean) {
-    if (this.activeSounds >= MAX_CONCURRENT_SOUNDS) return null;
+  // Une alerte (priority) passe toujours, comme les autres sons.
+  private startBuffer(id: string, buffer: AudioBuffer, start: number, volume: number, pan: number, rate: number, loop: boolean, priority = false) {
     const now = this.context.currentTime;
-    if (now - (this.lastPlayed.get(id) ?? -Infinity) < MIN_REPEAT_INTERVAL) return null;
+    if (!priority) {
+      if (this.activeSounds >= MAX_CONCURRENT_SOUNDS) return null;
+      if (now - (this.lastPlayed.get(id) ?? -Infinity) < MIN_REPEAT_INTERVAL) return null;
+    }
     this.lastPlayed.set(id, now);
     const source = this.context.createBufferSource();
     source.buffer = buffer;
@@ -412,20 +511,8 @@ function soundStart(buffer: AudioBuffer): number {
 
 // Le stockage du navigateur peut être indisponible (navigation privée…) : on s'en passe alors.
 function readNumber(key: string, fallback: number): number {
-  try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : Number(value);
-  } catch {
-    return fallback;
-  }
-}
-
-function write(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Réglage simplement non mémorisé.
-  }
+  const value = readItem(key);
+  return value === null ? fallback : Number(value);
 }
 
 export const audio = new AudioManager();

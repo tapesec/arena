@@ -23,8 +23,8 @@ const PAVING_TILE = 4;
 // Résolution de la carte qui dit où mettre l'herbe, la terre et les pavés (environ 20 cm par pixel).
 const MIX_RESOLUTION = 1024;
 
-// Chemins de terre des zones de départ vers les entrées de la place, définis pour les Bleus
-// et reproduits par symétrie (rotation de 180° autour du centre) pour les Rouges.
+// Chemins de terre des zones de départ vers les entrées de la place, définis pour la première équipe
+// et reproduits par symétrie (rotation de 180° autour du centre) pour la seconde.
 const PATHS: [number, number][][] = [
   // Vers la large entrée sud, en passant sous la grande maison.
   [
@@ -104,12 +104,15 @@ export function createSky(scene: Scene) {
   box.material = material;
   box.infiniteDistance = true;
   box.isPickable = false;
+  // Le ciel couvre tout l'écran : inutile d'effacer la couleur avant chaque image (la profondeur l'est toujours).
+  scene.autoClear = false;
 }
 
 // Sol texturé : herbe partout, terre sur les chemins et les zones de départ, pavés sur la place.
 export function createGround(scene: Scene): Mesh {
   const ground = createTerrainMesh("ground", scene, 0, GROUND_SIZE);
   ground.isPickable = false;
+  ground.freezeWorldMatrix();
 
   const material = new TerrainMaterial("groundMaterial", scene);
   material.mixTexture = createMixTexture(scene);

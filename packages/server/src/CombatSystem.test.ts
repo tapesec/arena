@@ -2,19 +2,27 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import {
   BACKWARD_SPEED_FACTOR,
+  lastStandBonus,
+  ENDURANCE_REGEN,
+  facingTowards,
+  MANA_REGEN,
   CLASSES,
   MOVE_SPEED,
   NO_INPUT,
   STICK_DISTANCE,
-  maxResource,
+  pickHero,
+  emptyStats,
   type ClassId,
+  type EffectKind,
   type CombatEvent,
   type InterruptEvent,
+  type KillEvent,
   type MoveInput,
 } from "@arena/shared";
 import { CombatSystem } from "./CombatSystem";
-import { PlayerRuntime } from "./PlayerRuntime";
-import { PlayerState } from "./state";
+import { PlayerRuntime, initVitals } from "./PlayerRuntime";
+import { EffectState, PlayerState } from "./state";
+import { addEffect } from "./combat/effectStore";
 
 const DT = 0.05;
 
@@ -27,6 +35,7 @@ class World {
   combat: CombatSystem;
   events: CombatEvent[] = [];
   interrupts: InterruptEvent[] = [];
+  kills: KillEvent[] = [];
   errors: { id: string; code: string; abilityId?: string }[] = [];
   // Valeurs renvoyées par le générateur aléatoire ; 0.99 par défaut = aucun blocage, esquive ou critique.
   rolls: number[] = [];
@@ -41,9 +50,14 @@ class World {
         sendTo: (id, type, message) => {
           if (type === "error") this.errors.push({ id, ...(message as { code: string; abilityId?: string }) });
         },
+        announce: (type, message) => {
+          if (type === "kill") this.kills.push(message as KillEvent);
+        },
       },
       () => this.rolls.shift() ?? 0.99,
     );
+    // Les tests opposent souvent des équipes de tailles différentes : le dernier carré fausserait les dégâts attendus.
+    this.combat.lastStandRule = false;
   }
 
   // facing : 0 regarde vers +z, π vers -z.
@@ -57,9 +71,7 @@ class World {
     state.x = x + OFFSET_X;
     state.z = z;
     state.facing = facing;
-    state.hp = state.maxHp = classDef.maxHp;
-    if (classDef.resource === "mana") state.mana = state.maxMana = maxResource("mana");
-    else state.endurance = state.maxEndurance = maxResource("endurance");
+    initVitals(state, classDef);
     const player = new PlayerRuntime(id, state, classDef);
     this.combat.add(player);
     return player;
@@ -367,6 +379,214 @@ describe("Arcaniste", () => {
   });
 });
 
+describe("Dernier carré", () => {
+  it("donne +5 % de dégâts par joueur d'écart à une équipe de 4 survivants ou moins en infériorité, jusqu'à +15 %", () => {
+    assert.equal(lastStandBonus(4, 4), 0);
+    assert.equal(lastStandBonus(5, 8), 0);
+    assert.ok(Math.abs(lastStandBonus(4, 5) - 0.05) < 1e-9);
+    assert.ok(Math.abs(lastStandBonus(2, 4) - 0.1) < 1e-9);
+    assert.ok(Math.abs(lastStandBonus(1, 8) - 0.15) < 1e-9);
+    assert.equal(lastStandBonus(6, 2), 0);
+    assert.equal(lastStandBonus(0, 3), 0);
+  });
+
+  it("frappe plus fort quand son équipe est en infériorité, et suit les morts", () => {
+    world.combat.lastStandRule = true;
+    const lame = world.spawn("l", "lame", 1, 0, -2);
+    const target = world.spawn("t", "gardien", 0, 0, 0);
+    const lastStand = (team: number) => (world.combat as unknown as { lastStand(team: number): number }).lastStand(team);
+    assert.equal(lastStand(1), 0);
+    const others = [1, 2, 3].map((i) => world.spawn(`a${i}`, "pretre", 0, i * 3, 5));
+    assert.ok(Math.abs(lastStand(1) - 0.15) < 1e-9);
+    assert.equal(lastStand(0), 0);
+    others[0].state.hp = 0;
+    others[1].state.hp = 0;
+    assert.ok(Math.abs(lastStand(1) - 0.05) < 1e-9);
+
+    // Le bonus s'applique au coup : même Attaque dans le dos, sans écart puis avec 3 joueurs d'écart.
+    target.state.hp = target.state.maxHp;
+    others[2].state.hp = 0;
+    world.cast(lame, "backstab", target);
+    world.run(0.1);
+    const plain = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")?.amount;
+    assert.ok(plain !== undefined, "la première Attaque dans le dos n'a pas porté");
+    assert.equal(lastStand(1), 0);
+    others[0].state.hp = others[0].state.maxHp;
+    others[1].state.hp = others[1].state.maxHp;
+    const second = world.spawn("t2", "gardien", 0, 6, 0);
+    assert.ok(Math.abs(lastStand(1) - 0.15) < 1e-9);
+    lame.state.x = second.state.x;
+    lame.state.z = -2;
+    world.events.length = 0;
+    world.run(20);
+    world.cast(lame, "backstab", second);
+    world.run(0.1);
+    const boosted = world.events.find((e) => e.kind === "damage" && e.abilityId === "backstab")?.amount;
+    assert.ok(boosted !== undefined && Math.abs(boosted - Math.round(plain * 1.15)) <= 1, `${plain} → ${boosted}`);
+  });
+});
+
+describe("Annonce des éliminations", () => {
+  it("annonce la victime, le tueur et la compétence, et le dernier survivant de l'équipe", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0);
+    pretre.state.name = "Kerra";
+    world.spawn("g", "gardien", 0, 6, 0).state.name = "Hald";
+    const lame = world.spawn("l", "lame", 1, 0, -2);
+    lame.state.name = "Lorcan";
+    pretre.state.hp = 1;
+    world.cast(lame, "backstab", pretre);
+    assert.ok(!pretre.alive);
+    assert.deepEqual(world.kills, [
+      {
+        victimName: "Kerra",
+        victimTeam: 0,
+        victimClass: "pretre",
+        killerName: "Lorcan",
+        killerTeam: 1,
+        abilityId: "backstab",
+        lastStanding: "Hald",
+      },
+    ]);
+  });
+});
+
+describe("Bilan de la partie", () => {
+  it("compte éliminations, points de vie réellement retirés ou rendus, et contrôles posés", () => {
+    const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
+    const pretre = world.spawn("p", "pretre", 0, 3, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 2, Math.PI);
+    world.cast(gardien, "shieldBash", enemy);
+    assert.equal(gardien.stats.controls, 1);
+
+    // Soin plafonné aux points de vie manquants.
+    gardien.state.hp = gardien.state.maxHp - 50;
+    world.cast(pretre, "instantHeal", gardien);
+    assert.equal(pretre.stats.healing, 50);
+
+    // Coup fatal sur une cible à 1 point de vie : 1 point de dégâts, une élimination.
+    const lame = world.spawn("l", "lame", 1, 3, -2);
+    pretre.state.hp = 1;
+    world.cast(lame, "backstab", pretre);
+    assert.ok(!pretre.alive);
+    assert.deepEqual(lame.stats, { kills: 1, damage: 1, healing: 0, controls: 0 });
+  });
+});
+
+describe("Roulade", () => {
+  it("4 m tout droit en 0,4 s, devant sans touche tenue, puis recharge de 8 s", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    const start = { x: lame.state.x, z: lame.state.z };
+    world.combat.roll("l");
+    assert.ok(lame.state.rolling);
+    world.run(0.45);
+    assert.ok(!lame.state.rolling);
+    assert.ok(Math.abs(lame.state.z - start.z - 4) < 1e-6 && Math.abs(lame.state.x - start.x) < 1e-6, `${lame.state.x}, ${lame.state.z}`);
+    world.combat.roll("l");
+    assert.equal(world.errors.at(-1)?.code, "rollCooldown");
+    world.run(7.6);
+    world.combat.roll("l");
+    assert.ok(lame.state.rolling);
+  });
+
+  it("dans la direction des touches tenues, pleine distance sous snare", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    world.combat.setInput("l", { ...NO_INPUT, down: true });
+    world.combat.roll("l");
+    lame.input = NO_INPUT;
+    const snared = world.spawn("s", "lame", 0, 4, 0, 0);
+    snared.effects.push({ kind: "snare", remaining: 5, duration: 5, sourceId: "x", value: 0.5, magic: false, view: new EffectState() } as never);
+    world.combat.roll("s");
+    world.run(0.45);
+    assert.ok(Math.abs(lame.state.z + 4) < 1e-6, `${lame.state.z}`);
+    assert.ok(Math.abs(snared.state.z - 4) < 1e-6, `${snared.state.z}`);
+  });
+
+  it("esquive coups et effets hostiles pendant la roulade, pas après", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, Math.PI);
+    const gardien = world.spawn("g", "gardien", 1, 0, -1.5, 0);
+    world.combat.roll("p");
+    world.cast(gardien, "shieldBash", pretre);
+    world.run(0.1);
+    assert.equal(pretre.state.hp, pretre.state.maxHp);
+    assert.ok(!pretre.has("stun"));
+    assert.ok(world.eventsOf("evaded").some((e) => e.targetId === "p"));
+  });
+
+  it("un Gardien en pleine roulade n'intercepte pas : le coup touche l'allié, l'Interception reste", () => {
+    const gardien = world.spawn("g", "gardien", 0, 1, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0);
+    const lame = world.spawn("e", "lame", 1, 0, -1.5, 0);
+    world.cast(gardien, "intercept", arcaniste);
+    world.combat.roll("g");
+    world.cast(lame, "kick", arcaniste);
+    assert.equal(gardien.state.hp, gardien.state.maxHp);
+    assert.ok(!gardien.has("silenced"));
+    assert.ok(arcaniste.has("silenced"));
+    assert.ok(arcaniste.has("intercept"));
+  });
+
+  it("verrou sur la cible et touche de déplacement : roule dans la direction voulue, pas vers la cible", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    lame.state.lock = "face";
+    const start = { x: lame.state.x, z: lame.state.z };
+    lame.input = { ...NO_INPUT, up: true, steer: true, yaw: Math.PI / 2 };
+    world.combat.roll("l");
+    lame.input = NO_INPUT;
+    lame.state.lock = "";
+    world.run(0.45);
+    assert.ok(Math.abs(lame.state.x - start.x - 4) < 1e-6 && Math.abs(lame.state.z - start.z) < 1e-6, `${lame.state.x - start.x}, ${lame.state.z - start.z}`);
+    // Orientation rendue à la fin de la roulade.
+    assert.equal(lame.state.facing, 0);
+  });
+
+  it("un obstacle arrête la roulade", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, Math.PI / 2);
+    const start = { x: lame.state.x, z: lame.state.z };
+    world.combat.confine = (_p, pos) => ({ x: Math.min(pos.x, start.x + 1), z: pos.z });
+    world.combat.roll("l");
+    world.run(0.45);
+    assert.ok(Math.abs(lame.state.x - start.x - 1) < 1e-6, `${lame.state.x - start.x}`);
+    assert.ok(!lame.state.rolling);
+  });
+
+  it("impossible sous la Provocation (arrêt net)", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    lame.effects.push({ kind: "halted", remaining: 0.5, duration: 0.5, sourceId: "x", value: 0, magic: false, view: new EffectState() } as never);
+    world.combat.roll("l");
+    assert.ok(!lame.state.rolling);
+  });
+
+  it("impossible sous root, mez ou stun", () => {
+    const lame = world.spawn("l", "lame", 0, 0, 0, 0);
+    lame.effects.push({ kind: "root", remaining: 5, duration: 5, sourceId: "x", value: 0, magic: false, view: new EffectState() } as never);
+    world.combat.roll("l");
+    assert.ok(!lame.state.rolling);
+    assert.equal(world.errors.at(-1)?.code, "rooted");
+  });
+});
+
+describe("Héros de la partie", () => {
+  const player = (id: string, team: number, stats: Partial<ReturnType<typeof emptyStats>>) => ({
+    id, name: id, team, classId: "lame", alive: true, ...emptyStats(), ...stats,
+  });
+
+  it("le meilleur score de l'équipe gagnante, départagé par les éliminations", () => {
+    const players = [
+      player("a", 0, { damage: 1000 }),
+      player("b", 0, { kills: 1 }),
+      player("c", 1, { kills: 5 }),
+    ];
+    assert.equal(pickHero(players, 0), "b");
+    assert.equal(pickHero(players, 1), "c");
+  });
+
+  it("personne sans point, ni sans vainqueur", () => {
+    const players = [player("a", 0, {}), player("b", 1, { kills: 2 })];
+    assert.equal(pickHero(players, 0), null);
+    assert.equal(pickHero(players, -1), null);
+  });
+});
+
 describe("Prêtre", () => {
   it("le buff de vie disparaît à la mort du Prêtre", () => {
     const pretre = world.spawn("p", "pretre", 0, 0, 0);
@@ -397,6 +617,8 @@ describe("Prêtre", () => {
     world.run(4.1);
     assert.equal(ally.state.hp, 650);
     assert.ok(!ally.has("buffStrength"));
+    // Les points de vie rendus comptent dans les soins du récap.
+    assert.equal(pretre.stats.healing, 650);
   });
 
   it("le Soin sans allié ciblé soigne le Prêtre lui-même", () => {
@@ -546,11 +768,13 @@ describe("Barde", () => {
     world.cast(enemy, "mez", ally);
     world.run(2.1);
     assert.ok(ally.has("mez"));
+    barde.state.mana = 500;
     world.cast(barde, "awaken", ally);
     world.run(1.05);
     assert.ok(!ally.has("mez"));
     assert.ok(ally.has("immuneMez"));
-    assert.ok(Math.abs(barde.state.mana - (barde.state.maxMana - 50)) < 1, "50 mana");
+    // Parti de 500 : 50 mana dépensés, plus 1,05 s de régénération.
+    assert.ok(Math.abs(barde.state.mana - (500 + MANA_REGEN * 1.05 - 50)) < 1, `50 mana (${barde.state.mana})`);
 
     const gardien = world.spawn("g", "gardien", 1, 3, 2, Math.PI);
     world.cast(gardien, "shieldBash", ally);
@@ -563,6 +787,7 @@ describe("Barde", () => {
   it("Oubli : n'interrompt pas, mais le sort qui finit pendant l'effet n'a aucun effet (mana et recharge dépensés)", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const barde = world.spawn("b", "barde", 1, 0, 10, Math.PI);
+    arcaniste.state.mana = 500;
     world.cast(arcaniste, "firebolt", barde);
     world.cast(barde, "silence", arcaniste);
     world.run(1.05);
@@ -571,7 +796,8 @@ describe("Barde", () => {
     assert.equal(world.interrupts.length, 0);
     world.run(1);
     assert.equal(barde.state.hp, barde.state.maxHp, "le sort oublié ne fait rien");
-    assert.ok(arcaniste.state.mana < arcaniste.state.maxMana - 99, "mana dépensé");
+    // Parti de 500 : 100 mana dépensés, plus 2,05 s de régénération.
+    assert.ok(Math.abs(arcaniste.state.mana - (500 + MANA_REGEN * 2.05 - 100)) < 1, `mana dépensé (${arcaniste.state.mana})`);
     assert.ok(!arcaniste.has("oblivion"), "consommé au premier sort");
     world.cast(arcaniste, "firebolt", barde);
     world.run(2.05);
@@ -677,9 +903,9 @@ describe("Barde", () => {
     barde.state.mana = 0;
     lame.state.endurance = far.state.endurance = 0;
     world.run(1);
-    assert.ok(Math.abs(barde.state.mana - 55) < 1, `mana ${barde.state.mana}`);
-    assert.ok(Math.abs(lame.state.endurance - 7) < 0.2, `endurance ${lame.state.endurance}`);
-    assert.ok(Math.abs(far.state.endurance - 2) < 0.2, "hors de portée : régénération de base");
+    assert.ok(Math.abs(barde.state.mana - (MANA_REGEN + 50)) < 1, `mana ${barde.state.mana}`);
+    assert.ok(Math.abs(lame.state.endurance - (ENDURANCE_REGEN + 5)) < 0.2, `endurance ${lame.state.endurance}`);
+    assert.ok(Math.abs(far.state.endurance - ENDURANCE_REGEN) < 0.2, "hors de portée : régénération de base");
   });
 
   it("Buff dextérité : coups et incantations 15 % plus rapides, permanent, retiré à la mort du Barde", () => {
@@ -1111,6 +1337,39 @@ describe("Immunités aux contrôles", () => {
 });
 
 describe("Règles communes", () => {
+  it("se tourne tout seul vers l'ennemi visé en lançant un sort ou en activant l'attaque, pas sous mez", () => {
+    const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, Math.PI);
+    const enemy = world.spawn("e", "pretre", 1, 0, 10, Math.PI);
+    world.cast(arcaniste, "firebolt", enemy);
+    assert.equal(arcaniste.state.castAbility, "firebolt");
+    assert.ok(Math.abs(arcaniste.state.facing) < 1e-6, `orientation ${arcaniste.state.facing}`);
+
+    // Dos tourné : l'ennemi est derrière la Lame.
+    const lame = world.spawn("l", "lame", 0, 0, 12, 0);
+    world.combat.setTarget(lame.id, enemy.id);
+    world.combat.toggleAttack(lame.id);
+    assert.ok(Math.abs(Math.abs(lame.state.facing) - Math.PI) < 1e-6, `orientation ${lame.state.facing}`);
+
+    // Sous mez : l'attaque activée ne le tourne pas (ce chemin ne passe pas par checkCanUse).
+    const gardien = world.spawn("g", "gardien", 0, -3, 0, Math.PI);
+    addEffect(gardien, "mez", 10, "x");
+    world.combat.setTarget(gardien.id, enemy.id);
+    world.combat.toggleAttack(gardien.id);
+    assert.equal(gardien.state.facing, Math.PI, "sous mez, pas de rotation");
+
+    // Jamais vers un allié.
+    const pretre = world.spawn("p", "pretre", 0, 0, -5, 0);
+    world.cast(pretre, "heal", arcaniste);
+    assert.equal(pretre.state.facing, 0);
+
+    // Clic droit tenu : l'orientation demandée suit la rotation.
+    const steer = world.spawn("s", "arcaniste", 0, 4, 0, Math.PI);
+    world.combat.setInput(steer.id, { up: false, down: false, left: false, right: false, steer: true, yaw: Math.PI });
+    world.cast(steer, "firebolt", enemy);
+    world.run(2.05);
+    assert.ok(world.eventsOf("damage").some((e) => e.sourceId === "s"), "le sort part malgré le clic droit");
+  });
+
   it("le root arrête net, puis la vitesse remonte jusqu'à la normale ; il casse aux dégâts", () => {
     const arcaniste = world.spawn("a", "arcaniste", 0, 0, 0, 0);
     const enemy = world.spawn("e", "pretre", 1, 0, 10, Math.PI);
@@ -1235,22 +1494,96 @@ describe("Contrôles", () => {
     assert.equal(lame.state.lock, "");
   });
 
-  it("le stick se lâche quand on est rooté ou que la cible meurt", () => {
+  it("le stick tient sous root : face à la cible, il avance dès que le root le permet ; il se lâche à la mort de la cible", () => {
     const lame = world.spawn("l", "lame", 0, 0, 0, 0);
-    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 10, Math.PI);
+    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 14, Math.PI);
     world.combat.setTarget(lame.id, arcaniste.id);
-    world.combat.lockOnTarget(lame.id, "stick");
     world.cast(arcaniste, "freeze", lame);
     world.run(1.6);
     assert.ok(lame.has("root"));
+    // Posé en étant rooté : accepté.
+    world.combat.lockOnTarget(lame.id, "stick");
+    assert.equal(lame.state.lock, "stick");
+    // L'arcaniste passe sur le côté : la Lame pivote pour lui faire face, sans encore avancer (root tout frais).
+    arcaniste.state.x += 10;
+    arcaniste.state.z = lame.state.z + 1;
+    world.run(0.1);
+    assert.equal(lame.state.lock, "stick");
+    const wanted = facingTowards(lame.state, arcaniste.state);
+    assert.ok(Math.abs(Math.atan2(Math.sin(lame.state.facing - wanted), Math.cos(lame.state.facing - wanted))) < 0.05, "face à la cible");
+    assert.ok(Math.abs(lame.state.x - OFFSET_X) < 0.05, "presque immobile sous root");
+    // Le root s'estompe : elle avance vers la cible.
+    world.run(6);
+    assert.equal(lame.state.lock, "stick");
+    assert.ok(lame.state.x - OFFSET_X > 2, `avance sous root déclinant (${(lame.state.x - OFFSET_X).toFixed(2)} m)`);
+    // Cible morte : le stick se lâche.
+    arcaniste.state.hp = 0;
+    assert.ok(!arcaniste.alive);
+    world.run(0.1);
     assert.equal(lame.state.lock, "");
+  });
+});
+
+describe("Suivi de cible, root et incantation", () => {
+  it("recevoir un root interrompt l'incantation en cours, sauf sous Concentration", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
+    const arcaniste = world.spawn("a", "arcaniste", 1, 0, 10, Math.PI);
+    world.cast(pretre, "heal");
+    world.cast(arcaniste, "freeze", pretre);
+    world.run(1.6);
+    assert.ok(pretre.has("root"));
+    assert.equal(pretre.state.castAbility, "", "incantation interrompue par le root");
+    assert.equal(world.interrupts.at(-1)?.reason, "cc");
+
+    // Sous Concentration : la Nova de givre (1,5 s) roote le mage pendant son Trait de feu (2 s), sans l'interrompre.
+    const mage = world.spawn("m", "arcaniste", 0, 4, 0, 0);
+    world.cast(mage, "concentration");
+    world.cast(mage, "firebolt", arcaniste);
+    world.cast(arcaniste, "frostNova");
+    world.run(1.6);
+    assert.ok(mage.has("root"), "rooté par la Nova");
+    assert.equal(mage.state.castAbility, "firebolt", "incantation protégée");
+  });
+
+  it("suivre sa cible empêche d'incanter, mais lancer un sort à incantation lâche le suivi et l'incantation démarre", () => {
+    const pretre = world.spawn("p", "pretre", 0, 0, 0, 0);
+    const allie = world.spawn("x", "lame", 0, 0, 12, 0);
+    world.combat.setTarget(pretre.id, allie.id);
+    world.combat.lockOnTarget(pretre.id, "stick");
+    world.run(0.2);
+    assert.ok(pretre.isMoving, "le suivi fait avancer");
+    world.combat.useAbility(pretre.id, "heal");
+    assert.equal(pretre.state.lock, "", "le suivi est lâché");
+    assert.equal(pretre.state.castAbility, "heal", "l'incantation démarre");
+    const z = pretre.state.z;
+    world.run(2.1);
+    assert.ok(Math.abs(pretre.state.z - z) < 1e-6, "plus d'avance pendant l'incantation");
+    assert.ok(world.eventsOf("heal").some((e) => e.sourceId === "p"), "le soin part");
+  });
+
+  it("un sort refusé (hors de portée) ne lâche pas le suivi ; une touche de déplacement empêche toujours d'incanter", () => {
+    const mage = world.spawn("m", "arcaniste", 0, 0, 0, 0);
+    const enemy = world.spawn("e", "lame", 1, 0, 40, Math.PI);
+    world.combat.setTarget(mage.id, enemy.id);
+    world.combat.lockOnTarget(mage.id, "stick");
+    world.run(0.2);
+    world.combat.useAbility(mage.id, "firebolt");
+    assert.equal(world.errors.at(-1)?.code, "outOfRange");
+    assert.equal(mage.state.lock, "stick", "suivi conservé");
+    assert.equal(mage.state.castAbility, "");
+    // Pas de côté (garde le suivi) : on bouge soi-même, le sort est refusé et le suivi reste.
+    enemy.state.z = mage.state.z + 15;
+    world.combat.setInput(mage.id, keys({ left: true, steer: true, yaw: 0 }));
+    world.run(0.1);
+    world.combat.useAbility(mage.id, "firebolt");
+    assert.equal(world.errors.at(-1)?.code, "castWhileMoving");
+    assert.equal(mage.state.lock, "stick");
   });
 });
 
 describe("Gardien : nouvelles compétences", () => {
   // Accès aux méthodes internes pour préparer une situation (effet déjà posé).
-  const addEffect = (p: PlayerRuntime, kind: string, duration: number) =>
-    (world.combat as unknown as { addEffect: (...args: unknown[]) => void }).addEffect(p, kind, duration, "test");
+  const addTestEffect = (p: PlayerRuntime, kind: EffectKind, duration: number) => addEffect(p, kind, duration, "test");
 
   it("la Charge fonce sur la cible, puis frappe et stun à l'arrivée", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
@@ -1278,7 +1611,7 @@ describe("Gardien : nouvelles compétences", () => {
     const gardien = world.spawn("g", "gardien", 0, 0, 0, 0);
     const enemy = world.spawn("e", "lame", 1, 0, 15, Math.PI);
     world.cast(enemy, "evasion");
-    addEffect(enemy, "immuneStun", 30);
+    addTestEffect(enemy, "immuneStun", 30);
     world.rolls = [0, 0, 0, 0];
     world.cast(gardien, "charge", enemy);
     world.run(1);

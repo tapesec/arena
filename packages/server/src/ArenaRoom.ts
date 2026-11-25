@@ -12,9 +12,10 @@ import {
   cleanName,
   confineToZone,
   getClass,
-  maxResource,
   spawnPosition,
   type ClassId,
+  type MatchSummary,
+  pickHero,
   type MatchPhase,
   type MoveInput,
   NO_INPUT,
@@ -22,11 +23,11 @@ import {
 } from "@arena/shared";
 import { BotBrain } from "./bots/BotBrain";
 import { createBotBrain } from "./bots/classBots";
-import { dispatchOrder } from "./bots/orders";
+import { dispatchOrder, followHumansAtStart } from "./bots/orders";
 import { botToReplace, initialBotClasses, pickBotClass } from "./bots/composition";
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
-import { PlayerRuntime } from "./PlayerRuntime";
+import { PlayerRuntime, initVitals } from "./PlayerRuntime";
 import { ArenaState, LoadingState, PlayerState } from "./state";
 import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
@@ -60,6 +61,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private combat = new CombatSystem({
     broadcast: (type, message, involved) => this.broadcastToWitnesses(type, message, involved),
     sendTo: (playerId, type, message) => this.clients.getById(playerId)?.send(type, message),
+    announce: (type, message) => this.broadcast(type, message),
   });
 
   // Joueurs visibles par chaque équipe, recalculés à chaque tick.
@@ -98,6 +100,11 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       if (typeof abilityId !== "string") return;
       this.countAction(client.sessionId);
       this.combat.useAbility(client.sessionId, abilityId);
+    },
+    roll: (client: Client) => {
+      if (!this.inMatch) return;
+      this.countAction(client.sessionId);
+      this.combat.roll(client.sessionId);
     },
     // Avancement du chargement du client, en pourcentage. Retenu dès la salle d'attente : le client commence à
     // charger en y arrivant.
@@ -151,6 +158,10 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private replacedByBot = new Set<string>();
   // Temps de simulation écoulé (ms), non arrondi.
   private elapsedMs = 0;
+  // Début du combat (après la préparation), en temps de simulation : durée affichée sur l'écran de fin ; null avant.
+  private fightStartedAt: number | null = null;
+  // Joueurs partis pendant la préparation ou le combat : ils restent dans le récap de fin.
+  private departed: PlayerRuntime[] = [];
 
   // --- Observabilité (telemetry.ts) ---
   private actions = new ActionCounter();
@@ -162,6 +173,28 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private activeHumans = 0;
   // Joueurs dont le résultat est déjà enregistré (départ, remplacement par un bot).
   private reported = new Set<string>();
+  // Récap de l'écran de fin : bilan de chaque joueur de la partie (partis compris), le héros de l'équipe gagnante et
+  // l'élimination qui a terminé la partie (de ce tic : sinon, la partie a fini par des départs).
+  private summary(winner: number): MatchSummary {
+    const row = (p: PlayerRuntime, left: boolean) => ({
+      id: p.id,
+      name: p.state.name,
+      team: p.state.team,
+      classId: p.state.classId,
+      alive: !left && p.alive,
+      ...(left && { left }),
+      ...p.stats,
+    });
+    const players = [...[...this.combat.players.values()].map((p) => row(p, false)), ...this.departed.map((p) => row(p, true))];
+    const lastKill = this.combat.lastKill;
+    return {
+      seconds: this.fightStartedAt === null ? null : Math.round((this.elapsedMs - this.fightStartedAt) / 1000),
+      players,
+      heroId: pickHero(players, winner),
+      finalKill: lastKill && lastKill.time === this.combat.now ? lastKill.event : null,
+    };
+  }
+
   // Arrêt du serveur (déploiement) : les départs qui suivent ne sont pas des abandons.
   private shuttingDown = false;
 
@@ -249,6 +282,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     trackRoom(this.roomId, () => ({ humans: this.humans(), inMatch: this.inMatch }));
     this.state.matchSize = MATCH_PLAYERS;
     this.state.phaseTimeLeft = LOBBY_SECONDS;
+    this.state.campSwap = Math.random() < 0.5;
     for (const team of [0, 1]) for (const classId of initialBotClasses(TEAM_SIZE)) this.addBot(team, classId);
     this.setSimulationInterval((deltaMs) => this.update(deltaMs / 1000), 1000 / TICK_RATE);
     this.setPatchRate(1000 / TICK_RATE);
@@ -303,6 +337,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     if (player && !player.isBot && this.inMatch) this.reportPlayer(client.sessionId, player, this.shuttingDown ? "arret" : "parti");
     this.browsers.delete(client.sessionId);
     this.perf.delete(client.sessionId);
+    const runtime = this.combat.players.get(client.sessionId);
+    if (runtime && this.inMatch) this.departed.push(runtime);
     this.combat.remove(client.sessionId);
     this.state.players.delete(client.sessionId);
     this.state.loading.delete(client.sessionId);
@@ -409,12 +445,13 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
     const indexInTeam = [0, 0];
     const teamSizes = [0, 0];
     this.state.players.forEach((p) => teamSizes[p.team]++);
+    this.state.alive0 = teamSizes[0];
+    this.state.alive1 = teamSizes[1];
+    this.state.teamSize = Math.max(teamSizes[0], teamSizes[1]);
 
     this.state.players.forEach((player, id) => {
       const classDef = getClass(player.classId)!;
-      player.hp = player.maxHp = classDef.maxHp;
-      if (classDef.resource === "mana") player.mana = player.maxMana = maxResource("mana");
-      else player.endurance = player.maxEndurance = maxResource("endurance");
+      initVitals(player, classDef);
 
       const zone = START_ZONES[player.team];
       const spawn = spawnPosition(zone, indexInTeam[player.team]++, teamSizes[player.team]);
@@ -435,8 +472,10 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
   private startFight() {
     this.state.phase = "fighting";
     this.state.phaseTimeLeft = 0;
+    this.fightStartedAt = this.elapsedMs;
     this.combat.confine = null;
     this.replaceUnloadedPlayers();
+    followHumansAtStart(this.bots, this.combat.players);
     // L'écran de chargement ne sert plus : sans filtre, il montrerait encore les pseudos adverses.
     this.state.loading.clear();
   }
@@ -453,6 +492,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       this.reportPlayer(id, player, "chargement");
       player.isBot = true;
       player.leader = false;
+      // Le chef suivant de son équipe est désigné après la boucle.
+      this.arrivals = this.arrivals.filter((arrival) => arrival !== id);
       player.name = this.freshName();
       this.combat.setInput(id, NO_INPUT);
       this.bots.push(createBotBrain(runtime, this.combat, this.pathfinder));
@@ -462,6 +503,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       client.leave(CloseCode.CONSENTED);
     }
     this.state.playerCount = this.humans();
+    this.updateLeaders();
   }
 
   // La partie se termine quand une équipe n'a plus aucun joueur vivant (ou plus aucun joueur).
@@ -471,6 +513,8 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       // Avant la préparation, les points de vie ne sont pas encore attribués : on compte les présents.
       if (this.phase === "classSelect" || p.hp > 0) alive[p.team]++;
     });
+    this.state.alive0 = alive[0];
+    this.state.alive1 = alive[1];
     if (alive[0] > 0 && alive[1] > 0) return;
     this.endMatch(alive[0] > 0 ? 0 : alive[1] > 0 ? 1 : -1);
   }
@@ -484,6 +528,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
       this.state.players.forEach((p) => client.view?.add(p));
     }
     this.clock.setTimeout(() => this.disconnect(), ENDED_ROOM_LIFETIME_MS);
+    this.broadcast("summary", this.summary(winner));
     console.log(`[arena ${this.roomId}] fin de partie, vainqueur : équipe ${winner + 1}`);
     if (this.matchStartedAt === null) return;
     this.state.players.forEach((player, id) => {

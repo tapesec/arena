@@ -27,6 +27,23 @@ const one = (params: (number | undefined)[]): SoundStep[] => [{ at: 0, params }]
 const melody = (frequencies: number[], interval: number, note: (number | undefined)[]): SoundStep[] =>
   frequencies.map((frequency, i) => ({ at: i * interval, params: [note[0], note[1], frequency, ...note.slice(3)] }));
 
+// Tintement de cloche (un seul coup) : partiels inharmoniques d'une cloche (bourdon, fondamentale, tierce mineure,
+// quinte, nominale, puis aigus qui s'éteignent vite) et la frappe du battant. base : hauteur de la fondamentale (Hz),
+// length : multiplie la résonance.
+const BELL_PARTIALS: [ratio: number, volume: number, release: number][] = [
+  [0.5, 0.9, 6],
+  [1, 0.7, 4.2],
+  [1.19, 0.45, 3.2],
+  [1.5, 0.3, 2.6],
+  [2, 0.4, 2.1],
+  [2.52, 0.18, 1.6],
+  [3.01, 0.1, 1],
+];
+const bell = (base: number, length: number, volume: number): SoundStep[] => [
+  ...BELL_PARTIALS.map(([ratio, amp, release]) => ({ at: 0, params: [volume * amp, 0, base * ratio, 0.005, 0, release * length, 0] })),
+  { at: 0, params: [volume * 0.35, 0, base * 14, 0, 0, 0.06, 4] },
+];
+
 export const SOUNDS = {
   // --- Magie ---
   fireLaunch: {
@@ -139,6 +156,22 @@ export const SOUNDS = {
     label: "Mort",
     category: "Alertes",
     steps: one([1.2, 0, 400, 0.02, 0.2, 0.6, 1, 1, -1, , -100, 0.15, , , , , , 0.6, 0.1]),
+  },
+  // Annonces d'élimination (décidées le 2026-11-21) : plus grave quand c'est un allié qui tombe.
+  killEnemy: {
+    label: "Élimination d'un adversaire (cloche)",
+    category: "Alertes",
+    steps: bell(110, 1, 0.5),
+  },
+  killAlly: {
+    label: "Élimination d'un allié (cloche)",
+    category: "Alertes",
+    steps: bell(82, 1, 0.5),
+  },
+  lastStanding: {
+    label: "Dernier survivant (cloche)",
+    category: "Alertes",
+    steps: bell(65, 1.7, 0.55),
   },
   abilityReady: {
     label: "Compétence disponible",

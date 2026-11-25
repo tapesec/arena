@@ -69,6 +69,8 @@ export const PlayerState = schema(
     comboTarget: t.string().default(""),
     // Le Gardien fonce sur sa cible (Charge).
     charging: t.boolean().default(false),
+    // Roulade en cours (voir ROLL_DURATION) : invulnérable, mené par le serveur.
+    rolling: t.boolean().default(false),
     // Chant du Barde en cours (id de la compétence : speedSong, secondWind ; "" si aucun).
     song: t.string().default(""),
     // Incantation en cours ("" si aucune), visible de tous pour pouvoir l'interrompre.
@@ -91,6 +93,15 @@ export const ArenaState = schema(
     time: t.uint32().default(0),
     // Équipe gagnante une fois la partie terminée (-1 tant qu'il n'y en a pas).
     winner: t.int8().default(-1),
+    // Personnages des équipes tirés au sort à chaque partie (décidé le 2026-11-21) : faux, la première équipe prend
+    // ceux du camp 1 et la seconde ceux du camp 2 ; vrai, l'inverse.
+    campSwap: t.boolean().default(false),
+    // Joueurs encore en vie dans chaque équipe pendant le combat : décompte en haut de l'écran (connu de tous, malgré
+    // le brouillard de guerre).
+    alive0: t.uint8().default(0),
+    alive1: t.uint8().default(0),
+    // Taille d'une équipe au début du combat (losanges du décompte).
+    teamSize: t.uint8().default(0),
     // Nombre de joueurs humains dans la partie et nombre maximal (le reste est joué par des bots).
     playerCount: t.uint8().default(0),
     matchSize: t.uint8().default(0),

@@ -8,14 +8,14 @@ import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { terrainHeight, type EffectKind } from "@arena/shared";
+import { terrainHeight, type ClassId, type EffectKind } from "@arena/shared";
 import type { PredictedBody } from "./prediction";
 import type { TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
 import { INSTRUMENT_ANIMATIONS, hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
-import { gameCharacter } from "./gameAppearances";
+import { campOf, gameCharacter } from "./gameAppearances";
 
 export interface EffectView {
   kind: string;
@@ -32,7 +32,8 @@ export interface PlayerView {
   name: string;
   isBot: boolean;
   leader: boolean;
-  classId: string;
+  // Vide tant que le joueur n'a pas de classe.
+  classId: ClassId | "";
   team: number;
   x: number;
   z: number;
@@ -51,6 +52,7 @@ export interface PlayerView {
   comboAbility: string;
   comboTarget: string;
   charging: boolean;
+  rolling: boolean;
   castAbility: string;
   castElapsed: number;
   castDuration: number;
@@ -69,12 +71,10 @@ const HITBOX_HEIGHT = 2.4;
 const HOVER_OUTLINE_WIDTH = 0.02;
 const DEAD_COLOR = new Color3(0.3, 0.3, 0.3);
 
-// Teinte de base par équipe : bleu ou rouge, légèrement variée d'un joueur à l'autre.
-const TEAM_HUES = [215, 5];
-
-// Couleur d'un joueur : celle de son équipe, légèrement variée d'un joueur à l'autre.
-function teamColor(team: number, colorIndex: number): Color3 {
-  const hue = TEAM_HUES[team] + ((colorIndex % 4) - 1.5) * 8;
+// Couleur de la capsule provisoire, vue par le joueur local (comme les pseudos) : bleue pour son équipe, rouge pour
+// celle d'en face, légèrement variée d'un joueur à l'autre.
+function teamColor(ally: boolean, colorIndex: number): Color3 {
+  const hue = (ally ? 215 : 5) + ((colorIndex % 4) - 1.5) * 8;
   return Color3.FromHSV((hue + 360) % 360, 0.65, 0.9);
 }
 
@@ -84,6 +84,9 @@ const VELOCITY_SMOOTHING = 12;
 // Représentation 3D d'un joueur : un personnage animé quand sa classe a un modèle, sinon une capsule
 // avec un "nez" pour l'orientation ; un anneau au sol pour son propre personnage.
 export class PlayerVisual {
+  private static frame = 0;
+  private effectFrame = -1;
+  private effects = new Map<string, number>();
   // Position et orientation prédites (son propre personnage, voir MovementPredictor), sinon null : on suit le serveur.
   predicted: PredictedBody | null = null;
   readonly root: TransformNode;
@@ -93,6 +96,8 @@ export class PlayerVisual {
   private aliveColor: Color3;
   private wasAlive = true;
   private team: number;
+  // Camp vu par le joueur local, pour la couleur de la capsule (son équipe ou celle d'en face).
+  private ally: boolean;
   // Zone de clic (cylindre invisible) et couleur du contour de survol (null sans survol).
   readonly hitbox: Mesh;
   private hovered: Color3 | null = null;
@@ -100,12 +105,14 @@ export class PlayerVisual {
   private model: CharacterInstance | null = null;
   private animator: CharacterAnimator | null = null;
   private modelClass = "";
-  // Équipe du personnage chargé (son camp, voir gameCharacter).
-  private modelTeam = -1;
+  // Camp du personnage chargé (voir campOf).
+  private modelCamp = -1;
   private loadToken = 0;
   private disposed = false;
   // Vitesse mesurée à l'écran, dans le repère du personnage.
   private lastX: number;
+  // Roulade en cours à l'image précédente : l'animation part au début de la roulade.
+  private wasRolling = false;
   private lastZ: number;
   private lastTime = performance.now();
   private forwardSpeed = 0;
@@ -123,7 +130,8 @@ export class PlayerVisual {
     this.lastZ = state.z;
 
     this.team = state.team;
-    this.aliveColor = teamColor(state.team, state.colorIndex);
+    this.ally = state.team === 0;
+    this.aliveColor = teamColor(this.ally, state.colorIndex);
     this.material = new StandardMaterial("playerMat", scene);
     this.material.diffuseColor = this.aliveColor;
 
@@ -152,20 +160,35 @@ export class PlayerVisual {
     return this.state.hp > 0;
   }
 
+  // Une nouvelle image commence : les effets des joueurs seront relus (voir effectTimes).
+  static nextFrame() {
+    PlayerVisual.frame++;
+  }
+
   hasEffect(kind: EffectKind): boolean {
-    for (const effect of this.state.effects) if (effect.kind === kind) return true;
-    return false;
+    return this.effectTimes().has(kind);
   }
 
   // Temps restant d'un effet, en secondes (0 s'il est absent).
   effectRemaining(kind: EffectKind): number {
-    for (const effect of this.state.effects) if (effect.kind === kind) return effect.remaining;
-    return 0;
+    return this.effectTimes().get(kind) ?? 0;
+  }
+
+  // Temps restant de chaque effet du joueur (le premier de chaque type), relu une fois par image : hasEffect est appelé
+  // des dizaines de fois par joueur et par image, et l'état n'arrive du serveur qu'entre deux images.
+  private effectTimes(): Map<string, number> {
+    if (this.effectFrame !== PlayerVisual.frame) {
+      this.effectFrame = PlayerVisual.frame;
+      this.effects.clear();
+      for (const effect of this.state.effects) if (!this.effects.has(effect.kind)) this.effects.set(effect.kind, effect.remaining);
+    }
+    return this.effects;
   }
 
   // smoothing : fraction du chemin à parcourir vers la position serveur pour cette frame. Son propre personnage,
-  // prédit (predicted), est placé directement.
-  update(smoothing: number) {
+  // prédit (predicted), est placé directement. campSwap : tirage des personnages de la partie (voir campOf) ;
+  // localTeam : équipe du joueur local (null tant qu'elle est inconnue).
+  update(smoothing: number, campSwap: boolean, localTeam: number | null) {
     if (this.predicted) {
       // Recalage net : l'animation de course ne doit pas y voir un déplacement.
       if (this.predicted.snapped) {
@@ -185,10 +208,13 @@ export class PlayerVisual {
     // Le personnage suit le relief.
     this.root.position.y = terrainHeight(this.root.position.x, this.root.position.z);
 
-    // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur.
-    if (this.state.team !== this.team) {
-      this.team = this.state.team;
-      this.aliveColor = teamColor(this.team, this.state.colorIndex);
+    // L'équipe est attribuée au lancement de la partie, après l'arrivée du joueur ; celle du joueur local arrive
+    // avec son propre état.
+    this.team = this.state.team;
+    const ally = localTeam === null ? this.team === 0 : this.team === localTeam;
+    if (ally !== this.ally) {
+      this.ally = ally;
+      this.aliveColor = teamColor(ally, this.state.colorIndex);
       if (this.isAlive) this.material.diffuseColor = this.aliveColor;
     }
 
@@ -199,8 +225,9 @@ export class PlayerVisual {
 
 
 
-    // Classe ou équipe changée : le personnage de sa classe et de son camp.
-    if (this.state.classId !== this.modelClass || this.team !== this.modelTeam) this.loadModel();
+    // Classe ou camp changé : le personnage de sa classe et de son camp.
+    const camp = campOf(this.team, campSwap);
+    if (this.state.classId !== this.modelClass || camp !== this.modelCamp) this.loadModel(camp);
     this.updateAnimation();
   }
 
@@ -247,9 +274,9 @@ export class PlayerVisual {
   }
 
   // Charge le personnage animé de la classe (la classe est choisie après l'arrivée du joueur).
-  private loadModel() {
+  private loadModel(camp: number) {
     this.modelClass = this.state.classId;
-    this.modelTeam = this.team;
+    this.modelCamp = camp;
     this.animator?.dispose();
     this.model?.dispose();
     this.model = null;
@@ -259,8 +286,7 @@ export class PlayerVisual {
     if (this.hovered) this.setHovered(this.hovered);
     if (!hasCharacterModel(this.modelClass)) return;
     const token = ++this.loadToken;
-    // Apparence de son camp, fixe par équipe (voir gameCharacter).
-    void this.assets.create(this.modelClass, this.root, undefined, gameCharacter(this.modelClass, this.team)).then((model) => {
+    void this.assets.create(this.modelClass, this.root, undefined, gameCharacter(this.modelClass, camp)).then((model) => {
       if (!model) return;
       // Le joueur a changé de classe ou a disparu pendant le chargement.
       if (token !== this.loadToken || this.disposed) {
@@ -304,6 +330,8 @@ export class PlayerVisual {
   }
 
   private updateAnimation() {
+    if (this.state.rolling && !this.wasRolling) this.animator?.roll();
+    this.wasRolling = this.state.rolling;
     const now = performance.now();
     const dt = Math.max((now - this.lastTime) / 1000, 1e-3);
     this.lastTime = now;

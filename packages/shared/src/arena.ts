@@ -18,7 +18,7 @@ export interface Obstacle {
 export const PLAZA = { x: 0, z: 0, radius: 14 };
 
 // Carte symétrique par rotation de 180° autour du centre : (x, z) ↔ (-x, -z), pour qu'aucune équipe
-// ne soit avantagée. Bleus en (-36, -36), Rouges en (36, 36).
+// ne soit avantagée. Première équipe en (-36, -36), seconde en (36, 36).
 //  - au centre, un hameau : six maisons fermées autour de la place. Par moitié de carte, une large entrée,
 //    un coin ouvert et une ruelle étroite ; la grande maison cache la place à qui arrive de son départ ;
 //  - sur les approches, des piles de caisses qui coupent les lignes de vue ;
@@ -44,8 +44,6 @@ export const OBSTACLES: Obstacle[] = [
   // Un seul abri près de chaque zone de départ.
   ...half({ x: 22, z: 34, halfWidth: 4, halfDepth: 0.4, kind: "fence" }),
 ];
-
-export const OBSTACLE_HEIGHT = 3;
 
 // Repousse un cercle (un personnage) hors des obstacles qu'il chevauche.
 export function resolveObstacleCollisions(pos: Position, radius: number): Position {
@@ -93,24 +91,27 @@ export function isInsideObstacle(pos: Position, margin: number): boolean {
 }
 
 // Méthode des "slabs" : on intersecte le segment avec chaque paire de bords du rectangle
-// (élargi de "margin" de chaque côté).
+// (élargi de "margin" de chaque côté). Appelée des dizaines de milliers de fois par seconde (lignes de vue, chemins des
+// bots) : calcul en nombres simples, sans tableau.
 function segmentIntersectsObstacle(a: Position, b: Position, o: Obstacle, margin: number): boolean {
   let tMin = 0;
   let tMax = 1;
-  const axes: [number, number, number, number][] = [
-    [a.x, b.x - a.x, o.x - o.halfWidth - margin, o.x + o.halfWidth + margin],
-    [a.z, b.z - a.z, o.z - o.halfDepth - margin, o.z + o.halfDepth + margin],
-  ];
-  for (const [start, delta, min, max] of axes) {
+  // Axe x, puis axe z.
+  for (let axis = 0; axis < 2; axis++) {
+    const start = axis === 0 ? a.x : a.z;
+    const delta = axis === 0 ? b.x - a.x : b.z - a.z;
+    const center = axis === 0 ? o.x : o.z;
+    const half = (axis === 0 ? o.halfWidth : o.halfDepth) + margin;
+    const min = center - half;
+    const max = center + half;
     if (Math.abs(delta) < 1e-9) {
       if (start < min || start > max) return false;
       continue;
     }
-    let t1 = (min - start) / delta;
-    let t2 = (max - start) / delta;
-    if (t1 > t2) [t1, t2] = [t2, t1];
-    tMin = Math.max(tMin, t1);
-    tMax = Math.min(tMax, t2);
+    const t1 = (min - start) / delta;
+    const t2 = (max - start) / delta;
+    tMin = Math.max(tMin, Math.min(t1, t2));
+    tMax = Math.min(tMax, Math.max(t1, t2));
     if (tMin > tMax) return false;
   }
   return true;

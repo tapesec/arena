@@ -15,6 +15,8 @@ export type GameErrorCode =
   | "incapacitated"
   | "charging"
   | "chargeInterrupted"
+  | "rolling"
+  | "rollCooldown"
   | "rooted"
   | "alreadyCasting"
   | "silenced"

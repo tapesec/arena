@@ -3,14 +3,16 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { Scene } from "@babylonjs/core/scene";
 import { useHudStore } from "../store";
 
-// Vue isométrique : caméra en diagonale, inclinée d'environ 55° par rapport à la verticale.
+// Vue isométrique : caméra en diagonale, inclinée d'environ 46° par rapport à la verticale (55° avant le
+// 2026-11-19 : plus plongeante, les murs cachent moins le joueur et on voit plus loin autour de lui).
 const DEFAULT_ALPHA = (-3 * Math.PI) / 4;
-const BETA = 0.95;
+const BETA = 0.8;
 // Inclinaison réglable à la souris : de presque à la verticale à presque rasante.
 const MIN_BETA = 0.3;
 const MAX_BETA = 1.35;
 // Distance de la caméra : assez près pour voir les personnages, la molette permet de reculer ou d'approcher.
-const DEFAULT_RADIUS = 26;
+// 37,4 m (26 m avant le 2026-11-21 : reculée de 25 %, puis de 15 %).
+const DEFAULT_RADIUS = 37.4;
 const MIN_RADIUS = 10;
 const MAX_RADIUS = 55;
 
@@ -75,6 +77,11 @@ export class CameraController {
     const targetAlpha = Math.atan2(-Math.cos(facing), -Math.sin(facing));
     const delta = Math.atan2(Math.sin(targetAlpha - this.camera.alpha), Math.cos(targetAlpha - this.camera.alpha));
     this.camera.alpha += delta * (1 - Math.exp(-FOLLOW_RATE * dt));
+  }
+
+  // Place la caméra dans le dos d'un personnage orienté selon facing, tout de suite (sans changer zoom ni inclinaison).
+  faceTowards(facing: number) {
+    this.camera.alpha = Math.atan2(-Math.cos(facing), -Math.sin(facing));
   }
 
   // Zoom par défaut ; l'orientation est remise par défaut seulement si on ne suit pas de personnage.

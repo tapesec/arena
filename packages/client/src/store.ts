@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { currentLanguage, setLanguage as applyLanguage, type Language } from "./i18n";
-import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type OrderId, type RelativePosition } from "@arena/shared";
+import { cleanName, defaultPlayerName, type ClassId, type EffectKind, type MatchPhase, type MatchSummary, type OrderId, type RelativePosition } from "@arena/shared";
+import { readItem, writeItem } from "./storage";
 
 // Pont entre le jeu et React : seules les infos utiles à l'interface passent ici,
 // et uniquement quand elles changent, jamais à chaque frame.
@@ -58,16 +59,22 @@ export interface SelfFrame extends UnitFrame {
   comboAbility: string;
   // Le Gardien fonce sur sa cible (Charge).
   charging: boolean;
+  // Roulade en cours ; immobilisé (root, arrêt net de la Provocation) : case de la roulade sur la barre.
+  rolling: boolean;
+  rooted: boolean;
 }
 
 export interface TargetFrame extends UnitFrame {
+  classId: ClassId | "";
+  mana: number;
+  maxMana: number;
+  endurance: number;
+  maxEndurance: number;
   isSelf: boolean;
   isAlly: boolean;
   distance: number;
   inMeleeRange: boolean;
   inLineOfSight: boolean;
-  // La cible est dans le cône de vision du joueur.
-  facing: boolean;
   // Où se trouve le joueur par rapport à la cible : devant, sur son flanc, dans son dos.
   position: RelativePosition;
 }
@@ -79,12 +86,19 @@ export interface MatchFrame {
   playerCount: number;
   matchSize: number;
   team: number;
+  // Survivants de son équipe et de celle d'en face pendant le combat, et taille d'une équipe (décompte en haut).
+  alliesAlive: number;
+  enemiesAlive: number;
+  teamSize: number;
+  // Jeu de personnages de son équipe pour cette partie (voir campOf).
+  camp: number;
   winner: number;
 }
 
-// Coéquipier affiché dans la fenêtre de groupe.
+// Membre de la fenêtre de groupe : soi (en premier, F1), puis ses coéquipiers (F2 à F8).
 export interface GroupMemberFrame {
   id: string;
+  isSelf: boolean;
   name: string;
   classId: ClassId | "";
   hp: number;
@@ -135,12 +149,35 @@ export interface GameActions {
   selectSelf: () => void;
   // Lancer une compétence (clic sur la barre d'action).
   castAbility: (abilityId: string) => void;
+  // Roulade (clic sur sa case, comme Espace).
+  roll: () => void;
 }
 
-const MAX_LOG_LINES = 8;
 const ERROR_DISPLAY_MS = 2000;
 
 let errorTimeout: ReturnType<typeof setTimeout> | undefined;
+// Conseil ponctuel (voir showHint) : affiché plus longtemps qu'une erreur, le temps de le lire.
+const HINT_DISPLAY_MS = 6000;
+let hintTimeout: ReturnType<typeof setTimeout> | undefined;
+// Conseils déjà montrés pendant cette visite (au cas où le stockage local est indisponible).
+const shownHints = new Set<string>();
+
+// Élimination annoncée (voir KillEvent), vue par le joueur local : ally = de son équipe.
+// Récap de fin de partie (voir MatchSummary), avec l'identifiant du joueur local pour le repérer dans le tableau.
+export type SummaryFrame = MatchSummary & { selfId: string };
+
+export interface KillFrame {
+  id: number;
+  // Heure d'arrivée (performance.now()) : l'annonce au centre dure un temps fixe à partir de là.
+  at: number;
+  victimName: string;
+  victimAlly: boolean;
+  victimClass: string;
+  killerName: string;
+  killerAlly: boolean;
+  abilityId: string;
+  lastStanding?: { name: string; ally: boolean };
+}
 
 interface HudState {
   // Le joueur a demandé à rejoindre une partie (sinon : écran d'accueil).
@@ -166,7 +203,6 @@ interface HudState {
   self: SelfFrame | null;
   target: TargetFrame | null;
   group: GroupMemberFrame[];
-  combatLog: string[];
   // Instant (performance.now()) de fin de recharge, par compétence.
   cooldownEnds: Record<string, number>;
   // Prochain coup d'arme : instants (performance.now()) de début et de fin de l'attente, null avant le premier ;
@@ -177,6 +213,13 @@ interface HudState {
   setOrderWheel: (wheel: OrderWheelFrame | null) => void;
   // Message bref affiché au centre de l'écran ("Cible hors de portée"...).
   flashMessage: string | null;
+  // Déplacement : « modern » (touches dans les directions de l'écran) ou « classic » (comme DAoC). Retenu par le
+  // navigateur.
+  movementMode: MovementMode;
+  setMovementMode: (mode: MovementMode) => void;
+  // Didacticiel « Comment jouer ? » ouvert : le clavier sert au didacticiel, plus au personnage.
+  tutorialOpen: boolean;
+  setTutorialOpen: (open: boolean) => void;
   actions: GameActions | null;
   joinGame: () => void;
   leaveGame: () => void;
@@ -185,13 +228,25 @@ interface HudState {
   setLoading: (loading: LoadingFrame[], loaded: boolean) => void;
   setFrames: (self: SelfFrame | null, target: TargetFrame | null, group: GroupMemberFrame[]) => void;
   setActions: (actions: GameActions | null) => void;
-  pushLog: (line: string) => void;
+  // Éliminations de la partie, la plus récente en premier (annonce au centre et fil à droite).
+  kills: KillFrame[];
+  addKill: (kill: Omit<KillFrame, "id" | "at">) => void;
+  // Récap envoyé par le serveur à la fin de la partie (null avant).
+  summary: SummaryFrame | null;
+  setSummary: (summary: SummaryFrame) => void;
   startCooldown: (abilityId: string, durationSeconds: number) => void;
   startSwing: (remainingSeconds: number, struck: boolean) => void;
   flash: (message: string) => void;
+  // Conseil affiché sous les messages d'erreur, une seule fois par navigateur : key le retient (stockage local, à
+  // défaut pour la visite), un conseil déjà vu n'est plus montré.
+  hint: string | null;
+  showHint: (key: string, message: string) => void;
 }
 
 // Ce qui est remis à zéro à chaque nouvelle partie.
+// Éliminations gardées pour le fil (on n'en montre que les dernières).
+const KILLS_KEPT = 8;
+
 const freshGame = {
   status: "connecting" as ConnectionStatus,
   error: null,
@@ -203,41 +258,48 @@ const freshGame = {
   self: null,
   target: null,
   group: [],
-  combatLog: [],
   cooldownEnds: {},
   swing: null,
   flashMessage: null,
+  hint: null,
   orderWheel: null,
+  kills: [],
+  summary: null,
 };
+
+export type MovementMode = "modern" | "classic";
+const MOVEMENT_STORAGE_KEY = "arena.movementMode";
+
+// Mode moderne par défaut (décidé le 2026-11-19 : plus simple pour un nouveau venu) ; le mode DAoC reste au choix.
+function initialMovementMode(): MovementMode {
+  return readItem(MOVEMENT_STORAGE_KEY) === "classic" ? "classic" : "modern";
+}
 
 // Le dernier pseudo saisi est retenu par le navigateur ; à la première visite, un pseudo par défaut est proposé.
 const NAME_STORAGE_KEY = "arena.playerName";
 
 function initialPlayerName(): string {
-  try {
-    const saved = cleanName(localStorage.getItem(NAME_STORAGE_KEY) ?? "");
-    if (saved) return saved;
-  } catch {
-    // Stockage indisponible (navigation privée…) : pseudo par défaut.
-  }
-  return defaultPlayerName();
+  return cleanName(readItem(NAME_STORAGE_KEY) ?? "") || defaultPlayerName();
 }
 
 export const useHudStore = create<HudState>((set) => ({
   inGame: false,
   gameKey: 0,
   playerName: initialPlayerName(),
+  movementMode: initialMovementMode(),
+  tutorialOpen: false,
+  setTutorialOpen: (tutorialOpen) => set({ tutorialOpen }),
+  setMovementMode: (mode) => {
+    writeItem(MOVEMENT_STORAGE_KEY, mode);
+    set({ movementMode: mode });
+  },
   language: currentLanguage(),
   setLanguage: (language) => {
     applyLanguage(language);
     set({ language });
   },
   setPlayerName: (name) => {
-    try {
-      localStorage.setItem(NAME_STORAGE_KEY, name);
-    } catch {
-      // Stockage indisponible : le pseudo vaut pour cette visite seulement.
-    }
+    writeItem(NAME_STORAGE_KEY, name);
     set({ playerName: name });
   },
   actions: null,
@@ -247,17 +309,29 @@ export const useHudStore = create<HudState>((set) => ({
   // Remplacé par un bot : plus de partie (la musique revient à celle des menus).
   setStatus: (status, error) => set(status === "replaced" ? { status, error: null, match: null } : { status, error: error ?? null }),
   setMatch: (match, teammates) => set({ match, teammates }),
+  setSummary: (summary) => set({ summary }),
+  addKill: (kill) => set((s) => ({ kills: [{ ...kill, id: (s.kills[0]?.id ?? 0) + 1, at: performance.now() }, ...s.kills].slice(0, KILLS_KEPT) })),
   setLoading: (loading, loaded) => set({ loading, loaded }),
   setPing: (ping) => set({ ping }),
   setFrames: (self, target, group) => set({ self, target, group }),
   setActions: (actions) => set({ actions }),
   setOrderWheel: (orderWheel) => set({ orderWheel }),
-  pushLog: (line) => set((s) => ({ combatLog: [...s.combatLog, line].slice(-MAX_LOG_LINES) })),
   startCooldown: (abilityId, durationSeconds) =>
     set((s) => ({ cooldownEnds: { ...s.cooldownEnds, [abilityId]: performance.now() + durationSeconds * 1000 } })),
   startSwing: (remainingSeconds, struck) => {
     const now = performance.now();
     set({ swing: { start: now, end: now + remainingSeconds * 1000, struck } });
+  },
+  showHint: (key, message) => {
+    const storageKey = `arena.hint.${key}`;
+    if (shownHints.has(key)) return;
+    shownHints.add(key);
+    // Stockage indisponible : le conseil est montré à chaque fois.
+    if (readItem(storageKey)) return;
+    writeItem(storageKey, "1");
+    clearTimeout(hintTimeout);
+    set({ hint: message });
+    hintTimeout = setTimeout(() => set({ hint: null }), HINT_DISPLAY_MS);
   },
   flash: (message) => {
     clearTimeout(errorTimeout);

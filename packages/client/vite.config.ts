@@ -21,6 +21,8 @@ const DEV_FILES: Record<string, URL> = {
   appearances: new URL("./src/game/appearances.json", import.meta.url),
   overlays2d: new URL("./src/game/overlays2d.json", import.meta.url),
   soundEdits: new URL("./src/audio/soundEdits.json", import.meta.url),
+  // Onglet « Sons communs » : sons communs du jeu remplacés.
+  commonSounds: new URL("./src/audio/commonSounds.json", import.meta.url),
   particleRequests: new URL("./particle-requests.json", import.meta.url),
 };
 function devFilesEndpoint(): Plugin {
