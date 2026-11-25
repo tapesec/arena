@@ -12,6 +12,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import { seededRandom } from "./seededRandom";
+import { createDefRegistry } from "./defRegistry";
 
 // Objets 3D (onglet « Objets 3D » de animation-lab.html), enregistrés dans objects3d.json : une forme simple
 // (sphère, anneau, cylindre, cône, cube, cristal, croissant), seule ou répétée en cercle, lumineuse ou éclairée,
@@ -298,26 +299,12 @@ export const FORMS: Record<ObjectForm, string> = {
   arcs: "Arcs électriques",
 };
 
-let savedObjects: Record<string, ObjectDef> = {};
-
-export function setObjectDefs(defs: Record<string, ObjectDef>) {
-  savedObjects = defs;
-}
-
-// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de l'objet de départ.
-export function objectDef(id: string): ObjectDef | null {
-  if (!savedObjects[id] && !BUILTIN_OBJECTS[id]) return null;
-  return { ...DEFAULT_OBJECT, ...BUILTIN_OBJECTS[id], ...savedObjects[id] };
-}
-
-export function objectChoices(): { id: string; label: string }[] {
-  const ids = new Set([...Object.keys(BUILTIN_OBJECTS), ...Object.keys(savedObjects)]);
-  return [...ids].map((id) => ({ id, label: objectLabel(id) }));
-}
-
-export function objectLabel(id: string): string {
-  return savedObjects[id]?.label ?? BUILTIN_OBJECTS[id]?.label ?? id;
-}
+// Réglages enregistrés (fichier JSON) et de départ.
+const objectDefs = createDefRegistry(DEFAULT_OBJECT, BUILTIN_OBJECTS);
+export const setObjectDefs = objectDefs.set;
+export const objectDef = objectDefs.get;
+export const objectChoices = objectDefs.choices;
+export const objectLabel = objectDefs.label;
 
 // Rayon d'un objet (mètres), pour l'étendre à une zone : celui de son cercle, sinon de sa forme.
 export function objectRadius(def: ObjectDef): number {

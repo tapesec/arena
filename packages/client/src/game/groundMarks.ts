@@ -9,6 +9,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import { hexToRgb } from "./color";
 import { seededRandom } from "./seededRandom";
+import { createDefRegistry } from "./defRegistry";
 
 // Marques au sol (onglet « Marques au sol » de animation-lab.html), enregistrées dans groundMarks.json : un dessin
 // (cercle, anneau, runes, rayons, fissures, créneaux) posé à plat sur le terrain, qui apparaît en grandissant,
@@ -117,28 +118,12 @@ export const PATTERNS: Record<GroundPattern, string> = {
   crosses: "Croix de vie",
 };
 
-// Marques réglées et enregistrées (groundMarks.json), données par le jeu ou par la page de réglage.
-let savedMarks: Record<string, GroundMarkDef> = {};
-
-export function setGroundMarkDefs(defs: Record<string, GroundMarkDef>) {
-  savedMarks = defs;
-}
-
-// Marque par son nom : sa version réglée, sinon celle de départ.
-// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de la marque de départ.
-export function groundMarkDef(id: string): GroundMarkDef | null {
-  if (!savedMarks[id] && !BUILTIN_MARKS[id]) return null;
-  return { ...DEFAULT_MARK, ...BUILTIN_MARKS[id], ...savedMarks[id] };
-}
-
-export function groundMarkChoices(): { id: string; label: string }[] {
-  const ids = new Set([...Object.keys(BUILTIN_MARKS), ...Object.keys(savedMarks)]);
-  return [...ids].map((id) => ({ id, label: groundMarkLabel(id) }));
-}
-
-export function groundMarkLabel(id: string): string {
-  return savedMarks[id]?.label ?? BUILTIN_MARKS[id]?.label ?? id;
-}
+// Réglages enregistrés (fichier JSON) et de départ.
+const marks = createDefRegistry(DEFAULT_MARK, BUILTIN_MARKS);
+export const setGroundMarkDefs = marks.set;
+export const groundMarkDef = marks.get;
+export const groundMarkChoices = marks.choices;
+export const groundMarkLabel = marks.label;
 
 // Hauteur au-dessus du sol (évite le scintillement avec le terrain).
 const LIFT = 0.05;

@@ -6,6 +6,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreatePlane } from "@babylonjs/core/Meshes/Builders/planeBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
+import { createDefRegistry } from "./defRegistry";
 
 // Affichage 2D (onglet « Affichage 2D » de animation-lab.html), enregistré dans overlays2d.json : un texte ou un
 // symbole (★ ♥ ♪ Z !…) toujours tourné vers la caméra, de taille fixe en mètres ou à l'écran, seul, en ronde autour
@@ -181,27 +182,12 @@ export const LAYOUTS: Record<OverlayLayout, string> = {
   rise: "Monte en s'effaçant, l'un après l'autre",
 };
 
-let savedOverlays: Record<string, OverlayDef> = {};
-
-export function setOverlayDefs(defs: Record<string, OverlayDef>) {
-  savedOverlays = defs;
-}
-
-// Les réglages absents d'un enregistrement (ajoutés depuis) reprennent ceux de l'affichage de départ, sinon ceux
-// par défaut.
-export function overlayDef(id: string): OverlayDef | null {
-  if (!savedOverlays[id] && !BUILTIN_OVERLAYS[id]) return null;
-  return { ...DEFAULT_OVERLAY, ...BUILTIN_OVERLAYS[id], ...savedOverlays[id] };
-}
-
-export function overlayChoices(): { id: string; label: string }[] {
-  const ids = new Set([...Object.keys(BUILTIN_OVERLAYS), ...Object.keys(savedOverlays)]);
-  return [...ids].map((id) => ({ id, label: overlayLabel(id) }));
-}
-
-export function overlayLabel(id: string): string {
-  return savedOverlays[id]?.label ?? BUILTIN_OVERLAYS[id]?.label ?? id;
-}
+// Réglages enregistrés (fichier JSON) et de départ.
+const overlayDefs = createDefRegistry(DEFAULT_OVERLAY, BUILTIN_OVERLAYS);
+export const setOverlayDefs = overlayDefs.set;
+export const overlayDef = overlayDefs.get;
+export const overlayChoices = overlayDefs.choices;
+export const overlayLabel = overlayDefs.label;
 
 // Affichage posé : at est partagé (le déplacer le déplace), stop() lance sa disparition, remove() le retire.
 export interface PlacedOverlay {
