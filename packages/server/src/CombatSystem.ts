@@ -20,7 +20,6 @@ import {
   forwardOf,
   moveDirection,
   RAMPART_RADIUS,
-  spellRange,
   NO_INPUT,
   SHIELD_BLOCK_CHANCE,
   SONG_RANGE,
@@ -36,9 +35,6 @@ import {
   isInMeleeRange,
   isMagic,
   isOffensive,
-  ignoresLineOfSight,
-  positionRelativeTo,
-  revivesInArea,
   stepMovement,
   simulateMovement,
   lockReleased,
@@ -61,6 +57,7 @@ import {
 } from "@arena/shared";
 import type { ActiveEffect, PlayerRuntime } from "./PlayerRuntime";
 import { addEffect, removeEffect } from "./combat/effectStore";
+import { affectedBy, areEnemies, areaCenter, pickTarget, validateTarget } from "./combat/targeting";
 import { comboError, costOf, dexterityFactor, isSong, powerFactor, splitHealShares, stopsSong, updateRegen, withFalloff } from "./combat/rules";
 
 // Ce dont le système de combat a besoin pour communiquer avec les clients.
@@ -207,8 +204,8 @@ export class CombatSystem {
     const ability = getAbility(abilityId);
     if (!caster?.alive || !ability || !caster.classDef.abilities.includes(abilityId)) return false;
     if (this.checkCanUse(caster, ability, ignoreMovement)) return false;
-    const targetId = this.pickTarget(caster, ability);
-    return !!targetId && !this.validateTarget(caster, ability, targetId) && !comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
+    const targetId = pickTarget(this.players, caster, ability);
+    return !!targetId && !validateTarget(this.players, caster, ability, targetId) && !comboError(ability, caster.state.comboAbility, caster.state.comboTarget, targetId);
   }
 
   useAbility(casterId: string, abilityId: string) {
@@ -224,7 +221,7 @@ export class CombatSystem {
     const error = this.checkCanUse(caster, ability, onlyStickMoves);
     if (error) return this.sendError(caster, error);
 
-    const targetId = this.pickTarget(caster, ability);
+    const targetId = pickTarget(this.players, caster, ability);
     if (!targetId) return this.sendError(caster, "noTarget");
     if (ability.target === "enemy") this.turnTowardsEnemy(caster, targetId);
 
@@ -243,7 +240,7 @@ export class CombatSystem {
       return;
     }
 
-    const targetError = this.validateTarget(caster, ability, targetId);
+    const targetError = validateTarget(this.players, caster, ability, targetId);
     if (targetError) return this.sendError(caster, targetError);
     // Ballade rythmée : agir (autre chose que se déplacer) la fait perdre ; couper son chant ne compte pas.
     // Chant de vitesse : lancer ou couper un chant ne compte pas comme une action.
@@ -342,7 +339,7 @@ export class CombatSystem {
 
     // Les conditions sont revérifiées à la fin : la cible a pu s'éloigner ou se cacher.
     const error =
-      state[ability.resource] < costOf(caster, ability) ? (ability.resource === "mana" ? "noMana" : "noEndurance") : this.validateTarget(caster, ability, targetId);
+      state[ability.resource] < costOf(caster, ability) ? (ability.resource === "mana" ? "noMana" : "noEndurance") : validateTarget(this.players, caster, ability, targetId);
     if (error) return this.sendError(caster, error);
     // Un sort commencé avant la Ballade rythmée la fait perdre en partant.
     this.noteAction(caster);
@@ -379,7 +376,7 @@ export class CombatSystem {
     if (queued) {
       const error =
         this.checkCanUse(attacker, queued, true) ??
-        this.validateTarget(attacker, queued, target.id) ??
+        validateTarget(this.players, attacker, queued, target.id) ??
         comboError(queued, opener, openerTargetId, target.id);
       if (!error) {
         if (this.resolveAbility(attacker, queued, target.id)) {
@@ -429,52 +426,6 @@ export class CombatSystem {
     player.state.comboTarget = "";
   }
 
-  // Détermine la cible de la compétence selon son type.
-  private pickTarget(caster: PlayerRuntime, ability: AbilityDef): string | null {
-    if (ability.target === "self" || ability.target === "enemiesAround") return caster.id;
-    const current = caster.targetId ? this.players.get(caster.targetId) : undefined;
-    if (ability.target === "ally") {
-      // Sans allié vivant ciblé, un soin ou un buff s'applique au lanceur.
-      return current?.alive && !this.areEnemies(caster, current) ? current.id : caster.id;
-    }
-    return current?.id ?? null;
-  }
-
-  // Retourne la raison du refus à envoyer au joueur, ou null si la cible convient.
-  private validateTarget(caster: PlayerRuntime, ability: AbilityDef, targetId: string): GameErrorCode | null {
-    const target = this.players.get(targetId);
-    if (!target) return "targetNotFound";
-    // Intervention divine : il faut au moins un allié mort dans la zone.
-    if (revivesInArea(ability) && this.affectedBy(caster, ability, targetId).length === 0) {
-      return "noDeadAllyInRange";
-    }
-    if (ability.target === "self" || ability.target === "enemiesAround") return null;
-
-    const enemy = this.areEnemies(caster, target);
-    if (ability.target === "enemy" && !enemy) return "notHostile";
-    if (ability.target !== "enemy" && enemy) return "hostile";
-    if (ability.target === "otherAlly" && target === caster) return "needOtherAlly";
-    if (ability.target === "deadAlly") {
-      if (target.alive) return "targetNotDead";
-    } else if (!target.alive) {
-      return "targetDead";
-    }
-
-    if (target !== caster) {
-      // Near sight : la portée des sorts du lanceur est réduite (une incantation finit donc hors de portée).
-      const reduced = isMagic(ability) && caster.has("nearSight");
-      const range = spellRange(ability, caster.has("nearSight"));
-      if (distance(caster.state, target.state) > range) return reduced ? "outOfRangeNearSight" : "outOfRange";
-      if (ability.minRange && distance(caster.state, target.state) < ability.minRange) return "tooClose";
-      if (!hasLineOfSight(caster.state, target.state)) return "noLineOfSight";
-    }
-    if (isOffensive(ability) && !isFacing(caster.state, target.state)) return "notFacing";
-    if (ability.position && positionRelativeTo(target.state, caster.state) !== ability.position) {
-      return ability.position === "back" ? "needBack" : "needSide";
-    }
-    return null;
-  }
-
   // Retourne vrai si une attaque de mêlée a porté sur sa cible (ni évitée ni interceptée) : elle ouvre un combo.
   private resolveAbility(caster: PlayerRuntime, ability: AbilityDef, targetId: string): boolean {
     caster.state[ability.resource] -= costOf(caster, ability);
@@ -491,8 +442,8 @@ export class CombatSystem {
     const used: AbilityUsedEvent = { casterId: caster.id, abilityId: ability.id, targetId };
     this.out.broadcast("ability", used, [caster.id, targetId]);
 
-    const center = this.areaCenter(caster, ability, targetId);
-    const affected = this.affectedBy(caster, ability, targetId);
+    const center = areaCenter(this.players, caster, ability, targetId);
+    const affected = affectedBy(this.players, caster, ability, targetId);
     const split = ability.effects.find((effect) => effect.type === "splitHeal");
     const shares = split ? splitHealShares(caster, split.amount, affected) : undefined;
     // Technique de mêlée ou coup instantané (Coup de pied) : un coup d'arme, qui peut être évité.
@@ -567,33 +518,6 @@ export class CombatSystem {
     target.lastMeleeHitAt = this.time;
     target.lastMeleeAttackerId = source.id;
     return this.avoidMelee(source, target, abilityId);
-  }
-
-  // Centre d'une zone d'effet : la cible pour une compétence visant un ennemi, le lanceur sinon.
-  private areaCenter(caster: PlayerRuntime, ability: AbilityDef, targetId: string): PlayerRuntime {
-    return ability.target === "enemy" ? (this.players.get(targetId) ?? caster) : caster;
-  }
-
-  // Cible unique, ou tous les personnages concernés dans la zone d'effet.
-  private affectedBy(caster: PlayerRuntime, ability: AbilityDef, targetId: string): PlayerRuntime[] {
-    const target = this.players.get(targetId);
-    if (!target) return [];
-    if (!ability.radius) return [target];
-
-    const offensive = isOffensive(ability);
-    // Une compétence qui ressuscite (Intervention divine) touche les alliés morts de la zone.
-    const revives = revivesInArea(ability);
-    const center = this.areaCenter(caster, ability, targetId);
-    // Une déflagration autour du lanceur touche tout ce qui est dans le rayon, obstacles compris ; de même, le Soin de
-    // groupe soigne et l'Intervention divine relève tous les alliés de la zone, même derrière un obstacle.
-    const throughWalls = ignoresLineOfSight(ability);
-    return [...this.players.values()].filter(
-      (p) =>
-        p.alive !== revives &&
-        this.areEnemies(caster, p) === offensive &&
-        distance(center.state, p.state) <= ability.radius! &&
-        (throughWalls || hasLineOfSight(center.state, p.state)),
-    );
   }
 
   private applyEffect(
@@ -1183,7 +1107,7 @@ export class CombatSystem {
   }
 
   private areEnemies(a: PlayerRuntime, b: PlayerRuntime): boolean {
-    return a.state.team !== b.state.team;
+    return areEnemies(a, b);
   }
 
   private emit(event: CombatEvent) {
