@@ -391,7 +391,7 @@ export class CombatSystem {
       }
       this.sendError(attacker, error, error === "combo" ? queued.after : undefined);
     }
-    this.dealDamage(attacker, target, attacker.classDef.autoAttack.damage, "auto", true);
+    this.dealDamage(attacker, target, attacker.classDef.autoAttack.damage, "auto", { melee: true });
   }
 
   // --- Compétences ---
@@ -608,12 +608,12 @@ export class CombatSystem {
     const magic = isMagic(ability);
     switch (effect.type) {
       case "damage":
-        this.dealDamage(caster, target, effect.amount, ability.id, !!ability.melee || !!ability.meleeStrike, avoidanceDone);
+        this.dealDamage(caster, target, effect.amount, ability.id, { melee: !!ability.melee || !!ability.meleeStrike, avoidanceDone });
         break;
       case "dot": {
         // Relancer la Brûlure (ou le Poison) la fait repartir de zéro.
         const ticks = Math.round(effect.duration / DOT_INTERVAL);
-        const dot = addEffect(target, effect.effect ?? "burning", effect.duration, caster.id, effect.amount / ticks);
+        const dot = addEffect(target, effect.effect ?? "burning", effect.duration, caster.id, { value: effect.amount / ticks });
         dot.ticks = { abilityId: ability.id, done: 0, total: ticks, kind: "damage" };
         if (effect.effect === "poisoned") this.emit({ kind: "debuff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "poisoned" });
         break;
@@ -622,7 +622,7 @@ export class CombatSystem {
         // Contrôle physique quand il vient d'une compétence d'endurance (Coup de pied) : le Cri de ralliement n'en
         // protège pas. Ni immunité ensuite, ni cassé par les dégâts ; relancé, il repart de sa durée.
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
-        addEffect(target, "silenced", effect.duration, caster.id, 0, magic);
+        addEffect(target, "silenced", effect.duration, caster.id, { magic });
         // Le chant du Barde se tait : il ne peut pas le relancer tant que dure le silence (c'est une compétence à mana),
         // et devra repayer son activation ensuite.
         target.state.song = "";
@@ -637,7 +637,7 @@ export class CombatSystem {
         // Contrôle magique (le Cri de ralliement en protège et le retire). Il n'interrompt pas : une incantation en
         // cours qui se termine pendant l'effet est le sort oublié. Relancé, il repart de sa durée.
         if (magic && this.resistsMagic(caster, target, ability.id)) break;
-        addEffect(target, "oblivion", effect.duration, caster.id, 0, magic);
+        addEffect(target, "oblivion", effect.duration, caster.id, { magic });
         this.emit({ kind: "cc", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "oblivion" });
         break;
       case "ballad":
@@ -666,7 +666,7 @@ export class CombatSystem {
       case "hot": {
         // Relancé par le même lanceur, il repart de zéro ; ceux de lanceurs différents se cumulent.
         const ticks = Math.round(effect.duration / HOT_INTERVAL);
-        const renew = addEffect(target, "renew", effect.duration, caster.id, effect.amount / ticks, false, true);
+        const renew = addEffect(target, "renew", effect.duration, caster.id, { value: effect.amount / ticks, perSource: true });
         renew.ticks = { abilityId: ability.id, done: 0, total: ticks, kind: "heal" };
         this.emit({ kind: "buff", sourceId: caster.id, targetId: target.id, abilityId: ability.id, detail: "renew" });
         break;
@@ -757,9 +757,9 @@ export class CombatSystem {
     target: PlayerRuntime,
     amount: number,
     abilityId: string,
-    melee: boolean,
-    avoidanceDone = false,
-    dot = false,
+    // melee : coup de mêlée (critique, évitement, Brise armure) ; avoidanceDone : évitement et interception déjà
+    // tranchés (attaque spéciale, Charge) ; dot : tic d'un effet sur la durée.
+    { melee = false, avoidanceDone = false, dot = false }: { melee?: boolean; avoidanceDone?: boolean; dot?: boolean } = {},
   ) {
     if (!target.alive) return;
     // En pleine roulade : ni coup ni tic ne porte (un tic évité ne s'affiche pas, il en tombe un par seconde).
@@ -906,7 +906,7 @@ export class CombatSystem {
       this.emit({ kind: "immune", sourceId: source.id, targetId: target.id, abilityId, detail: cc });
       return;
     }
-    addEffect(target, cc, duration, source.id, 0, options.magic);
+    addEffect(target, cc, duration, source.id, { magic: options.magic });
     source.stats.controls++;
     // Un Gardien mez ou stun perd son Rempart.
     const rampart = cc !== "root" ? target.getEffect("rampart") : undefined;
@@ -969,7 +969,7 @@ export class CombatSystem {
       if (ticks.kind === "heal") {
         // Un tic qui ne soigne rien (cible pleine) n'est pas annoncé : pas de « +0 » flottant ni de voix.
         if (player.state.hp < player.state.maxHp) this.heal(source, player, effect.value, ticks.abilityId);
-      } else this.dealDamage(source, player, effect.value, ticks.abilityId, false, false, true);
+      } else this.dealDamage(source, player, effect.value, ticks.abilityId, { dot: true });
     }
   }
 
@@ -1008,7 +1008,7 @@ export class CombatSystem {
     if (this.resistsMobility(source, target, abilityId)) return;
     const current = target.getEffect("snare");
     if (current && (current.value > slow || (current.value === slow && current.remaining >= duration))) return;
-    addEffect(target, "snare", duration, source.id, slow, magic);
+    addEffect(target, "snare", duration, source.id, { value: slow, magic });
   }
 
   // Ballade rythmée : root et snares sont sans effet. Retourne vrai s'il est résisté.
@@ -1142,7 +1142,7 @@ export class CombatSystem {
       this.emit({ kind: "immune", sourceId: player.id, targetId: target.id, abilityId: "charge", detail: "melee" });
       return;
     }
-    this.dealDamage(player, target, charge.damage, "charge", true, true);
+    this.dealDamage(player, target, charge.damage, "charge", { melee: true, avoidanceDone: true });
     if (target.alive) this.applyControl(player, target, "stun", charge.stun, "charge", { ignoreImmunity: true });
   }
 

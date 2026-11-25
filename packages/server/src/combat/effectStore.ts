@@ -10,10 +10,9 @@ export function addEffect(
   kind: EffectKind,
   duration: number,
   sourceId: string,
-  value = 0,
-  magic = false,
-  // Un effet par lanceur (Renouveau) : seul celui du même lanceur est rafraîchi.
-  perSource = false,
+  // value : valeur propre à l'effet (part de vitesse perdue d'un snare, montant d'un tic) ; magic : posé par un sort ;
+  // perSource : un effet par lanceur (Renouveau), seul celui du même lanceur est rafraîchi.
+  { value = 0, magic = false, perSource = false }: { value?: number; magic?: boolean; perSource?: boolean } = {},
 ): ActiveEffect {
   const existing = perSource ? player.effects.find((e) => e.kind === kind && e.sourceId === sourceId) : player.getEffect(kind);
   if (existing) {
