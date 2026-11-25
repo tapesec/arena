@@ -541,7 +541,6 @@ export class CombatSystem {
     return lastStandBonus(own, other);
   }
 
-  // Gardien qui intercepte le prochain coup visant la cible, s'il est vivant et assez proche.
   // Un Gardien intercepte le coup : il le prend à la place de sa cible, et l'interception est consommée. Renvoie celui
   // qui reçoit le coup (la cible elle-même sans interception).
   private redirectToInterceptor(source: PlayerRuntime, target: PlayerRuntime, abilityId: string): PlayerRuntime {
@@ -553,6 +552,7 @@ export class CombatSystem {
     return interceptor;
   }
 
+  // Gardien qui intercepte le prochain coup visant la cible, s'il est vivant et assez proche.
   private interceptorOf(target: PlayerRuntime): PlayerRuntime | undefined {
     const intercept = target.getEffect("intercept");
     const interceptor = intercept ? this.players.get(intercept.sourceId) : undefined;

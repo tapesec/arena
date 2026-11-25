@@ -27,7 +27,6 @@ export function ReplacedScreen() {
   );
 }
 
-// --- Avant le combat ---
 
 // Écran de chargement : les joueurs des deux équipes (son équipe à gauche), chacun avec sa barre. La partie part quand
 // tout le monde a fini, ou au bout d'une minute ; un joueur en retard continue de charger pendant la préparation.
@@ -68,5 +67,3 @@ export function LoadingScreen() {
     </div>
   );
 }
-
-// --- Pendant le combat ---
