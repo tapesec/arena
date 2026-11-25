@@ -10,6 +10,7 @@ import {
   cleanName,
   getAbility,
   getClass,
+  isIncapacitated,
   type AbilityDef,
   type ClassId,
 } from "@arena/shared";
@@ -886,7 +887,7 @@ function RollSlot({ now }: { now: number }) {
   const reason =
     self.hp <= 0
       ? errorText("dead")
-      : self.effects.some((e) => e.kind === "mez" || e.kind === "stun" || e.kind === "rampart")
+      : isIncapacitated(self.effects)
         ? errorText("incapacitated")
         : self.rooted
           ? errorText("rooted")

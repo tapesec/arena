@@ -1,4 +1,4 @@
-import { isMagic, type AbilityDef, type GameErrorCode } from "@arena/shared";
+import { isIncapacitated, isMagic, type AbilityDef, type GameErrorCode } from "@arena/shared";
 import { abilityName, quote, t, type TextKey } from "./i18n";
 import type { SelfFrame, TargetFrame } from "./store";
 
@@ -30,7 +30,7 @@ const READY: AbilityStatus = { state: "ready", reason: null };
 
 export function abilityStatus(ability: AbilityDef, self: SelfFrame, target: TargetFrame | null): AbilityStatus {
   if (self.hp <= 0) return refused("disabled", "dead");
-  if (self.effects.some((e) => e.kind === "mez" || e.kind === "stun" || e.kind === "rampart")) {
+  if (isIncapacitated(self.effects)) {
     return refused("disabled", "incapacitated");
   }
   if (self.charging) return refused("disabled", "charging");

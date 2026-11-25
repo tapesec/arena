@@ -35,6 +35,7 @@ import {
   NO_INPUT,
   START_ZONES,
   confineToZone,
+  isIncapacitated,
   type ClassId,
   type AbilityUsedEvent,
   type CombatEvent,
@@ -797,15 +798,12 @@ export class Game {
       hasEnemyTarget: !!target && target.isAlive && target.state.team !== state.team,
       bots: [...this.players.values()]
         .filter((p) => p.state.isBot && p.isAlive && p.state.team === state.team)
-        .map((p) => {
-          const effects = kinds(p);
-          return {
-            classId: p.state.classId as ClassId,
-            mana: p.state.mana,
-            song: p.state.song,
-            incapacitated: effects.has("mez") || effects.has("stun") || effects.has("rampart"),
-          };
-        }),
+        .map((p) => ({
+          classId: p.state.classId as ClassId,
+          mana: p.state.mana,
+          song: p.state.song,
+          incapacitated: isIncapacitated(p.state.effects),
+        })),
     };
     return ORDERS.map((id) => ({ id, label: this.orderLabel(id), enabled: orderAvailable(id, situation) }));
   }

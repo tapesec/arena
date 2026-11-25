@@ -1,4 +1,4 @@
-import { NO_INPUT, emptyStats, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
+import { NO_INPUT, emptyStats, isIncapacitated, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
 import type { EffectState, PlayerState } from "./state";
 
 export interface ActiveEffect {
@@ -71,7 +71,7 @@ export class PlayerRuntime {
 
   // Mez, stun, ou Rempart (le Gardien se fige) : ne peut plus agir du tout.
   get incapacitated(): boolean {
-    return this.has("mez") || this.has("stun") || this.has("rampart");
+    return isIncapacitated(this.effects);
   }
 
   // Mez, stun, ou root (qui ne laisse que lentement reprendre de la vitesse).

@@ -56,8 +56,9 @@ function findEffect(effects: Iterable<MovementEffect>, kind: string): MovementEf
   return undefined;
 }
 
-// Mez, stun, ou Rempart (le Gardien se fige) : ne peut plus agir du tout.
-export function isIncapacitated(effects: Iterable<MovementEffect>): boolean {
+// Mez, stun, ou Rempart (le Gardien se fige) : ne peut plus agir du tout. Seule définition de cette règle, pour le
+// serveur, la prédiction, la barre de compétences et la roue des ordres.
+export function isIncapacitated(effects: Iterable<{ kind: string }>): boolean {
   for (const effect of effects) if (effect.kind === "mez" || effect.kind === "stun" || effect.kind === "rampart") return true;
   return false;
 }
