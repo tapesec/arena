@@ -10,7 +10,6 @@ import {
   MOVE_SPEED,
   NO_INPUT,
   STICK_DISTANCE,
-  maxResource,
   pickHero,
   emptyStats,
   type ClassId,
@@ -20,7 +19,7 @@ import {
   type MoveInput,
 } from "@arena/shared";
 import { CombatSystem } from "./CombatSystem";
-import { PlayerRuntime } from "./PlayerRuntime";
+import { PlayerRuntime, initVitals } from "./PlayerRuntime";
 import { EffectState, PlayerState } from "./state";
 
 const DT = 0.05;
@@ -70,9 +69,7 @@ class World {
     state.x = x + OFFSET_X;
     state.z = z;
     state.facing = facing;
-    state.hp = state.maxHp = classDef.maxHp;
-    if (classDef.resource === "mana") state.mana = state.maxMana = maxResource("mana");
-    else state.endurance = state.maxEndurance = maxResource("endurance");
+    initVitals(state, classDef);
     const player = new PlayerRuntime(id, state, classDef);
     this.combat.add(player);
     return player;

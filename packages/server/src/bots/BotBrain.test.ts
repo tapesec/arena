@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CLASSES, MELEE_RANGE, START_ZONES, distance, maxResource, spawnPosition, type ClassId, type OrderId } from "@arena/shared";
+import { CLASSES, MELEE_RANGE, START_ZONES, distance, spawnPosition, type ClassId, type OrderId } from "@arena/shared";
 import { CombatSystem } from "../CombatSystem";
-import { PlayerRuntime } from "../PlayerRuntime";
+import { PlayerRuntime, initVitals } from "../PlayerRuntime";
 import { PlayerState } from "../state";
 import { computeTeamVisibility } from "../visibility";
 import { HUMAN_ERRORS, type BotBrain } from "./BotBrain";
@@ -35,9 +35,7 @@ class Sim {
     state.x = inLane ? x + LANE.x : x;
     state.z = inLane ? z + LANE.z : z;
     state.facing = facing;
-    state.hp = state.maxHp = classDef.maxHp;
-    if (classDef.resource === "mana") state.mana = state.maxMana = maxResource("mana");
-    else state.endurance = state.maxEndurance = maxResource("endurance");
+    initVitals(state, classDef);
     const player = new PlayerRuntime(id, state, classDef);
     this.combat.add(player);
     if (bot) this.bots.push(createBotBrain(player, this.combat, pathfinder));

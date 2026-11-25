@@ -1,4 +1,4 @@
-import { NO_INPUT, emptyStats, isIncapacitated, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
+import { NO_INPUT, emptyStats, isIncapacitated, maxResource, movesBody, type ClassDef, type EffectKind, type MoveInput } from "@arena/shared";
 import type { EffectState, PlayerState } from "./state";
 
 export interface ActiveEffect {
@@ -18,6 +18,13 @@ export interface ActiveEffect {
   ticks?: { abilityId: string; done: number; total: number; kind: "damage" | "heal" };
   // Copie synchronisée vers les clients.
   view: EffectState;
+}
+
+// PV et ressource de départ d'un joueur selon sa classe : tout plein (mana pour les lanceurs, endurance sinon).
+export function initVitals(state: PlayerState, classDef: ClassDef) {
+  state.hp = state.maxHp = classDef.maxHp;
+  if (classDef.resource === "mana") state.mana = state.maxMana = maxResource("mana");
+  else state.endurance = state.maxEndurance = maxResource("endurance");
 }
 
 // Tout ce que le serveur sait d'un joueur, y compris ce qui n'est jamais envoyé aux clients.

@@ -12,7 +12,6 @@ import {
   cleanName,
   confineToZone,
   getClass,
-  maxResource,
   spawnPosition,
   type ClassId,
   type MatchSummary,
@@ -28,7 +27,7 @@ import { dispatchOrder, followHumansAtStart } from "./bots/orders";
 import { botToReplace, initialBotClasses, pickBotClass } from "./bots/composition";
 import { Pathfinder } from "./bots/Pathfinder";
 import { CombatSystem } from "./CombatSystem";
-import { PlayerRuntime } from "./PlayerRuntime";
+import { PlayerRuntime, initVitals } from "./PlayerRuntime";
 import { ArenaState, LoadingState, PlayerState } from "./state";
 import { claimName, nameKey, randomName } from "./names";
 import { computeTeamVisibility } from "./visibility";
@@ -452,9 +451,7 @@ export class ArenaRoom extends Room<{ state: ArenaState }> {
 
     this.state.players.forEach((player, id) => {
       const classDef = getClass(player.classId)!;
-      player.hp = player.maxHp = classDef.maxHp;
-      if (classDef.resource === "mana") player.mana = player.maxMana = maxResource("mana");
-      else player.endurance = player.maxEndurance = maxResource("endurance");
+      initVitals(player, classDef);
 
       const zone = START_ZONES[player.team];
       const spawn = spawnPosition(zone, indexInTeam[player.team]++, teamSizes[player.team]);
