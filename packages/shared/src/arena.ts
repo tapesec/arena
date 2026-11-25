@@ -45,8 +45,6 @@ export const OBSTACLES: Obstacle[] = [
   ...half({ x: 22, z: 34, halfWidth: 4, halfDepth: 0.4, kind: "fence" }),
 ];
 
-export const OBSTACLE_HEIGHT = 3;
-
 // Repousse un cercle (un personnage) hors des obstacles qu'il chevauche.
 export function resolveObstacleCollisions(pos: Position, radius: number): Position {
   let { x, z } = pos;

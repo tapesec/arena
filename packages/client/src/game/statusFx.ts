@@ -180,7 +180,7 @@ export class StatusFx {
       this.updateAuras(status, alive, player, speed);
       status.abilityFx.update(player.character, playing, localTeam === null ? undefined : player.state.team === localTeam);
       this.updateMez(status, mez && !this.tuned(player, "mez"));
-      this.updateStars(status, stun && !this.tuned(player, "stun"), player);
+      this.updateStars(status, stun && !this.tuned(player, "stun"));
       this.updateRoot(status, this.tuned(player, "root") ? 0 : root, player);
       this.updateBubble(status, bubble && !this.tuned(player, "bubble"), this.time - (this.bubbleApplied.get(player.sessionId) ?? -Infinity));
       this.updateNova(status, nova);
@@ -273,7 +273,7 @@ export class StatusFx {
   }
 
   // Étoiles dorées qui tournent autour de la tête.
-  private updateStars(status: PlayerStatus, active: boolean, player: PlayerVisual) {
+  private updateStars(status: PlayerStatus, active: boolean) {
     if (active && !status.stars) {
       status.stars = new TransformNode("stunStars", this.scene);
       status.stars.parent = status.anchor;

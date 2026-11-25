@@ -3,7 +3,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import { PointerEventTypes, type PointerInfo } from "@babylonjs/core/Events/pointerEvents";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
-import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import { CreateDashedLines } from "@babylonjs/core/Meshes/Builders/linesBuilder";
 import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
@@ -344,7 +344,6 @@ export class Game {
       roll: () => this.handleAction("roll"),
     });
 
-    // Accès à la scène depuis la console du navigateur, en développement uniquement.
     // En développement : scène et joueurs accessibles depuis la console du navigateur.
     if (import.meta.env.DEV) {
       Object.assign(window, { scene: this.scene, players: this.players, characterAssets: this.characterAssets, village: this.village, audio, spellEffects: this.spellEffects });

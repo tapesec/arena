@@ -12,7 +12,7 @@ import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder";
 import type { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
-import { getAbility, revivesInArea, type AbilityDef } from "@arena/shared";
+import { getAbility, revivesInArea, terrainHeight } from "@arena/shared";
 import * as P from "./particles";
 import { ParticleFactory, type Recipe } from "./particles";
 import { oneShot, recipeById } from "./particleDefs";
@@ -44,7 +44,6 @@ import objects3d from "./objects3d.json";
 import { Overlays2D, setOverlayDefs, type OverlayDef } from "./overlays2d";
 import overlays2d from "./overlays2d.json";
 import type { Scenery } from "./abilityEffects";
-import { terrainHeight } from "@arena/shared";
 import { tuningOf, zoneCenterIsTarget } from "./abilityAnimations";
 import { TUNING } from "./tuning";
 

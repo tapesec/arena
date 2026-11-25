@@ -34,10 +34,6 @@ export type OrderReply =
   | "alreadyBuffed"
   | "alreadySinging";
 
-export interface OrderMessage {
-  order: OrderId;
-}
-
 export interface BotReplyMessage {
   botId: string;
   reply: OrderReply;
