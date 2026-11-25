@@ -433,7 +433,14 @@ describe("Bots : ordres", () => {
     assert.ok(distance(lame.state, chef.state) <= 5.5, `Lame à ${distance(lame.state, chef.state).toFixed(1)} m`);
   });
 
-  it("Début du combat : une équipe sans humain attend 5 s, puis suit son Gardien qui explore", () => {
+  it("Début du combat : une équipe sans humain attend 5 s, puis suit son Gardien qui explore", (t) => {
+    // Point d'exploration tiré au hasard : suite figée, sinon l'ennemi posé devant le chef peut tomber derrière un
+    // obstacle et le test échouer une fois sur quelques-unes.
+    let seed = 7;
+    t.mock.method(Math, "random", () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    });
     const sim = new Sim();
     const arcaniste = sim.spawn("a", "arcaniste", 0, 0, 0, 0, true);
     const gardien = sim.spawn("g", "gardien", 0, 2, 0, 0, true);
