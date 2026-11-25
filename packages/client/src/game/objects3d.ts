@@ -11,6 +11,7 @@ import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
+import { seededRandom } from "./seededRandom";
 
 // Objets 3D (onglet « Objets 3D » de animation-lab.html), enregistrés dans objects3d.json : une forme simple
 // (sphère, anneau, cylindre, cône, cube, cristal, croissant), seule ou répétée en cercle, lumineuse ou éclairée,
@@ -378,7 +379,7 @@ export class Objects3D {
   createFromDef(def: ObjectDef, at: Vector3, radius?: number): PlacedObject {
     const root = new TransformNode("object3d", this.scene);
     const material = this.takeMaterial(def);
-    const rand = random(def.seed);
+    const rand = seededRandom(def.seed);
     const meshes: Mesh[] = [];
     const count = Math.max(1, Math.round(def.count));
     const arcs = def.form === "arcs";
@@ -718,10 +719,3 @@ function objectMaterial(scene: Scene, def: ObjectDef): StandardMaterial {
   return material;
 }
 
-function random(seed: number): () => number {
-  let state = Math.floor(seed * 9301 + 49297) % 233280 || 1;
-  return () => {
-    state = (state * 9301 + 49297) % 233280;
-    return state / 233280;
-  };
-}

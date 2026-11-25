@@ -20,7 +20,8 @@ import { recipeById, setParticleEffectDefs, type ParticleEffectDef } from "./par
 import particleEffects from "./particleEffects.json";
 import type { PlayerVisual } from "./PlayerVisual";
 import { hasTunedEffects } from "./abilityAnimations";
-import { AbilityEffectPlayer, type Scenery } from "./abilityEffects";
+import { AbilityEffectPlayer, TEAM_COLORS, type Scenery } from "./abilityEffects";
+import { hexToRgb } from "./color";
 import { TUNING } from "./tuning";
 
 // Effets à particules réglés sur la page de réglage (ils remplacent ceux du code de même nom).
@@ -119,8 +120,8 @@ const RAMPART_SPIN_BOOST = 2.5;
 const RAMPART_SPIN_UP = 0.8;
 const RAMPART_LIFT = 0.12;
 // Couleur de la zone (r,g,b) : bleue pour le camp du joueur, rouge pour l'adversaire (comme les tenues).
-const RAMPART_ALLY = "40,120,255";
-const RAMPART_ENEMY = "235,45,20";
+const RAMPART_ALLY = hexToRgb(TEAM_COLORS.ally);
+const RAMPART_ENEMY = hexToRgb(TEAM_COLORS.enemy);
 
 // États qui durent : volutes du mez, étoiles du stun, cristaux de glace du root, bulle irisée.
 export class StatusFx {
