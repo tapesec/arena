@@ -13,9 +13,6 @@ import { Scene } from "@babylonjs/core/scene";
 import { Callbacks, type Room } from "@colyseus/sdk";
 import {
   ARENA_SIZE,
-  EFFECTS,
-  PERMANENT,
-  SPELL_RANGE,
   TAB_TARGET_RANGE,
   terrainHeight,
   distance,
@@ -29,9 +26,7 @@ import {
   spellRange,
   type AbilityDef,
   MELEE_RANGE,
-  positionRelativeTo,
   inputToDirection,
-  isInMeleeRange,
   NO_INPUT,
   START_ZONES,
   confineToZone,
@@ -41,8 +36,6 @@ import {
   type CombatEvent,
   type CooldownEvent,
   type SwingEvent,
-  type EffectCategory,
-  type EffectKind,
   type GameErrorMessage,
   type InterruptEvent,
   type KillEvent,
@@ -55,21 +48,19 @@ import {
   type OrderSituation,
   type OrderId,
 } from "@arena/shared";
-import {
-  useHudStore,
-  type CastFrame,
-  type EffectFrame,
-  type GroupMemberFrame,
-  type MatchFrame,
-  type SelfFrame,
-  type TargetFrame,
-  type LoadingFrame,
-  type TeammateFrame,
-} from "../store";
+import { useHudStore } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay, type StatusIndicator, type TargetMark } from "./WorldOverlay";
 import { ScreenProjector } from "./screenProjection";
 import type { MatchStateView } from "./matchState";
+import {
+  buildGroup,
+  buildLoading,
+  buildMatchFrame,
+  buildSelfFrame,
+  buildTargetFrame,
+  buildTeammates,
+} from "./hudFrames";
 import { createGround, createLights, createSky } from "./environment";
 import { COMMON_SOUND_CHOICES, audio, choiceRecipes } from "../audio/AudioManager";
 import { Nature } from "./nature";
@@ -80,19 +71,25 @@ import { SpellEffects } from "./SpellEffects";
 import { GameAudio } from "./GameAudio";
 import { PROJECTILE_TRAVEL_TIME, isProjectile } from "./spellFx";
 import { errorText } from "../abilityStatus";
-import { abilityName, className, effectLabel, t, type TextKey } from "../i18n";
+import { className, effectLabel, t, type TextKey } from "../i18n";
 import { KeyboardInput, type KeyAction } from "./KeyboardInput";
 import { OrderWheel } from "./OrderWheel";
 import { DOT_STRENGTH, HitGlow, hitDirection, hitStrength } from "./HitGlow";
 import { TargetPointer, edgePoint } from "./TargetPointer";
-import { MAGNET_RADIUS, bestCandidate, rankEnemies, type EnemyCandidate, type EnemyRanking, type TargetCandidate } from "./targeting";
+import {
+  MAGNET_RADIUS,
+  bestCandidate,
+  rankEnemies,
+  type EnemyCandidate,
+  type EnemyRanking,
+  type TargetCandidate,
+} from "./targeting";
 import { CharacterAssets } from "./characterAssets";
 import { LoadingTracker } from "./loading";
 import { lobbyReady, waitForLobby } from "./lobbyPriority";
 import { MovementPredictor, VelocityTracker } from "./prediction";
 import { TUNING } from "./tuning";
 import { MUSIC } from "./commonSounds";
-import { campOf } from "./gameAppearances";
 import { PlayerVisual, type PlayerView } from "./PlayerVisual";
 import { RenderScale } from "./renderScale";
 import { decodeImagesOffThread } from "./imageDecoding";
@@ -1288,106 +1285,13 @@ export class Game {
     this.lastHudRefresh = now;
     const nameOf = (id: string) => this.players.get(id)?.state.name ?? "";
 
-    const selfFrame: SelfFrame | null = self
-      ? {
-          ...unitFrame(self.state, nameOf),
-          classId: self.state.classId,
-          mana: Math.floor(self.state.mana),
-          maxMana: self.state.maxMana,
-          endurance: Math.floor(self.state.endurance),
-          maxEndurance: self.state.maxEndurance,
-          attacking: self.state.attacking,
-          lock: self.state.lock,
-          song: self.state.song,
-          queuedAbility: self.state.queuedAbility,
-          // Le combo ne part que sur la cible de son ouverture.
-          comboAbility: target && self.state.comboTarget === target.sessionId ? self.state.comboAbility : "",
-          charging: self.state.charging,
-          rolling: self.state.rolling,
-          rooted: self.hasEffect("root") || self.hasEffect("halted"),
-        }
-      : null;
-    const targetFrame: TargetFrame | null =
-      self && target
-        ? {
-            ...unitFrame(target.state, nameOf),
-            classId: target.state.classId,
-            mana: Math.floor(target.state.mana),
-            maxMana: target.state.maxMana,
-            endurance: Math.floor(target.state.endurance),
-            maxEndurance: target.state.maxEndurance,
-            isSelf: target === self,
-            isAlly: target.state.team === self.state.team,
-            distance: Math.round(distance(self.state, target.state)),
-            inMeleeRange: isInMeleeRange(self.state, target.state),
-            inLineOfSight: hasLineOfSight(self.state, target.state),
-            position: positionRelativeTo(target.state, self.state),
-          }
-        : null;
-
+    const selfFrame = self ? buildSelfFrame(self, target, nameOf) : null;
+    const targetFrame = self && target ? buildTargetFrame(self, target, nameOf) : null;
     // Soi en premier (F1), puis les coéquipiers dans l'ordre de leurs touches (F2 à F8).
-    const group: GroupMemberFrame[] = self
-      ? [self, ...this.groupMembers()].map((p) => ({
-          id: p.sessionId,
-          isSelf: p === self,
-          name: p.state.name,
-          classId: p.state.classId,
-          hp: p.state.hp,
-          maxHp: p.state.maxHp,
-          mana: Math.floor(p.state.mana),
-          maxMana: p.state.maxMana,
-          endurance: Math.floor(p.state.endurance),
-          maxEndurance: p.state.maxEndurance,
-          casting: castFrame(p.state)?.abilityName ?? null,
-          effects: sortAfflictionsFirst(effectFrames(p.state, nameOf, true)),
-          inRange: p === self || (distance(self.state, p.state) <= SPELL_RANGE && hasLineOfSight(self.state, p.state)),
-          isTarget: p === target,
-        }))
-      : [];
-
-    const state = this.matchState;
-    const myTeam = self?.state.team ?? 0;
-    const matchFrame: MatchFrame = {
-      phase: state.phase,
-      timeLeft: Math.ceil(state.phaseTimeLeft),
-      playerCount: state.playerCount,
-      matchSize: state.matchSize,
-      team: myTeam,
-      alliesAlive: myTeam === 0 ? state.alive0 : state.alive1,
-      enemiesAlive: myTeam === 0 ? state.alive1 : state.alive0,
-      teamSize: state.teamSize,
-      camp: campOf(myTeam, state.campSwap),
-      winner: state.winner,
-    };
-    // Le serveur ne nous envoie que nos coéquipiers pendant le choix des classes.
-    const teammates: TeammateFrame[] = self
-      ? [...this.players.values()]
-          .filter((p) => p.state.team === self.state.team)
-          .map((p) => ({
-            id: p.sessionId,
-            name: p.state.name,
-            classId: p.state.classId,
-            isSelf: p === self,
-            isBot: p.state.isBot,
-            leader: p.state.leader,
-          }))
-          // Soi-même, puis les autres joueurs, puis les bots.
-          .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || Number(a.isBot) - Number(b.isBot))
-      : [];
-
-    // Écran de chargement : tous les joueurs de la partie (le serveur les envoie tous, sans leur classe). Le sien est
-    // pris du suivi local, plus à jour.
-    const loadingState = this.matchState.loading;
-    const loading: LoadingFrame[] = loadingState
-      ? [...loadingState.entries()].map(([id, entry]) => ({
-          id,
-          name: entry.name,
-          team: entry.team,
-          isBot: entry.isBot,
-          isSelf: id === this.room.sessionId,
-          progress: id === this.room.sessionId ? this.sentLoadPercent : entry.progress,
-        }))
-      : [];
+    const group = self ? buildGroup(self, this.groupMembers(), target, nameOf) : [];
+    const matchFrame = buildMatchFrame(this.matchState, self?.state.team ?? 0);
+    const teammates = self ? buildTeammates(self, this.players.values()) : [];
+    const loading = buildLoading(this.matchState.loading, this.room.sessionId, this.sentLoadPercent);
     const loaded = this.loading.progress >= 1;
 
     // On ne prévient React que si quelque chose a réellement changé.
@@ -1414,48 +1318,4 @@ function soundRecipes(tuning: unknown): Set<string> {
   };
   visit(tuning);
   return recipes;
-}
-
-function unitFrame(state: PlayerView, nameOf: (id: string) => string) {
-  return {
-    name: state.name,
-    className: state.classId ? className(state.classId) : "",
-    hp: state.hp,
-    maxHp: state.maxHp,
-    cast: castFrame(state),
-    effects: effectFrames(state, nameOf),
-  };
-}
-
-// Les afflictions d'abord (ce qu'il faut purifier), puis les buffs, puis les immunités.
-const CATEGORY_ORDER: Record<EffectCategory, number> = { control: 0, debuff: 1, buff: 2, immunity: 3 };
-
-function sortAfflictionsFirst(effects: EffectFrame[]): EffectFrame[] {
-  return effects.sort((a, b) => CATEGORY_ORDER[EFFECTS[a.kind].category] - CATEGORY_ORDER[EFFECTS[b.kind].category]);
-}
-
-function castFrame(state: PlayerView): CastFrame | null {
-  if (!state.castAbility || state.castDuration <= 0) return null;
-  return {
-    abilityName: abilityName(state.castAbility),
-    progress: Math.min(1, state.castElapsed / state.castDuration),
-  };
-}
-
-// Durée restante à la seconde, au dixième dans les dernières secondes (compte à rebours) : le HUD n'est pas redessiné
-// à chaque rafraîchissement. coarse : toujours à la seconde (fenêtre de groupe, sans chiffre).
-const FINE_COUNTDOWN = 3;
-function roundRemaining(remaining: number, coarse: boolean): number {
-  if (coarse || remaining >= FINE_COUNTDOWN) return Math.ceil(remaining);
-  return Math.max(0.1, Math.ceil(remaining * 10) / 10);
-}
-
-function effectFrames(state: PlayerView, nameOf: (id: string) => string, coarse = false): EffectFrame[] {
-  return [...state.effects].map((e) => ({
-    kind: e.kind as EffectKind,
-    remaining: e.remaining === PERMANENT ? null : roundRemaining(e.remaining, coarse),
-    duration: e.remaining === PERMANENT || !(e.duration > 0) ? null : e.duration,
-    sourceId: e.source,
-    source: nameOf(e.source),
-  }));
 }
