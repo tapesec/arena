@@ -2,15 +2,20 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { OBSTACLES, hasClearPath, hasLineOfSight, isInsideObstacle, resolveObstacleCollisions } from "./arena";
 
-// Première maison du hameau : 8 × 8 m centrée en (14, 14).
-const house = OBSTACLES[0];
+// Grande maison du hameau : 8 × 8 m centrée en (14, 14).
+const house = OBSTACLES.find((o) => o.x === 14 && o.z === 14)!;
 
 test("une maison coupe le passage et la ligne de vue", () => {
-  assert.deepEqual([house.x, house.z, house.halfWidth, house.halfDepth], [14, 14, 4, 4]);
-  const south = { x: 14, z: 5 };
-  const north = { x: 14, z: 23 };
+  assert.deepEqual([house.halfWidth, house.halfDepth], [4, 4]);
+  // De part et d'autre de la maison, hors de tout autre obstacle.
+  const south = { x: 14, z: 9 };
+  const north = { x: 14, z: 19 };
+  assert.equal(isInsideObstacle(south, 0.5), false);
+  assert.equal(isInsideObstacle(north, 0.5), false);
   assert.equal(hasClearPath(south, north, 0.5), false);
-  assert.equal(hasLineOfSight(south, north), false);
+  // La maison seule suffit à couper la vue.
+  assert.equal(hasLineOfSight(south, north, [house]), false);
+  assert.equal(hasLineOfSight(south, north, []), true);
   // Le long de la façade, à plus d'une marge de distance : le passage est libre.
   assert.equal(hasClearPath({ x: 19, z: 9 }, { x: 19, z: 19 }, 0.5), true);
   // Même segment, marge plus large que l'écart : il frôle la maison.

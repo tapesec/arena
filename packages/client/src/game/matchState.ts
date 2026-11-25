@@ -1,7 +1,8 @@
 import type { MatchPhase } from "@arena/shared";
 
 // Ce que le client lit de l'état de la partie synchronisé par le serveur (voir server/src/state.ts). Avant le premier
-// état reçu, les champs sont encore vides : phase "" en particulier.
+// état reçu, les champs sont encore absents (phase comprise) : ce type décrit l'état une fois reçu, d'où les tests
+// défensifs restés à quelques endroits.
 export interface MatchStateView {
   phase: MatchPhase;
   phaseTimeLeft: number;

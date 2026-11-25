@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { getAbility, type AbilityDef, type EffectKind } from "@arena/shared";
-import { abilityStatus } from "./abilityStatus";
+import { abilityStatus, errorText } from "./abilityStatus";
 import type { SelfFrame, TargetFrame } from "./store";
 
 const ability = (id: string): AbilityDef => {
@@ -76,6 +76,8 @@ test("mort, neutralisé, en Charge ou en roulade : rien ne part", () => {
 
 test("ressource insuffisante, sauf pour couper son chant", () => {
   assert.equal(state(ability("firebolt"), self({ mana: 0 }), enemy()), "unaffordable");
+  assert.equal(state(ability("speedSong"), self({ mana: 0 }), null), "unaffordable");
+  assert.equal(state(ability("speedSong"), self({ mana: 0, song: "speedSong" }), null), "ready");
 });
 
 test("pas de cible qui convienne", () => {
@@ -88,10 +90,15 @@ test("pas de cible qui convienne", () => {
 
 test("hors de portée, trop près ou hors de vue", () => {
   const firebolt = ability("firebolt");
-  assert.equal(state(firebolt, self(), enemy({ distance: firebolt.range + 1 })), "range");
-  assert.equal(state(firebolt, self(), enemy({ inLineOfSight: false })), "range");
   const charge = ability("charge");
-  assert.equal(state(charge, self(), enemy({ distance: (charge.minRange ?? 0) - 1 })), "range");
+  const cases = [
+    [firebolt, enemy({ distance: firebolt.range + 1 }), "outOfRange"],
+    [firebolt, enemy({ inLineOfSight: false }), "noLineOfSight"],
+    [charge, enemy({ distance: (charge.minRange ?? 0) - 1 }), "tooClose"],
+  ] as const;
+  for (const [def, target, code] of cases) {
+    assert.deepEqual(abilityStatus(def, self(), target), { state: "range", reason: errorText(code) });
+  }
 });
 
 test("technique de dos : refusée de face, prête dans le dos", () => {
