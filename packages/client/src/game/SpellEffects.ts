@@ -86,6 +86,8 @@ interface TransientEffect {
   // progress : de 0 (début) à 1 (fin).
   animate(progress: number): void;
   onEnd?(): void;
+  // Effet interrompu avant sa fin (page de réglage relancée) : arrêter ce qui le suit encore, sans son arrivée.
+  onCancel?(): void;
   // Forme de la réserve : rendue à la réserve à la fin au lieu d'être détruite.
   pool?: PooledShape;
 }
@@ -365,7 +367,10 @@ export class SpellEffects {
 
   // Efface les effets passagers en cours (projectiles, impulsions, brûlures…) : la page de réglage relance sa lecture.
   clearTransient() {
-    for (const effect of this.effects) this.release(effect);
+    for (const effect of this.effects) {
+      effect.onCancel?.();
+      this.release(effect);
+    }
     this.effects = [];
     for (const item of this.attached) item.system.stop();
     this.attached = [];
@@ -396,6 +401,14 @@ export class SpellEffects {
     mesh.position.copyFrom(from);
     // Les traînées suivent la position du projectile (même vecteur) ; arrêtées à l'arrivée, elles s'éteignent seules.
     const trails = recipes(visual?.trail).map((recipe) => recipe(this.particles, mesh.position));
+    const stopTrails = () => {
+      for (const trail of trails) {
+        if (!trail) continue;
+        // L'émetteur ne doit plus suivre le projectile, qui va disparaître.
+        trail.emitter = mesh.position.clone();
+        trail.stop();
+      }
+    };
     this.effects.push({
       mesh,
       age: 0,
@@ -407,14 +420,11 @@ export class SpellEffects {
         Vector3.LerpToRef(from, to, progress, mesh.position);
       },
       onEnd: () => {
-        for (const trail of trails) {
-          if (!trail) continue;
-          // L'émetteur ne doit plus suivre le projectile, qui va disparaître.
-          trail.emitter = mesh.position.clone();
-          trail.stop();
-        }
+        stopTrails();
         if (!target.isDisposed()) onArrive();
       },
+      // Les traînées lisent la position de la sphère, qui repartira avec un autre projectile : elles doivent s'arrêter.
+      onCancel: stopTrails,
     });
   }
 

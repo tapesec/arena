@@ -355,6 +355,8 @@ interface Live {
 const DEG = Math.PI / 180;
 // Matériaux gardés prêts au-delà desquels ceux qui ne servent plus sont détruits.
 const MAX_SPARE_MATERIALS = 48;
+// Modèles de formes gardés au-delà desquels ceux qui ne servent plus sont détruits.
+const MAX_SPARE_FORMS = 32;
 
 export class Objects3D {
   private live: Live[] = [];
@@ -564,10 +566,22 @@ export class Objects3D {
       model.isPickable = false;
       model.setEnabled(false);
       this.forms.set(key, model);
+      this.dropSpareForms();
     }
     const mesh = new Mesh("object3d", this.scene);
     model.geometry?.applyToMesh(mesh);
     return mesh;
+  }
+
+  // Trop de modèles (épaisseurs essayées à la suite sur la page de réglage) : ceux qu'aucun exemplaire n'utilise sont
+  // détruits.
+  private dropSpareForms() {
+    if (this.forms.size <= MAX_SPARE_FORMS) return;
+    for (const [key, model] of this.forms) {
+      if ((model.geometry?.meshes.length ?? 0) > 1) continue;
+      model.dispose();
+      this.forms.delete(key);
+    }
   }
 
   // Matériau d'un réglage, partagé par ses exemplaires (il n'est jamais modifié après sa création).
