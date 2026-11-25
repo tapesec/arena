@@ -60,6 +60,10 @@ const SLASH_DURATION = 0.25;
 const BUBBLE_POP_DURATION = 0.3;
 const BEAM_DURATION = 1.4;
 const BEAM_HEIGHT = 9;
+// Couleurs de l'éclatement de la bulle, de l'estafilade et du rayon de lumière.
+const BUBBLE_POP_COLOR = new Color3(0.75, 0.65, 1);
+const SLASH_COLOR = new Color3(1, 0.95, 0.8);
+const BEAM_COLOR = new Color3(1, 0.85, 0.45);
 // Le disque qui montre la portée exacte d'une zone reste, plus discret quand des particules l'accompagnent.
 const AREA_ALPHA = 0.45;
 const AREA_ALPHA_WITH_PARTICLES = 0.22;
@@ -82,12 +86,24 @@ interface TransientEffect {
   // progress : de 0 (début) à 1 (fin).
   animate(progress: number): void;
   onEnd?(): void;
+  // Forme de la réserve : rendue à la réserve à la fin au lieu d'être détruite.
+  pool?: PooledShape;
+}
+
+// Formes des effets passagers les plus fréquents (chaque sort, chaque coup spécial) : gardées en réserve et réutilisées.
+// Créer un maillage et son matériau prenait 0,5 à 1 ms à chaque fois, de quoi saccader dans les grosses mêlées.
+type PooledShape = "projectile" | "pulse" | "melee" | "area" | "slash" | "beam" | "bubblePop";
+
+interface PooledMesh {
+  mesh: Mesh;
+  material: StandardMaterial;
 }
 
 // Effets visuels des compétences : projectiles, impulsions, impacts, zones,
 // et liens entre un Gardien et le joueur qu'il protège.
 export class SpellEffects {
   private effects: TransientEffect[] = [];
+  private pools = new Map<PooledShape, PooledMesh[]>();
   private guardLinks = new Map<string, LinesMesh>();
   private particles: ParticleFactory;
   // Effets qui suivent un personnage un moment (brûlure…) : leur point d'attache est recopié à chaque image.
@@ -206,17 +222,11 @@ export class SpellEffects {
   bubblePop(anchor: TransformNode) {
     const center = anchor.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
     oneShot(recipeById("bubbleShards")(this.particles, center.clone()));
-    const ring = CreateTorus("bubblePop", { diameter: 2.4, thickness: 0.1, tessellation: 48 }, this.scene);
-    ring.rotation.x = Math.PI / 2;
-    ring.bakeCurrentTransformIntoVertices();
-    ring.billboardMode = Mesh.BILLBOARDMODE_ALL;
-    const material = this.glowMaterial(new Color3(0.75, 0.65, 1), 1);
-    material.alphaMode = Constants.ALPHA_ADD;
-    ring.material = material;
-    ring.isPickable = false;
+    const { mesh: ring, material } = this.take("bubblePop", BUBBLE_POP_COLOR, 1);
     ring.position.copyFrom(center);
     this.effects.push({
       mesh: ring,
+      pool: "bubblePop",
       age: 0,
       duration: BUBBLE_POP_DURATION,
       animate: (progress) => {
@@ -246,26 +256,12 @@ export class SpellEffects {
 
   // Estafilade : croissant lumineux tourné vers la caméra, incliné au hasard, qui s'élargit et s'éteint.
   private spawnSlash(at: Vector3) {
-    const outer: Vector3[] = [];
-    const inner: Vector3[] = [];
-    for (let i = 0; i <= 16; i++) {
-      const t = i / 16;
-      const angle = -1.1 + t * 2.2;
-      // Plus épais au milieu, effilé aux deux bouts.
-      const thickness = 0.28 * Math.sin(Math.PI * t);
-      outer.push(new Vector3(Math.sin(angle), Math.cos(angle) - 0.5, 0));
-      inner.push(new Vector3(Math.sin(angle) * (1 - thickness), (Math.cos(angle) - 0.5) * (1 - thickness) - thickness * 0.5, 0));
-    }
-    const mesh = CreateRibbon("slash", { pathArray: [outer, inner], sideOrientation: Mesh.DOUBLESIDE }, this.scene);
-    const material = this.glowMaterial(new Color3(1, 0.95, 0.8), 1);
-    material.alphaMode = Constants.ALPHA_ADD;
-    mesh.material = material;
-    mesh.isPickable = false;
-    mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
+    const { mesh, material } = this.take("slash", SLASH_COLOR, 1);
     mesh.position.copyFrom(at);
     mesh.rotation.z = Math.random() * Math.PI * 2;
     this.effects.push({
       mesh,
+      pool: "slash",
       age: 0,
       duration: SLASH_DURATION,
       animate: (progress) => {
@@ -277,15 +273,11 @@ export class SpellEffects {
 
   // Rayon de lumière dorée qui descend du ciel sur le personnage, puis s'estompe.
   private spawnBeam(feet: Vector3) {
-    const mesh = CreateCylinder("beam", { height: BEAM_HEIGHT, diameterTop: 1.6, diameterBottom: 1, tessellation: 24, cap: Mesh.NO_CAP }, this.scene);
-    const material = this.glowMaterial(new Color3(1, 0.85, 0.45), 0);
-    material.alphaMode = Constants.ALPHA_ADD;
-    material.backFaceCulling = false;
-    mesh.material = material;
-    mesh.isPickable = false;
+    const { mesh, material } = this.take("beam", BEAM_COLOR, 0);
     mesh.position.set(feet.x, feet.y + BEAM_HEIGHT / 2, feet.z);
     this.effects.push({
       mesh,
+      pool: "beam",
       age: 0,
       duration: BEAM_DURATION,
       animate: (progress) => {
@@ -347,8 +339,9 @@ export class SpellEffects {
       effect.age += dt;
       if (effect.age >= effect.duration) {
         this.effects = this.effects.filter((e) => e !== effect);
-        effect.mesh.dispose(false, true);
+        // Avant de rendre la forme : la fin d'un projectile lit encore sa position.
         effect.onEnd?.();
+        this.release(effect);
         continue;
       }
       effect.animate(effect.age / effect.duration);
@@ -372,7 +365,7 @@ export class SpellEffects {
 
   // Efface les effets passagers en cours (projectiles, impulsions, brûlures…) : la page de réglage relance sa lecture.
   clearTransient() {
-    for (const effect of this.effects) effect.mesh.dispose(false, true);
+    for (const effect of this.effects) this.release(effect);
     this.effects = [];
     for (const item of this.attached) item.system.stop();
     this.attached = [];
@@ -380,6 +373,8 @@ export class SpellEffects {
 
   dispose() {
     for (const effect of this.effects) effect.mesh.dispose(false, true);
+    for (const pool of this.pools.values()) for (const { mesh } of pool) mesh.dispose(false, true);
+    this.pools.clear();
     for (const line of this.guardLinks.values()) line.dispose();
     this.statuses.dispose();
     this.targets.dispose();
@@ -394,10 +389,10 @@ export class SpellEffects {
   // Projectile qui suit la cible même si elle bouge pendant le vol : un cœur lumineux, et sa traînée de particules.
   private launchProjectile(fx: AbilityFx, visual: CodeVisual | undefined, caster: TransformNode, target: TransformNode, onArrive: () => void) {
     const from = caster.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
-    const mesh = CreateSphere("projectile", { diameter: visual?.core ?? 0.45, segments: 8 }, this.scene);
-    mesh.material = this.glowMaterial(fx.color, 1);
-    mesh.isPickable = false;
-    mesh.isVisible = (visual?.core ?? 0.45) > 0;
+    const core = visual?.core ?? 0.45;
+    const { mesh } = this.take("projectile", fx.color, 1);
+    mesh.scaling.setAll(core);
+    mesh.isVisible = core > 0;
     mesh.position.copyFrom(from);
     // Les traînées suivent la position du projectile (même vecteur) ; arrêtées à l'arrivée, elles s'éteignent seules.
     const trails = recipes(visual?.trail).map((recipe) => recipe(this.particles, mesh.position));
@@ -405,6 +400,7 @@ export class SpellEffects {
       mesh,
       age: 0,
       duration: PROJECTILE_TRAVEL_TIME,
+      pool: "projectile",
       animate: (progress) => {
         if (target.isDisposed()) return;
         const to = target.getAbsolutePosition().add(new Vector3(0, BODY_CENTER, 0));
@@ -424,12 +420,10 @@ export class SpellEffects {
 
   // Sphère translucide qui grossit et s'estompe autour du personnage.
   private spawnPulse(color: Color3, anchor: TransformNode, size: number) {
-    const mesh = CreateSphere("pulse", { diameter: 1, segments: 12 }, this.scene);
-    const material = this.glowMaterial(color, 0.5);
-    mesh.material = material;
-    mesh.isPickable = false;
+    const { mesh, material } = this.take("pulse", color, 0.5);
     this.effects.push({
       mesh,
+      pool: "pulse",
       age: 0,
       duration: PULSE_DURATION,
       animate: (progress) => {
@@ -442,15 +436,13 @@ export class SpellEffects {
 
   // Éclair bref et aplati à l'impact d'un coup spécial de mêlée.
   private spawnMelee(color: Color3, anchor: TransformNode) {
-    const mesh = CreateSphere("meleeHit", { diameter: 1, segments: 8 }, this.scene);
-    const material = this.glowMaterial(color, 0.9);
-    mesh.material = material;
-    mesh.isPickable = false;
+    const { mesh, material } = this.take("melee", color, 0.9);
     mesh.position.copyFrom(anchor.getAbsolutePosition()).y += BODY_CENTER;
     this.effects.push({
       mesh,
       age: 0,
       duration: MELEE_DURATION,
+      pool: "melee",
       animate: (progress) => {
         mesh.scaling.set(1.4 * (0.5 + progress), 0.25, 1.4 * (0.5 + progress));
         material.alpha = 0.9 * (1 - progress);
@@ -460,16 +452,14 @@ export class SpellEffects {
 
   // Disque au sol qui s'étend jusqu'au rayon de la zone d'effet, puis s'estompe.
   private spawnArea(color: Color3, center: Vector3, radius: number, alpha = AREA_ALPHA) {
-    const mesh = CreateDisc("area", { radius: 1, tessellation: 48 }, this.scene);
-    const material = this.glowMaterial(color, alpha);
-    mesh.material = material;
-    mesh.isPickable = false;
+    const { mesh, material } = this.take("area", color, alpha);
     mesh.rotation.x = Math.PI / 2;
     mesh.position.set(center.x, center.y + 0.06, center.z);
     this.effects.push({
       mesh,
       age: 0,
       duration: AREA_DURATION,
+      pool: "area",
       animate: (progress) => {
         mesh.scaling.setAll(radius * Math.min(1, 0.3 + progress * 2));
         material.alpha = alpha * (1 - progress);
@@ -497,6 +487,68 @@ export class SpellEffects {
     });
   }
 
+  // Forme de la réserve, remise à zéro (position, rotation, échelle), avec sa couleur et son opacité.
+  private take(shape: PooledShape, color: Color3, alpha: number): PooledMesh {
+    const item = this.pools.get(shape)?.pop() ?? this.createShape(shape);
+    const { mesh, material } = item;
+    mesh.position.setAll(0);
+    mesh.rotation.setAll(0);
+    mesh.scaling.setAll(1);
+    mesh.isVisible = true;
+    mesh.setEnabled(true);
+    material.emissiveColor.copyFrom(color);
+    material.alpha = alpha;
+    return item;
+  }
+
+  // Fin d'un effet passager : sa forme retourne à la réserve (cachée), les autres sont détruites.
+  private release(effect: TransientEffect) {
+    if (!effect.pool) {
+      effect.mesh.dispose(false, true);
+      return;
+    }
+    effect.mesh.setEnabled(false);
+    const pool = this.pools.get(effect.pool) ?? [];
+    pool.push({ mesh: effect.mesh, material: effect.mesh.material as StandardMaterial });
+    this.pools.set(effect.pool, pool);
+  }
+
+  // Maillage et matériau propres à une forme de la réserve, créés une fois.
+  private createShape(shape: PooledShape): PooledMesh {
+    let mesh: Mesh;
+    switch (shape) {
+      case "projectile":
+      case "melee":
+        mesh = CreateSphere(shape, { diameter: 1, segments: 8 }, this.scene);
+        break;
+      case "pulse":
+        mesh = CreateSphere("pulse", { diameter: 1, segments: 12 }, this.scene);
+        break;
+      case "area":
+        mesh = CreateDisc("area", { radius: 1, tessellation: 48 }, this.scene);
+        break;
+      case "slash":
+        mesh = CreateRibbon("slash", { pathArray: slashPaths(), sideOrientation: Mesh.DOUBLESIDE }, this.scene);
+        mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
+        break;
+      case "beam":
+        mesh = CreateCylinder("beam", { height: BEAM_HEIGHT, diameterTop: 1.6, diameterBottom: 1, tessellation: 24, cap: Mesh.NO_CAP }, this.scene);
+        break;
+      case "bubblePop":
+        mesh = CreateTorus("bubblePop", { diameter: 2.4, thickness: 0.1, tessellation: 48 }, this.scene);
+        mesh.rotation.x = Math.PI / 2;
+        mesh.bakeCurrentTransformIntoVertices();
+        mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
+        break;
+    }
+    const material = this.glowMaterial(new Color3(), 1);
+    if (shape === "slash" || shape === "beam" || shape === "bubblePop") material.alphaMode = Constants.ALPHA_ADD;
+    if (shape === "beam") material.backFaceCulling = false;
+    mesh.material = material;
+    mesh.isPickable = false;
+    return { mesh, material };
+  }
+
   // Matériau lumineux, insensible à l'éclairage de la scène.
   private glowMaterial(color: Color3, alpha: number): StandardMaterial {
     const material = new StandardMaterial("fx", this.scene);
@@ -506,4 +558,18 @@ export class SpellEffects {
     material.alpha = alpha;
     return material;
   }
+}
+
+// Estafilade : croissant plus épais au milieu, effilé aux deux bouts (bord extérieur, bord intérieur).
+function slashPaths(): Vector3[][] {
+  const outer: Vector3[] = [];
+  const inner: Vector3[] = [];
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16;
+    const angle = -1.1 + t * 2.2;
+    const thickness = 0.28 * Math.sin(Math.PI * t);
+    outer.push(new Vector3(Math.sin(angle), Math.cos(angle) - 0.5, 0));
+    inner.push(new Vector3(Math.sin(angle) * (1 - thickness), (Math.cos(angle) - 0.5) * (1 - thickness) - thickness * 0.5, 0));
+  }
+  return [outer, inner];
 }

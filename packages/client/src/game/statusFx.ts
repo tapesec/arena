@@ -279,7 +279,7 @@ export class StatusFx {
       status.stars.parent = status.anchor;
       status.stars.position.y = HEAD + 0.1;
       for (let i = 0; i < STARS; i++) {
-        const star = CreatePlane("stunStar", { size: 0.32 }, this.scene);
+        const star = sharedForm(this.scene, "stunStar", () => CreatePlane("stunStar", { size: 0.32 }, this.scene));
         star.material = this.starMaterial;
         star.billboardMode = Mesh.BILLBOARDMODE_ALL;
         star.isPickable = false;
@@ -421,12 +421,32 @@ function remaining(player: PlayerVisual, kind: string): number {
   return 0;
 }
 
+// Modèles cachés des formes répétées (étoiles du stun, cristaux du root), un par scène : chaque exemplaire partage
+// leur géométrie au lieu de la recalculer (bien plus rapide qu'un nouveau maillage à chaque contrôle).
+const formModels = new WeakMap<Scene, Map<string, Mesh>>();
+function sharedForm(scene: Scene, key: string, build: () => Mesh): Mesh {
+  let models = formModels.get(scene);
+  if (!models) formModels.set(scene, (models = new Map()));
+  let model = models.get(key);
+  if (!model || model.isDisposed()) {
+    model = build();
+    model.isPickable = false;
+    model.setEnabled(false);
+    models.set(key, model);
+  }
+  const mesh = new Mesh(key, scene);
+  model.geometry?.applyToMesh(mesh);
+  return mesh;
+}
+
 // Cristaux pointus, légèrement inclinés vers l'extérieur, en cercle autour des pieds.
 function crystalCrown(scene: Scene, material: StandardMaterial): TransformNode {
   const crown = new TransformNode("rootCrystals", scene);
   for (let i = 0; i < CRYSTALS; i++) {
     const height = 0.55 + ((i * 37) % 10) / 20;
-    const crystal = CreateCylinder("crystal", { height, diameterTop: 0, diameterBottom: 0.28, tessellation: 4 }, scene);
+    // Cristal de hauteur 1, étiré à sa hauteur.
+    const crystal = sharedForm(scene, "crystal", () => CreateCylinder("crystal", { height: 1, diameterTop: 0, diameterBottom: 0.28, tessellation: 4 }, scene));
+    crystal.scaling.y = height;
     crystal.material = material;
     crystal.isPickable = false;
     crystal.parent = crown;
