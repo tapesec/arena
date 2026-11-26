@@ -58,6 +58,92 @@ console.log("avant : repère Tripo", frame(byName(tripo)), "repère réf.", fram
 console.log("après : repère Tripo", frame(byName(tripo)));
 
 // Nouvelles matrices monde, du haut vers le bas de la hiérarchie.
+// Pose de repos : nos animations partent de bras à l'horizontale (pose en T). Un modèle généré dans une autre pose
+// (pose A, bras baissés) est d'abord mis dans la nôtre : chaque os des membres est tourné pour pointer vers son enfant
+// dans la même direction que chez nous, le maillage suit (habillage), puis cette pose devient la pose de repos. Les
+// animations ramènent ensuite les bras en bas, et le maillage retrouve sa forme d'origine (cape qui pend).
+{
+  const CHAINS = { clavicle: "upperarm", upperarm: "lowerarm", lowerarm: "hand", hand: "middle_01", thigh: "calf", calf: "foot", foot: "ball" };
+  for (const finger of ["thumb", "index", "middle", "ring", "pinky"]) Object.assign(CHAINS, { [`${finger}_01`]: `${finger}_02`, [`${finger}_02`]: `${finger}_03` });
+  const childOf = (name) => {
+    for (const side of ["l", "r"]) {
+      for (const [from, to] of Object.entries(CHAINS)) if (name === `${from}_${side}`) return `${to}_${side}`;
+    }
+    return null;
+  };
+  const tripoNodes = byName(tripo);
+  const position = (m) => parts(m).t;
+  const posed = new Map();
+  let turned = 0;
+  const pose = (node, parentWorld) => {
+    const local = Matrix.FromArray(node.getMatrix());
+    let w = local.multiply(parentWorld);
+    const childName = childOf(node.getName().toLowerCase());
+    const child = childName && tripoNodes.get(childName);
+    const refFrom = refNodes.get(node.getName().toLowerCase()), refTo = childName && refNodes.get(childName);
+    if (child && refFrom && refTo && child.getParentNode() === node) {
+      const have = position(Matrix.FromArray(child.getMatrix()).multiply(w)).subtract(position(w)).normalize();
+      const want = position(world(refTo)).subtract(position(world(refFrom))).normalize();
+      const axis = Vector3.Cross(have, want);
+      const angle = Math.acos(Math.min(1, Math.max(-1, Vector3.Dot(have, want))));
+      if (axis.length() > 1e-6 && angle > 1e-4) {
+        const p = position(w);
+        const rotation = Matrix.RotationAxis(axis.normalize(), angle);
+        w = w.multiply(Matrix.Translation(-p.x, -p.y, -p.z)).multiply(rotation).multiply(Matrix.Translation(p.x, p.y, p.z));
+        turned++;
+      }
+    }
+    posed.set(node, w);
+    for (const c of node.listChildren()) pose(c, w);
+  };
+  for (const scene of tripo.getRoot().listScenes()) for (const top of scene.listChildren()) pose(top, Matrix.Identity());
+
+  // Maillage habillé dans cette pose (positions et normales en coordonnées du monde, comme le veut l'habillage glTF).
+  const ibm = skin.getInverseBindMatrices();
+  const ibmArray = ibm.getArray();
+  const skinMatrices = joints.map((j, i) => Matrix.FromArray(ibmArray, i * 16).multiply(posed.get(j)));
+  const done = new Set();
+  for (const node of tripo.getRoot().listNodes()) {
+    if (node.getSkin() !== skin || !node.getMesh()) continue;
+    for (const primitive of node.getMesh().listPrimitives()) {
+      const pos = primitive.getAttribute("POSITION"), nor = primitive.getAttribute("NORMAL");
+      if (done.has(pos)) continue;
+      done.add(pos);
+      const J = primitive.getAttribute("JOINTS_0").getArray(), W = primitive.getAttribute("WEIGHTS_0").getArray();
+      const P = pos.getArray().slice(), N = nor?.getArray().slice();
+      for (let v = 0; v < pos.getCount(); v++) {
+        const p = new Vector3(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]);
+        const n = N ? new Vector3(N[v * 3], N[v * 3 + 1], N[v * 3 + 2]) : null;
+        const outP = Vector3.Zero(), outN = Vector3.Zero();
+        for (let k = 0; k < 4; k++) {
+          const weight = W[v * 4 + k];
+          if (!weight) continue;
+          const m = skinMatrices[J[v * 4 + k]];
+          outP.addInPlace(Vector3.TransformCoordinates(p, m).scale(weight));
+          if (n) outN.addInPlace(Vector3.TransformNormal(n, m).scale(weight));
+        }
+        P.set(outP.asArray(), v * 3);
+        if (N) N.set(outN.normalize().asArray(), v * 3);
+      }
+      pos.setArray(P);
+      if (N) nor.setArray(N);
+    }
+    // Sommets désormais en coordonnées du monde : le nœud du maillage ne doit plus rien transformer.
+    node.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1]).setScale([1, 1, 1]);
+  }
+  // La pose devient la pose de repos : transformations locales des os, et matrices de liaison = inverse du monde.
+  for (const [node, w] of posed) {
+    const parent = node.getParentNode();
+    const local = parent ? w.multiply(Matrix.Invert(posed.get(parent))) : w;
+    const { s, r, t } = parts(local);
+    node.setTranslation(t.asArray()).setRotation(r.normalize().asArray()).setScale(s.asArray());
+  }
+  const array = ibmArray.slice();
+  joints.forEach((j, i) => Matrix.Invert(posed.get(j)).copyToArray(array, i * 16));
+  ibm.setArray(array);
+  console.log({ osMisEnPoseT: turned });
+}
+
 // Tous les nœuds sont concernés, pas seulement les os : le nœud « Armature », parent des os, doit aussi avoir
 // l'orientation du nôtre, sinon les animations de l'os racine le remettent de travers.
 const allNodes = tripo.getRoot().listNodes();
