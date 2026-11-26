@@ -128,17 +128,9 @@
     ],
     "arcaniste": [
       {
-        "model": "HumanTeen_Female",
-        "headOnly": true,
-        "parts": [
-          "Female_Noble_Arms",
-          "Female_Noble_Legs",
-          "Female_Noble_Feet",
-          "Female_Wizard_Body"
-        ],
-        "hair": [
-          "Hair_Long_Teen"
-        ],
+        "model": "custom:Arcaniste_Tripo",
+        "parts": [],
+        "hair": [],
         "weapons": [
           {
             "item": "UltimateRPGItems/Book1_Open",
@@ -149,20 +141,7 @@
             "slot": "right"
           }
         ],
-        "accessories": [
-          "HF_Amr_Hat_Witch_01",
-          "HF_Amr_Cape_Royal_Fur_01",
-          "HF_Gear_Bandolier_Potions_01"
-        ],
-        "outfitColors": {
-          "Noble": {
-            "variant": 2
-          },
-          "Wizard": {
-            "variant": 2
-          }
-        },
-        "hairColor": "#ff6f00"
+        "accessories": []
       },
       {
         "model": "monster:Cultist",
@@ -996,6 +975,36 @@
           0.3304
         ],
         "scale": 0.6718
+      }
+    },
+    "custom:Arcaniste_Tripo": {
+      "Hearthfold/HF_Wep_Staff_Legendary_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.0229,
+          0.0765,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.60255
+      },
+      "UltimateRPGItems/Book1_Open@left": {
+        "bone": "hand_l",
+        "position": [
+          0.0303,
+          0.1656,
+          0.0388
+        ],
+        "rotation": [
+          -0.1913,
+          2.9532,
+          1.7763
+        ],
+        "scale": 0.00217
       }
     }
   }

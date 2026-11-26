@@ -7,6 +7,7 @@ import {
   accessoryKey,
   accessorySocket,
   isInstrument,
+  isCustom,
   isMonster,
   playKey,
   weaponKey,
@@ -124,7 +125,7 @@ function itemPaint(appearance: Appearance, item: string): Pick<MountedItem, "col
 }
 
 export function genderOf(model: string): string | null {
-  return isMonster(model) ? null : (CATALOG.bodies.find((b) => b.id === model)?.gender ?? null);
+  return isMonster(model) || isCustom(model) ? null : (CATALOG.bodies.find((b) => b.id === model)?.gender ?? null);
 }
 
 // Tous les objets du modèle, avec leur clé de placement.

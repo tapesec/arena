@@ -166,9 +166,22 @@ export function monsterModel(id: string): string {
   return `${MONSTER}${id}`;
 }
 
+// Modèle complet, déjà habillé (généré avec Tripo), sur notre squelette (axes et noms des os Quaternius, voir
+// scripts/align-tripo-skeleton.mjs) : nos animations s'y branchent par nom d'os, sans ses déplacements d'os (autres
+// proportions) sauf celui du bassin. Pas de tenue ni de coiffure.
+const CUSTOM = "custom:";
+export const CUSTOM_MODELS: Record<string, string> = { Arcaniste_Tripo: "Arcaniste (Tripo)" };
+export function isCustom(model: string): boolean {
+  return model.startsWith(CUSTOM);
+}
+export function customModel(id: string): string {
+  return `${CUSTOM}${id}`;
+}
+
 // Fichier (dans public/dev-models/appearance/) du modèle de base.
 export function modelFile(appearance: Appearance): string {
   if (isMonster(appearance.model)) return `monsters/${appearance.model.slice(MONSTER.length)}.glb`;
+  if (isCustom(appearance.model)) return `custom/${appearance.model.slice(CUSTOM.length)}.glb`;
   return `bodies/${appearance.model}${appearance.headOnly ? "_Head" : ""}.glb`;
 }
 

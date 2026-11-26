@@ -1,5 +1,5 @@
 import { Animation } from "@babylonjs/core/Animations/animation";
-import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { AnimatorAvatar } from "@babylonjs/core/Animations/animatorAvatar";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -20,6 +20,7 @@ import {
   appearanceUrl,
   boneName,
   isHairCut,
+  isCustom,
   isMonster,
   modelFile,
   PLAY_FRAME,
@@ -477,7 +478,8 @@ export class CharacterAssets {
   // Éditeur d'apparence : textures de couleur (variantes, teintes), chargées une fois par fichier et par teinte, avec le
   // nombre de personnages qui s'en servent (une texture teinte est libérée quand plus personne ne l'utilise).
   private colorTextures = new Map<string, { texture: Promise<Texture>; uses: number }>();
-  // Éditeur d'apparence : animations reciblées une fois par monstre, sur un exemplaire caché (voir createCustom).
+  // Éditeur d'apparence : animations reciblées une fois par monstre (ou adaptées une fois par modèle complet), sur un
+  // exemplaire caché (voir createCustom).
   private monsterAnimations = new Map<string, Promise<AnimationGroup[]>>();
 
   // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
@@ -729,7 +731,8 @@ export class CharacterAssets {
   ): Promise<CharacterInstance> {
     const url = body ? (file: string) => file : appearanceUrl;
     const monster = isMonster(appearance.model);
-    const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
+    const custom = isCustom(appearance.model);
+    const pieceFiles = monster || custom ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
     // Textures de couleur réservées dès le départ : rendues si la création échoue. Pour chaque objet dont des cases de
     // la palette Hearthfold sont repeintes, sa palette repeinte.
     const colorKeys = recolors.map((recolor) => this.acquireColorTexture(recolor));
@@ -951,11 +954,11 @@ export class CharacterAssets {
       .map((a) => a.node);
 
     // Animations rebranchées par nom d'os : celles de nos bibliothèques pour un corps (même squelette), celles
-    // reciblées une fois pour ce monstre sinon.
+    // reciblées une fois pour ce monstre, ou adaptées une fois à ce modèle complet (voir customAnimationsOf).
     let sources = [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
-    if (monster) {
+    if (monster || custom) {
       try {
-        sources = await this.monsterAnimationsOf(appearance.model, base, sources);
+        sources = await (monster ? this.monsterAnimationsOf(appearance.model, base, sources) : this.customAnimationsOf(appearance.model, base, sources));
       } catch (error) {
         // Échec : tout ce qui a déjà été créé (pièces, capes et leur balancement, objets, corps) est libéré.
         for (const { node } of attachments) node.dispose(false, false);
@@ -1120,9 +1123,40 @@ export class CharacterAssets {
     }
     return groups;
   }
+
+  // Modèle complet sur notre squelette (mêmes noms et axes d'os, autres proportions) : nos animations s'y branchent
+  // telles quelles pour les rotations ; les déplacements d'os sont retirés, sauf celui du bassin, mis à l'échelle du
+  // modèle (voir scaledHipsAnimation). Préparées une seule fois, sur un exemplaire caché.
+  private customAnimationsOf(model: string, base: AssetContainer, sources: AnimationGroup[]): Promise<AnimationGroup[]> {
+    let groups = this.monsterAnimations.get(model);
+    if (!groups) {
+      const template = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const root = template.rootNodes[0] as TransformNode;
+      root.setEnabled(false);
+      const nodes = new Map<string, TransformNode>();
+      for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
+      groups = Promise.resolve(
+        sources.map((group) => {
+          const adapted = new AnimationGroup(group.name, this.scene);
+          for (const { animation, target } of group.targetedAnimations) {
+            const name = (target as { name?: string }).name ?? "";
+            const node = nodes.get(name);
+            if (!node) continue;
+            if (animation.targetProperty !== "position") adapted.addTargetedAnimation(animation, node);
+            else if (name === "pelvis") adapted.addTargetedAnimation(scaledHipsAnimation(animation, target as TransformNode, node), node);
+          }
+          adapted.normalize(group.from, group.to);
+          adapted.stop();
+          return adapted;
+        }),
+      );
+      this.monsterAnimations.set(model, groups);
+    }
+    return groups;
+  }
 }
 
-// Position du bassin d'une de nos animations, rapportée au bassin d'un monstre : chaque déplacement par rapport à la
+// Position du bassin d'une de nos animations, rapportée au bassin d'un monstre (ou d'un modèle complet) : chaque déplacement par rapport à la
 // pose de repos est passé dans le repère du monde, mis à l'échelle (hauteur du bassin du monstre sur la nôtre), puis
 // ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas.
 function scaledHipsAnimation(source: Animation, pelvis: TransformNode, hips: TransformNode): Animation {

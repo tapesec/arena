@@ -19,6 +19,9 @@ import {
   accessoryKey,
   isFantasyRace,
   isInstrument,
+  CUSTOM_MODELS,
+  customModel,
+  isCustom,
   isMonster,
   monsterModel,
   playKey,
@@ -84,9 +87,11 @@ function appearanceAssets(appearance: Appearance): string[] {
   const assets = [
     isMonster(appearance.model)
       ? `Monstre ${appearance.model.slice("monster:".length)} (Fantasy Monsters Pack)`
+      : isCustom(appearance.model)
+        ? `Modèle complet ${CUSTOM_MODELS[appearance.model.slice("custom:".length)] ?? appearance.model} (Tripo)`
       : `Corps ${appearance.model}${appearance.headOnly ? " (tête seule)" : " (entier)"} (${appearance.model.startsWith("Human") ? "Universal Base Characters" : "Fantasy Races"})`,
   ];
-  if (!isMonster(appearance.model)) {
+  if (!isMonster(appearance.model) && !isCustom(appearance.model)) {
     for (const part of appearance.parts) assets.push(`Pièce ${part} (Modular Character Outfits – Fantasy)`);
     for (const hair of appearance.hair) assets.push(`Coiffure ${hair} (Universal Base Characters)`);
     if (appearance.hairColor) assets.push(`Cheveux teints en ${appearance.hairColor}`);
@@ -212,7 +217,7 @@ export function AppearancePanel(props: {
       </button>
     );
   const gender = appearance ? genderOf(appearance.model) : null;
-  const body = appearance && !isMonster(appearance.model) ? CATALOG.bodies.find((b) => b.id === appearance.model) : null;
+  const body = appearance && !isMonster(appearance.model) && !isCustom(appearance.model) ? CATALOG.bodies.find((b) => b.id === appearance.model) : null;
   const [weaponPack, setWeaponPack] = useState(WEAPON_PACKS[0]);
   const [weaponSlot, setWeaponSlot] = useState<WeaponSlot>("right");
   // Place proposée pour la prochaine arme : la première libre (main droite, main gauche, dos).
@@ -271,12 +276,12 @@ export function AppearancePanel(props: {
           <label className="appearance-row">
             Type
             <select
-              value={isMonster(appearance.model) ? "monster" : "body"}
+              value={isMonster(appearance.model) ? "monster" : isCustom(appearance.model) ? "custom" : "body"}
               onChange={(e) =>
                 // Retour à une race : la tenue de départ de la classe, en gardant armes et accessoires.
-                e.target.value === "monster"
+                e.target.value !== "body"
                   ? patch({
-                      model: monsterModel(CATALOG.monsters[0].id),
+                      model: e.target.value === "monster" ? monsterModel(CATALOG.monsters[0].id) : customModel(Object.keys(CUSTOM_MODELS)[0]),
                       parts: [],
                       hair: [],
                       skin: undefined,
@@ -299,6 +304,7 @@ export function AppearancePanel(props: {
             >
               <option value="body">Race (Quaternius)</option>
               <option value="monster">Monstre (tenue incluse)</option>
+              <option value="custom">Modèle complet (Tripo, habillé)</option>
             </select>
           </label>
           {body ? (
@@ -369,6 +375,17 @@ export function AppearancePanel(props: {
               <HairControls appearance={sanitizedAppearance(appearance)} race={body.race} gender={body.gender} patch={patch} />
               <ColorControls appearance={appearance} race={body.race} hasSkins={!!body.skins} patch={patch} />
             </>
+          ) : isCustom(appearance.model) ? (
+            <label className="appearance-row">
+              Modèle
+              <select value={appearance.model.slice("custom:".length)} onChange={(e) => patch({ model: customModel(e.target.value) })}>
+                {Object.entries(CUSTOM_MODELS).map(([id, label]) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : (
             <label className="appearance-row">
               Monstre
@@ -937,6 +954,7 @@ export function PlacementPanel(props: {
     () => [
       ...CATALOG.bodies.map((b) => ({ id: b.id, label: `${RACES[b.race] ?? b.race} ${GENDERS[b.gender].toLowerCase()}` })),
       ...CATALOG.monsters.map((m) => ({ id: monsterModel(m.id), label: `Monstre ${m.id}` })),
+      ...Object.entries(CUSTOM_MODELS).map(([id, label]) => ({ id: customModel(id), label: `Modèle complet ${label}` })),
     ],
     [],
   );
