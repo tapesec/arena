@@ -46,7 +46,8 @@ console.log("avant : repère Tripo", frame(byName(tripo)), "repère réf.", fram
   const angle = side(byName(tripo)) - side(refNodes);
   let turn = Matrix.RotationY(angle);
   const test = Vector3.TransformNormal(new Vector3(Math.cos(side(byName(tripo))), 0, Math.sin(side(byName(tripo)))), turn);
-  if (Math.abs(Math.atan2(test.z, test.x) - side(refNodes)) > 1e-3) turn = Matrix.RotationY(-angle);
+  const gap = Math.atan2(test.z, test.x) - side(refNodes);
+  if (Math.abs(Math.atan2(Math.sin(gap), Math.cos(gap))) > 1e-3) turn = Matrix.RotationY(-angle);
   for (const scene of tripo.getRoot().listScenes()) {
     for (const top of scene.listChildren()) {
       const { s, r, t } = parts(Matrix.FromArray(top.getMatrix()).multiply(turn));
@@ -109,14 +110,27 @@ ibm.setArray(array);
 let maxGap = 0;
 for (const j of allNodes) maxGap = Math.max(maxGap, parts(world(j)).t.subtract(parts(originalWorld.get(j)).t).length());
 console.log({ alignés: matched.length, gardés: kept, écartPositionMax: maxGap });
-// Taille : le bassin à la même hauteur que le nôtre (mêmes déplacements du bassin, même foulée au sol).
-const pelvisY = (nodes) => parts(world(nodes.get("pelvis"))).t.y;
-const factor = pelvisY(refNodes) / pelvisY(byName(tripo));
-for (const scene of tripo.getRoot().listScenes()) {
-  for (const top of scene.listChildren()) {
-    const { s, r, t } = parts(Matrix.FromArray(top.getMatrix()).multiply(Matrix.Scaling(factor, factor, factor)));
-    top.setTranslation(t.asArray()).setRotation(r.normalize().asArray()).setScale(s.asArray());
+// Taille : le bassin à la même hauteur au-dessus de l'os racine (aux pieds) que le nôtre (mêmes déplacements du
+// bassin, même foulée au sol). L'échelle est appliquée aux positions (os, sommets, matrices de liaison) et non à un nœud :
+// les os gardent une échelle 1, comme les nôtres, et les placements d'objets s'y règlent dans les mêmes unités.
+const pelvisHeight = (nodes) => parts(world(nodes.get("pelvis"))).t.y - parts(world(nodes.get("root"))).t.y;
+const factor = pelvisHeight(refNodes) / pelvisHeight(byName(tripo));
+if (!(factor > 0)) throw new Error(`Échelle impossible (${factor}) : bassin sous l'os racine ?`);
+for (const node of tripo.getRoot().listNodes()) node.setTranslation(node.getTranslation().map((v) => v * factor));
+const scaledAccessors = new Set();
+for (const mesh of tripo.getRoot().listMeshes()) {
+  for (const primitive of mesh.listPrimitives()) {
+    for (const accessor of [primitive.getAttribute("POSITION"), ...primitive.listTargets().map((t) => t.getAttribute("POSITION"))]) {
+      if (!accessor || scaledAccessors.has(accessor)) continue;
+      scaledAccessors.add(accessor);
+      accessor.setArray(accessor.getArray().map((v) => v * factor));
+    }
   }
+}
+{
+  const array = ibm.getArray().slice();
+  for (let i = 0; i < array.length; i += 16) for (const k of [12, 13, 14]) array[i + k] *= factor;
+  ibm.setArray(array);
 }
 // Noms d'os exactement ceux de notre squelette (« Head » : animations et accroche des chapeaux).
 for (const j of joints) {

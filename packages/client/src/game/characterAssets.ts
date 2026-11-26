@@ -859,7 +859,7 @@ export class CharacterAssets {
     const attachments: { key: string; node: TransformNode }[] = [];
     items.forEach((item, i) => {
       const fbx = item.file.endsWith(".fbx");
-      // Arme en main d'un corps Quaternius : la prise des armes du jeu (lame vers le haut du modèle, poignée au point
+      // Arme en main d'un corps Quaternius (ou d'un modèle complet, même squelette) : la prise des armes du jeu (lame vers le haut du modèle, poignée au point
       // d'origine) ; sinon, posé droit au point d'accroche.
       const hand = !monster && /@(right|left)$/.test(item.key);
       const mount =
@@ -1135,21 +1135,30 @@ export class CharacterAssets {
       root.setEnabled(false);
       const nodes = new Map<string, TransformNode>();
       for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
-      groups = Promise.resolve(
-        sources.map((group) => {
-          const adapted = new AnimationGroup(group.name, this.scene);
+      // Copies des animations : normalize ajoute des clés aux bornes, et les originales servent aux autres personnages.
+      const adapted: AnimationGroup[] = [];
+      try {
+        for (const group of sources) {
+          const copy = new AnimationGroup(group.name, this.scene);
+          adapted.push(copy);
           for (const { animation, target } of group.targetedAnimations) {
             const name = (target as { name?: string }).name ?? "";
             const node = nodes.get(name);
             if (!node) continue;
-            if (animation.targetProperty !== "position") adapted.addTargetedAnimation(animation, node);
-            else if (name === "pelvis") adapted.addTargetedAnimation(scaledHipsAnimation(animation, target as TransformNode, node), node);
+            if (animation.targetProperty !== "position") copy.addTargetedAnimation(animation.clone(), node);
+            else if (name === "pelvis") copy.addTargetedAnimation(scaledHipsAnimation(animation, target as TransformNode, node), node);
           }
-          adapted.normalize(group.from, group.to);
-          adapted.stop();
-          return adapted;
-        }),
-      );
+          copy.normalize(group.from, group.to);
+          copy.stop();
+        }
+      } catch (error) {
+        // Échec : l'exemplaire caché et les groupes déjà faits sont libérés (rien n'est gardé, un essai suivant repart de zéro).
+        for (const group of adapted) group.dispose();
+        root.dispose(false, false);
+        for (const skeleton of template.skeletons) skeleton.dispose();
+        return Promise.reject(error);
+      }
+      groups = Promise.resolve(adapted);
       this.monsterAnimations.set(model, groups);
     }
     return groups;
@@ -1158,7 +1167,8 @@ export class CharacterAssets {
 
 // Position du bassin d'une de nos animations, rapportée au bassin d'un monstre (ou d'un modèle complet) : chaque déplacement par rapport à la
 // pose de repos est passé dans le repère du monde, mis à l'échelle (hauteur du bassin du monstre sur la nôtre), puis
-// ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas.
+// ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas
+// (pour un modèle complet, l'os racine garde la rotation de nos animations, constante dans nos bibliothèques).
 function scaledHipsAnimation(source: Animation, pelvis: TransformNode, hips: TransformNode): Animation {
   const sourceParent = pelvis.parent as TransformNode | null;
   const targetParent = hips.parent as TransformNode | null;

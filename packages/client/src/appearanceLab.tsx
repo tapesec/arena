@@ -281,6 +281,7 @@ export function AppearancePanel(props: {
                 // Retour à une race : la tenue de départ de la classe, en gardant armes et accessoires.
                 e.target.value !== "body"
                   ? patch({
+                      headOnly: undefined,
                       model: e.target.value === "monster" ? monsterModel(CATALOG.monsters[0].id) : customModel(Object.keys(CUSTOM_MODELS)[0]),
                       parts: [],
                       hair: [],

@@ -65,7 +65,7 @@ export interface HeldWeapon {
 }
 
 export interface Appearance {
-  // Corps d'une race (« Elf_Male ») ou monstre (« monster:GoblinWarrior »).
+  // Corps d'une race (« Elf_Male »), monstre (« monster:GoblinWarrior ») ou modèle complet (« custom:Arcaniste_Tripo »).
   model: string;
   // Corps d'une race : seulement la tête et le cou (les pièces de tenue couvrent le reste), ou le corps entier.
   headOnly?: boolean;
