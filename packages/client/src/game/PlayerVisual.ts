@@ -14,7 +14,7 @@ import type { TargetReaction } from "./abilityAnimations";
 import type { PlayingAbility } from "./abilityEffects";
 import { TUNING } from "./tuning";
 import { CharacterAnimator, type Reaction } from "./CharacterAnimator";
-import { INSTRUMENT_ANIMATIONS, hasCharacterModel, type CharacterAssets, type CharacterInstance } from "./characterAssets";
+import { INSTRUMENT_ANIMATIONS, hasCharacterModel, outline, type CharacterAssets, type CharacterInstance } from "./characterAssets";
 import { campOf, gameCharacter } from "./gameAppearances";
 
 export interface EffectView {
@@ -67,8 +67,8 @@ const BODY_HEIGHT = 1.8;
 // 2,2 m), pour le cibler sans viser pile sa silhouette.
 const HITBOX_DIAMETER = 1.4;
 const HITBOX_HEIGHT = 2.4;
-// Épaisseur du contour au survol (unités du maillage).
-const HOVER_OUTLINE_WIDTH = 0.02;
+// Épaisseur du contour au survol : en mètres sur un personnage chargé (voir outline), en unités du maillage sur la capsule.
+const HOVER_OUTLINE_WIDTH = 0.03;
 const DEAD_COLOR = new Color3(0.3, 0.3, 0.3);
 
 // Couleur de la capsule provisoire, vue par le joueur local (comme les pseudos) : bleue pour son équipe, rouge pour
@@ -310,10 +310,15 @@ export class PlayerVisual {
   setHovered(color: Color3 | null) {
     const previous = this.hovered;
     this.hovered = color;
-    const meshes = this.model ? this.model.meshes : [this.body, this.nose];
     // Le modèle vient de remplacer la capsule : on retire le contour de la capsule.
     if (previous && this.model) for (const mesh of [this.body, this.nose]) mesh.renderOutline = false;
-    for (const mesh of meshes) {
+    // Personnage chargé : son contour sombre prend la couleur du survol, plus épais, puis revient.
+    if (this.model) {
+      if (color) outline(this.model.meshes, color, HOVER_OUTLINE_WIDTH);
+      else outline(this.model.meshes);
+      return;
+    }
+    for (const mesh of [this.body, this.nose]) {
       mesh.renderOutline = !!color;
       if (color) {
         mesh.outlineColor = color;

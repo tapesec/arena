@@ -45,17 +45,20 @@ const CHARACTER_SCALE = 1.2;
 const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))|_Acc_|Belt|Bracer/;
 
 // Contour sombre des personnages (corps, tenue, armes et accessoires) : ils se détachent du sol et du décor à la
-// distance de la caméra. Pas sur les yeux, sourcils et poils du visage (ils seraient cerclés de noir). Épaisseur dans le
-// repère du maillage (vers l'extérieur, le long des normales).
-const OUTLINE_COLOR = Color3.FromHexString("#1d1410");
-const OUTLINE_WIDTH = 0.012;
-const NO_OUTLINE_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))/;
-function outline(meshes: AbstractMesh[]) {
+// distance de la caméra. Pas sur les petites pièces collées au corps (yeux, sourcils, poils du visage, ceintures,
+// brassards, accessoires de tenue : NO_SHADOW_PIECES), que la coque du contour d'à côté noircirait. L'épaisseur est
+// donnée dans le monde (mètres) : le contour de Babylon gonfle le maillage dans son propre repère, elle est divisée par
+// l'échelle du maillage (bâtons FBX à 0,0065, armes réduites…).
+export const OUTLINE_COLOR = Color3.FromHexString("#1d1410");
+const OUTLINE_WIDTH = 0.014;
+export function outline(meshes: AbstractMesh[], color: Color3 = OUTLINE_COLOR, width = OUTLINE_WIDTH) {
+  const scale = new Vector3();
   for (const mesh of meshes) {
-    if (NO_OUTLINE_PIECES.test(mesh.name)) continue;
+    if (NO_SHADOW_PIECES.test(mesh.name)) continue;
+    mesh.computeWorldMatrix(true).decompose(scale);
     mesh.renderOutline = true;
-    mesh.outlineColor = OUTLINE_COLOR;
-    mesh.outlineWidth = OUTLINE_WIDTH;
+    mesh.outlineColor = color;
+    mesh.outlineWidth = width / Math.max(1e-4, Math.abs(scale.x));
   }
 }
 
