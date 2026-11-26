@@ -2,8 +2,9 @@
 // notre Arcaniste, en gardant leurs positions : les animations Quaternius s'y branchent alors directement par nom,
 // comme sur nos personnages. Les matrices de liaison sont recalculées : le maillage ne bouge pas.
 // Usage : node scripts/align-tripo-skeleton.mjs <modèle Tripo riggé (squelette UE)>.glb <un de nos personnages>.glb
-//   packages/client/public/dev-models/appearance/custom/<Nom>.glb [hauteur totale en mètres]
-//   [cape-epaules] (puis ajouter <Nom> à CUSTOM_MODELS). Sans hauteur, le bassin est mis à la hauteur du nôtre.
+//   packages/client/public/dev-models/appearance/custom/<Nom>.glb [hauteur totale en mètres] [cape-epaules]
+//   (options dans n'importe quel ordre ; puis ajouter <Nom> à CUSTOM_MODELS). Sans hauteur, le bassin est mis à la
+//   hauteur du nôtre.
 //   cape-epaules : la cape est rattachée aux épaules au lieu des bras (voir plus bas).
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
@@ -11,7 +12,12 @@ import { getBounds, textureCompress } from "@gltf-transform/functions";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.js";
 import sharp from "sharp";
 
-const [tripoPath, refPath, outPath, heightArg, ...flags] = process.argv.slice(2);
+const [tripoPath, refPath, outPath, ...options] = process.argv.slice(2);
+// Options dans n'importe quel ordre : un nombre (hauteur totale), des drapeaux connus.
+const FLAGS = new Set(["cape-epaules"]);
+const heightArg = options.find((o) => o !== "" && !Number.isNaN(Number(o)));
+const flags = options.filter((o) => o !== heightArg);
+for (const flag of flags) if (!FLAGS.has(flag)) throw new Error(`Option inconnue : ${flag} (connues : ${[...FLAGS].join(", ")})`);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const tripo = await io.read(tripoPath);
 const ref = await io.read(refPath);
@@ -27,60 +33,115 @@ const refNodes = byName(ref);
 const skin = tripo.getRoot().listSkins()[0];
 
 // Cape rattachée aux épaules (option cape-epaules) : le rigging automatique de Tripo fait suivre les bras (et le bassin,
-// les jambes) à la cape, qui se plie, se froisse et se troue dès qu'ils bougent. Les sommets de la cape (couleur de la
-// cape dans la texture, sous le cou) suivent désormais le haut du buste d'un bloc : la cape tombe des épaules et ne suit
-// plus les bras. Un point présent en plusieurs sommets (coutures de texture) est traité d'un bloc.
+// les jambes) à la cape, qui se plie, se froisse et se troue dès qu'ils bougent. La cape (couleur violette dans la
+// texture, sous la base du cou, plus grand morceau d'un seul tenant) suit désormais le haut du buste d'un bloc : elle
+// tombe des épaules et ne suit plus les bras. Les sommets d'un même point (coutures de texture) sont traités ensemble ;
+// leur bordure (sommets voisins hors cape) est partagée entre le buste et ses os d'origine, pour s'étirer moins quand
+// les bras bougent. Le maillage d'entrée est supposé dans sa pose de liaison (sommets en coordonnées du monde).
 if (flags.includes("cape-epaules")) {
   const CAPE_HUE = [250, 320];
   const jointNames = skin.listJoints().map((j) => j.getName());
   // Haut du buste (spine_05, qui suit spine_03 dans nos animations) : les clavicules, elles, tournent quand les bras
   // descendent, et une cape longue qui leur est rattachée s'évase en cloche.
   const torso = jointNames.indexOf("spine_05");
-  if (torso < 0) throw new Error("Os spine_05 absent : cape-epaules impossible");
-  const neckY = tripo.getRoot().listNodes().find((n) => n.getName() === "neck_01").getWorldMatrix()[13];
+  const neckIndex = jointNames.findIndex((n) => n.toLowerCase() === "neck_01");
+  if (torso < 0 || neckIndex < 0) throw new Error("Os spine_05 ou neck_01 absent : cape-epaules impossible");
+  // Base du cou dans l'espace de liaison (celui des sommets) : inverse de sa matrice de liaison.
+  const neckY = Matrix.Invert(Matrix.FromArray(skin.getInverseBindMatrices().getArray(), neckIndex * 16)).m[13];
   const hue = (r, g, b) => {
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
     if (max - min < 25) return -1;
     const h = max === r ? ((g - b) / (max - min)) % 6 : max === g ? (b - r) / (max - min) + 2 : (r - g) / (max - min) + 4;
     return (h * 60 + 360) % 360;
   };
-  for (const mesh of tripo.getRoot().listMeshes()) {
-    for (const primitive of mesh.listPrimitives()) {
-      const texture = primitive.getMaterial()?.getBaseColorTexture();
-      if (!texture) continue;
+  const wrap = (u, mode) => (mode === 10497 ? u - Math.floor(u) : mode === 33648 ? 1 - Math.abs((u % 2 + 2) % 2 - 1) : Math.min(1, Math.max(0, u)));
+  let total = 0;
+  for (const node of tripo.getRoot().listNodes()) {
+    if (node.getSkin() !== skin || !node.getMesh()) continue;
+    for (const primitive of node.getMesh().listPrimitives()) {
+      const material = primitive.getMaterial();
+      const texture = material?.getBaseColorTexture();
+      const textureInfo = material?.getBaseColorTextureInfo();
+      const uvAcc = textureInfo && primitive.getAttribute(`TEXCOORD_${textureInfo.getTexCoord()}`);
+      const jointsAcc = primitive.getAttribute("JOINTS_0"), weightsAcc = primitive.getAttribute("WEIGHTS_0");
+      if (!texture || !uvAcc || !jointsAcc || !weightsAcc) continue;
       const { data, info } = await sharp(Buffer.from(texture.getImage())).raw().toBuffer({ resolveWithObject: true });
-      const uv = primitive.getAttribute("TEXCOORD_0").getArray();
+      const uv = uvAcc.getArray();
       const pos = primitive.getAttribute("POSITION").getArray();
-      const jointsAcc = primitive.getAttribute("JOINTS_0");
-      const J = jointsAcc.getArray().slice();
       const count = pos.length / 3;
-      const key = (v) => `${Math.round(pos[v * 3] * 1e5)},${Math.round(pos[v * 3 + 1] * 1e5)},${Math.round(pos[v * 3 + 2] * 1e5)}`;
-      const isCape = new Uint8Array(count);
+      // Points (sommets fusionnés par position) et leurs voisins par les triangles.
+      const pointOf = new Int32Array(count);
+      const keys = new Map();
+      for (let v = 0; v < count; v++) {
+        const key = `${Math.round(pos[v * 3] * 1e5)},${Math.round(pos[v * 3 + 1] * 1e5)},${Math.round(pos[v * 3 + 2] * 1e5)}`;
+        if (!keys.has(key)) keys.set(key, keys.size);
+        pointOf[v] = keys.get(key);
+      }
+      const indices = primitive.getIndices()?.getArray() ?? Uint32Array.from({ length: count }, (_, i) => i);
+      const neighbours = Array.from({ length: keys.size }, () => new Set());
+      for (let i = 0; i < indices.length; i += 3) {
+        const tri = [indices[i], indices[i + 1], indices[i + 2]].map((v) => pointOf[v]);
+        for (const a of tri) for (const b of tri) if (a !== b) neighbours[a].add(b);
+      }
+      // Points violets sous la base du cou.
+      const violet = new Uint8Array(keys.size);
       for (let v = 0; v < count; v++) {
         if (pos[v * 3 + 1] > neckY) continue;
-        const px = Math.min(info.width - 1, Math.max(0, Math.floor(uv[v * 2] * info.width)));
-        const py = Math.min(info.height - 1, Math.max(0, Math.floor(uv[v * 2 + 1] * info.height)));
+        const px = Math.min(info.width - 1, Math.floor(wrap(uv[v * 2], textureInfo.getWrapS()) * info.width));
+        const py = Math.min(info.height - 1, Math.floor(wrap(uv[v * 2 + 1], textureInfo.getWrapT()) * info.height));
         const i = (py * info.width + px) * info.channels;
         const h = hue(data[i], data[i + 1], data[i + 2]);
-        if (h >= CAPE_HUE[0] && h <= CAPE_HUE[1]) isCape[v] = 1;
+        if (h >= CAPE_HUE[0] && h <= CAPE_HUE[1]) violet[pointOf[v]] = 1;
       }
-      const spread = () => {
-        const keys = new Set();
-        for (let v = 0; v < count; v++) if (isCape[v]) keys.add(key(v));
-        for (let v = 0; v < count; v++) if (!isCape[v] && pos[v * 3 + 1] <= neckY && keys.has(key(v))) isCape[v] = 1;
-      };
-      spread();
-      let moved = 0;
+      // Plus grand morceau violet d'un seul tenant : la cape (les petits îlots ailleurs sur le corps sont ignorés).
+      const component = new Int32Array(keys.size).fill(-1);
+      let best = -1, bestSize = 0;
+      for (let start = 0, id = 0; start < keys.size; start++) {
+        if (!violet[start] || component[start] >= 0) continue;
+        const stack = [start];
+        component[start] = id;
+        let size = 0;
+        while (stack.length) {
+          const p = stack.pop();
+          size++;
+          for (const n of neighbours[p]) if (violet[n] && component[n] < 0) { component[n] = id; stack.push(n); }
+        }
+        if (size > bestSize) { best = id; bestSize = size; }
+        id++;
+      }
+      if (best < 0) continue;
+      const cape = (point) => component[point] === best;
+      const border = (point) => !cape(point) && [...neighbours[point]].some(cape);
+      const J = jointsAcc.getArray().slice();
+      const W = new Float32Array(count * 4);
+      const element = [0, 0, 0, 0];
+      for (let v = 0; v < count; v++) W.set(weightsAcc.getElement(v, element), v * 4);
       for (let v = 0; v < count; v++) {
-        if (!isCape[v]) continue;
-        // Toute la cape suit le buste d'un bloc : une partie restée au bassin ou aux jambes s'en écarterait (trous).
-        for (let k = 0; k < 4; k++) J[v * 4 + k] = torso;
-        moved++;
+        const point = pointOf[v];
+        if (cape(point)) {
+          // Un seul os, poids 1 (glTF : pas deux poids non nuls sur le même os).
+          J.set([torso, 0, 0, 0], v * 4);
+          W.set([1, 0, 0, 0], v * 4);
+          total++;
+        } else if (border(point)) {
+          // Moitié buste, moitié os d'origine : le buste prend la place de son propre poids s'il en a un, sinon celle
+          // du plus faible (dont la part est reportée sur les autres).
+          const slots = [0, 1, 2, 3].map((k) => v * 4 + k);
+          const slot = slots.find((s) => J[s] === torso && W[s] > 0) ?? slots.reduce((a, b) => (W[b] < W[a] ? b : a));
+          const own = J[slot] === torso ? W[slot] : 0;
+          W[slot] = 0;
+          const rest = slots.reduce((sum, s) => sum + W[s], 0);
+          for (const s of slots) W[s] = rest > 0 ? (W[s] / rest) * 0.5 * (1 - own) : 0;
+          J[slot] = torso;
+          W[slot] = rest > 0 ? 0.5 + 0.5 * own : 1;
+        }
       }
       jointsAcc.setArray(J);
-      console.log({ capeAuxEpaules: moved });
+      weightsAcc.setNormalized(false).setArray(W);
     }
   }
+  if (!total) throw new Error("cape-epaules : aucune cape violette trouvée sous le cou");
+  console.log({ capeAuxEpaules: total });
 }
 const joints = skin.listJoints();
 const jointSet = new Set(joints);
