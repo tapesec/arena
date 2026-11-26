@@ -15,6 +15,9 @@ const MAX_BETA = 1.35;
 const DEFAULT_RADIUS = 37.4;
 const MIN_RADIUS = 10;
 const MAX_RADIUS = 55;
+const FOV = 0.6;
+// Vue par défaut en partie (reprise par le banc de comparaison de l'éditeur d'animations).
+export const GAME_CAMERA = { fov: FOV, beta: BETA, radius: DEFAULT_RADIUS };
 
 // Radians de rotation par pixel de déplacement de la souris.
 const ROTATION_SPEED = 0.006;
@@ -39,7 +42,7 @@ export class CameraController {
     private onSteerChange: (steering: boolean) => void = () => {},
   ) {
     this.camera = new ArcRotateCamera("camera", DEFAULT_ALPHA, BETA, DEFAULT_RADIUS, Vector3.Zero(), scene);
-    this.camera.fov = 0.6;
+    this.camera.fov = FOV;
 
     canvas.addEventListener("pointerdown", this.handlePointerDown);
     canvas.addEventListener("pointermove", this.handlePointerMove);

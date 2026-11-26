@@ -137,6 +137,44 @@ interface AbilityButtonsProps {
 export interface ZoomControl {
   get: () => number;
   set: (radius: number) => void;
+  // Banc de comparaison de la direction artistique : vue de la caméra de jeu, contour, matériaux mats.
+  bench?: () => BenchState | null;
+  setBench?: (changes: Partial<BenchState>) => void;
+}
+
+export interface BenchState {
+  gameView: boolean;
+  outline: boolean;
+  matte: boolean;
+}
+
+const BENCH_LABELS: Record<keyof BenchState, string> = { gameView: "Vue de jeu", outline: "Contour", matte: "Mat" };
+
+// Interrupteurs du banc de comparaison (sous la réglette de zoom).
+function BenchToggles({ zoom }: { zoom: ZoomControl }) {
+  // La scène peut ne pas être prête au premier affichage : état par défaut de la scène en attendant.
+  const [state, setState] = useState<BenchState>(() => zoom.bench?.() ?? { gameView: false, outline: true, matte: false });
+  if (!zoom.setBench) return null;
+  return (
+    <div className="appearance-row">
+      Comparer
+      <span className="appearance-variants">
+        {(Object.keys(BENCH_LABELS) as (keyof BenchState)[]).map((key) => (
+          <button
+            key={key}
+            className={state[key] ? "lab-tab-active" : ""}
+            onClick={() => {
+              const next = { ...state, [key]: !state[key] };
+              zoom.setBench!({ [key]: next[key] });
+              setState(next);
+            }}
+          >
+            {BENCH_LABELS[key]}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
 }
 
 function ZoomSlider({ zoom }: { zoom: ZoomControl }) {
@@ -263,6 +301,7 @@ export function AppearancePanel(props: {
         </button>
       </div>
       <ZoomSlider zoom={props.zoom} />
+      <BenchToggles zoom={props.zoom} />
       <AbilityButtons {...props.abilities} />
       {!appearance ? (
         <div>
@@ -979,6 +1018,7 @@ export function PlacementPanel(props: {
         </button>
       </div>
       <ZoomSlider zoom={props.zoom} />
+      <BenchToggles zoom={props.zoom} />
       <AbilityButtons {...props.abilities} />
       <label className="appearance-row">
         Modèle

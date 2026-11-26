@@ -71,7 +71,6 @@
           "Male_Knight_Legs_Armor",
           "Male_Knight_Body_Cloth",
           "Male_Knight_Arms",
-          "Male_Noble_Acc_Pauldron_Lion",
           "Male_Noble_Acc_Pauldron",
           "Male_Knight_Feet_Armor"
         ],
@@ -103,27 +102,20 @@
         }
       },
       {
-        "model": "monster:DeserterKnight",
-        "headOnly": true,
+        "model": "custom:Gardien_DA",
         "parts": [],
         "hair": [],
         "weapons": [
           {
-            "item": "MedievalWeapons/Axe",
-            "slot": "right"
-          },
-          {
-            "item": "Hearthfold/HF_Wep_Shield_Kite_01",
+            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
             "slot": "left"
           },
           {
-            "item": "Hearthfold/HF_Wep_Axe_Great_Crude_01",
-            "slot": "back"
+            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "slot": "right"
           }
         ],
-        "accessories": [
-          "HF_Amr_Helm_Horned_01"
-        ]
+        "accessories": []
       }
     ],
     "arcaniste": [
@@ -396,7 +388,7 @@
           -1.3424,
           -1.5708
         ],
-        "scale": 0.7963
+        "scale": 1.0352
       },
       "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
         "bone": "hand_r",
@@ -1005,6 +997,36 @@
           1.7728
         ],
         "scale": 0.00373
+      }
+    },
+    "custom:Gardien_DA": {
+      "Hearthfold/HF_Wep_Shield_Tower_01@left": {
+        "bone": "hand_l",
+        "position": [
+          -0.0892,
+          0.1425,
+          0.0311
+        ],
+        "rotation": [
+          -0.021,
+          -1.3424,
+          -1.5708
+        ],
+        "scale": 0.9157
+      },
+      "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.0446,
+          0.1487,
+          -0.0754
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 1.4506
       }
     }
   }

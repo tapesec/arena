@@ -5,6 +5,7 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateDisc } from "@babylonjs/core/Meshes/Builders/discBuilder";
@@ -110,7 +111,8 @@ import { EMPTY_APPEARANCES, PLAY_SLOT, type Appearance, type AppearanceFile } fr
 audio.useMutedKey("arena.lab.muted");
 soundPlayer.setMuted(audio.settings.muted);
 import type { PlayerVisual } from "./game/PlayerVisual";
-import { CHARACTERS, CharacterAssets, INSTRUMENT_ANIMATIONS, usedAnimations, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
+import { CHARACTERS, CharacterAssets, INSTRUMENT_ANIMATIONS, outline, usedAnimations, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
+import { GAME_CAMERA } from "./game/CameraController";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
 import {
   BUILTIN_DEFS,
@@ -178,6 +180,10 @@ const AREA_DURATION = 0.7;
 const AREA_ALPHA = 0.45;
 const AREA_ALPHA_WITH_PARTICLES = 0.22;
 
+// Sol de la scène : gris neutre, ou couleur de la terre de l'arène en vue de jeu (banc de comparaison).
+const LAB_FLOOR = new Color3(0.15, 0.16, 0.19);
+const ARENA_GROUND = Color3.FromHexString("#3a2618");
+
 class Stage {
   private engine: Engine;
   private scene: Scene;
@@ -185,6 +191,7 @@ class Stage {
   private holder: TransformNode;
   private fx: ParticleFactory;
   private instance: CharacterInstance | null = null;
+  private floorMaterial!: StandardMaterial;
   // Onglets Apparence et Placement : personnage assemblé à montrer à la place de celui de la classe (voir load).
   appearance: Appearance | null = null;
   private mounts: AppearanceFile["mounts"] = {};
@@ -276,7 +283,8 @@ class Stage {
     const floor = CreateDisc("floor", { radius: 40, tessellation: 96 }, this.scene);
     floor.rotation.x = Math.PI / 2;
     const material = new StandardMaterial("floor", this.scene);
-    material.diffuseColor = new Color3(0.15, 0.16, 0.19);
+    this.floorMaterial = material;
+    material.diffuseColor = LAB_FLOOR;
     material.specularColor = Color3.Black();
     floor.material = material;
     this.holder = new TransformNode("holder", this.scene);
@@ -350,6 +358,7 @@ class Stage {
     }
     if (!instance) return null;
     this.instance = instance;
+    this.applyBench(instance);
     this.restart();
     return instance;
   }
@@ -479,6 +488,53 @@ class Stage {
   // Placements réglés des objets (onglet Placement), pris au prochain chargement.
   setMounts(mounts: AppearanceFile["mounts"]) {
     this.mounts = mounts;
+  }
+
+  // Banc de comparaison de la direction artistique (onglets Apparence et Placement) : vue de la caméra de jeu (même
+  // angle, champ et distance qu'en partie, sol couleur de l'arène), contour des personnages, matériaux forcés en mat.
+  readonly bench = { gameView: false, outline: true, matte: false };
+  private savedView: { fov: number; beta: number; radius: number; targetY: number } | null = null;
+  private matteBackup = new Map<PBRMaterial, { metallic: number | null; roughness: number | null }>();
+
+  setBench(changes: Partial<Stage["bench"]>) {
+    Object.assign(this.bench, changes);
+    const camera = this.camera;
+    if (this.bench.gameView && !this.savedView) {
+      this.savedView = { fov: camera.fov, beta: camera.beta, radius: camera.radius, targetY: camera.target.y };
+      camera.fov = GAME_CAMERA.fov;
+      camera.beta = GAME_CAMERA.beta;
+      camera.radius = GAME_CAMERA.radius;
+      camera.target.y = 0;
+      this.floorMaterial.diffuseColor = ARENA_GROUND;
+    } else if (!this.bench.gameView && this.savedView) {
+      camera.fov = this.savedView.fov;
+      camera.beta = this.savedView.beta;
+      camera.radius = this.savedView.radius;
+      camera.target.y = this.savedView.targetY;
+      this.savedView = null;
+      this.floorMaterial.diffuseColor = LAB_FLOOR;
+    }
+    if (this.instance) this.applyBench(this.instance);
+  }
+
+  private applyBench(instance: CharacterInstance) {
+    if (this.bench.outline) outline(instance.meshes);
+    else for (const mesh of instance.meshes) mesh.renderOutline = false;
+    for (const mesh of instance.meshes) {
+      const material = mesh.material;
+      if (!(material instanceof PBRMaterial)) continue;
+      if (this.bench.matte) {
+        if (!this.matteBackup.has(material)) this.matteBackup.set(material, { metallic: material.metallic, roughness: material.roughness });
+        material.metallic = 0;
+        material.roughness = 1;
+      } else {
+        const backup = this.matteBackup.get(material);
+        if (!backup) continue;
+        material.metallic = backup.metallic;
+        material.roughness = backup.roughness;
+        this.matteBackup.delete(material);
+      }
+    }
   }
 
   // Distance de la caméra au personnage (réglette de zoom des onglets Apparence et Placement).
@@ -1950,6 +2006,8 @@ function AnimationLab() {
       set: (radius: number) => {
         if (stageRef.current) stageRef.current.zoom = radius;
       },
+      bench: () => stageRef.current?.bench ?? null,
+      setBench: (changes: { gameView?: boolean; outline?: boolean; matte?: boolean }) => stageRef.current?.setBench(changes),
     }),
     [],
   );

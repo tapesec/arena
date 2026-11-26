@@ -259,7 +259,7 @@
             -1.3424,
             -1.5708
           ],
-          "scale": 0.7963
+          "scale": 1.0352
         },
         "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
           "bone": "hand_r",
@@ -279,116 +279,66 @@
     },
     {
       "appearance": {
-        "model": "monster:DeserterKnight",
-        "headOnly": true,
+        "model": "custom:Gardien_DA",
         "parts": [],
         "hair": [],
         "weapons": [
           {
-            "item": "MedievalWeapons/Axe",
-            "slot": "right"
-          },
-          {
-            "item": "Hearthfold/HF_Wep_Shield_Kite_01",
+            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
             "slot": "left"
           },
           {
-            "item": "Hearthfold/HF_Wep_Axe_Great_Crude_01",
-            "slot": "back"
+            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "slot": "right"
           }
         ],
-        "accessories": [
-          "HF_Amr_Helm_Horned_01"
-        ]
+        "accessories": []
       },
       "body": "appearances/gardien-2.glb",
       "items": [
         {
-          "key": "MedievalWeapons/Axe@right",
-          "file": "appearances/items/weapons/MedievalWeapons/Axe.fbx",
-          "socket": {
-            "bone": "hand_r"
-          }
-        },
-        {
-          "key": "Hearthfold/HF_Wep_Shield_Kite_01@left",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Kite_01.glb",
+          "key": "Hearthfold/HF_Wep_Shield_Tower_01@left",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb",
           "socket": {
             "bone": "hand_l"
           }
         },
         {
-          "key": "Hearthfold/HF_Wep_Axe_Great_Crude_01@back",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Axe_Great_Crude_01.glb",
+          "key": "Hearthfold/HF_Wep_Sword_Great_Crude_01@right",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb",
           "socket": {
-            "bone": "spine_03"
+            "bone": "hand_r"
           }
-        },
-        {
-          "key": "HF_Amr_Helm_Horned_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Helm_Horned_01.glb",
-          "socket": {
-            "bone": "Head"
-          },
-          "hang": false
         }
       ],
       "mounts": {
-        "MedievalWeapons/Axe@right": {
-          "bone": "mixamorig:RightHand",
+        "Hearthfold/HF_Wep_Shield_Tower_01@left": {
+          "bone": "hand_l",
           "position": [
-            0.1684,
-            0.1106,
-            0.0485
+            -0.0892,
+            0.1425,
+            0.0311
           ],
           "rotation": [
-            0.3366,
-            2.9253,
-            1.3011
+            -0.021,
+            -1.3424,
+            -1.5708
           ],
-          "scale": 0.0025
+          "scale": 0.9157
         },
-        "Hearthfold/HF_Wep_Shield_Kite_01@left": {
-          "bone": "mixamorig:LeftHand",
+        "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
+          "bone": "hand_r",
           "position": [
-            -0.0083,
-            0.0099,
-            -0.0522
-          ],
-          "rotation": [
-            -0.1855,
-            -2.9832,
-            -1.4397
-          ],
-          "scale": 1
-        },
-        "Hearthfold/HF_Wep_Axe_Great_Crude_01@back": {
-          "bone": "mixamorig:Spine2",
-          "position": [
-            0.4112,
-            -0.4446,
-            -0.1028
-          ],
-          "rotation": [
-            0.1259,
-            -3.1331,
-            -0.6418
-          ],
-          "scale": 1
-        },
-        "HF_Amr_Helm_Horned_01@c": {
-          "bone": "mixamorig:Head",
-          "position": [
-            0,
-            0.0337,
-            0.0443
+            -0.0446,
+            0.1487,
+            -0.0754
           ],
           "rotation": [
             0,
-            0,
-            0
+            1.5708,
+            1.5708
           ],
-          "scale": 1
+          "scale": 1.4506
         }
       }
     }
