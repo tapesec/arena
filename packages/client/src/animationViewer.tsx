@@ -67,7 +67,8 @@ class Stage {
   onFrame: (() => void) | null = null;
 
   constructor(private canvas: HTMLCanvasElement) {
-    this.engine = new Engine(canvas, true, { stencil: true });
+    // Rendu à la densité de l'écran (Retina) : image nette, comme en jeu (voir renderScale.ts).
+    this.engine = new Engine(canvas, true, { stencil: true }, true);
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.09, 0.1, 0.13, 1);
     new HemisphericLight("sky", new Vector3(0, 1, 0.3), this.scene).intensity = 0.9;
