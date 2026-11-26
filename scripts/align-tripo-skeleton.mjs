@@ -81,8 +81,13 @@ console.log("après : repère Tripo", frame(byName(tripo)));
     const childName = childOf(node.getName().toLowerCase());
     const child = childName && tripoNodes.get(childName);
     const refFrom = refNodes.get(node.getName().toLowerCase()), refTo = childName && refNodes.get(childName);
-    if (child && refFrom && refTo && child.getParentNode() === node) {
-      const have = position(Matrix.FromArray(child.getMatrix()).multiply(w)).subtract(position(w)).normalize();
+    // L'enfant peut être plus bas dans la hiérarchie (main → métacarpe → doigt) : son monde composé depuis cet os.
+    let childLocal = child ? Matrix.FromArray(child.getMatrix()) : null;
+    for (let up = child?.getParentNode(); childLocal && up !== node; up = up?.getParentNode()) {
+      childLocal = up ? childLocal.multiply(Matrix.FromArray(up.getMatrix())) : null;
+    }
+    if (childLocal && refFrom && refTo) {
+      const have = position(childLocal.multiply(w)).subtract(position(w)).normalize();
       const want = position(world(refTo)).subtract(position(world(refFrom))).normalize();
       const axis = Vector3.Cross(have, want);
       const angle = Math.acos(Math.min(1, Math.max(-1, Vector3.Dot(have, want))));
@@ -101,26 +106,43 @@ console.log("après : repère Tripo", frame(byName(tripo)));
   // Maillage habillé dans cette pose (positions et normales en coordonnées du monde, comme le veut l'habillage glTF).
   const ibm = skin.getInverseBindMatrices();
   const ibmArray = ibm.getArray();
+  const missing = joints.filter((j) => !posed.has(j));
+  if (missing.length) throw new Error(`Os hors de la scène : ${missing.map((j) => j.getName()).join(", ")}`);
   const skinMatrices = joints.map((j, i) => Matrix.FromArray(ibmArray, i * 16).multiply(posed.get(j)));
-  const done = new Set();
+  // Cas non gérés (absents des modèles Tripo) : refusés plutôt que transformés à moitié.
+  const skinned = tripo.getRoot().listNodes().filter((n) => n.getSkin() === skin && n.getMesh());
+  if (tripo.getRoot().listSkins().length > 1) throw new Error("Plusieurs squelettes : non géré");
   for (const node of tripo.getRoot().listNodes()) {
-    if (node.getSkin() !== skin || !node.getMesh()) continue;
+    if (node.getMesh() && node.getSkin() !== skin && skinned.some((n) => n.getMesh() === node.getMesh())) throw new Error("Maillage partagé avec un nœud non habillé : non géré");
+  }
+  const done = new Set();
+  for (const node of skinned) {
     for (const primitive of node.getMesh().listPrimitives()) {
+      const semantics = primitive.listSemantics();
+      if (semantics.some((name) => /^(JOINTS|WEIGHTS)_[1-9]|^TANGENT$/.test(name)) || primitive.listTargets().length) {
+        throw new Error(`Attributs non gérés : ${semantics.join(", ")}${primitive.listTargets().length ? ", cibles de morph" : ""}`);
+      }
       const pos = primitive.getAttribute("POSITION"), nor = primitive.getAttribute("NORMAL");
       if (done.has(pos)) continue;
+      if (nor && done.has(nor)) throw new Error("Normales partagées entre primitives : non géré");
       done.add(pos);
-      const J = primitive.getAttribute("JOINTS_0").getArray(), W = primitive.getAttribute("WEIGHTS_0").getArray();
+      if (nor) done.add(nor);
+      const jointsAcc = primitive.getAttribute("JOINTS_0"), weightsAcc = primitive.getAttribute("WEIGHTS_0");
       const P = pos.getArray().slice(), N = nor?.getArray().slice();
+      const joint = [0, 0, 0, 0], weight = [0, 0, 0, 0];
       for (let v = 0; v < pos.getCount(); v++) {
+        jointsAcc.getElement(v, joint);
+        weightsAcc.getElement(v, weight); // valeurs normalisées, quel que soit le type stocké
+        const total = weight.reduce((a, b) => a + b, 0);
+        if (!(total > 0)) continue; // sommet sans os : laissé tel quel
         const p = new Vector3(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]);
         const n = N ? new Vector3(N[v * 3], N[v * 3 + 1], N[v * 3 + 2]) : null;
         const outP = Vector3.Zero(), outN = Vector3.Zero();
         for (let k = 0; k < 4; k++) {
-          const weight = W[v * 4 + k];
-          if (!weight) continue;
-          const m = skinMatrices[J[v * 4 + k]];
-          outP.addInPlace(Vector3.TransformCoordinates(p, m).scale(weight));
-          if (n) outN.addInPlace(Vector3.TransformNormal(n, m).scale(weight));
+          if (!weight[k]) continue;
+          const m = skinMatrices[joint[k]];
+          outP.addInPlace(Vector3.TransformCoordinates(p, m).scale(weight[k] / total));
+          if (n) outN.addInPlace(Vector3.TransformNormal(n, m).scale(weight[k] / total));
         }
         P.set(outP.asArray(), v * 3);
         if (N) N.set(outN.normalize().asArray(), v * 3);
@@ -128,11 +150,15 @@ console.log("après : repère Tripo", frame(byName(tripo)));
       pos.setArray(P);
       if (N) nor.setArray(N);
     }
-    // Sommets désormais en coordonnées du monde : le nœud du maillage ne doit plus rien transformer.
+    // Sommets désormais en coordonnées du monde : le nœud du maillage, rattaché à la scène, ne transforme plus rien
+    // (même pour un visualiseur qui appliquerait la transformation d'un nœud habillé).
     node.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1]).setScale([1, 1, 1]);
+    node.getParentNode()?.removeChild(node);
+    tripo.getRoot().listScenes()[0].addChild(node);
   }
   // La pose devient la pose de repos : transformations locales des os, et matrices de liaison = inverse du monde.
   for (const [node, w] of posed) {
+    if (skinned.includes(node)) continue; // remis à l'identité ci-dessus
     const parent = node.getParentNode();
     const local = parent ? w.multiply(Matrix.Invert(posed.get(parent))) : w;
     const { s, r, t } = parts(local);
@@ -164,6 +190,10 @@ const visit = (node) => {
       const parent = node.getParentNode();
       w = Matrix.Compose(orig.s, parts(newWorld.get(parent) ?? world(parent)).r, orig.t);
       kept.push(node.getName());
+    } else if (node.getSkin() && node.getMesh()) {
+      // Maillage habillé (sommets en coordonnées du monde) : aucune transformation propre.
+      const parent = node.getParentNode();
+      w = parent ? (newWorld.get(parent) ?? world(parent)) : Matrix.Identity();
     } else {
       w = originalWorld.get(node);
     }
