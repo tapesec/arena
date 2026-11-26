@@ -37,7 +37,6 @@ if (flags.includes("cape-epaules")) {
   // descendent, et une cape longue qui leur est rattachée s'évase en cloche.
   const torso = jointNames.indexOf("spine_05");
   if (torso < 0) throw new Error("Os spine_05 absent : cape-epaules impossible");
-  const armSide = jointNames.map((name) => /^(upperarm|lowerarm|hand|thumb|index|middle|ring|pinky)(_[a-z]+)?(_\d+)?_([lr])$/.exec(name)?.[4] ?? null);
   const neckY = tripo.getRoot().listNodes().find((n) => n.getName() === "neck_01").getWorldMatrix()[13];
   const hue = (r, g, b) => {
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
