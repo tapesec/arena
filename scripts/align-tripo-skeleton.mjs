@@ -36,8 +36,8 @@ const skin = tripo.getRoot().listSkins()[0];
 // les jambes) à la cape, qui se plie, se froisse et se troue dès qu'ils bougent. La cape (couleur violette dans la
 // texture, sous la base du cou, plus grand morceau d'un seul tenant) suit désormais le haut du buste d'un bloc : elle
 // tombe des épaules et ne suit plus les bras. Les sommets d'un même point (coutures de texture) sont traités ensemble ;
-// leur bordure (sommets voisins hors cape) est partagée entre le buste et ses os d'origine, pour s'étirer moins quand
-// les bras bougent. Le maillage d'entrée est supposé dans sa pose de liaison (sommets en coordonnées du monde).
+// autour de la frontière cape / reste, les poids passent progressivement de l'un à l'autre (voir BAND), pour que la
+// cape ne s'étire pas en une bande quand un bras se lève. Le maillage d'entrée est supposé dans sa pose de liaison (sommets en coordonnées du monde).
 if (flags.includes("cape-epaules")) {
   const CAPE_HUE = [250, 320];
   const jointNames = skin.listJoints().map((j) => j.getName());
@@ -111,30 +111,57 @@ if (flags.includes("cape-epaules")) {
       }
       if (best < 0) continue;
       const cape = (point) => component[point] === best;
-      const border = (point) => !cape(point) && [...neighbours[point]].some(cape);
       const J = jointsAcc.getArray().slice();
       const W = new Float32Array(count * 4);
       const element = [0, 0, 0, 0];
       for (let v = 0; v < count; v++) W.set(weightsAcc.getElement(v, element), v * 4);
+      // Poids par point : cape entièrement au buste, le reste tel quel.
+      const weights = Array.from({ length: keys.size }, () => null);
       for (let v = 0; v < count; v++) {
         const point = pointOf[v];
-        if (cape(point)) {
-          // Un seul os, poids 1 (glTF : pas deux poids non nuls sur le même os).
-          J.set([torso, 0, 0, 0], v * 4);
-          W.set([1, 0, 0, 0], v * 4);
-          total++;
-        } else if (border(point)) {
-          // Moitié buste, moitié os d'origine : le buste prend la place de son propre poids s'il en a un, sinon celle
-          // du plus faible (dont la part est reportée sur les autres).
-          const slots = [0, 1, 2, 3].map((k) => v * 4 + k);
-          const slot = slots.find((s) => J[s] === torso && W[s] > 0) ?? slots.reduce((a, b) => (W[b] < W[a] ? b : a));
-          const own = J[slot] === torso ? W[slot] : 0;
-          W[slot] = 0;
-          const rest = slots.reduce((sum, s) => sum + W[s], 0);
-          for (const s of slots) W[s] = rest > 0 ? (W[s] / rest) * 0.5 * (1 - own) : 0;
-          J[slot] = torso;
-          W[slot] = rest > 0 ? 0.5 + 0.5 * own : 1;
+        if (weights[point]) continue;
+        const map = new Map();
+        if (cape(point)) map.set(torso, 1);
+        else for (let k = 0; k < 4; k++) if (W[v * 4 + k] > 0) map.set(J[v * 4 + k], (map.get(J[v * 4 + k]) ?? 0) + W[v * 4 + k]);
+        weights[point] = map;
+      }
+      // Transition progressive autour de la frontière cape / reste : les points à moins de BAND rangées de la frontière
+      // (des deux côtés) prennent, SMOOTH fois de suite, la moyenne des poids de leurs voisins. L'étirement quand un bras
+      // se lève se répartit sur toute la bande au lieu d'une seule rangée de triangles.
+      const BAND = 6, SMOOTH = 24;
+      const distance = new Int32Array(keys.size).fill(-1);
+      let ring = [];
+      for (let p = 0; p < keys.size; p++) {
+        if ([...neighbours[p]].some((n) => cape(n) !== cape(p))) { distance[p] = 0; ring.push(p); }
+      }
+      for (let d = 1; d <= BAND && ring.length; d++) {
+        const next = [];
+        for (const p of ring) for (const n of neighbours[p]) if (distance[n] < 0) { distance[n] = d; next.push(n); }
+        ring = next;
+      }
+      const band = [];
+      for (let p = 0; p < keys.size; p++) if (distance[p] >= 0 && distance[p] < BAND) band.push(p);
+      for (let iteration = 0; iteration < SMOOTH; iteration++) {
+        const updated = band.map((p) => {
+          const sum = new Map(weights[p]);
+          for (const n of neighbours[p]) for (const [bone, w] of weights[n]) sum.set(bone, (sum.get(bone) ?? 0) + w);
+          const weightSum = [...sum.values()].reduce((a, b) => a + b, 0);
+          for (const [bone, w] of sum) sum.set(bone, w / weightSum);
+          return sum;
+        });
+        band.forEach((p, i) => (weights[p] = updated[i]));
+      }
+      // Retour aux quatre os les plus forts par sommet, normalisés.
+      for (let v = 0; v < count; v++) {
+        const point = pointOf[v];
+        if (!cape(point) && distance[point] < 0) continue;
+        const top = [...weights[point]].sort((a, b) => b[1] - a[1]).slice(0, 4);
+        const sum = top.reduce((a, [, w]) => a + w, 0);
+        for (let k = 0; k < 4; k++) {
+          J[v * 4 + k] = top[k]?.[0] ?? 0;
+          W[v * 4 + k] = top[k] ? top[k][1] / sum : 0;
         }
+        if (cape(point)) total++;
       }
       jointsAcc.setArray(J);
       weightsAcc.setNormalized(false).setArray(W);
