@@ -345,6 +345,7 @@ class Stage {
     this.resetRuns();
     this.animator = null;
     this.frozen = null;
+    this.restoreMatte();
     this.instance?.dispose();
     this.instance = null;
     const appearance = this.appearance && sanitizedAppearance(this.appearance);
@@ -358,7 +359,7 @@ class Stage {
     }
     if (!instance) return null;
     this.instance = instance;
-    this.applyBench(instance);
+    this.refreshBench();
     this.restart();
     return instance;
   }
@@ -369,6 +370,7 @@ class Stage {
     this.targetFx.stopAll();
     this.targetAnimator = null;
     this.targetFrozen = null;
+    this.restoreMatte();
     this.target?.dispose();
     this.target = null;
     const instance = await this.assets.create(classId, this.targetHolder);
@@ -378,6 +380,7 @@ class Stage {
     }
     if (!instance) return;
     this.target = instance;
+    this.refreshBench();
     this.targetAnimator = new CharacterAnimator(instance.animations, instance.set, {});
     this.updateTargetVisibility();
     if (this.mode === "scrub") this.showFrame();
@@ -490,49 +493,60 @@ class Stage {
     this.mounts = mounts;
   }
 
-  // Banc de comparaison de la direction artistique (onglets Apparence et Placement) : vue de la caméra de jeu (même
-  // angle, champ et distance qu'en partie, sol couleur de l'arène), contour des personnages, matériaux forcés en mat.
+  // Banc de comparaison de la direction artistique (onglets Apparence et Placement, remis à zéro ailleurs) : vue de la
+  // caméra de jeu (même angle, champ et distance qu'en partie, sol couleur de l'arène), contour des personnages,
+  // matériaux forcés en mat. Appliqué au personnage et à la cible d'en face.
   readonly bench = { gameView: false, outline: true, matte: false };
-  private savedView: { fov: number; beta: number; radius: number; targetY: number } | null = null;
+  private labFov = 0.8;
+  // Valeurs d'origine des matériaux passés en mat (partagés entre personnages d'un même fichier).
   private matteBackup = new Map<PBRMaterial, { metallic: number | null; roughness: number | null }>();
 
   setBench(changes: Partial<Stage["bench"]>) {
+    const wasGameView = this.bench.gameView;
     Object.assign(this.bench, changes);
-    const camera = this.camera;
-    if (this.bench.gameView && !this.savedView) {
-      this.savedView = { fov: camera.fov, beta: camera.beta, radius: camera.radius, targetY: camera.target.y };
-      camera.fov = GAME_CAMERA.fov;
-      camera.beta = GAME_CAMERA.beta;
-      camera.radius = GAME_CAMERA.radius;
-      camera.target.y = 0;
-      this.floorMaterial.diffuseColor = ARENA_GROUND;
-    } else if (!this.bench.gameView && this.savedView) {
-      camera.fov = this.savedView.fov;
-      camera.beta = this.savedView.beta;
-      camera.radius = this.savedView.radius;
-      camera.target.y = this.savedView.targetY;
-      this.savedView = null;
+    if (this.bench.gameView && !wasGameView) this.labFov = this.camera.fov;
+    if (!this.bench.gameView && wasGameView) {
+      this.camera.fov = this.labFov;
       this.floorMaterial.diffuseColor = LAB_FLOOR;
+      this.frameMoment();
     }
-    if (this.instance) this.applyBench(this.instance);
+    this.applyGameView();
+    this.refreshBench();
   }
 
-  private applyBench(instance: CharacterInstance) {
-    if (this.bench.outline) outline(instance.meshes);
-    else for (const mesh of instance.meshes) mesh.renderOutline = false;
-    for (const mesh of instance.meshes) {
-      const material = mesh.material;
-      if (!(material instanceof PBRMaterial)) continue;
-      if (this.bench.matte) {
+  // Vue de jeu : réappliquée après chaque cadrage de l'éditeur (frameMoment), qui sinon la remplacerait.
+  private applyGameView() {
+    if (!this.bench.gameView) return;
+    this.camera.fov = GAME_CAMERA.fov;
+    this.camera.beta = GAME_CAMERA.beta;
+    this.camera.radius = GAME_CAMERA.radius;
+    this.camera.target.y = 0;
+    this.floorMaterial.diffuseColor = ARENA_GROUND;
+  }
+
+  // Remet les matériaux d'origine (avant de créer un personnage : ses copies de couleur partent des vraies valeurs).
+  private restoreMatte() {
+    for (const [material, backup] of this.matteBackup) {
+      material.metallic = backup.metallic;
+      material.roughness = backup.roughness;
+    }
+    this.matteBackup.clear();
+  }
+
+  // Contour et mat sur le personnage et la cible, selon le banc.
+  private refreshBench() {
+    this.restoreMatte();
+    for (const instance of [this.instance, this.target]) {
+      if (!instance) continue;
+      if (this.bench.outline) outline(instance.meshes);
+      else for (const mesh of instance.meshes) mesh.renderOutline = false;
+      if (!this.bench.matte) continue;
+      for (const mesh of instance.meshes) {
+        const material = mesh.material;
+        if (!(material instanceof PBRMaterial)) continue;
         if (!this.matteBackup.has(material)) this.matteBackup.set(material, { metallic: material.metallic, roughness: material.roughness });
         material.metallic = 0;
         material.roughness = 1;
-      } else {
-        const backup = this.matteBackup.get(material);
-        if (!backup) continue;
-        material.metallic = backup.metallic;
-        material.roughness = backup.roughness;
-        this.matteBackup.delete(material);
       }
     }
   }
@@ -696,6 +710,7 @@ class Stage {
       this.camera.setTarget(new Vector3(0, 1.1, this.targetHolder.position.z));
       this.camera.radius = 5.5;
     }
+    this.applyGameView();
   }
 
   private resetRuns() {
@@ -2012,6 +2027,10 @@ function AnimationLab() {
     [],
   );
   // Place « joué » d'un instrument : le personnage tient la pose de jeu.
+  // Banc de comparaison : seulement dans Apparence et Placement (ailleurs, la vue et les matériaux normaux).
+  useEffect(() => {
+    if (tab !== "apparence" && tab !== "placement") stageRef.current?.setBench({ gameView: false, matte: false, outline: true });
+  }, [tab, stage]);
   const playPose = tab === "placement" && placement.kind === "weapon" && placement.slot === PLAY_SLOT;
   useEffect(() => stageRef.current?.setPlayPose(playPose), [playPose, stage]);
   const placementNode = tab === "placement" ? (instance?.attachments?.find((a) => a.key === placementKey(placement))?.node ?? null) : null;

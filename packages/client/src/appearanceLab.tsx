@@ -152,8 +152,14 @@ const BENCH_LABELS: Record<keyof BenchState, string> = { gameView: "Vue de jeu",
 
 // Interrupteurs du banc de comparaison (sous la réglette de zoom).
 function BenchToggles({ zoom }: { zoom: ZoomControl }) {
-  // La scène peut ne pas être prête au premier affichage : état par défaut de la scène en attendant.
-  const [state, setState] = useState<BenchState>(() => zoom.bench?.() ?? { gameView: false, outline: true, matte: false });
+  // État lu dans la scène (qui peut ne pas être prête au premier affichage, ou remettre le banc à zéro) : relu
+  // régulièrement, comme la réglette de zoom.
+  const read = () => ({ ...(zoom.bench?.() ?? { gameView: false, outline: true, matte: false }) });
+  const [state, setState] = useState<BenchState>(read);
+  useEffect(() => {
+    const timer = setInterval(() => setState(read()), 300);
+    return () => clearInterval(timer);
+  }, [zoom]);
   if (!zoom.setBench) return null;
   return (
     <div className="appearance-row">
@@ -190,7 +196,7 @@ function ZoomSlider({ zoom }: { zoom: ZoomControl }) {
       <input
         type="range"
         min={1.5}
-        max={15}
+        max={60}
         step={0.1}
         value={radius}
         onChange={(e) => {
