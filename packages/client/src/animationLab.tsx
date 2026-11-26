@@ -129,6 +129,7 @@ import type { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
 import catalog from "./animationCatalog.json";
 import "./styles.css";
 import { rebaseDraft, readStorage, useDevFileDraft, writeStorage, type DevFileDraft, type StoredDraft } from "./labDrafts";
+import { enableToonStyle, toonStyleRequested } from "./game/toonStyle";
 
 // Page de réglage des animations de compétence (http://localhost:5173/animation-lab.html), en développement
 // seulement. Pour chaque compétence d'une classe : l'animation, la portion jouée et la vitesse, sur une timeline.
@@ -260,6 +261,7 @@ class Stage {
     // Rendu à la densité de l'écran (Retina) : image nette, comme en jeu (voir renderScale.ts).
     this.engine = new Engine(canvas, true, { stencil: true }, true);
     this.scene = new Scene(this.engine);
+    if (toonStyleRequested()) enableToonStyle(this.scene);
     this.scene.clearColor = new Color4(0.09, 0.1, 0.13, 1);
     new HemisphericLight("sky", new Vector3(0, 1, 0.3), this.scene).intensity = 0.9;
     const sun = new DirectionalLight("sun", new Vector3(-0.4, -1, -0.6), this.scene);
