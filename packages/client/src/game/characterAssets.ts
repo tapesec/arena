@@ -1,3 +1,4 @@
+import "@babylonjs/core/Rendering/outlineRenderer";
 import { Animation } from "@babylonjs/core/Animations/animation";
 import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { AnimatorAvatar } from "@babylonjs/core/Animations/animatorAvatar";
@@ -42,6 +43,21 @@ import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLo
 const CHARACTER_SCALE = 1.2;
 // Pièces de tenue sans ombre portée (voir plus bas, à l'appel des ombres).
 const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))|_Acc_|Belt|Bracer/;
+
+// Contour sombre des personnages (corps, tenue, armes et accessoires) : ils se détachent du sol et du décor à la
+// distance de la caméra. Pas sur les yeux, sourcils et poils du visage (ils seraient cerclés de noir). Épaisseur dans le
+// repère du maillage (vers l'extérieur, le long des normales).
+const OUTLINE_COLOR = Color3.FromHexString("#1d1410");
+const OUTLINE_WIDTH = 0.012;
+const NO_OUTLINE_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))/;
+function outline(meshes: AbstractMesh[]) {
+  for (const mesh of meshes) {
+    if (NO_OUTLINE_PIECES.test(mesh.name)) continue;
+    mesh.renderOutline = true;
+    mesh.outlineColor = OUTLINE_COLOR;
+    mesh.outlineWidth = OUTLINE_WIDTH;
+  }
+}
 
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
@@ -652,6 +668,7 @@ export class CharacterAssets {
     // Les petites pièces posées sur le corps (yeux, accessoires, ceintures…) ne projettent pas d'ombre : vue du soleil,
     // elles restent dans la silhouette du corps, et chacune coûterait un appel de dessin de plus à chaque image.
     this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
+    outline(meshes);
 
     return {
       root,
@@ -977,6 +994,7 @@ export class CharacterAssets {
     }
 
     this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
+    outline(meshes);
     // Points d'accroche « arme » des effets : armes et accessoires tenus par un os, pas les capes (qui se balancent).
     const weapons = attachments.filter((a) => !items.find((item) => item.key === a.key)?.hang).map((a) => a.node);
     return {

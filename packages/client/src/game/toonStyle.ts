@@ -1,12 +1,10 @@
-import "@babylonjs/core/Rendering/outlineRenderer";
-import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { MaterialPluginBase } from "@babylonjs/core/Materials/materialPluginBase";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import type { Scene } from "@babylonjs/core/scene";
 
-// Essai de style graphique (développement seulement, adresse ?style=toon) : ombrage en paliers façon dessin animé,
-// liseré de lumière sur les bords et contour sombre autour des personnages, pour juger à la distance de jeu si le rendu
+// Essai de style graphique (développement seulement, adresse ?style=toon) : ombrage en paliers façon dessin animé et
+// liseré de lumière sur les bords, pour juger à la distance de jeu si le rendu
 // « colle » mieux. Rien n'est activé sans le paramètre.
 
 // Paliers de luminosité (après le rendu PBR) : la couleur garde sa teinte, sa luminosité est tirée vers le palier le
@@ -38,12 +36,8 @@ class ToonPlugin extends MaterialPluginBase {
   }
 }
 
-const OUTLINE_COLOR = Color3.FromHexString("#1d1410");
-// Épaisseur du contour, en unités du monde.
-const OUTLINE_WIDTH = 0.012;
-
-// Active le style sur les matériaux PBR (personnages, décor : tous les modèles glTF) existants et à venir, et le contour
-// sur les maillages articulés (personnages) au fil de leur arrivée.
+// Active le style sur les matériaux PBR (personnages, décor : tous les modèles glTF) existants et à venir (le contour des
+// personnages, lui, est toujours là : voir characterAssets).
 export function enableToonStyle(scene: Scene) {
   const styled = new WeakSet<Material>();
   const apply = (material: Material) => {
@@ -53,16 +47,6 @@ export function enableToonStyle(scene: Scene) {
   };
   for (const material of scene.materials) apply(material);
   scene.onNewMaterialAddedObservable.add(apply);
-  let frame = 0;
-  scene.onBeforeRenderObservable.add(() => {
-    if (frame++ % 30) return;
-    for (const mesh of scene.meshes) {
-      if (!mesh.skeleton || mesh.renderOutline) continue;
-      mesh.renderOutline = true;
-      mesh.outlineColor = OUTLINE_COLOR;
-      mesh.outlineWidth = OUTLINE_WIDTH;
-    }
-  });
 }
 
 // Paramètre d'adresse ?style=toon, en développement.
