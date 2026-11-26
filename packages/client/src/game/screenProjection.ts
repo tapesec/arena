@@ -59,13 +59,10 @@ export class ScreenProjector {
     const width = engine.getRenderWidth();
     const height = engine.getRenderHeight();
     this.world.set(x, y, z);
-    Vector3.ProjectToRef(
-      this.world,
-      Matrix.IdentityReadOnly,
-      this.scene.getTransformMatrix(),
-      camera.viewport.toGlobalToRef(width, height, this.viewport),
-      this.projected,
-    );
+    // toGlobalToRef remplit this.viewport mais renvoie le viewport de la caméra (normalisé, entre 0 et 1) : ne pas
+    // passer sa valeur de retour à ProjectToRef.
+    camera.viewport.toGlobalToRef(width, height, this.viewport);
+    Vector3.ProjectToRef(this.world, Matrix.IdentityReadOnly, this.scene.getTransformMatrix(), this.viewport, this.projected);
     // Le canvas peut être rendu à une résolution différente de sa taille affichée.
     out.x = (this.projected.x * this.cssWidth) / width;
     out.y = (this.projected.y * this.cssHeight) / height;
