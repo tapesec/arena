@@ -2,14 +2,15 @@
 // notre Arcaniste, en gardant leurs positions : les animations Quaternius s'y branchent alors directement par nom,
 // comme sur nos personnages. Les matrices de liaison sont recalculées : le maillage ne bouge pas.
 // Usage : node scripts/align-tripo-skeleton.mjs <modèle Tripo riggé (squelette UE)>.glb <un de nos personnages>.glb
-//   packages/client/public/dev-models/appearance/custom/<Nom>.glb (puis ajouter <Nom> à CUSTOM_MODELS)
+//   packages/client/public/dev-models/appearance/custom/<Nom>.glb [hauteur totale en mètres]
+//   (puis ajouter <Nom> à CUSTOM_MODELS). Sans hauteur, le bassin est mis à la hauteur du nôtre.
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
-import { textureCompress } from "@gltf-transform/functions";
+import { getBounds, textureCompress } from "@gltf-transform/functions";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector.js";
 import sharp from "sharp";
 
-const [tripoPath, refPath, outPath] = process.argv.slice(2);
+const [tripoPath, refPath, outPath, heightArg] = process.argv.slice(2);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const tripo = await io.read(tripoPath);
 const ref = await io.read(refPath);
@@ -230,7 +231,10 @@ console.log({ alignés: matched.length, gardés: kept, écartPositionMax: maxGap
 // bassin, même foulée au sol). L'échelle est appliquée aux positions (os, sommets, matrices de liaison) et non à un nœud :
 // les os gardent une échelle 1, comme les nôtres, et les placements d'objets s'y règlent dans les mêmes unités.
 const pelvisHeight = (nodes) => parts(world(nodes.get("pelvis"))).t.y - parts(world(nodes.get("root"))).t.y;
-const factor = pelvisHeight(refNodes) / pelvisHeight(byName(tripo));
+// Hauteur totale demandée (chapeau compris) : elle remplace le calage du bassin ; le jeu met alors les déplacements du
+// bassin à l'échelle du modèle (scaledHipsAnimation).
+const bounds = getBounds(tripo.getRoot().listScenes()[0]);
+const factor = heightArg ? Number(heightArg) / (bounds.max[1] - bounds.min[1]) : pelvisHeight(refNodes) / pelvisHeight(byName(tripo));
 if (!(factor > 0)) throw new Error(`Échelle impossible (${factor}) : bassin sous l'os racine ?`);
 for (const node of tripo.getRoot().listNodes()) node.setTranslation(node.getTranslation().map((v) => v * factor));
 const scaledAccessors = new Set();
