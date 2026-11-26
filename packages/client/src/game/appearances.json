@@ -981,8 +981,8 @@
       "Hearthfold/HF_Wep_Staff_Legendary_01@right": {
         "bone": "hand_r",
         "position": [
-          -0.0555,
-          0.1849,
+          -0.0102,
+          0.0898,
           0
         ],
         "rotation": [
@@ -990,21 +990,21 @@
           1.5708,
           1.5708
         ],
-        "scale": 1.09997
+        "scale": 1.1
       },
       "UltimateRPGItems/Book1_Open@left": {
         "bone": "hand_l",
         "position": [
-          0.0732,
-          0.4004,
-          0.0937
+          0.0622,
+          0.2228,
+          0.0267
         ],
         "rotation": [
-          -0.1913,
-          2.9532,
-          1.7763
+          -0.0506,
+          2.9824,
+          1.7728
         ],
-        "scale": 0.00396
+        "scale": 0.004
       }
     }
   }
