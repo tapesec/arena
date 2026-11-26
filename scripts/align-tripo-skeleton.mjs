@@ -111,6 +111,33 @@ if (flags.includes("cape-epaules")) {
       }
       if (best < 0) continue;
       const cape = (point) => component[point] === best;
+      // Cape décollée du corps : la face extérieure de la cape (sommets dont la normale s'éloigne de l'axe du corps) est
+      // poussée de PUSH (fraction de la hauteur du personnage) le long de sa normale ; la face intérieure ne bouge pas.
+      // Le dos de la veste et la doublure ne traversent plus la face extérieure par endroits (comme un modificateur
+      // Displace limité à cette face, dans Blender).
+      const PUSH = 0.006;
+      const normalAcc = primitive.getAttribute("NORMAL");
+      if (normalAcc) {
+        const normals = normalAcc.getArray();
+        let minY = Infinity, maxY = -Infinity;
+        for (let v = 0; v < count; v++) { minY = Math.min(minY, pos[v * 3 + 1]); maxY = Math.max(maxY, pos[v * 3 + 1]); }
+        const spine = skin.listJoints()[torso].getWorldMatrix();
+        const sum = new Float32Array(keys.size * 3);
+        for (let v = 0; v < count; v++) if (cape(pointOf[v])) for (let a = 0; a < 3; a++) sum[pointOf[v] * 3 + a] += normals[v * 3 + a];
+        const moved = pos.slice();
+        for (let v = 0; v < count; v++) {
+          const p = pointOf[v];
+          if (!cape(p)) continue;
+          const nx = sum[p * 3], ny = sum[p * 3 + 1], nz = sum[p * 3 + 2];
+          const length = Math.hypot(nx, ny, nz) || 1;
+          // Extérieure : la normale pointe dans le même sens que l'écart à l'axe du corps (à l'horizontale).
+          if (nx * (pos[v * 3] - spine[12]) + nz * (pos[v * 3 + 2] - spine[14]) <= 0) continue;
+          moved[v * 3] += (nx / length) * PUSH * (maxY - minY);
+          moved[v * 3 + 1] += (ny / length) * PUSH * (maxY - minY);
+          moved[v * 3 + 2] += (nz / length) * PUSH * (maxY - minY);
+        }
+        primitive.getAttribute("POSITION").setArray(moved);
+      }
       const J = jointsAcc.getArray().slice();
       const W = new Float32Array(count * 4);
       const element = [0, 0, 0, 0];
