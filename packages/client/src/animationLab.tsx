@@ -711,8 +711,9 @@ class Stage {
 
   // Caméra tournée vers ce que règle le moment : le lanceur, la cible ou toute la zone.
   private frameMoment() {
-    // Vue de jeu : seul le point visé change, le zoom et l'angle choisis sont gardés.
-    const kept = this.bench.gameView ? { beta: this.camera.beta, radius: this.camera.radius } : null;
+    // Vue de jeu : seul le point visé change, le zoom et les angles choisis sont gardés (setTarget les recalcule pour
+    // garder la position de la caméra).
+    const kept = this.bench.gameView ? { alpha: this.camera.alpha, beta: this.camera.beta, radius: this.camera.radius } : null;
     const moment = this.workshop ? "caster" : this.moment;
     if (moment === "zone") {
       const radius = getAbility(this.abilityId)?.radius ?? 5;
@@ -731,6 +732,7 @@ class Stage {
       this.camera.radius = 5.5;
     }
     if (kept) {
+      this.camera.alpha = kept.alpha;
       this.camera.beta = kept.beta;
       this.camera.radius = kept.radius;
     }
