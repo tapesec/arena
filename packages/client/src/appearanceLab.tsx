@@ -11,6 +11,7 @@ import {
   ACCESSORY_SOCKETS,
   GENDERS,
   PAIRED_SOCKETS,
+  BRIGHTNESS_RANGE,
   PART_SLOTS,
   PLAY_FRAME,
   PLAY_SLOT,
@@ -444,6 +445,7 @@ export function AppearancePanel(props: {
               </select>
             </label>
           )}
+          <BrightnessSlider value={appearance.brightness ?? 1} onCommit={(value) => patch({ brightness: value === 1 ? undefined : value })} />
 
           <h4>Armes</h4>
           {appearance.weapons.map((weapon, i) => (
@@ -602,6 +604,34 @@ function HairControls({ appearance, race, gender, patch }: { appearance: Appeara
       </label>
       {cut === "race" && <p className="lab-note">Les cheveux de la race gardent leurs couleurs ; la teinte vaut pour les sourcils et les poils ajoutés.</p>}
     </>
+  );
+}
+
+// Luminosité du personnage : la réglette bouge librement, la valeur n'est appliquée (personnage reconstruit) qu'au
+// relâchement ; à régler en Vue de jeu, sous l'éclairage de la partie.
+function BrightnessSlider({ value, onCommit }: { value: number; onCommit: (value: number) => void }) {
+  const [current, setCurrent] = useState(value);
+  useEffect(() => setCurrent(value), [value]);
+  const commit = () => {
+    if (current !== value) onCommit(current);
+  };
+  return (
+    <label className="appearance-row" title="Facteur sur la couleur du corps et de la tenue (pas des armes) ; à régler en Vue de jeu">
+      Luminosité
+      <input
+        type="range"
+        min={BRIGHTNESS_RANGE.min}
+        max={BRIGHTNESS_RANGE.max}
+        step={0.05}
+        value={current}
+        onChange={(e) => setCurrent(Number(e.target.value))}
+        onPointerUp={commit}
+        onKeyUp={commit}
+        onBlur={commit}
+      />
+      <span>×{current.toFixed(2)}</span>
+      {value !== 1 && <button onClick={() => onCommit(1)}>D'origine</button>}
+    </label>
   );
 }
 

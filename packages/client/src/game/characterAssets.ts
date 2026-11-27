@@ -8,7 +8,7 @@ import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
@@ -30,6 +30,7 @@ import {
   type Mount,
   type MountedItem,
   type Recolor,
+  validBrightness,
 } from "./appearance";
 import { gameCharacterFiles, hasBothCamps, raceBody } from "./gameAppearances";
 import { paintCells, tintImage } from "./textureTint";
@@ -864,6 +865,28 @@ export class CharacterAssets {
         }
       });
     });
+
+    // Luminosité : couleur des matériaux du corps (tenue et cheveux compris) multipliée, sur une copie (matériaux partagés
+    // avec les autres personnages du même fichier). Les armes et accessoires, accrochés plus loin, gardent la leur.
+    const brightness = validBrightness(appearance.brightness);
+    if (brightness) {
+      const brightened = new Map<PBRMaterial, PBRMaterial>();
+      for (const mesh of meshes) {
+        const material = mesh.material;
+        if (!(material instanceof PBRMaterial)) continue;
+        let copy = brightened.get(material);
+        if (!copy) {
+          copy = material.clone(`${material.name}-bright`);
+          copy.albedoColor = material.albedoColor.scale(brightness);
+          brightened.set(material, copy);
+        }
+        mesh.material = copy;
+      }
+      // La copie et ses textures (des copies légères, qui partagent l'image avec celles d'origine) sont libérées.
+      cleanup.push(() => {
+        for (const copy of brightened.values()) copy.dispose(false, true);
+      });
+    }
 
     // Os par nom : ceux du modèle, plus nos noms d'os pour un monstre (points d'accroche des effets).
     const bones = new Map(nodes);

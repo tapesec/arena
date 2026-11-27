@@ -90,6 +90,18 @@ export interface Appearance {
   // Couleurs des armes et accessoires, par objet (identifiant du catalogue) : les deux mains, ou les deux pièces d'une
   // paire, partagent celles de leur objet.
   itemColors?: Record<string, ItemColors>;
+  // Luminosité du personnage (corps, tenue et cheveux ; pas les armes ni les accessoires) : facteur sur la couleur de ses
+  // matériaux, réglé sous l'éclairage du jeu (Vue de jeu de l'éditeur). 1 ou absent : couleurs d'origine.
+  brightness?: number;
+}
+
+// Bornes du réglage de luminosité.
+export const BRIGHTNESS_RANGE = { min: 0.5, max: 2 };
+
+// Luminosité d'une apparence : un nombre dans les bornes, sinon (ou à 1) aucune.
+export function validBrightness(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value === 1) return undefined;
+  return Math.min(BRIGHTNESS_RANGE.max, Math.max(BRIGHTNESS_RANGE.min, value));
 }
 
 // Contenu de appearances.json : deux variantes par classe (une par camp), et les placements réglés par modèle

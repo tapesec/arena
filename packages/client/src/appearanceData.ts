@@ -1,5 +1,6 @@
 import catalogJson from "./appearanceCatalog.json";
 import {
+  validBrightness,
   PAIRED_SOCKETS,
   WEAPON_SLOTS,
   appearanceUrl,
@@ -108,6 +109,7 @@ export function sanitizedAppearance(appearance: Appearance): Appearance {
     skin: race && body.skins ? variant(appearance.skin) : undefined,
     raceHairColor: race ? variant(appearance.raceHairColor) : undefined,
     itemColors: Object.keys(itemColors).length ? itemColors : undefined,
+    brightness: validBrightness(appearance.brightness),
   };
 }
 
