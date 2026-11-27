@@ -503,32 +503,40 @@ class Stage {
   // caméra de jeu (même angle, champ et distance qu'en partie, sol couleur de l'arène, éclairage du jeu), contour des
   // personnages, matériaux forcés en mat. Appliqué au personnage et à la cible d'en face.
   readonly bench = { gameView: false, outline: true, matte: false };
-  private labFov = 0.8;
+  // Caméra de l'éditeur avant la Vue de jeu, rendue en la quittant (le zoom choisi n'est pas perdu).
+  private labView = { fov: 0.8, beta: 1.25, radius: 5.5 };
   private sky: HemisphericLight;
   private sun: DirectionalLight;
   // Valeurs d'origine des matériaux passés en mat (partagés entre personnages d'un même fichier).
   private matteBackup = new Map<PBRMaterial, { metallic: number | null; roughness: number | null }>();
 
+  // Contour et Mat ne touchent pas à la caméra ; seule l'entrée dans la Vue de jeu (ou sa sortie) la change.
   setBench(changes: Partial<Stage["bench"]>) {
     const wasGameView = this.bench.gameView;
     Object.assign(this.bench, changes);
-    if (this.bench.gameView && !wasGameView) this.labFov = this.camera.fov;
+    if (this.bench.gameView && !wasGameView) {
+      const { fov, beta, radius } = this.camera;
+      this.labView = { fov, beta, radius };
+      this.camera.fov = GAME_CAMERA.fov;
+      this.camera.beta = GAME_CAMERA.beta;
+      this.camera.radius = GAME_CAMERA.radius;
+      this.applyGameView();
+    }
     if (!this.bench.gameView && wasGameView) {
-      this.camera.fov = this.labFov;
       this.floorMaterial.diffuseColor = LAB_FLOOR;
       applyLighting(this.sky, this.sun, LAB_LIGHTING);
       this.frameMoment();
+      this.camera.fov = this.labView.fov;
+      this.camera.beta = this.labView.beta;
+      this.camera.radius = this.labView.radius;
     }
-    this.applyGameView();
     this.refreshBench();
   }
 
-  // Vue de jeu : réappliquée après chaque cadrage de l'éditeur (frameMoment), qui sinon la remplacerait.
+  // Vue de jeu : regard au sol, sol de l'arène et éclairage du jeu ; réappliquée après chaque cadrage de l'éditeur
+  // (frameMoment). L'angle et le zoom, posés à l'entrée, restent ceux que l'on choisit ensuite.
   private applyGameView() {
     if (!this.bench.gameView) return;
-    this.camera.fov = GAME_CAMERA.fov;
-    this.camera.beta = GAME_CAMERA.beta;
-    this.camera.radius = GAME_CAMERA.radius;
     this.camera.target.y = 0;
     this.floorMaterial.diffuseColor = ARENA_GROUND;
     applyLighting(this.sky, this.sun, GAME_LIGHTING);
@@ -703,6 +711,8 @@ class Stage {
 
   // Caméra tournée vers ce que règle le moment : le lanceur, la cible ou toute la zone.
   private frameMoment() {
+    // Vue de jeu : seul le point visé change, le zoom et l'angle choisis sont gardés.
+    const kept = this.bench.gameView ? { beta: this.camera.beta, radius: this.camera.radius } : null;
     const moment = this.workshop ? "caster" : this.moment;
     if (moment === "zone") {
       const radius = getAbility(this.abilityId)?.radius ?? 5;
@@ -719,6 +729,10 @@ class Stage {
     } else {
       this.camera.setTarget(new Vector3(0, 1.1, this.targetHolder.position.z));
       this.camera.radius = 5.5;
+    }
+    if (kept) {
+      this.camera.beta = kept.beta;
+      this.camera.radius = kept.radius;
     }
     this.applyGameView();
   }
