@@ -127,7 +127,8 @@
             "slot": "left"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "armSpread": 7
       }
     ],
     "pretre": [
@@ -141,7 +142,8 @@
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "armSpread": 10
       },
       {
         "model": "monster:KoboldShaman",
@@ -996,6 +998,22 @@
           1.5708
         ],
         "scale": 1
+      }
+    },
+    "custom:Cultiste_DA": {
+      "MedievalWeapons/Scythe@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.0821,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.0025
       }
     }
   }

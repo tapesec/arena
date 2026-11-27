@@ -392,7 +392,8 @@
             "slot": "left"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "armSpread": 7
       },
       "body": "appearances/arcaniste-2.glb",
       "items": [
@@ -411,7 +412,22 @@
           }
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "MedievalWeapons/Scythe@right": {
+          "bone": "hand_r",
+          "position": [
+            -0.03,
+            0.0821,
+            0
+          ],
+          "rotation": [
+            0,
+            1.5708,
+            1.5708
+          ],
+          "scale": 0.0025
+        }
+      }
     }
   ],
   "pretre": [
@@ -426,7 +442,8 @@
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "armSpread": 10
       },
       "body": "appearances/pretre-1.glb",
       "items": [
