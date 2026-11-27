@@ -11,6 +11,7 @@ import { SkyMaterial } from "@babylonjs/materials/sky/skyMaterial";
 import { TerrainMaterial } from "@babylonjs/materials/terrain/terrainMaterial";
 import { PLAZA, START_ZONES } from "@arena/shared";
 import { assetUrl } from "../assets";
+import { applyLighting, GAME_LIGHTING } from "./gameLighting";
 import { createTerrainMesh } from "./terrainMesh";
 
 // Textures du sol (dans public/models/ground/).
@@ -66,21 +67,13 @@ function distanceToSegment(x: number, z: number, ax: number, az: number, bx: num
   return Math.hypot(x - ax - t * dx, z - az - t * dz);
 }
 
-// Direction de la lumière du soleil (vers le bas) ; le soleil du ciel est placé à l'opposé.
-const SUN_DIRECTION = new Vector3(-0.5, -1, 0.3).normalize();
 // Couleur de l'horizon : fond du ciel et brume au loin.
 const HORIZON = new Color3(0.72, 0.82, 0.9);
 
 export function createLights(scene: Scene): DirectionalLight {
-  const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.95;
-  // Ciel bleuté au-dessus, reflet vert de l'herbe en dessous.
-  hemi.diffuse = new Color3(0.8, 0.88, 1);
-  hemi.groundColor = new Color3(0.35, 0.42, 0.28);
-  const sun = new DirectionalLight("sun", SUN_DIRECTION, scene);
-  // Lumière chaude de fin d'après-midi.
-  sun.diffuse = new Color3(1, 0.93, 0.8);
-  sun.intensity = 1.5;
+  const sky = new HemisphericLight("hemi", Vector3.Up(), scene);
+  const sun = new DirectionalLight("sun", Vector3.Down(), scene);
+  applyLighting(sky, sun, GAME_LIGHTING);
   return sun;
 }
 
@@ -99,7 +92,7 @@ export function createSky(scene: Scene) {
   material.turbidity = 6;
   material.rayleigh = 1.6;
   material.useSunPosition = true;
-  material.sunPosition = SUN_DIRECTION.scale(-100);
+  material.sunPosition = GAME_LIGHTING.sun.direction.scale(-100);
   const box = CreateBox("sky", { size: 1000 }, scene);
   box.material = material;
   box.infiniteDistance = true;

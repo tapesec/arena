@@ -113,6 +113,7 @@ soundPlayer.setMuted(audio.settings.muted);
 import type { PlayerVisual } from "./game/PlayerVisual";
 import { CHARACTERS, CharacterAssets, INSTRUMENT_ANIMATIONS, outline, usedAnimations, type CharacterAnimationSet, type CharacterInstance } from "./game/characterAssets";
 import { GAME_CAMERA } from "./game/CameraController";
+import { applyLighting, GAME_LIGHTING, type Lighting } from "./game/gameLighting";
 import { AbilityEffectPlayer, EFFECT_ANCHORS, effectPosition, type EffectTrack } from "./game/abilityEffects";
 import {
   BUILTIN_DEFS,
@@ -183,6 +184,11 @@ const AREA_ALPHA_WITH_PARTICLES = 0.22;
 // Sol de la scène : gris neutre, ou couleur de la terre de l'arène en vue de jeu (banc de comparaison).
 const LAB_FLOOR = new Color3(0.15, 0.16, 0.19);
 const ARENA_GROUND = Color3.FromHexString("#3a2618");
+// Éclairage de l'éditeur (plus fort que celui du jeu, pour voir les détails) ; la Vue de jeu prend celui du jeu.
+const LAB_LIGHTING: Lighting = {
+  sky: { direction: new Vector3(0, 1, 0.3), intensity: 0.9, diffuse: Color3.White(), groundColor: Color3.Black() },
+  sun: { direction: new Vector3(-0.4, -1, -0.6), intensity: 1.6, diffuse: Color3.White() },
+};
 
 class Stage {
   private engine: Engine;
@@ -270,9 +276,9 @@ class Stage {
     this.scene = new Scene(this.engine);
     if (toonStyleRequested()) enableToonStyle(this.scene);
     this.scene.clearColor = new Color4(0.09, 0.1, 0.13, 1);
-    new HemisphericLight("sky", new Vector3(0, 1, 0.3), this.scene).intensity = 0.9;
-    const sun = new DirectionalLight("sun", new Vector3(-0.4, -1, -0.6), this.scene);
-    sun.intensity = 1.6;
+    this.sky = new HemisphericLight("sky", Vector3.Up(), this.scene);
+    this.sun = new DirectionalLight("sun", Vector3.Down(), this.scene);
+    applyLighting(this.sky, this.sun, LAB_LIGHTING);
     // Trois-quarts face (le personnage regarde vers +z) ; la souris tourne autour, la molette rapproche.
     const camera = new ArcRotateCamera("camera", Math.PI / 3, 1.25, 5.5, new Vector3(0, 1.1, 0), this.scene);
     this.camera = camera;
@@ -494,10 +500,12 @@ class Stage {
   }
 
   // Banc de comparaison de la direction artistique (onglets Apparence et Placement, remis à zéro ailleurs) : vue de la
-  // caméra de jeu (même angle, champ et distance qu'en partie, sol couleur de l'arène), contour des personnages,
-  // matériaux forcés en mat. Appliqué au personnage et à la cible d'en face.
+  // caméra de jeu (même angle, champ et distance qu'en partie, sol couleur de l'arène, éclairage du jeu), contour des
+  // personnages, matériaux forcés en mat. Appliqué au personnage et à la cible d'en face.
   readonly bench = { gameView: false, outline: true, matte: false };
   private labFov = 0.8;
+  private sky: HemisphericLight;
+  private sun: DirectionalLight;
   // Valeurs d'origine des matériaux passés en mat (partagés entre personnages d'un même fichier).
   private matteBackup = new Map<PBRMaterial, { metallic: number | null; roughness: number | null }>();
 
@@ -508,6 +516,7 @@ class Stage {
     if (!this.bench.gameView && wasGameView) {
       this.camera.fov = this.labFov;
       this.floorMaterial.diffuseColor = LAB_FLOOR;
+      applyLighting(this.sky, this.sun, LAB_LIGHTING);
       this.frameMoment();
     }
     this.applyGameView();
@@ -522,6 +531,7 @@ class Stage {
     this.camera.radius = GAME_CAMERA.radius;
     this.camera.target.y = 0;
     this.floorMaterial.diffuseColor = ARENA_GROUND;
+    applyLighting(this.sky, this.sun, GAME_LIGHTING);
   }
 
   // Remet les matériaux d'origine (avant de créer un personnage : ses copies de couleur partent des vraies valeurs).
