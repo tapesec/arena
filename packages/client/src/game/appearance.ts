@@ -195,7 +195,7 @@ export function monsterModel(id: string): string {
 // scripts/align-tripo-skeleton.mjs) : nos animations s'y branchent par nom d'os, sans ses déplacements d'os (autres
 // proportions) sauf celui du bassin. Pas de tenue ni de coiffure.
 const CUSTOM = "custom:";
-export const CUSTOM_MODELS: Record<string, string> = { Arcaniste_Tripo: "Arcaniste (Tripo)", Gardien_DA: "Gardien (essai de DA)", Arcaniste_DA: "Arcaniste (essai de DA)" };
+export const CUSTOM_MODELS: Record<string, string> = { Arcaniste_Tripo: "Arcaniste (Tripo)", Gardien_DA: "Gardien (essai de DA)", Arcaniste_DA: "Arcaniste (essai de DA)", Lame_DA: "Lame (essai de DA)" };
 export function isCustom(model: string): boolean {
   return model.startsWith(CUSTOM);
 }

@@ -2,8 +2,7 @@
   "lame": [
     {
       "appearance": {
-        "model": "Human_Male",
-        "headOnly": true,
+        "model": "custom:Lame_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -16,10 +15,7 @@
             "slot": "left"
           }
         ],
-        "accessories": [
-          "HF_Amr_Hat_Feathered_01",
-          "HF_Gear_Bandolier_Potions_01"
-        ]
+        "accessories": []
       },
       "body": "appearances/lame-1.glb",
       "items": [
@@ -36,55 +32,9 @@
           "socket": {
             "bone": "hand_l"
           }
-        },
-        {
-          "key": "HF_Amr_Hat_Feathered_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Hat_Feathered_01.glb",
-          "socket": {
-            "bone": "Head"
-          },
-          "hang": false
-        },
-        {
-          "key": "HF_Gear_Bandolier_Potions_01@c",
-          "file": "appearances/items/accessories/HF_Gear_Bandolier_Potions_01.glb",
-          "socket": {
-            "bone": "spine_03",
-            "at": "neck_01"
-          },
-          "hang": false
         }
       ],
-      "mounts": {
-        "HF_Gear_Bandolier_Potions_01@c": {
-          "bone": "spine_03",
-          "position": [
-            0,
-            0.1886,
-            -0.0299
-          ],
-          "rotation": [
-            -0.0888,
-            0,
-            0
-          ],
-          "scale": 1
-        },
-        "Hearthfold/HF_Wep_Shield_Buckler_Iron_01@left": {
-          "bone": "hand_l",
-          "position": [
-            0.0205,
-            0.1023,
-            -0.0043
-          ],
-          "rotation": [
-            -0.1363,
-            -1.696,
-            -3.0171
-          ],
-          "scale": 1.13
-        }
-      }
+      "mounts": {}
     },
     {
       "appearance": {

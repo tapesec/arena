@@ -2,19 +2,9 @@
   "variants": {
     "lame": [
       {
-        "model": "Human_Male",
-        "headOnly": true,
-        "parts": [
-          "Male_Ranger_Body",
-          "Male_Noble_Arms",
-          "Male_Ranger_Feet_Boots",
-          "Male_Knight_Legs_Armor",
-          "Male_Ranger_Acc_Pauldron"
-        ],
-        "hair": [
-          "Hair_Beard",
-          "Hair_Balding"
-        ],
+        "model": "custom:Lame_DA",
+        "parts": [],
+        "hair": [],
         "weapons": [
           {
             "item": "Quaternius/Sword_Bronze",
@@ -25,22 +15,7 @@
             "slot": "left"
           }
         ],
-        "accessories": [
-          "HF_Amr_Hat_Feathered_01",
-          "HF_Gear_Bandolier_Potions_01"
-        ],
-        "hairColor": "#ff1900",
-        "outfitColors": {
-          "Ranger": {
-            "variant": 2
-          },
-          "Noble": {
-            "variant": 2
-          },
-          "Knight": {
-            "variant": 3
-          }
-        }
+        "accessories": []
       },
       {
         "model": "monster:GoblinWarrior",
