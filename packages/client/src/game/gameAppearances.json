@@ -34,7 +34,22 @@
           }
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "Hearthfold/HF_Wep_Shield_Buckler_Iron_01@left": {
+          "bone": "hand_l",
+          "position": [
+            -0.0335,
+            0.1,
+            -0.0044
+          ],
+          "rotation": [
+            -0.2209,
+            -1.5164,
+            1.5708
+          ],
+          "scale": 1
+        }
+      }
     },
     {
       "appearance": {
