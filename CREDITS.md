@@ -24,6 +24,10 @@ importées par `scripts/import-assets.sh`.
 
 ## Sans obligation de crédit
 
+- **Personnages des deux camps** (les 10 modèles des classes) — générés avec [Tripo AI](https://www.tripo3d.ai) (images de
+  concept et modèles 3D), abonnement payant : usage commercial autorisé, propriété de l'auteur du jeu, y compris après la
+  fin de l'abonnement. La mention « AI-generated with Tripo AI » est gardée dans les métadonnées des fichiers, comme
+  l'exigent les conditions de Tripo. Armes et objets portés : Quaternius et autres packs ci-dessous.
 - **Modèles 3D** (personnages, tenues, armes, village, nature, accessoires) et **animations** — [Quaternius](https://quaternius.com), CC0.
   Packs : Modular Character Outfits – Fantasy (Source), Universal Base Characters, Universal Animation Library 1 et 2 (Source),
   Medieval Village MegaKit, Stylized Nature MegaKit, Fantasy Props MegaKit, Pirate Kit, RPG Asset Pack.

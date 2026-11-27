@@ -1,5 +1,6 @@
+import "@babylonjs/core/Rendering/outlineRenderer";
 import { Animation } from "@babylonjs/core/Animations/animation";
-import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
+import { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { AnimatorAvatar } from "@babylonjs/core/Animations/animatorAvatar";
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -7,7 +8,7 @@ import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
-import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
@@ -20,6 +21,7 @@ import {
   appearanceUrl,
   boneName,
   isHairCut,
+  isCustom,
   isMonster,
   modelFile,
   PLAY_FRAME,
@@ -28,7 +30,11 @@ import {
   type Mount,
   type MountedItem,
   type Recolor,
+  validArmSpread,
+  validBrightness,
 } from "./appearance";
+import { spreadArms } from "./armSpread";
+import { relaxedAnimations } from "./CharacterAnimator";
 import { gameCharacterFiles, hasBothCamps, raceBody } from "./gameAppearances";
 import { paintCells, tintImage } from "./textureTint";
 import type { Shadows } from "./shadows";
@@ -41,6 +47,24 @@ import { GLTFLoaderAnimationStartMode } from "@babylonjs/loaders/glTF/glTFFileLo
 const CHARACTER_SCALE = 1.2;
 // Pièces de tenue sans ombre portée (voir plus bas, à l'appel des ombres).
 const NO_SHADOW_PIECES = /^(Eyes|Eyebrows|Hair_(Beard|Moustache|MuttonChops))|_Acc_|Belt|Bracer/;
+
+// Contour sombre des personnages (corps, tenue, armes et accessoires) : ils se détachent du sol et du décor à la
+// distance de la caméra. Pas sur les petites pièces collées au corps (yeux, sourcils, poils du visage, ceintures,
+// brassards, accessoires de tenue : NO_SHADOW_PIECES), que la coque du contour d'à côté noircirait. L'épaisseur est
+// donnée dans le monde (mètres) : le contour de Babylon gonfle le maillage dans son propre repère, elle est divisée par
+// l'échelle du maillage (bâtons FBX à 0,0065, armes réduites…).
+export const OUTLINE_COLOR = Color3.FromHexString("#1d1410");
+const OUTLINE_WIDTH = 0.014;
+export function outline(meshes: AbstractMesh[], color: Color3 = OUTLINE_COLOR, width = OUTLINE_WIDTH) {
+  const scale = new Vector3();
+  for (const mesh of meshes) {
+    if (NO_SHADOW_PIECES.test(mesh.name)) continue;
+    mesh.computeWorldMatrix(true).decompose(scale);
+    mesh.renderOutline = true;
+    mesh.outlineColor = color;
+    mesh.outlineWidth = width / Math.max(1e-4, Math.abs(scale.x));
+  }
+}
 
 // Part de métal gardée sur les matériaux des modèles (voir load).
 const METALLIC = 0.25;
@@ -477,7 +501,8 @@ export class CharacterAssets {
   // Éditeur d'apparence : textures de couleur (variantes, teintes), chargées une fois par fichier et par teinte, avec le
   // nombre de personnages qui s'en servent (une texture teinte est libérée quand plus personne ne l'utilise).
   private colorTextures = new Map<string, { texture: Promise<Texture>; uses: number }>();
-  // Éditeur d'apparence : animations reciblées une fois par monstre, sur un exemplaire caché (voir createCustom).
+  // Éditeur d'apparence : animations reciblées une fois par monstre (ou adaptées une fois par modèle complet), sur un
+  // exemplaire caché (voir createCustom).
   private monsterAnimations = new Map<string, Promise<AnimationGroup[]>>();
 
   // libraries : bibliothèques d'animations à charger (la page de visualisation charge les versions complètes).
@@ -650,6 +675,7 @@ export class CharacterAssets {
     // Les petites pièces posées sur le corps (yeux, accessoires, ceintures…) ne projettent pas d'ombre : vue du soleil,
     // elles restent dans la silhouette du corps, et chacune coûterait un appel de dessin de plus à chaque image.
     this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
+    outline(meshes);
 
     return {
       root,
@@ -729,7 +755,8 @@ export class CharacterAssets {
   ): Promise<CharacterInstance> {
     const url = body ? (file: string) => file : appearanceUrl;
     const monster = isMonster(appearance.model);
-    const pieceFiles = monster ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
+    const custom = isCustom(appearance.model);
+    const pieceFiles = monster || custom ? [] : [...appearance.parts.map((p) => `parts/${p}.glb`), ...appearance.hair.map((h) => `hair/${h}.glb`)];
     // Textures de couleur réservées dès le départ : rendues si la création échoue. Pour chaque objet dont des cases de
     // la palette Hearthfold sont repeintes, sa palette repeinte.
     const colorKeys = recolors.map((recolor) => this.acquireColorTexture(recolor));
@@ -842,6 +869,28 @@ export class CharacterAssets {
       });
     });
 
+    // Luminosité : couleur des matériaux du corps (tenue et cheveux compris) multipliée, sur une copie (matériaux partagés
+    // avec les autres personnages du même fichier). Les armes et accessoires, accrochés plus loin, gardent la leur.
+    const brightness = validBrightness(appearance.brightness);
+    if (brightness) {
+      const brightened = new Map<PBRMaterial, PBRMaterial>();
+      for (const mesh of meshes) {
+        const material = mesh.material;
+        if (!(material instanceof PBRMaterial)) continue;
+        let copy = brightened.get(material);
+        if (!copy) {
+          copy = material.clone(`${material.name}-bright`);
+          copy.albedoColor = material.albedoColor.scale(brightness);
+          brightened.set(material, copy);
+        }
+        mesh.material = copy;
+      }
+      // La copie et ses textures (des copies légères, qui partagent l'image avec celles d'origine) sont libérées.
+      cleanup.push(() => {
+        for (const copy of brightened.values()) copy.dispose(false, true);
+      });
+    }
+
     // Os par nom : ceux du modèle, plus nos noms d'os pour un monstre (points d'accroche des effets).
     const bones = new Map(nodes);
     if (monster) {
@@ -856,7 +905,7 @@ export class CharacterAssets {
     const attachments: { key: string; node: TransformNode }[] = [];
     items.forEach((item, i) => {
       const fbx = item.file.endsWith(".fbx");
-      // Arme en main d'un corps Quaternius : la prise des armes du jeu (lame vers le haut du modèle, poignée au point
+      // Arme en main d'un corps Quaternius (ou d'un modèle complet, même squelette) : la prise des armes du jeu (lame vers le haut du modèle, poignée au point
       // d'origine) ; sinon, posé droit au point d'accroche.
       const hand = !monster && /@(right|left)$/.test(item.key);
       const mount =
@@ -951,11 +1000,11 @@ export class CharacterAssets {
       .map((a) => a.node);
 
     // Animations rebranchées par nom d'os : celles de nos bibliothèques pour un corps (même squelette), celles
-    // reciblées une fois pour ce monstre sinon.
+    // reciblées une fois pour ce monstre, ou adaptées une fois à ce modèle complet (voir customAnimationsOf).
     let sources = [...libraries.flatMap((library) => library.animationGroups), ...mixamo];
-    if (monster) {
+    if (monster || custom) {
       try {
-        sources = await this.monsterAnimationsOf(appearance.model, base, sources);
+        sources = await (monster ? this.monsterAnimationsOf(appearance.model, base, sources) : this.customAnimationsOf(appearance.model, base, sources));
       } catch (error) {
         // Échec : tout ce qui a déjà été créé (pièces, capes et leur balancement, objets, corps) est libéré.
         for (const { node } of attachments) node.dispose(false, false);
@@ -973,7 +1022,13 @@ export class CharacterAssets {
       animations.set(group.name, clone);
     }
 
+    // Écart des bras réglé dans l'éditeur, au repos et en déplacement.
+    const armSpread = validArmSpread(appearance.armSpread);
+    const removeSpread = armSpread ? spreadArms(this.scene, bones, animations, relaxedAnimations(def.animations.idle), armSpread) : null;
+    if (removeSpread) cleanup.push(removeSpread);
+
     this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
+    outline(meshes);
     // Points d'accroche « arme » des effets : armes et accessoires tenus par un os, pas les capes (qui se balancent).
     const weapons = attachments.filter((a) => !items.find((item) => item.key === a.key)?.hang).map((a) => a.node);
     return {
@@ -1120,11 +1175,52 @@ export class CharacterAssets {
     }
     return groups;
   }
+
+  // Modèle complet sur notre squelette (mêmes noms et axes d'os, autres proportions) : nos animations s'y branchent
+  // telles quelles pour les rotations ; les déplacements d'os sont retirés, sauf celui du bassin, mis à l'échelle du
+  // modèle (voir scaledHipsAnimation). Préparées une seule fois, sur un exemplaire caché.
+  private customAnimationsOf(model: string, base: AssetContainer, sources: AnimationGroup[]): Promise<AnimationGroup[]> {
+    let groups = this.monsterAnimations.get(model);
+    if (!groups) {
+      const template = base.instantiateModelsToScene((name) => name, false, { doNotInstantiate: true });
+      const root = template.rootNodes[0] as TransformNode;
+      root.setEnabled(false);
+      const nodes = new Map<string, TransformNode>();
+      for (const node of root.getDescendants(false)) if (node instanceof TransformNode) nodes.set(node.name, node);
+      // Copies des animations : normalize ajoute des clés aux bornes, et les originales servent aux autres personnages.
+      const adapted: AnimationGroup[] = [];
+      try {
+        for (const group of sources) {
+          const copy = new AnimationGroup(group.name, this.scene);
+          adapted.push(copy);
+          for (const { animation, target } of group.targetedAnimations) {
+            const name = (target as { name?: string }).name ?? "";
+            const node = nodes.get(name);
+            if (!node) continue;
+            if (animation.targetProperty !== "position") copy.addTargetedAnimation(animation.clone(), node);
+            else if (name === "pelvis") copy.addTargetedAnimation(scaledHipsAnimation(animation, target as TransformNode, node), node);
+          }
+          copy.normalize(group.from, group.to);
+          copy.stop();
+        }
+      } catch (error) {
+        // Échec : l'exemplaire caché et les groupes déjà faits sont libérés (rien n'est gardé, un essai suivant repart de zéro).
+        for (const group of adapted) group.dispose();
+        root.dispose(false, false);
+        for (const skeleton of template.skeletons) skeleton.dispose();
+        return Promise.reject(error);
+      }
+      groups = Promise.resolve(adapted);
+      this.monsterAnimations.set(model, groups);
+    }
+    return groups;
+  }
 }
 
-// Position du bassin d'une de nos animations, rapportée au bassin d'un monstre : chaque déplacement par rapport à la
+// Position du bassin d'une de nos animations, rapportée au bassin d'un monstre (ou d'un modèle complet) : chaque déplacement par rapport à la
 // pose de repos est passé dans le repère du monde, mis à l'échelle (hauteur du bassin du monstre sur la nôtre), puis
-// ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas.
+// ramené dans le repère du parent du bassin du monstre. Les parents des deux bassins (racines des modèles) ne bougent pas
+// (pour un modèle complet, l'os racine garde la rotation de nos animations, constante dans nos bibliothèques).
 function scaledHipsAnimation(source: Animation, pelvis: TransformNode, hips: TransformNode): Animation {
   const sourceParent = pelvis.parent as TransformNode | null;
   const targetParent = hips.parent as TransformNode | null;

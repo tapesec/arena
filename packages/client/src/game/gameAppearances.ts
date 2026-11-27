@@ -1,5 +1,5 @@
 import data from "./gameAppearances.json";
-import { isMonster, type GameAppearance } from "./appearance";
+import { isCustom, isMonster, type GameAppearance } from "./appearance";
 import type { CustomCharacter } from "./characterAssets";
 
 // Personnages du jeu par classe et par camp, construits d'après l'éditeur d'apparence (npm run build-appearances).
@@ -28,7 +28,7 @@ export function hasBothCamps(classId: string): boolean {
 // gabarit du reciblage des animations Mixamo (voir CharacterAssets.loadMixamo).
 export function raceBody(): string | undefined {
   for (const variants of Object.values(GAME_APPEARANCES)) {
-    for (const character of variants) if (character && !isMonster(character.appearance.model)) return character.body;
+    for (const character of variants) if (character && !isMonster(character.appearance.model) && !isCustom(character.appearance.model)) return character.body;
   }
   return undefined;
 }

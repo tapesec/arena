@@ -11,6 +11,8 @@ import {
   ACCESSORY_SOCKETS,
   GENDERS,
   PAIRED_SOCKETS,
+  ARM_SPREAD_RANGE,
+  BRIGHTNESS_RANGE,
   PART_SLOTS,
   PLAY_FRAME,
   PLAY_SLOT,
@@ -19,6 +21,9 @@ import {
   accessoryKey,
   isFantasyRace,
   isInstrument,
+  CUSTOM_MODELS,
+  customModel,
+  isCustom,
   isMonster,
   monsterModel,
   playKey,
@@ -84,9 +89,11 @@ function appearanceAssets(appearance: Appearance): string[] {
   const assets = [
     isMonster(appearance.model)
       ? `Monstre ${appearance.model.slice("monster:".length)} (Fantasy Monsters Pack)`
+      : isCustom(appearance.model)
+        ? `Modèle complet ${CUSTOM_MODELS[appearance.model.slice("custom:".length)] ?? appearance.model} (Tripo)`
       : `Corps ${appearance.model}${appearance.headOnly ? " (tête seule)" : " (entier)"} (${appearance.model.startsWith("Human") ? "Universal Base Characters" : "Fantasy Races"})`,
   ];
-  if (!isMonster(appearance.model)) {
+  if (!isMonster(appearance.model) && !isCustom(appearance.model)) {
     for (const part of appearance.parts) assets.push(`Pièce ${part} (Modular Character Outfits – Fantasy)`);
     for (const hair of appearance.hair) assets.push(`Coiffure ${hair} (Universal Base Characters)`);
     if (appearance.hairColor) assets.push(`Cheveux teints en ${appearance.hairColor}`);
@@ -132,6 +139,50 @@ interface AbilityButtonsProps {
 export interface ZoomControl {
   get: () => number;
   set: (radius: number) => void;
+  // Banc de comparaison de la direction artistique : vue de la caméra de jeu, contour, matériaux mats.
+  bench?: () => BenchState | null;
+  setBench?: (changes: Partial<BenchState>) => void;
+}
+
+export interface BenchState {
+  gameView: boolean;
+  outline: boolean;
+  matte: boolean;
+}
+
+const BENCH_LABELS: Record<keyof BenchState, string> = { gameView: "Vue de jeu", outline: "Contour", matte: "Mat" };
+
+// Interrupteurs du banc de comparaison (sous la réglette de zoom).
+function BenchToggles({ zoom }: { zoom: ZoomControl }) {
+  // État lu dans la scène (qui peut ne pas être prête au premier affichage, ou remettre le banc à zéro) : relu
+  // régulièrement, comme la réglette de zoom.
+  const read = () => ({ ...(zoom.bench?.() ?? { gameView: false, outline: true, matte: false }) });
+  const [state, setState] = useState<BenchState>(read);
+  useEffect(() => {
+    const timer = setInterval(() => setState(read()), 300);
+    return () => clearInterval(timer);
+  }, [zoom]);
+  if (!zoom.setBench) return null;
+  return (
+    <div className="appearance-row">
+      Comparer
+      <span className="appearance-variants">
+        {(Object.keys(BENCH_LABELS) as (keyof BenchState)[]).map((key) => (
+          <button
+            key={key}
+            className={state[key] ? "lab-tab-active" : ""}
+            onClick={() => {
+              const next = { ...state, [key]: !state[key] };
+              zoom.setBench!({ [key]: next[key] });
+              setState(next);
+            }}
+          >
+            {BENCH_LABELS[key]}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
 }
 
 function ZoomSlider({ zoom }: { zoom: ZoomControl }) {
@@ -147,7 +198,7 @@ function ZoomSlider({ zoom }: { zoom: ZoomControl }) {
       <input
         type="range"
         min={1.5}
-        max={15}
+        max={60}
         step={0.1}
         value={radius}
         onChange={(e) => {
@@ -212,7 +263,7 @@ export function AppearancePanel(props: {
       </button>
     );
   const gender = appearance ? genderOf(appearance.model) : null;
-  const body = appearance && !isMonster(appearance.model) ? CATALOG.bodies.find((b) => b.id === appearance.model) : null;
+  const body = appearance && !isMonster(appearance.model) && !isCustom(appearance.model) ? CATALOG.bodies.find((b) => b.id === appearance.model) : null;
   const [weaponPack, setWeaponPack] = useState(WEAPON_PACKS[0]);
   const [weaponSlot, setWeaponSlot] = useState<WeaponSlot>("right");
   // Place proposée pour la prochaine arme : la première libre (main droite, main gauche, dos).
@@ -258,6 +309,7 @@ export function AppearancePanel(props: {
         </button>
       </div>
       <ZoomSlider zoom={props.zoom} />
+      <BenchToggles zoom={props.zoom} />
       <AbilityButtons {...props.abilities} />
       {!appearance ? (
         <div>
@@ -271,12 +323,13 @@ export function AppearancePanel(props: {
           <label className="appearance-row">
             Type
             <select
-              value={isMonster(appearance.model) ? "monster" : "body"}
+              value={isMonster(appearance.model) ? "monster" : isCustom(appearance.model) ? "custom" : "body"}
               onChange={(e) =>
                 // Retour à une race : la tenue de départ de la classe, en gardant armes et accessoires.
-                e.target.value === "monster"
+                e.target.value !== "body"
                   ? patch({
-                      model: monsterModel(CATALOG.monsters[0].id),
+                      headOnly: undefined,
+                      model: e.target.value === "monster" ? monsterModel(CATALOG.monsters[0].id) : customModel(Object.keys(CUSTOM_MODELS)[0]),
                       parts: [],
                       hair: [],
                       skin: undefined,
@@ -299,6 +352,7 @@ export function AppearancePanel(props: {
             >
               <option value="body">Race (Quaternius)</option>
               <option value="monster">Monstre (tenue incluse)</option>
+              <option value="custom">Modèle complet (Tripo, habillé)</option>
             </select>
           </label>
           {body ? (
@@ -369,6 +423,17 @@ export function AppearancePanel(props: {
               <HairControls appearance={sanitizedAppearance(appearance)} race={body.race} gender={body.gender} patch={patch} />
               <ColorControls appearance={appearance} race={body.race} hasSkins={!!body.skins} patch={patch} />
             </>
+          ) : isCustom(appearance.model) ? (
+            <label className="appearance-row">
+              Modèle
+              <select value={appearance.model.slice("custom:".length)} onChange={(e) => patch({ model: customModel(e.target.value) })}>
+                {Object.entries(CUSTOM_MODELS).map(([id, label]) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : (
             <label className="appearance-row">
               Monstre
@@ -381,6 +446,28 @@ export function AppearancePanel(props: {
               </select>
             </label>
           )}
+          <SettingSlider
+            key={`brightness-${classId}-${camp}`}
+            label="Luminosité"
+            title="Facteur sur la couleur du corps et de la tenue (pas des armes) ; à régler en Vue de jeu"
+            value={appearance.brightness ?? 1}
+            neutral={1}
+            range={BRIGHTNESS_RANGE}
+            step={0.05}
+            format={(value) => `×${value.toFixed(2)}`}
+            onCommit={(value) => patch({ brightness: value === 1 ? undefined : value })}
+          />
+          <SettingSlider
+            key={`arms-${classId}-${camp}`}
+            label="Écart des bras"
+            title="Bras écartés du corps au repos et en déplacement (pas pendant les sorts), pour que l'arme ou le livre ne le traverse pas"
+            value={appearance.armSpread ?? 0}
+            neutral={0}
+            range={ARM_SPREAD_RANGE}
+            step={1}
+            format={(value) => `${value}°`}
+            onCommit={(value) => patch({ armSpread: value === 0 ? undefined : value })}
+          />
 
           <h4>Armes</h4>
           {appearance.weapons.map((weapon, i) => (
@@ -539,6 +626,55 @@ function HairControls({ appearance, race, gender, patch }: { appearance: Appeara
       </label>
       {cut === "race" && <p className="lab-note">Les cheveux de la race gardent leurs couleurs ; la teinte vaut pour les sourcils et les poils ajoutés.</p>}
     </>
+  );
+}
+
+// Réglage d'un personnage à la réglette (luminosité, écart des bras) : elle bouge librement, la valeur n'est appliquée
+// (personnage reconstruit) qu'au relâchement (événement natif « change », même relâchée hors de la réglette) ; à régler
+// en Vue de jeu. Une réglette par personnage (key) : rien d'un glissé ne passe à un autre. neutral : valeur d'origine.
+function SettingSlider(props: {
+  label: string;
+  title: string;
+  value: number;
+  neutral: number;
+  range: { min: number; max: number };
+  step: number;
+  format: (value: number) => string;
+  onCommit: (value: number) => void;
+}) {
+  const { value, neutral, onCommit } = props;
+  const [current, setCurrent] = useState(value);
+  useEffect(() => setCurrent(value), [value]);
+  const input = useRef<HTMLInputElement>(null);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  useEffect(() => {
+    const element = input.current;
+    if (!element) return;
+    const commit = () => {
+      const next = Number(element.value);
+      if (next !== valueRef.current) commitRef.current(next);
+    };
+    element.addEventListener("change", commit);
+    return () => element.removeEventListener("change", commit);
+  }, []);
+  return (
+    <label className="appearance-row" title={props.title}>
+      {props.label}
+      <input
+        type="range"
+        min={props.range.min}
+        max={props.range.max}
+        step={props.step}
+        value={current}
+        ref={input}
+        onChange={(e) => setCurrent(Number(e.target.value))}
+      />
+      <span>{props.format(current)}</span>
+      {value !== neutral && <button onClick={() => onCommit(neutral)}>D'origine</button>}
+    </label>
   );
 }
 
@@ -937,6 +1073,7 @@ export function PlacementPanel(props: {
     () => [
       ...CATALOG.bodies.map((b) => ({ id: b.id, label: `${RACES[b.race] ?? b.race} ${GENDERS[b.gender].toLowerCase()}` })),
       ...CATALOG.monsters.map((m) => ({ id: monsterModel(m.id), label: `Monstre ${m.id}` })),
+      ...Object.entries(CUSTOM_MODELS).map(([id, label]) => ({ id: customModel(id), label: `Modèle complet ${label}` })),
     ],
     [],
   );
@@ -960,6 +1097,7 @@ export function PlacementPanel(props: {
         </button>
       </div>
       <ZoomSlider zoom={props.zoom} />
+      <BenchToggles zoom={props.zoom} />
       <AbilityButtons {...props.abilities} />
       <label className="appearance-row">
         Modèle

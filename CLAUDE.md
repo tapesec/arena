@@ -5,6 +5,8 @@ Le jeu s'appelle **Win or Wipe** (domaine winorwipe.com). « arena » reste le n
 - Infrastructure as code : **Terraform** (fournisseurs AWS et Cloudflare), pas AWS CDK ni CloudFormation. Cette
   consigne prime sur la préférence des règles AWS ci-dessous.
 - Profil AWS local : `lionnel-perso` ; région du jeu : `eu-west-3` (Paris).
+- Personnages : avant d'en générer ou d'en modifier un, lire `direction-artistique.md` (style commun, silhouette par classe,
+  identité par camp, méthode Tripo).
 
 <!-- BEGIN AWS Agent Toolkit rules -->
 # AWS Guidance

@@ -20,6 +20,7 @@ import sharp from "sharp";
 import { CATALOG, mountedItems, recolorsOf } from "../packages/client/src/appearanceData";
 import {
   isHairCut,
+  isCustom,
   isMonster,
   modelFile,
   type Appearance,
@@ -27,6 +28,8 @@ import {
   type GameAppearance,
   type MountedItem,
   type Recolor,
+  validArmSpread,
+  validBrightness,
 } from "../packages/client/src/game/appearance";
 import { paintPixels, tintPixels } from "../packages/client/src/game/textureTint";
 
@@ -151,7 +154,7 @@ async function buildItem(item: MountedItem): Promise<MountedItem> {
 
 async function buildCharacter(file: AppearanceFile, classId: string, camp: number, appearance: Appearance): Promise<GameAppearance> {
   const body = `${TARGET}/${classId}-${camp + 1}.glb`;
-  if (isMonster(appearance.model)) await copyFile(path.join(EDITOR, modelFile(appearance)), path.join(MODELS, body));
+  if (isMonster(appearance.model) || isCustom(appearance.model)) await copyFile(path.join(EDITOR, modelFile(appearance)), path.join(MODELS, body));
   else await buildBody(appearance, recolorsOf(appearance), body);
   const items: MountedItem[] = [];
   for (const item of mountedItems(appearance)) items.push(await buildItem(item));
@@ -161,7 +164,7 @@ async function buildCharacter(file: AppearanceFile, classId: string, camp: numbe
   const mounts = Object.fromEntries(Object.entries(modelMounts).filter(([key]) => used.has(key)));
   return {
     // Tenue, coiffures et couleurs sont dans le corps : il ne reste que le modèle et les objets.
-    appearance: { model: appearance.model, headOnly: appearance.headOnly, parts: [], hair: [], weapons: appearance.weapons, accessories: appearance.accessories },
+    appearance: { model: appearance.model, headOnly: appearance.headOnly, parts: [], hair: [], weapons: appearance.weapons, accessories: appearance.accessories, brightness: validBrightness(appearance.brightness), armSpread: validArmSpread(appearance.armSpread) },
     body,
     items,
     mounts,

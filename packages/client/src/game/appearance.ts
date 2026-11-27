@@ -65,7 +65,7 @@ export interface HeldWeapon {
 }
 
 export interface Appearance {
-  // Corps d'une race (« Elf_Male ») ou monstre (« monster:GoblinWarrior »).
+  // Corps d'une race (« Elf_Male »), monstre (« monster:GoblinWarrior ») ou modèle complet (« custom:Arcaniste_DA »).
   model: string;
   // Corps d'une race : seulement la tête et le cou (les pièces de tenue couvrent le reste), ou le corps entier.
   headOnly?: boolean;
@@ -90,6 +90,31 @@ export interface Appearance {
   // Couleurs des armes et accessoires, par objet (identifiant du catalogue) : les deux mains, ou les deux pièces d'une
   // paire, partagent celles de leur objet.
   itemColors?: Record<string, ItemColors>;
+  // Luminosité du personnage (corps, tenue et cheveux ; pas les armes ni les accessoires) : facteur sur la couleur de ses
+  // matériaux, réglé sous l'éclairage du jeu (Vue de jeu de l'éditeur). 1 ou absent : couleurs d'origine.
+  brightness?: number;
+  // Écart des bras (degrés) au repos et en déplacement : les bras s'éloignent du corps (un bâton ou un livre tenu ne
+  // le traverse plus) ; il s'efface pendant les sorts et autres actions. Absent ou 0 : bras de l'animation.
+  armSpread?: number;
+}
+
+// Bornes du réglage de luminosité.
+export const BRIGHTNESS_RANGE = { min: 0.5, max: 2 };
+
+// Luminosité d'une apparence : un nombre dans les bornes, sinon (ou à 1) aucune.
+export function validBrightness(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value === 1) return undefined;
+  return Math.min(BRIGHTNESS_RANGE.max, Math.max(BRIGHTNESS_RANGE.min, value));
+}
+
+// Bornes de l'écart des bras, en degrés.
+export const ARM_SPREAD_RANGE = { min: 0, max: 30 };
+
+// Écart des bras d'une apparence : un nombre dans les bornes, sinon (ou à 0) aucun.
+export function validArmSpread(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value === 0) return undefined;
+  const spread = Math.min(ARM_SPREAD_RANGE.max, Math.max(ARM_SPREAD_RANGE.min, value));
+  return spread || undefined;
 }
 
 // Contenu de appearances.json : deux variantes par classe (une par camp), et les placements réglés par modèle
@@ -166,9 +191,33 @@ export function monsterModel(id: string): string {
   return `${MONSTER}${id}`;
 }
 
+// Modèle complet, déjà habillé (généré avec Tripo), sur notre squelette (axes et noms des os Quaternius, voir
+// scripts/align-tripo-skeleton.mjs) : nos animations s'y branchent par nom d'os, sans ses déplacements d'os (autres
+// proportions) sauf celui du bassin. Pas de tenue ni de coiffure.
+const CUSTOM = "custom:";
+export const CUSTOM_MODELS: Record<string, string> = {
+  Gardien_DA: "Gardien",
+  Arcaniste_DA: "Arcaniste",
+  Lame_DA: "Lame",
+  Pretre_DA: "Prêtre",
+  Barde_DA: "Barde",
+  Viking_DA: "Gardien viking",
+  Cultiste_DA: "Arcaniste cultiste",
+  Gobelin_DA: "Lame gobelin",
+  Chaman_DA: "Prêtre chaman gobelin",
+  Diablotin_DA: "Barde diablotin",
+};
+export function isCustom(model: string): boolean {
+  return model.startsWith(CUSTOM);
+}
+export function customModel(id: string): string {
+  return `${CUSTOM}${id}`;
+}
+
 // Fichier (dans public/dev-models/appearance/) du modèle de base.
 export function modelFile(appearance: Appearance): string {
   if (isMonster(appearance.model)) return `monsters/${appearance.model.slice(MONSTER.length)}.glb`;
+  if (isCustom(appearance.model)) return `custom/${appearance.model.slice(CUSTOM.length)}.glb`;
   return `bodies/${appearance.model}${appearance.headOnly ? "_Head" : ""}.glb`;
 }
 

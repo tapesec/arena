@@ -1,5 +1,7 @@
 import catalogJson from "./appearanceCatalog.json";
 import {
+  validArmSpread,
+  validBrightness,
   PAIRED_SOCKETS,
   WEAPON_SLOTS,
   appearanceUrl,
@@ -7,6 +9,7 @@ import {
   accessoryKey,
   accessorySocket,
   isInstrument,
+  isCustom,
   isMonster,
   playKey,
   weaponKey,
@@ -107,6 +110,8 @@ export function sanitizedAppearance(appearance: Appearance): Appearance {
     skin: race && body.skins ? variant(appearance.skin) : undefined,
     raceHairColor: race ? variant(appearance.raceHairColor) : undefined,
     itemColors: Object.keys(itemColors).length ? itemColors : undefined,
+    brightness: validBrightness(appearance.brightness),
+    armSpread: validArmSpread(appearance.armSpread),
   };
 }
 
@@ -124,7 +129,7 @@ function itemPaint(appearance: Appearance, item: string): Pick<MountedItem, "col
 }
 
 export function genderOf(model: string): string | null {
-  return isMonster(model) ? null : (CATALOG.bodies.find((b) => b.id === model)?.gender ?? null);
+  return isMonster(model) || isCustom(model) ? null : (CATALOG.bodies.find((b) => b.id === model)?.gender ?? null);
 }
 
 // Tous les objets du modèle, avec leur clé de placement.

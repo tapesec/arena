@@ -51,6 +51,7 @@ import {
 import { useHudStore } from "../store";
 import { CameraController } from "./CameraController";
 import { WorldOverlay, type StatusIndicator, type TargetMark } from "./WorldOverlay";
+import { enableToonStyle, toonStyleRequested } from "./toonStyle";
 import { ScreenProjector } from "./screenProjection";
 import type { MatchStateView } from "./matchState";
 import {
@@ -258,6 +259,7 @@ export class Game {
       return (phase === "preparation" && this.loading.progress >= 1) || phase === "fighting";
     });
     this.scene = new Scene(this.engine);
+    if (toonStyleRequested()) enableToonStyle(this.scene);
     // Le chargement commence dès la salle d'attente ; le serveur attend que chacun ait fini avant la préparation.
     this.loading = new LoadingTracker(() => this.sendLoadProgress());
 
