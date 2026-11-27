@@ -292,7 +292,8 @@
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.75
       },
       "body": "appearances/gardien-2.glb",
       "items": [

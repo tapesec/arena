@@ -115,7 +115,8 @@
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.75
       }
     ],
     "arcaniste": [
@@ -975,7 +976,7 @@
         "position": [
           -0.0095,
           0.0838,
-          0.0
+          0
         ],
         "rotation": [
           0,
