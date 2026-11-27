@@ -445,7 +445,7 @@ export function AppearancePanel(props: {
               </select>
             </label>
           )}
-          <BrightnessSlider value={appearance.brightness ?? 1} onCommit={(value) => patch({ brightness: value === 1 ? undefined : value })} />
+          <BrightnessSlider key={`${classId}-${camp}`} value={appearance.brightness ?? 1} onCommit={(value) => patch({ brightness: value === 1 ? undefined : value })} />
 
           <h4>Armes</h4>
           {appearance.weapons.map((weapon, i) => (
@@ -608,13 +608,26 @@ function HairControls({ appearance, race, gender, patch }: { appearance: Appeara
 }
 
 // Luminosité du personnage : la réglette bouge librement, la valeur n'est appliquée (personnage reconstruit) qu'au
-// relâchement ; à régler en Vue de jeu, sous l'éclairage de la partie.
+// relâchement (événement natif « change », même relâchée hors de la réglette) ; à régler en Vue de jeu, sous
+// l'éclairage de la partie. Une réglette par personnage (key) : rien d'un glissé ne passe à un autre.
 function BrightnessSlider({ value, onCommit }: { value: number; onCommit: (value: number) => void }) {
   const [current, setCurrent] = useState(value);
   useEffect(() => setCurrent(value), [value]);
-  const commit = () => {
-    if (current !== value) onCommit(current);
-  };
+  const input = useRef<HTMLInputElement>(null);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  useEffect(() => {
+    const element = input.current;
+    if (!element) return;
+    const commit = () => {
+      const next = Number(element.value);
+      if (next !== valueRef.current) commitRef.current(next);
+    };
+    element.addEventListener("change", commit);
+    return () => element.removeEventListener("change", commit);
+  }, []);
   return (
     <label className="appearance-row" title="Facteur sur la couleur du corps et de la tenue (pas des armes) ; à régler en Vue de jeu">
       Luminosité
@@ -624,10 +637,8 @@ function BrightnessSlider({ value, onCommit }: { value: number; onCommit: (value
         max={BRIGHTNESS_RANGE.max}
         step={0.05}
         value={current}
+        ref={input}
         onChange={(e) => setCurrent(Number(e.target.value))}
-        onPointerUp={commit}
-        onKeyUp={commit}
-        onBlur={commit}
       />
       <span>×{current.toFixed(2)}</span>
       {value !== 1 && <button onClick={() => onCommit(1)}>D'origine</button>}

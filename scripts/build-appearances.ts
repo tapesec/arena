@@ -28,6 +28,7 @@ import {
   type GameAppearance,
   type MountedItem,
   type Recolor,
+  validBrightness,
 } from "../packages/client/src/game/appearance";
 import { paintPixels, tintPixels } from "../packages/client/src/game/textureTint";
 
@@ -162,7 +163,7 @@ async function buildCharacter(file: AppearanceFile, classId: string, camp: numbe
   const mounts = Object.fromEntries(Object.entries(modelMounts).filter(([key]) => used.has(key)));
   return {
     // Tenue, coiffures et couleurs sont dans le corps : il ne reste que le modèle et les objets.
-    appearance: { model: appearance.model, headOnly: appearance.headOnly, parts: [], hair: [], weapons: appearance.weapons, accessories: appearance.accessories, brightness: appearance.brightness },
+    appearance: { model: appearance.model, headOnly: appearance.headOnly, parts: [], hair: [], weapons: appearance.weapons, accessories: appearance.accessories, brightness: validBrightness(appearance.brightness) },
     body,
     items,
     mounts,
