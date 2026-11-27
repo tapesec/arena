@@ -225,6 +225,7 @@ Traque et élimine les cibles fragiles, en priorité les casters.
   - **Buff please** : chaque Prêtre et chaque Barde qui a un buff que le joueur n'a pas encore le lui lance (vie et puissance pour le Prêtre, dextérité pour le Barde).
 
 ## Assets
+- **Direction artistique des personnages** : voir `direction-artistique.md` (un même style pour tous, une silhouette par classe, une identité par camp).
 - **Source** : packs Quaternius, licence CC0 (libre, même commercialement). Tous partagent le même squelette humanoïde (65 os), donc toutes les animations vont sur tous les personnages.
   - Modular Character Outfits – Fantasy (version Source) : 5 styles de tenue (chevalier, noble, mage, rôdeur, paysan), homme et femme, 3 variantes de couleur.
   - Universal Base Characters (gratuit) : têtes, corps, coiffures.
