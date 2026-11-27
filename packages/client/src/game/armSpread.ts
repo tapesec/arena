@@ -16,10 +16,9 @@ interface Arm {
   next: TransformNode;
   // Côté du bras : 1 à droite, -1 à gauche.
   side: number;
-  // Rotation de l'animation, et celle qu'on a écrite par-dessus (pour reconnaître une image où l'animation n'a rien
-  // réécrit : animation en pause).
+  // Rotation de l'animation, et si l'écart y est ajouté (elle est alors remise avant l'animation suivante).
   base: Quaternion;
-  written: Quaternion | null;
+  written: boolean;
 }
 
 // Renvoie de quoi retirer l'écart (rotations de l'animation rendues), ou null sans les os des bras.
@@ -35,7 +34,7 @@ export function spreadArms(
     const child = bones.get(next);
     if (!bone || !child) return null;
     bone.rotationQuaternion ??= Quaternion.FromEulerVector(bone.rotation);
-    return { bone, next: child, side, base: bone.rotationQuaternion.clone(), written: null };
+    return { bone, next: child, side, base: bone.rotationQuaternion.clone(), written: false };
   };
   const right = arm("upperarm_r", "lowerarm_r", 1);
   const left = arm("upperarm_l", "lowerarm_l", -1);
@@ -53,15 +52,32 @@ export function spreadArms(
   const inverse = new Matrix();
   const delta = new Quaternion();
 
+  // Avant les animations, la rotation sans l'écart est remise : une animation en pause (ou un os sans piste) la garde
+  // telle quelle, et un fondu entre deux animations part d'elle (sinon l'écart compterait deux fois pendant le fondu).
+  const before = scene.onBeforeAnimationsObservable.add(() => {
+    for (const a of arms) {
+      if (a.written) a.bone.rotationQuaternion!.copyFrom(a.base);
+      a.written = false;
+    }
+  });
   const observer = scene.onAfterAnimationsObservable.add(() => {
-    // Détendu : seules des animations détendues jouent (au moins une).
-    const playing = groups.filter((group) => group.isPlaying);
-    const target = playing.length > 0 && playing.every((group) => relaxed.has(group.name)) ? 1 : 0;
+    // Détendu : seules des animations détendues sont en cours (au moins une ; en pause aussi, comme la pose figée de
+    // l'éditeur).
+    let started = false;
+    let tense = false;
+    for (const group of groups) {
+      if (!group.isStarted) continue;
+      started = true;
+      if (!relaxed.has(group.name)) tense = true;
+    }
+    const target = started && !tense ? 1 : 0;
     const step = scene.getEngine().getDeltaTime() / 1000 / FADE;
     weight = target > weight ? Math.min(target, weight + step) : Math.max(target, weight - step);
 
-    // Positions de l'image précédente (les matrices de cette image ne sont pas encore calculées) : assez justes pour
-    // orienter l'axe et choisir le sens.
+    for (const a of arms) a.base.copyFrom(a.bone.rotationQuaternion!);
+    if (weight <= 0) return;
+
+    // Positions de la pose de cette image (recalculées à la demande), sans l'écart.
     right.bone.getAbsolutePosition().subtractToRef(left.bone.getAbsolutePosition(), lateral);
     if (lateral.lengthSquared() < 1e-8) return;
     // Axe avant du torse : perpendiculaire à la ligne des épaules, à l'horizontale.
@@ -71,13 +87,6 @@ export function spreadArms(
 
     for (const a of arms) {
       const current = a.bone.rotationQuaternion!;
-      // L'animation a réécrit la rotation : c'est la nouvelle base ; sinon (pause) la base reste.
-      if (!a.written || !current.equalsWithEpsilon(a.written, 1e-6)) a.base.copyFrom(current);
-      if (weight <= 0) {
-        if (a.written) current.copyFrom(a.base);
-        a.written = null;
-        continue;
-      }
       // Sens : celui qui pousse le bras vers l'extérieur (son côté de la ligne des épaules).
       a.next.getAbsolutePosition().subtractToRef(a.bone.getAbsolutePosition(), direction);
       Vector3.CrossToRef(axis, direction, swing);
@@ -93,12 +102,12 @@ export function spreadArms(
       } else direction.copyFrom(axis);
       Quaternion.RotationAxisToRef(direction.normalize(), sign * angle * weight, delta);
       delta.multiplyToRef(a.base, current);
-      a.written ??= new Quaternion();
-      a.written.copyFrom(current);
+      a.written = true;
     }
   });
 
   return () => {
+    scene.onBeforeAnimationsObservable.remove(before);
     scene.onAfterAnimationsObservable.remove(observer);
     for (const a of arms) if (a.written) a.bone.rotationQuaternion!.copyFrom(a.base);
   };
