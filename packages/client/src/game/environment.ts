@@ -73,14 +73,14 @@ const HORIZON = new Color3(0.72, 0.82, 0.9);
 
 export function createLights(scene: Scene): DirectionalLight {
   const hemi = new HemisphericLight("hemi", new Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.55;
+  hemi.intensity = 0.95;
   // Ciel bleuté au-dessus, reflet vert de l'herbe en dessous.
   hemi.diffuse = new Color3(0.8, 0.88, 1);
   hemi.groundColor = new Color3(0.35, 0.42, 0.28);
   const sun = new DirectionalLight("sun", SUN_DIRECTION, scene);
   // Lumière chaude de fin d'après-midi.
   sun.diffuse = new Color3(1, 0.93, 0.8);
-  sun.intensity = 0.95;
+  sun.intensity = 1.5;
   return sun;
 }
 
