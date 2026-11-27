@@ -433,4 +433,7 @@ for (const j of joints) {
 // Textures en webp 1024 (comme nos personnages).
 await tripo.transform(textureCompress({ encoder: sharp, targetFormat: "webp", resize: [1024, 1024] }));
 console.log({ échelle: +factor.toFixed(3) });
+// Conditions de Tripo : ne pas retirer ce qui signale un modèle généré par IA. glTF-Transform réécrit l'en-tête
+// « generator: Tripo » ; la mention est reportée dans copyright et extras, que la relecture conserve (build-appearances).
+Object.assign(tripo.getRoot().getAsset(), { copyright: "AI-generated with Tripo AI (tripo3d.ai)", extras: { aiGenerated: "Tripo AI" } });
 await io.write(outPath, tripo);

@@ -65,7 +65,7 @@ export interface HeldWeapon {
 }
 
 export interface Appearance {
-  // Corps d'une race (« Elf_Male »), monstre (« monster:GoblinWarrior ») ou modèle complet (« custom:Arcaniste_Tripo »).
+  // Corps d'une race (« Elf_Male »), monstre (« monster:GoblinWarrior ») ou modèle complet (« custom:Arcaniste_DA »).
   model: string;
   // Corps d'une race : seulement la tête et le cou (les pièces de tenue couvrent le reste), ou le corps entier.
   headOnly?: boolean;
@@ -196,17 +196,16 @@ export function monsterModel(id: string): string {
 // proportions) sauf celui du bassin. Pas de tenue ni de coiffure.
 const CUSTOM = "custom:";
 export const CUSTOM_MODELS: Record<string, string> = {
-  Arcaniste_Tripo: "Arcaniste (Tripo)",
-  Gardien_DA: "Gardien (essai de DA)",
-  Arcaniste_DA: "Arcaniste (essai de DA)",
-  Lame_DA: "Lame (essai de DA)",
-  Pretre_DA: "Prêtre (essai de DA)",
-  Barde_DA: "Barde (essai de DA)",
-  Viking_DA: "Gardien viking (essai de DA)",
-  Cultiste_DA: "Arcaniste cultiste (essai de DA)",
-  Gobelin_DA: "Lame gobelin (essai de DA)",
-  Chaman_DA: "Prêtre chaman gobelin (essai de DA)",
-  Diablotin_DA: "Barde diablotin (essai de DA)",
+  Gardien_DA: "Gardien",
+  Arcaniste_DA: "Arcaniste",
+  Lame_DA: "Lame",
+  Pretre_DA: "Prêtre",
+  Barde_DA: "Barde",
+  Viking_DA: "Gardien viking",
+  Cultiste_DA: "Arcaniste cultiste",
+  Gobelin_DA: "Lame gobelin",
+  Chaman_DA: "Prêtre chaman gobelin",
+  Diablotin_DA: "Barde diablotin",
 };
 export function isCustom(model: string): boolean {
   return model.startsWith(CUSTOM);
