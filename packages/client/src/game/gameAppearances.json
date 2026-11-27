@@ -7,30 +7,31 @@
         "hair": [],
         "weapons": [
           {
-            "item": "Quaternius/Sword_Bronze",
-            "slot": "right"
-          },
-          {
             "item": "Hearthfold/HF_Wep_Shield_Buckler_Iron_01",
             "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Sword_Long_Legendary_01",
+            "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.45
       },
       "body": "appearances/lame-1.glb",
       "items": [
-        {
-          "key": "Quaternius/Sword_Bronze@right",
-          "file": "appearances/items/weapons/Quaternius/Sword_Bronze.glb",
-          "socket": {
-            "bone": "hand_r"
-          }
-        },
         {
           "key": "Hearthfold/HF_Wep_Shield_Buckler_Iron_01@left",
           "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Buckler_Iron_01.glb",
           "socket": {
             "bone": "hand_l"
+          }
+        },
+        {
+          "key": "Hearthfold/HF_Wep_Sword_Long_Legendary_01@right",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Sword_Long_Legendary_01.glb",
+          "socket": {
+            "bone": "hand_r"
           }
         }
       ],
@@ -66,7 +67,8 @@
             "slot": "left"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.8
       },
       "body": "appearances/lame-2.glb",
       "items": [
@@ -75,6 +77,9 @@
           "file": "appearances/items/weapons/Quaternius/Weapon_Sword_2.glb",
           "socket": {
             "bone": "hand_r"
+          },
+          "colors": {
+            "m:Atlas": "#d5b64e"
           }
         },
         {
@@ -82,10 +87,42 @@
           "file": "appearances/items/weapons/Quaternius/Weapon_Sword_2.glb",
           "socket": {
             "bone": "hand_l"
+          },
+          "colors": {
+            "m:Atlas": "#d5b64e"
           }
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "Quaternius/Weapon_Sword_2@right": {
+          "bone": "hand_r",
+          "position": [
+            -0.03,
+            0.1,
+            0
+          ],
+          "rotation": [
+            0.2101,
+            -1.5708,
+            -1.5708
+          ],
+          "scale": 0.6718
+        },
+        "Quaternius/Weapon_Sword_2@left": {
+          "bone": "hand_l",
+          "position": [
+            0.0613,
+            0.155,
+            0
+          ],
+          "rotation": [
+            -0.0674,
+            -1.5708,
+            -1.5708
+          ],
+          "scale": 0.6786
+        }
+      }
     }
   ],
   "gardien": [
@@ -162,34 +199,96 @@
         "hair": [],
         "weapons": [
           {
-            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
+            "item": "Hearthfold/HF_Wep_Shield_Kite_01",
             "slot": "left"
           },
           {
-            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "item": "UltimateRPGItems/Axe_Double",
             "slot": "right"
+          },
+          {
+            "item": "UltimateRPGItems/Axe_small",
+            "slot": "back"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.7,
+        "armSpread": 5
       },
       "body": "appearances/gardien-2.glb",
       "items": [
         {
-          "key": "Hearthfold/HF_Wep_Shield_Tower_01@left",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb",
+          "key": "Hearthfold/HF_Wep_Shield_Kite_01@left",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Kite_01.glb",
           "socket": {
             "bone": "hand_l"
           }
         },
         {
-          "key": "Hearthfold/HF_Wep_Sword_Great_Crude_01@right",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb",
+          "key": "UltimateRPGItems/Axe_Double@right",
+          "file": "appearances/items/weapons/UltimateRPGItems/Axe_Double.fbx",
           "socket": {
             "bone": "hand_r"
+          },
+          "colors": {
+            "m:Steel": "#d8d7d5"
+          }
+        },
+        {
+          "key": "UltimateRPGItems/Axe_small@back",
+          "file": "appearances/items/weapons/UltimateRPGItems/Axe_small.fbx",
+          "socket": {
+            "bone": "spine_03"
+          },
+          "colors": {
+            "m:Steel": "#b1aca4"
           }
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "Hearthfold/HF_Wep_Shield_Kite_01@left": {
+          "bone": "hand_l",
+          "position": [
+            -0.0921,
+            0.1509,
+            0
+          ],
+          "rotation": [
+            -0.2984,
+            -1.5708,
+            -1.5708
+          ],
+          "scale": 1.1999
+        },
+        "UltimateRPGItems/Axe_Double@right": {
+          "bone": "hand_r",
+          "position": [
+            -0.0672,
+            0.0844,
+            0.0725
+          ],
+          "rotation": [
+            0,
+            1.5708,
+            1.5708
+          ],
+          "scale": 0.007
+        },
+        "UltimateRPGItems/Axe_small@back": {
+          "bone": "spine_03",
+          "position": [
+            0,
+            -0.0286,
+            -0.3435
+          ],
+          "rotation": [
+            0.2265,
+            0,
+            -0.7896
+          ],
+          "scale": 0.0065
+        }
+      }
     }
   ],
   "arcaniste": [
@@ -276,6 +375,7 @@
           }
         ],
         "accessories": [],
+        "brightness": 1.4,
         "armSpread": 7
       },
       "body": "appearances/arcaniste-2.glb",
@@ -326,6 +426,7 @@
           }
         ],
         "accessories": [],
+        "brightness": 1.4,
         "armSpread": 10
       },
       "body": "appearances/pretre-1.glb",
@@ -353,9 +454,15 @@
           {
             "item": "Hearthfold/HF_Wep_Sword_Short_Steel_01",
             "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Staff_Crude_01",
+            "slot": "back"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.35,
+        "armSpread": 16
       },
       "body": "appearances/pretre-2.glb",
       "items": [
@@ -372,9 +479,45 @@
           "socket": {
             "bone": "hand_l"
           }
+        },
+        {
+          "key": "Hearthfold/HF_Wep_Staff_Crude_01@back",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Staff_Crude_01.glb",
+          "socket": {
+            "bone": "spine_03"
+          }
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "Hearthfold/HF_Wep_Staff_Crude_01@back": {
+          "bone": "spine_03",
+          "position": [
+            0,
+            0.2076,
+            -0.2373
+          ],
+          "rotation": [
+            -0.027,
+            0,
+            0.3673
+          ],
+          "scale": 1
+        },
+        "Hearthfold/HF_Wep_Wand_Oak_01@right": {
+          "bone": "hand_r",
+          "position": [
+            -0.0395,
+            0.0674,
+            0
+          ],
+          "rotation": [
+            0,
+            1.5708,
+            1.5708
+          ],
+          "scale": 0.9923
+        }
+      }
     }
   ],
   "barde": [
@@ -393,7 +536,9 @@
             "slot": "back"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.35,
+        "armSpread": 15
       },
       "body": "appearances/barde-1.glb",
       "items": [
@@ -413,7 +558,50 @@
           "playKey": "Quaternius/Weapon_Lute@play"
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "Hearthfold/HF_Wep_Sabre_01@right": {
+          "bone": "hand_r",
+          "position": [
+            -0.03,
+            0.1,
+            0
+          ],
+          "rotation": [
+            0.2583,
+            -1.5827,
+            -1.5334
+          ],
+          "scale": 1.3261
+        },
+        "Quaternius/Weapon_Lute@back": {
+          "bone": "spine_03",
+          "position": [
+            0.1441,
+            0.2168,
+            -0.1787
+          ],
+          "rotation": [
+            0.2265,
+            0,
+            2.4417
+          ],
+          "scale": 0.7278
+        },
+        "Quaternius/Weapon_Lute@play": {
+          "bone": "mains (chant)",
+          "position": [
+            0.0937,
+            -0.6146,
+            0.0498
+          ],
+          "rotation": [
+            0.1842,
+            0.0083,
+            0.6814
+          ],
+          "scale": 0.8371
+        }
+      }
     },
     {
       "appearance": {
@@ -426,11 +614,13 @@
             "slot": "back"
           },
           {
-            "item": "Quaternius/Weapon_Dagger",
+            "item": "UltimateRPGItems/Sword_Golden",
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.5,
+        "armSpread": 14
       },
       "body": "appearances/barde-2.glb",
       "items": [
@@ -443,14 +633,57 @@
           "playKey": "Quaternius/Weapon_Lute@play"
         },
         {
-          "key": "Quaternius/Weapon_Dagger@right",
-          "file": "appearances/items/weapons/Quaternius/Weapon_Dagger.glb",
+          "key": "UltimateRPGItems/Sword_Golden@right",
+          "file": "appearances/items/weapons/UltimateRPGItems/Sword_Golden.fbx",
           "socket": {
             "bone": "hand_r"
           }
         }
       ],
-      "mounts": {}
+      "mounts": {
+        "Quaternius/Weapon_Lute@back": {
+          "bone": "spine_03",
+          "position": [
+            0.0774,
+            0.3582,
+            -0.2391
+          ],
+          "rotation": [
+            0.2265,
+            0,
+            2.8853
+          ],
+          "scale": 0.6992
+        },
+        "Quaternius/Weapon_Lute@play": {
+          "bone": "mains (chant)",
+          "position": [
+            0.0756,
+            -0.6332,
+            0.0466
+          ],
+          "rotation": [
+            0.1474,
+            0.0713,
+            0.4525
+          ],
+          "scale": 0.7134
+        },
+        "UltimateRPGItems/Sword_Golden@right": {
+          "bone": "hand_r",
+          "position": [
+            -0.03,
+            0.1,
+            0
+          ],
+          "rotation": [
+            0,
+            1.5708,
+            1.5708
+          ],
+          "scale": 0.0054
+        }
+      }
     }
   ]
 }

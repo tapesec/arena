@@ -7,15 +7,16 @@
         "hair": [],
         "weapons": [
           {
-            "item": "Quaternius/Sword_Bronze",
-            "slot": "right"
-          },
-          {
             "item": "Hearthfold/HF_Wep_Shield_Buckler_Iron_01",
             "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Sword_Long_Legendary_01",
+            "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.45
       },
       {
         "model": "custom:Gobelin_DA",
@@ -31,7 +32,13 @@
             "slot": "left"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "itemColors": {
+          "Quaternius/Weapon_Sword_2": {
+            "m:Atlas": "#d5b64e"
+          }
+        },
+        "brightness": 1.8
       }
     ],
     "gardien": [
@@ -58,15 +65,29 @@
         "hair": [],
         "weapons": [
           {
-            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
+            "item": "Hearthfold/HF_Wep_Shield_Kite_01",
             "slot": "left"
           },
           {
-            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "item": "UltimateRPGItems/Axe_Double",
             "slot": "right"
+          },
+          {
+            "item": "UltimateRPGItems/Axe_small",
+            "slot": "back"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "itemColors": {
+          "UltimateRPGItems/Axe_small": {
+            "m:Steel": "#b1aca4"
+          },
+          "UltimateRPGItems/Axe_Double": {
+            "m:Steel": "#d8d7d5"
+          }
+        },
+        "brightness": 1.7,
+        "armSpread": 5
       }
     ],
     "arcaniste": [
@@ -103,7 +124,8 @@
           }
         ],
         "accessories": [],
-        "armSpread": 7
+        "armSpread": 7,
+        "brightness": 1.4
       }
     ],
     "pretre": [
@@ -118,7 +140,8 @@
           }
         ],
         "accessories": [],
-        "armSpread": 10
+        "armSpread": 10,
+        "brightness": 1.4
       },
       {
         "model": "custom:Chaman_DA",
@@ -132,9 +155,15 @@
           {
             "item": "Hearthfold/HF_Wep_Sword_Short_Steel_01",
             "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Staff_Crude_01",
+            "slot": "back"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.35,
+        "armSpread": 16
       }
     ],
     "barde": [
@@ -152,7 +181,9 @@
             "slot": "back"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.35,
+        "armSpread": 15
       },
       {
         "model": "custom:Diablotin_DA",
@@ -164,11 +195,13 @@
             "slot": "back"
           },
           {
-            "item": "Quaternius/Weapon_Dagger",
+            "item": "UltimateRPGItems/Sword_Golden",
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.5,
+        "armSpread": 14
       }
     ]
   },
@@ -943,6 +976,338 @@
           1.5708
         ],
         "scale": 0.0025
+      }
+    },
+    "custom:Viking_DA": {
+      "Hearthfold/HF_Wep_Shield_Kite_01@left": {
+        "bone": "hand_l",
+        "position": [
+          -0.0921,
+          0.1509,
+          0
+        ],
+        "rotation": [
+          -0.2984,
+          -1.5708,
+          -1.5708
+        ],
+        "scale": 1.1999
+      },
+      "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 1.13
+      },
+      "Hearthfold/HF_Wep_Hammer_War_Steel_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0.9811,
+          0,
+          0
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Hammer_War_Legendary_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.3807,
+          0.0877
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Mace_Legendary_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.2578,
+          -1.1186
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Mace_Steel_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.159,
+          -0.69
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Mace_Gold_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.2252,
+          -0.9771
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Halberd_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.1066,
+          -0.4624
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Crossbow_Crude_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          -0.0714,
+          -0.388
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          0
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Axe_Great_Legendary_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.0805,
+          0.0844,
+          -0.2665
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 1.212
+      },
+      "UltimateRPGItems/Axe_Double@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.0672,
+          0.0844,
+          0.0725
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.007
+      },
+      "UltimateRPGItems/Axe_small@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          -0.0286,
+          -0.3435
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          -0.7896
+        ],
+        "scale": 0.0065
+      }
+    },
+    "custom:Chaman_DA": {
+      "Hearthfold/HF_Wep_Staff_Crude_01@back": {
+        "bone": "spine_03",
+        "position": [
+          0,
+          0.2076,
+          -0.2373
+        ],
+        "rotation": [
+          -0.027,
+          0,
+          0.3673
+        ],
+        "scale": 1
+      },
+      "Hearthfold/HF_Wep_Wand_Oak_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.0395,
+          0.0674,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.9923
+      }
+    },
+    "custom:Diablotin_DA": {
+      "Quaternius/Weapon_Lute@back": {
+        "bone": "spine_03",
+        "position": [
+          0.0774,
+          0.3582,
+          -0.2391
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          2.8853
+        ],
+        "scale": 0.6992
+      },
+      "Quaternius/Weapon_Lute@play": {
+        "bone": "mains (chant)",
+        "position": [
+          0.0756,
+          -0.6332,
+          0.0466
+        ],
+        "rotation": [
+          0.1474,
+          0.0713,
+          0.4525
+        ],
+        "scale": 0.7134
+      },
+      "UltimateRPGItems/Sword_big_Golden@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          -0.1146
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.0047
+      },
+      "UltimateRPGItems/Sword_Golden@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0,
+          1.5708,
+          1.5708
+        ],
+        "scale": 0.0054
+      }
+    },
+    "custom:Barde_DA": {
+      "Hearthfold/HF_Wep_Sabre_01@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0.2583,
+          -1.5827,
+          -1.5334
+        ],
+        "scale": 1.3261
+      },
+      "Quaternius/Weapon_Lute@back": {
+        "bone": "spine_03",
+        "position": [
+          0.1441,
+          0.2168,
+          -0.1787
+        ],
+        "rotation": [
+          0.2265,
+          0,
+          2.4417
+        ],
+        "scale": 0.7278
+      },
+      "Quaternius/Weapon_Lute@play": {
+        "bone": "mains (chant)",
+        "position": [
+          0.0937,
+          -0.6146,
+          0.0498
+        ],
+        "rotation": [
+          0.1842,
+          0.0083,
+          0.6814
+        ],
+        "scale": 0.8371
+      }
+    },
+    "custom:Gobelin_DA": {
+      "Quaternius/Weapon_Sword_2@right": {
+        "bone": "hand_r",
+        "position": [
+          -0.03,
+          0.1,
+          0
+        ],
+        "rotation": [
+          0.2101,
+          -1.5708,
+          -1.5708
+        ],
+        "scale": 0.6718
+      },
+      "Quaternius/Weapon_Sword_2@left": {
+        "bone": "hand_l",
+        "position": [
+          0.0613,
+          0.155,
+          0
+        ],
+        "rotation": [
+          -0.0674,
+          -1.5708,
+          -1.5708
+        ],
+        "scale": 0.6786
       }
     }
   }
