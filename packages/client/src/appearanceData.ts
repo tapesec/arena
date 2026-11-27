@@ -1,5 +1,6 @@
 import catalogJson from "./appearanceCatalog.json";
 import {
+  validArmSpread,
   validBrightness,
   PAIRED_SOCKETS,
   WEAPON_SLOTS,
@@ -110,6 +111,7 @@ export function sanitizedAppearance(appearance: Appearance): Appearance {
     raceHairColor: race ? variant(appearance.raceHairColor) : undefined,
     itemColors: Object.keys(itemColors).length ? itemColors : undefined,
     brightness: validBrightness(appearance.brightness),
+    armSpread: validArmSpread(appearance.armSpread),
   };
 }
 

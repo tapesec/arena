@@ -30,8 +30,11 @@ import {
   type Mount,
   type MountedItem,
   type Recolor,
+  validArmSpread,
   validBrightness,
 } from "./appearance";
+import { spreadArms } from "./armSpread";
+import { relaxedAnimations } from "./CharacterAnimator";
 import { gameCharacterFiles, hasBothCamps, raceBody } from "./gameAppearances";
 import { paintCells, tintImage } from "./textureTint";
 import type { Shadows } from "./shadows";
@@ -1018,6 +1021,11 @@ export class CharacterAssets {
       clone.stop();
       animations.set(group.name, clone);
     }
+
+    // Écart des bras réglé dans l'éditeur, au repos et en déplacement.
+    const armSpread = validArmSpread(appearance.armSpread);
+    const removeSpread = armSpread ? spreadArms(this.scene, bones, animations, relaxedAnimations(def.animations.idle), armSpread) : null;
+    if (removeSpread) cleanup.push(removeSpread);
 
     this.shadows?.cast(meshes.filter((mesh) => !NO_SHADOW_PIECES.test(mesh.name)));
     outline(meshes);

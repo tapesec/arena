@@ -93,6 +93,9 @@ export interface Appearance {
   // Luminosité du personnage (corps, tenue et cheveux ; pas les armes ni les accessoires) : facteur sur la couleur de ses
   // matériaux, réglé sous l'éclairage du jeu (Vue de jeu de l'éditeur). 1 ou absent : couleurs d'origine.
   brightness?: number;
+  // Écart des bras (degrés) au repos et en déplacement : les bras s'éloignent du corps (un bâton ou un livre tenu ne
+  // le traverse plus) ; il s'efface pendant les sorts et autres actions. Absent ou 0 : bras de l'animation.
+  armSpread?: number;
 }
 
 // Bornes du réglage de luminosité.
@@ -102,6 +105,16 @@ export const BRIGHTNESS_RANGE = { min: 0.5, max: 2 };
 export function validBrightness(value: unknown): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value) || value === 1) return undefined;
   return Math.min(BRIGHTNESS_RANGE.max, Math.max(BRIGHTNESS_RANGE.min, value));
+}
+
+// Bornes de l'écart des bras, en degrés.
+export const ARM_SPREAD_RANGE = { min: 0, max: 30 };
+
+// Écart des bras d'une apparence : un nombre dans les bornes, sinon (ou à 0) aucun.
+export function validArmSpread(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value === 0) return undefined;
+  const spread = Math.min(ARM_SPREAD_RANGE.max, Math.max(ARM_SPREAD_RANGE.min, value));
+  return spread || undefined;
 }
 
 // Contenu de appearances.json : deux variantes par classe (une par camp), et les placements réglés par modèle

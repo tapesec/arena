@@ -33,6 +33,12 @@ const WALK: Record<number, Gait> = {
   [-2]: { name: "Walk_L_Loop", speed: 0.65 },
   [-3]: { name: "Walk_Bwd_L_Loop", speed: 1.5 },
 };
+// Animations « détendues » d'un personnage : sa pose de repos et ses allures (marche, course, sprint), où ses bras
+// pendent librement (voir armSpread.ts).
+export function relaxedAnimations(idle: string): Set<string> {
+  return new Set([idle, ...Object.values(RUN).map((g) => g.name), ...Object.values(WALK).map((g) => g.name), SPRINT.name]);
+}
+
 // Bonus de vitesse en avançant tout droit : au-delà de SPRINT_THRESHOLD (m/s), le personnage sprinte (même mesure).
 const SPRINT: Gait = { name: "Sprint_Loop", speed: 6.6 };
 const SPRINT_THRESHOLD = 8;

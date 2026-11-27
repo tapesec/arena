@@ -11,6 +11,7 @@ import {
   ACCESSORY_SOCKETS,
   GENDERS,
   PAIRED_SOCKETS,
+  ARM_SPREAD_RANGE,
   BRIGHTNESS_RANGE,
   PART_SLOTS,
   PLAY_FRAME,
@@ -445,7 +446,28 @@ export function AppearancePanel(props: {
               </select>
             </label>
           )}
-          <BrightnessSlider key={`${classId}-${camp}`} value={appearance.brightness ?? 1} onCommit={(value) => patch({ brightness: value === 1 ? undefined : value })} />
+          <SettingSlider
+            key={`brightness-${classId}-${camp}`}
+            label="Luminosité"
+            title="Facteur sur la couleur du corps et de la tenue (pas des armes) ; à régler en Vue de jeu"
+            value={appearance.brightness ?? 1}
+            neutral={1}
+            range={BRIGHTNESS_RANGE}
+            step={0.05}
+            format={(value) => `×${value.toFixed(2)}`}
+            onCommit={(value) => patch({ brightness: value === 1 ? undefined : value })}
+          />
+          <SettingSlider
+            key={`arms-${classId}-${camp}`}
+            label="Écart des bras"
+            title="Bras écartés du corps au repos et en déplacement (pas pendant les sorts), pour que l'arme ou le livre ne le traverse pas"
+            value={appearance.armSpread ?? 0}
+            neutral={0}
+            range={ARM_SPREAD_RANGE}
+            step={1}
+            format={(value) => `${value}°`}
+            onCommit={(value) => patch({ armSpread: value === 0 ? undefined : value })}
+          />
 
           <h4>Armes</h4>
           {appearance.weapons.map((weapon, i) => (
@@ -607,10 +629,20 @@ function HairControls({ appearance, race, gender, patch }: { appearance: Appeara
   );
 }
 
-// Luminosité du personnage : la réglette bouge librement, la valeur n'est appliquée (personnage reconstruit) qu'au
-// relâchement (événement natif « change », même relâchée hors de la réglette) ; à régler en Vue de jeu, sous
-// l'éclairage de la partie. Une réglette par personnage (key) : rien d'un glissé ne passe à un autre.
-function BrightnessSlider({ value, onCommit }: { value: number; onCommit: (value: number) => void }) {
+// Réglage d'un personnage à la réglette (luminosité, écart des bras) : elle bouge librement, la valeur n'est appliquée
+// (personnage reconstruit) qu'au relâchement (événement natif « change », même relâchée hors de la réglette) ; à régler
+// en Vue de jeu. Une réglette par personnage (key) : rien d'un glissé ne passe à un autre. neutral : valeur d'origine.
+function SettingSlider(props: {
+  label: string;
+  title: string;
+  value: number;
+  neutral: number;
+  range: { min: number; max: number };
+  step: number;
+  format: (value: number) => string;
+  onCommit: (value: number) => void;
+}) {
+  const { value, neutral, onCommit } = props;
   const [current, setCurrent] = useState(value);
   useEffect(() => setCurrent(value), [value]);
   const input = useRef<HTMLInputElement>(null);
@@ -629,19 +661,19 @@ function BrightnessSlider({ value, onCommit }: { value: number; onCommit: (value
     return () => element.removeEventListener("change", commit);
   }, []);
   return (
-    <label className="appearance-row" title="Facteur sur la couleur du corps et de la tenue (pas des armes) ; à régler en Vue de jeu">
-      Luminosité
+    <label className="appearance-row" title={props.title}>
+      {props.label}
       <input
         type="range"
-        min={BRIGHTNESS_RANGE.min}
-        max={BRIGHTNESS_RANGE.max}
-        step={0.05}
+        min={props.range.min}
+        max={props.range.max}
+        step={props.step}
         value={current}
         ref={input}
         onChange={(e) => setCurrent(Number(e.target.value))}
       />
-      <span>×{current.toFixed(2)}</span>
-      {value !== 1 && <button onClick={() => onCommit(1)}>D'origine</button>}
+      <span>{props.format(current)}</span>
+      {value !== neutral && <button onClick={() => onCommit(neutral)}>D'origine</button>}
     </label>
   );
 }
