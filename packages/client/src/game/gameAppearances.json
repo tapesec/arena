@@ -412,142 +412,66 @@
     },
     {
       "appearance": {
-        "model": "monster:Cultist",
-        "headOnly": true,
+        "model": "custom:Arcaniste_DA",
         "parts": [],
         "hair": [],
         "weapons": [
           {
-            "item": "MedievalWeapons/Scythe",
-            "slot": "right"
+            "item": "UltimateRPGItems/Book1_Open",
+            "slot": "left"
           },
           {
-            "item": "Hearthfold/HF_Wep_Staff_Crude_01",
-            "slot": "left"
+            "item": "Hearthfold/HF_Wep_Staff_Legendary_01",
+            "slot": "right"
           }
         ],
-        "accessories": [
-          "HF_Amr_Mantle_Fur_01",
-          "HF_Amr_Cape_Tattered_01",
-          "HF_Amr_Helm_Skull_Bone_01",
-          "HF_Amr_Boots_Fur_01"
-        ]
+        "accessories": []
       },
       "body": "appearances/arcaniste-2.glb",
       "items": [
         {
-          "key": "MedievalWeapons/Scythe@right",
-          "file": "appearances/items/weapons/MedievalWeapons/Scythe.fbx",
-          "socket": {
-            "bone": "hand_r"
-          }
-        },
-        {
-          "key": "Hearthfold/HF_Wep_Staff_Crude_01@left",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Staff_Crude_01.glb",
+          "key": "UltimateRPGItems/Book1_Open@left",
+          "file": "appearances/items/weapons/UltimateRPGItems/Book1_Open.fbx",
           "socket": {
             "bone": "hand_l"
           }
         },
         {
-          "key": "HF_Amr_Mantle_Fur_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Mantle_Fur_01.4007d868.glb",
+          "key": "Hearthfold/HF_Wep_Staff_Legendary_01@right",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Staff_Legendary_01.glb",
           "socket": {
-            "bone": "neck_01"
-          },
-          "hang": false
-        },
-        {
-          "key": "HF_Amr_Cape_Tattered_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Cape_Tattered_01.841b95b1.glb",
-          "socket": {
-            "bone": "neck_01"
-          },
-          "hang": true
-        },
-        {
-          "key": "HF_Amr_Helm_Skull_Bone_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Helm_Skull_Bone_01.glb",
-          "socket": {
-            "bone": "Head"
-          },
-          "hang": false
-        },
-        {
-          "key": "HF_Amr_Boots_Fur_01@r",
-          "file": "appearances/items/accessories/HF_Amr_Boots_Fur_01.glb",
-          "socket": {
-            "bone": "foot_r",
-            "ground": true
-          },
-          "part": "right"
-        },
-        {
-          "key": "HF_Amr_Boots_Fur_01@l",
-          "file": "appearances/items/accessories/HF_Amr_Boots_Fur_01.glb",
-          "socket": {
-            "bone": "foot_l",
-            "ground": true
-          },
-          "part": "left"
+            "bone": "hand_r"
+          }
         }
       ],
       "mounts": {
-        "MedievalWeapons/Scythe@right": {
-          "bone": "mixamorig:RightHand",
+        "Hearthfold/HF_Wep_Staff_Legendary_01@right": {
+          "bone": "hand_r",
           "position": [
-            -0.0073,
-            0.0576,
-            0.0498
-          ],
-          "rotation": [
-            0.3175,
-            3.1233,
-            1.4082
-          ],
-          "scale": 0.0026
-        },
-        "Hearthfold/HF_Wep_Staff_Crude_01@left": {
-          "bone": "mixamorig:LeftHand",
-          "position": [
-            0.0156,
-            0.0748,
-            0.0198
-          ],
-          "rotation": [
-            -0.0625,
-            0.0738,
-            1.3806
-          ],
-          "scale": 1
-        },
-        "HF_Amr_Cape_Tattered_01@c": {
-          "bone": "mixamorig:Neck",
-          "position": [
-            0.0524,
-            0,
-            -0.1534
-          ],
-          "rotation": [
-            0,
-            -0.5117,
+            -0.0095,
+            0.0838,
             0
           ],
-          "scale": 1
-        },
-        "HF_Amr_Helm_Skull_Bone_01@c": {
-          "bone": "mixamorig:Head",
-          "position": [
-            0,
-            0.0577,
-            -0.0386
-          ],
           "rotation": [
             0,
-            0,
-            0
+            1.5708,
+            1.5708
           ],
-          "scale": 1
+          "scale": 1.02674
+        },
+        "UltimateRPGItems/Book1_Open@left": {
+          "bone": "hand_l",
+          "position": [
+            0.0581,
+            0.208,
+            0.0249
+          ],
+          "rotation": [
+            -0.0506,
+            2.9824,
+            1.7728
+          ],
+          "scale": 0.00373
         }
       }
     }
