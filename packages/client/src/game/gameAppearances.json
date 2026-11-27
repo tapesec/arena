@@ -347,7 +347,7 @@
   "arcaniste": [
     {
       "appearance": {
-        "model": "custom:Arcaniste_Tripo",
+        "model": "custom:Arcaniste_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -360,7 +360,9 @@
             "slot": "right"
           }
         ],
-        "accessories": []
+        "accessories": [],
+        "brightness": 1.75,
+        "armSpread": 11
       },
       "body": "appearances/arcaniste-1.glb",
       "items": [
@@ -383,30 +385,30 @@
         "Hearthfold/HF_Wep_Staff_Legendary_01@right": {
           "bone": "hand_r",
           "position": [
-            -0.0095,
+            -0.0226,
             0.0838,
-            0
+            0.0415
           ],
           "rotation": [
             0,
             1.5708,
             1.5708
           ],
-          "scale": 1.02674
+          "scale": 1.0267
         },
         "UltimateRPGItems/Book1_Open@left": {
           "bone": "hand_l",
           "position": [
-            0.0581,
-            0.208,
-            0.0249
+            0.066,
+            0.1942,
+            0.0255
           ],
           "rotation": [
             -0.0506,
             2.9824,
             1.7728
           ],
-          "scale": 0.00373
+          "scale": 0.0037
         }
       }
     },
@@ -448,30 +450,30 @@
         "Hearthfold/HF_Wep_Staff_Legendary_01@right": {
           "bone": "hand_r",
           "position": [
-            -0.0095,
+            -0.0226,
             0.0838,
-            0
+            0.0415
           ],
           "rotation": [
             0,
             1.5708,
             1.5708
           ],
-          "scale": 1.02674
+          "scale": 1.0267
         },
         "UltimateRPGItems/Book1_Open@left": {
           "bone": "hand_l",
           "position": [
-            0.0581,
-            0.208,
-            0.0249
+            0.066,
+            0.1942,
+            0.0255
           ],
           "rotation": [
             -0.0506,
             2.9824,
             1.7728
           ],
-          "scale": 0.00373
+          "scale": 0.0037
         }
       }
     }
