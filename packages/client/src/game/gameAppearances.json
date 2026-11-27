@@ -53,8 +53,7 @@
     },
     {
       "appearance": {
-        "model": "monster:GoblinWarrior",
-        "headOnly": true,
+        "model": "custom:Gobelin_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -67,10 +66,7 @@
             "slot": "left"
           }
         ],
-        "accessories": [
-          "HF_Amr_Coif_Chainmail_01",
-          "HF_Gear_Belt_Utility_01"
-        ]
+        "accessories": []
       },
       "body": "appearances/lame-2.glb",
       "items": [
@@ -87,161 +83,12 @@
           "socket": {
             "bone": "hand_l"
           }
-        },
-        {
-          "key": "HF_Amr_Coif_Chainmail_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Coif_Chainmail_01.glb",
-          "socket": {
-            "bone": "Head"
-          },
-          "hang": false
-        },
-        {
-          "key": "HF_Gear_Belt_Utility_01@c",
-          "file": "appearances/items/accessories/HF_Gear_Belt_Utility_01.glb",
-          "socket": {
-            "bone": "pelvis"
-          },
-          "hang": false
         }
       ],
-      "mounts": {
-        "Quaternius/Weapon_Sword_2@right": {
-          "bone": "mixamorig:RightHand",
-          "position": [
-            -0.0159,
-            0.0462,
-            0.0571
-          ],
-          "rotation": [
-            0.4197,
-            0.0775,
-            -1.3629
-          ],
-          "scale": 0.652
-        },
-        "HF_Amr_Coif_Chainmail_01@c": {
-          "bone": "mixamorig:Head",
-          "position": [
-            -0.0006,
-            0,
-            0.008
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": 1.0328
-        },
-        "HF_Gear_Belt_Utility_01@c": {
-          "bone": "mixamorig:Hips",
-          "position": [
-            0,
-            0.0382,
-            0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": 1.2489
-        },
-        "Quaternius/Weapon_Sword_2@left": {
-          "bone": "mixamorig:LeftHand",
-          "position": [
-            0.0058,
-            0.0637,
-            -0.01
-          ],
-          "rotation": [
-            0.136,
-            -2.9461,
-            -1.4519
-          ],
-          "scale": 0.652
-        }
-      }
+      "mounts": {}
     }
   ],
   "gardien": [
-    {
-      "appearance": {
-        "model": "Human_Male",
-        "headOnly": true,
-        "parts": [],
-        "hair": [],
-        "weapons": [
-          {
-            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
-            "slot": "left"
-          },
-          {
-            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
-            "slot": "right"
-          }
-        ],
-        "accessories": [
-          "HF_Amr_Helm_Winged_01"
-        ]
-      },
-      "body": "appearances/gardien-1.glb",
-      "items": [
-        {
-          "key": "Hearthfold/HF_Wep_Shield_Tower_01@left",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb",
-          "socket": {
-            "bone": "hand_l"
-          }
-        },
-        {
-          "key": "Hearthfold/HF_Wep_Sword_Great_Crude_01@right",
-          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb",
-          "socket": {
-            "bone": "hand_r"
-          }
-        },
-        {
-          "key": "HF_Amr_Helm_Winged_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Helm_Winged_01.glb",
-          "socket": {
-            "bone": "Head"
-          },
-          "hang": false
-        }
-      ],
-      "mounts": {
-        "Hearthfold/HF_Wep_Shield_Tower_01@left": {
-          "bone": "hand_l",
-          "position": [
-            -0.06,
-            0.0958,
-            0.0209
-          ],
-          "rotation": [
-            -0.021,
-            -1.3424,
-            -1.5708
-          ],
-          "scale": 1.0352
-        },
-        "Hearthfold/HF_Wep_Sword_Great_Crude_01@right": {
-          "bone": "hand_r",
-          "position": [
-            -0.03,
-            0.1,
-            -0.0507
-          ],
-          "rotation": [
-            0,
-            1.5708,
-            1.5708
-          ],
-          "scale": 1.2614
-        }
-      }
-    },
     {
       "appearance": {
         "model": "custom:Gardien_DA",
@@ -260,7 +107,7 @@
         "accessories": [],
         "brightness": 1.75
       },
-      "body": "appearances/gardien-2.glb",
+      "body": "appearances/gardien-1.glb",
       "items": [
         {
           "key": "Hearthfold/HF_Wep_Shield_Tower_01@left",
@@ -307,6 +154,42 @@
           "scale": 1.4506
         }
       }
+    },
+    {
+      "appearance": {
+        "model": "custom:Viking_DA",
+        "parts": [],
+        "hair": [],
+        "weapons": [
+          {
+            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
+            "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "slot": "right"
+          }
+        ],
+        "accessories": []
+      },
+      "body": "appearances/gardien-2.glb",
+      "items": [
+        {
+          "key": "Hearthfold/HF_Wep_Shield_Tower_01@left",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Shield_Tower_01.glb",
+          "socket": {
+            "bone": "hand_l"
+          }
+        },
+        {
+          "key": "Hearthfold/HF_Wep_Sword_Great_Crude_01@right",
+          "file": "appearances/items/weapons/Hearthfold/HF_Wep_Sword_Great_Crude_01.glb",
+          "socket": {
+            "bone": "hand_r"
+          }
+        }
+      ],
+      "mounts": {}
     }
   ],
   "arcaniste": [
@@ -459,8 +342,7 @@
     },
     {
       "appearance": {
-        "model": "monster:KoboldShaman",
-        "headOnly": true,
+        "model": "custom:Chaman_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -473,9 +355,7 @@
             "slot": "left"
           }
         ],
-        "accessories": [
-          "HF_Amr_Cape_Tattered_01"
-        ]
+        "accessories": []
       },
       "body": "appearances/pretre-2.glb",
       "items": [
@@ -492,67 +372,15 @@
           "socket": {
             "bone": "hand_l"
           }
-        },
-        {
-          "key": "HF_Amr_Cape_Tattered_01@c",
-          "file": "appearances/items/accessories/HF_Amr_Cape_Tattered_01.glb",
-          "socket": {
-            "bone": "neck_01"
-          },
-          "hang": true
         }
       ],
-      "mounts": {
-        "HF_Amr_Cape_Tattered_01@c": {
-          "bone": "mixamorig:Neck",
-          "position": [
-            0,
-            0.038,
-            -0.1197
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": 0.5446
-        },
-        "Hearthfold/HF_Wep_Wand_Oak_01@right": {
-          "bone": "mixamorig:RightHand",
-          "position": [
-            -0.0033,
-            0.0671,
-            0.012
-          ],
-          "rotation": [
-            -0.158,
-            0.1905,
-            -1.4858
-          ],
-          "scale": 1
-        },
-        "Hearthfold/HF_Wep_Sword_Short_Steel_01@left": {
-          "bone": "mixamorig:LeftHand",
-          "position": [
-            0.0092,
-            0.0523,
-            0.0097
-          ],
-          "rotation": [
-            -0.1306,
-            0.0982,
-            1.4101
-          ],
-          "scale": 1
-        }
-      }
+      "mounts": {}
     }
   ],
   "barde": [
     {
       "appearance": {
-        "model": "HumanRegular_Male",
-        "headOnly": true,
+        "model": "custom:Barde_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -585,55 +413,11 @@
           "playKey": "Quaternius/Weapon_Lute@play"
         }
       ],
-      "mounts": {
-        "Hearthfold/HF_Wep_Sabre_01@right": {
-          "bone": "hand_r",
-          "position": [
-            -0.0299,
-            0.0997,
-            0
-          ],
-          "rotation": [
-            0.21,
-            -1.5708,
-            -1.5708
-          ],
-          "scale": 1.13
-        },
-        "Quaternius/Weapon_Lute@back": {
-          "bone": "spine_03",
-          "position": [
-            0.1693,
-            0.2673,
-            -0.1235
-          ],
-          "rotation": [
-            0.2265,
-            0,
-            2.5334
-          ],
-          "scale": 0.7063
-        },
-        "Quaternius/Weapon_Lute@play": {
-          "bone": "mains (chant)",
-          "position": [
-            0.0195,
-            -0.6745,
-            0.033
-          ],
-          "rotation": [
-            0,
-            0,
-            0.2709
-          ],
-          "scale": 0.7063
-        }
-      }
+      "mounts": {}
     },
     {
       "appearance": {
-        "model": "WaterElfFins_Male",
-        "headOnly": true,
+        "model": "custom:Diablotin_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -666,50 +450,7 @@
           }
         }
       ],
-      "mounts": {
-        "Quaternius/Weapon_Lute@back": {
-          "bone": "spine_03",
-          "position": [
-            -0.0795,
-            0.1089,
-            -0.2079
-          ],
-          "rotation": [
-            -0.0318,
-            -0.2044,
-            -2.3336
-          ],
-          "scale": 0.9069
-        },
-        "Quaternius/Weapon_Dagger@right": {
-          "bone": "hand_r",
-          "position": [
-            -0.03,
-            0.1,
-            0
-          ],
-          "rotation": [
-            0,
-            1.5708,
-            1.5708
-          ],
-          "scale": 0.4734
-        },
-        "Quaternius/Weapon_Lute@play": {
-          "bone": "mains (chant)",
-          "position": [
-            0.0113,
-            -0.5965,
-            0.0171
-          ],
-          "rotation": [
-            0,
-            0,
-            0.3304
-          ],
-          "scale": 0.6718
-        }
-      }
+      "mounts": {}
     }
   ]
 }

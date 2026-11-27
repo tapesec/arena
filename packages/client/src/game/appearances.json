@@ -18,8 +18,7 @@
         "accessories": []
       },
       {
-        "model": "monster:GoblinWarrior",
-        "headOnly": true,
+        "model": "custom:Gobelin_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -32,50 +31,10 @@
             "slot": "left"
           }
         ],
-        "accessories": [
-          "HF_Amr_Coif_Chainmail_01",
-          "HF_Gear_Belt_Utility_01"
-        ]
+        "accessories": []
       }
     ],
     "gardien": [
-      {
-        "model": "Human_Male",
-        "headOnly": true,
-        "parts": [
-          "Male_Knight_Legs_Armor",
-          "Male_Knight_Body_Cloth",
-          "Male_Knight_Arms",
-          "Male_Noble_Acc_Pauldron",
-          "Male_Knight_Feet_Armor"
-        ],
-        "hair": [
-          "Hair_Moustache",
-          "Hair_Beard",
-          "Hair_Buzzed"
-        ],
-        "weapons": [
-          {
-            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
-            "slot": "left"
-          },
-          {
-            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
-            "slot": "right"
-          }
-        ],
-        "accessories": [
-          "HF_Amr_Helm_Winged_01"
-        ],
-        "outfitColors": {
-          "Knight": {
-            "variant": 1
-          },
-          "Noble": {
-            "variant": 2
-          }
-        }
-      },
       {
         "model": "custom:Gardien_DA",
         "parts": [],
@@ -92,6 +51,22 @@
         ],
         "accessories": [],
         "brightness": 1.75
+      },
+      {
+        "model": "custom:Viking_DA",
+        "parts": [],
+        "hair": [],
+        "weapons": [
+          {
+            "item": "Hearthfold/HF_Wep_Shield_Tower_01",
+            "slot": "left"
+          },
+          {
+            "item": "Hearthfold/HF_Wep_Sword_Great_Crude_01",
+            "slot": "right"
+          }
+        ],
+        "accessories": []
       }
     ],
     "arcaniste": [
@@ -146,8 +121,7 @@
         "armSpread": 10
       },
       {
-        "model": "monster:KoboldShaman",
-        "headOnly": true,
+        "model": "custom:Chaman_DA",
         "parts": [],
         "hair": [],
         "weapons": [
@@ -160,26 +134,14 @@
             "slot": "left"
           }
         ],
-        "accessories": [
-          "HF_Amr_Cape_Tattered_01"
-        ]
+        "accessories": []
       }
     ],
     "barde": [
       {
-        "model": "HumanRegular_Male",
-        "headOnly": true,
-        "parts": [
-          "Male_Peasant_Arms",
-          "Male_Peasant_Legs",
-          "Male_Peasant_Feet",
-          "Male_Peasant_Body",
-          "Male_Knight_Acc_Scarf"
-        ],
-        "hair": [
-          "Hair_Moustache",
-          "Hair_SimpleParted"
-        ],
+        "model": "custom:Barde_DA",
+        "parts": [],
+        "hair": [],
         "weapons": [
           {
             "item": "Hearthfold/HF_Wep_Sabre_01",
@@ -190,31 +152,12 @@
             "slot": "back"
           }
         ],
-        "accessories": [],
-        "outfitColors": {
-          "Peasant": {
-            "variant": 1
-          },
-          "Knight": {
-            "variant": 1
-          }
-        },
-        "hairColor": "#ffdd00"
+        "accessories": []
       },
       {
-        "model": "WaterElfFins_Male",
-        "headOnly": true,
-        "parts": [
-          "Male_Peasant_Legs",
-          "Male_Knight_Acc_Scarf",
-          "Male_Ranger_Body",
-          "Male_Wizard_Arms",
-          "Male_Noble_Feet",
-          "Male_Noble_Acc_Gorget"
-        ],
-        "hair": [
-          "Hair_Moustache"
-        ],
+        "model": "custom:Diablotin_DA",
+        "parts": [],
+        "hair": [],
         "weapons": [
           {
             "item": "Quaternius/Weapon_Lute",
@@ -225,21 +168,7 @@
             "slot": "right"
           }
         ],
-        "accessories": [],
-        "outfitColors": {
-          "Peasant": {
-            "variant": 1
-          },
-          "Knight": {
-            "variant": 3
-          },
-          "Ranger": {
-            "variant": 2
-          }
-        },
-        "hairColor": "#ffdd00",
-        "skin": 2,
-        "raceHairColor": 2
+        "accessories": []
       }
     ]
   },
